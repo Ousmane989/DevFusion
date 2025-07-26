@@ -223,7 +223,7 @@ main {
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  border-left: 5px solid #DC143C;
+  border-left: 5px solid red;
 }
 
 .contact-section h2 {
@@ -248,7 +248,7 @@ main {
 }
 
 .info-block h3 {
-  color: #DC143C;
+  color: red;
   margin-bottom: 15px;
   font-weight: bold;
 }
