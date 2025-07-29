@@ -1,0 +1,63 @@
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement</title>
+    <link rel="stylesheet" href="Paiement.css">
+</head>
+
+<body>
+
+    <h2>PAIEMENT</h2>
+
+    <div class="containe">
+
+        <form>
+           <h4>Choisissez le mode de paiement :</h4>
+
+            <input type="radio" id="om" name="paiement">
+            <label for="om">Orange Money</label><br> <br>
+            <label for="numeroOM">Numéro Orange Money :</label><br>
+            <input type="tel" id="numeroOM" name="numeroOM" placeholder="77XXXXXXXX" required><br><br>
+
+            <input type="radio" id="om" name="paiement" checked>
+            <label for="om">wave</label><br> <br>
+
+
+
+            <label for="numeroOM">Numéro wave :</label><br>
+            <input type="tel" id="numeroOM" name="numeroOM" placeholder="77XXXXXXXX" required><br><br>
+
+
+
+            <input type="radio" id="cb" name="paiement">
+            <label for="cb">Carte Bancaire</label><br> <br>
+
+            <label for="numeroCarte">Numéro de carte :</label><br>
+            <input type="text" id="numeroCarte" name="numeroCarte" placeholder="XXXX XXXX XXXX XXXX"><br><br>
+
+            <label for="dateExp">Date d'expiration :</label><br>
+            <input type="text" id="dateExp" name="dateExp" placeholder="MM/AA"><br><br>
+
+            <label for="cvv">CVV :</label><br>
+            <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="3"><br><br>
+
+        <input type="submit" value="Payer"  id="strong">
+
+        </form>
+
+        <div class="img">
+            <img src="image/logo/Capture d'écran 2025-07-28 154548.png" alt="" height="549">
+           
+        </div>
+        
+
+    </div>
+
+
+
+
+</body>
+
+</html>
