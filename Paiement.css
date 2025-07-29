@@ -1,0 +1,24 @@
+body {
+  background-color: #f9f9f9;
+  font-family: Verdana, sans-serif;
+}
+
+form {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  padding: 20px;
+  max-width: 50%;
+  
+  
+   }
+.containe{
+    display: flex;
+    justify-content: center;
+
+}
+h2{
+    text-align: center;
+}
+#strong{
+    font-size: 20px;
+}
