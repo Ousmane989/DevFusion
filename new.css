@@ -1,0 +1,102 @@
+/* Style global */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f4f4;
+}
+
+/* Navigation */
+nav {
+  color: rgb(8, 7, 7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  gap: 0px; 
+  position: fixed; /* Rend l'élément fixe par rapport à la fenêtre de visualisation */
+  top: 0;          /* Le colle au bord supérieur de la fenêtre */
+  left: 0;         /* Le colle au bord gauche de la fenêtre */
+  width: 100%;     /* Fait en sorte qu'il occupe toute la largeur */
+  z-index: 1000;   /* S'assure qu'il est au-dessus des autres éléments (valeur élevée) */
+  background-color: #ffffff; 
+  padding: 5px 0; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+
+}
+/* Styles pour le menu */
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.menu li a {
+  color: rgb(14, 8, 8);
+  text-decoration: none;
+  font-weight: 500;
+}
+/* Footer */
+footer {
+    background-color: #111;
+    color: white;
+    text-align: center;
+    padding: 4px 8px;
+}
+/* Cartes produits */
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  width: 250px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.card img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+/* Section promo */
+.promo {
+  background-color: #fff;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.promo h2 {
+  font-size: 2.2em;
+  color: #111;
+}
+
+.promo p {
+  color: #555;
+  margin: 10px 0;
+}
+
+.btn {
+  background-color: #e53935;
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background-color: #c62828;
+}
