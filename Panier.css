@@ -69,6 +69,42 @@ nav{
 .contenu-principal {
   margin-top: 60px; /* ← espace au-dessus du contenu */
 }
+/* Navigation */
+nav {
+  color: rgb(8, 7, 7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  gap: 0px; 
+  position: fixed; /* Rend l'élément fixe par rapport à la fenêtre de visualisation */
+  top: 0;          /* Le colle au bord supérieur de la fenêtre */
+  left: 0;         /* Le colle au bord gauche de la fenêtre */
+  width: 100%;     /* Fait en sorte qu'il occupe toute la largeur */
+  z-index: 1000;   /* S'assure qu'il est au-dessus des autres éléments (valeur élevée) */
+  background-color: #ffffff; 
+  padding: 5px 0; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+
+}
+/* Styles pour le menu */
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding-top: 50px;
+  text-align: left;
+  padding-left: 50px;
+  margin-top: -20px;
+  
+}
+
+.menu li a {
+  color: rgb(14, 8, 8);
+  text-decoration: none;
+  font-weight: 500;
+}
 
 
 .header {
