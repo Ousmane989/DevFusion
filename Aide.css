@@ -92,12 +92,7 @@ nav {
   margin-top: -20px;
   
 }
-nav a:hover {
-  background-color: red;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(220, 20, 60, 0.4);
-}
+
 
 
 nav a:hover {
