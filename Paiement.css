@@ -22,3 +22,51 @@ h2{
 #strong{
     font-size: 20px;
 }
+
+nav {
+  color: rgb(8, 7, 7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  gap: 0px; 
+  position: fixed; /* Rend l'élément fixe par rapport à la fenêtre de visualisation */
+  top: 0;          /* Le colle au bord supérieur de la fenêtre */
+  left: 0;         /* Le colle au bord gauche de la fenêtre */
+  width: 100%;     /* Fait en sorte qu'il occupe toute la largeur */
+  z-index: 1000;   /* S'assure qu'il est au-dessus des autres éléments (valeur élevée) */
+  background-color: #ffffff; 
+  padding: 5px 0; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+
+ 
+}
+
+body, html {
+  margin: 75;
+  
+}
+
+footer {
+    background-color: #111;
+    color: white;
+    text-align: center;
+    padding: 4px 8px;
+}
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding-top: 50px;
+  text-align: left;
+  padding-left: 50px;
+  margin-top: -20px;
+  
+}
+
+.menu li a {
+  color: rgb(14, 8, 8);
+  text-decoration: none;
+  font-weight: 500;
+}
