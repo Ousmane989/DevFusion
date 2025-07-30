@@ -69,11 +69,11 @@ nav {
   justify-content: space-between;
   align-items: center; 
   gap: 0px; 
-  position: fixed; /* Rend l'élément fixe par rapport à la fenêtre de visualisation */
-  top: 0;          /* Le colle au bord supérieur de la fenêtre */
-  left: 0;         /* Le colle au bord gauche de la fenêtre */
-  width: 100%;     /* Fait en sorte qu'il occupe toute la largeur */
-  z-index: 1000;   /* S'assure qu'il est au-dessus des autres éléments (valeur élevée) */
+  position: fixed; 
+  top: 0;          
+  left: 0;        
+  width: 100%;     
+  z-index: 1000;   
   background-color: #ffffff; 
   padding: 5px 0; 
   box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
