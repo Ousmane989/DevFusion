@@ -82,6 +82,9 @@ nav a:hover {
     object-fit: cover;
     object-position: center;
 }
+
+
+
 @keyframes slide-show{
     0%{
         opacity: 0;

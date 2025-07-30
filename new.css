@@ -5,6 +5,9 @@ body {
   background-color: #f4f4f4;
 }
 
+.card{
+  text-align: center;
+}
 /* Navigation */
 nav {
   color: rgb(8, 7, 7);
