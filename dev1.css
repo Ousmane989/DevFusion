@@ -1,0 +1,213 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+
+nav {
+  color: rgb(8, 7, 7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  gap: 0px; 
+  position: fixed; /* Rend l'élément fixe par rapport à la fenêtre de visualisation */
+  top: 0;          /* Le colle au bord supérieur de la fenêtre */
+  left: 0;         /* Le colle au bord gauche de la fenêtre */
+  width: 100%;     /* Fait en sorte qu'il occupe toute la largeur */
+  z-index: 1000;   /* S'assure qu'il est au-dessus des autres éléments (valeur élevée) */
+  background-color: #ffffff; 
+  padding: 5px 0; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+
+}
+
+body {
+  background-color: #f1f1f1;
+  color: #222;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111;
+  color: #fff;
+  padding: 15px 30px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links li a:hover {
+  color: #f97316;
+}
+
+.cart {
+  font-size: 20px;
+}
+
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 30px 20px;
+}
+
+.product-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.product-images {
+  flex: 1;
+}
+
+.product-images img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.thumbnails {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.thumbnails img {
+  width: 60px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.product-details {
+  flex: 1;
+}
+
+.product-details h1 {
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+.category {
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.stars {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #f59e0b;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.ref {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.selectors select {
+  padding: 10px;
+  margin-right: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.add-to-cart {
+  padding: 12px 25px;
+  background-color: #f97316;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.reviews {
+  margin: 60px 0;
+}
+
+.review-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.review-card {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.description {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 50px;
+}
+
+.description h2 {
+  margin-bottom: 10px;
+}
+
+.suggestions h2 {
+  margin-bottom: 20px;
+}
+
+.suggest-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.suggest-card {
+  background: white;
+  padding: 10px;
+  border-radius: 6px;
+  width: 180px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.suggest-card img {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+footer {
+  background-color: #111;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+footer .socials a {
+  margin: 0 10px;
+  font-size: 18px;
+}
