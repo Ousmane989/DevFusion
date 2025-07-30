@@ -188,7 +188,6 @@ footer {
   max-width: 800px;
   margin: auto;
 }
-
 .marque {
   background-color: white;
   border: 1px solid #ddd;
@@ -200,6 +199,16 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+}
+
+
+
+.center{
+text-align: center;
+}
+.social-icons {
+  text-align: center;
 }
 
 .marque:hover {
