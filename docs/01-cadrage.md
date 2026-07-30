@@ -1,6 +1,6 @@
-# Section 1 — Document de cadrage
+# Marsa — Section 1 — Document de cadrage
 
-> Plateforme de vente en ligne hybride (boutiques vendeurs + place de marché unifiée)
+> **Marsa** (مرسى) — Plateforme de vente en ligne hybride (boutiques vendeurs + place de marché unifiée)
 > Marché de lancement : **Mauritanie** (Nouakchott, Nouadhibou) — extension **Sénégal** en phase 2.
 > Statut : **brouillon en attente de validation** · Version 0.1
 
@@ -14,7 +14,7 @@
 | Échéance | Flexible / non fixée | Priorisation **par valeur et par risque**, pas par date. On livre par lots utilisables. |
 | Catégories | Généraliste (électronique, mode, alimentaire, artisanat, autres) | Catalogue polyvalent (variantes, unités, périssable). **Recommandation** : ancrer le lancement sur 1-2 catégories (voir §6). |
 | Entité juridique RIM | **Aucune pour l'instant** | ⚠️ Bloquant pour le **séquestre des fonds** et la contractualisation avec les wallets. Montage intérimaire requis (§5). |
-| Nom / domaine | Non défini | Placeholder `[Plateforme]` / `boutique.[domaine]` dans tous les livrables (question ouverte §6). |
+| Nom | **Marsa** (مرسى, « le port ») | Marque retenue. **Domaine** encore à confirmer (`boutique.marsa.xx` selon extension dispo — question ouverte §6). |
 
 ---
 
@@ -161,7 +161,7 @@ Ce point remonte en tête de la **liste des risques** (Section 5 des livrables).
 ## 6. Questions ouvertes issues du cadrage (pour la Section 6 finale, mais utiles à trancher tôt)
 
 1. **Catégorie d'ancrage au lancement** : généraliste dès J1 dilue la confiance et la logistique. Je recommande d'**ancrer sur 1-2 catégories** (p. ex. électronique/accessoires pour le panier moyen élevé, ou mode/artisanat pour la marge et la différenciation) tout en gardant le catalogue polyvalent. → **Ton choix ?**
-2. **Nom de la plateforme et domaine** (`boutique.[domaine]`) — non défini.
+2. **Nom** : **Marsa** ✅ — reste à confirmer le **domaine** (`.mr`, `.com`, `.africa`… et le format des sous-domaines boutiques `boutique.marsa.xx`).
 3. **Entité juridique** : valides-tu le **montage intérimaire « facilitateur »** ci-dessus le temps de constituer la société ?
 4. **Bankily** comme premier wallet : as-tu déjà un contact/accès API, ou faut-il prévoir COD-only au tout premier jalon ?
 5. **Canal WhatsApp** : usage du numéro personnel du vendeur (lien `wa.me`) au MVP, ou API WhatsApp Business (coût, vérification Meta) ?
