@@ -1,13 +1,13 @@
 <?php
 /**
- * Marsa — inscription d'un vendeur (création de boutique).
- * Enregistre le vendeur avec le statut « essai » et une fin d'essai à J+3.
- * Provisoire (stockage fichier) ; à remplacer par la vraie API + PostgreSQL.
+ * Marsa — inscription vendeur (création de compte + boutique).
+ * Crée un compte sécurisé (mot de passe haché), un slug unique de boutique,
+ * démarre l'essai (J+3), connecte le vendeur et renvoie l'URL de redirection.
  */
 header('Content-Type: application/json; charset=utf-8');
 
 $config = require __DIR__ . '/../includes/config.php';
-require __DIR__ . '/../includes/store.php';
+require __DIR__ . '/../includes/auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -15,29 +15,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Accepte JSON ou formulaire.
-$in = [];
 $raw = file_get_contents('php://input');
-if ($raw !== '' && ($j = json_decode($raw, true)) !== null) {
-    $in = is_array($j) ? $j : [];
-} else {
-    $in = $_POST;
+$in  = ($raw !== '' && ($j = json_decode($raw, true)) !== null && is_array($j)) ? $j : $_POST;
+
+if (!csrf_ok($in['csrf'] ?? '')) {
+    http_response_code(419);
+    echo json_encode(['ok' => false, 'error' => 'csrf']);
+    exit;
 }
 
 $shop  = trim((string) ($in['shop'] ?? ''));
 $owner = trim((string) ($in['owner'] ?? ''));
+$email = trim((string) ($in['email'] ?? ''));
 $phone = preg_replace('/\D+/', '', (string) ($in['phone'] ?? ''));
+$pass  = (string) ($in['password'] ?? '');
 $cat   = trim((string) ($in['category'] ?? ''));
 $city  = trim((string) ($in['city'] ?? ''));
 
-$errors = [];
-if (mb_strlen($shop) < 2)  { $errors[] = 'shop'; }
-if (mb_strlen($owner) < 2) { $errors[] = 'owner'; }
-if ($phone === '' || strlen($phone) < 8 || strlen($phone) > 15) { $errors[] = 'phone'; }
+$fields = [];
+if (mb_strlen($shop) < 2)  { $fields[] = 'shop'; }
+if (mb_strlen($owner) < 2) { $fields[] = 'owner'; }
+if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) { $fields[] = 'email'; }
+if ($phone === '' || strlen($phone) < 8 || strlen($phone) > 15) { $fields[] = 'phone'; }
+if (strlen($pass) < 6) { $fields[] = 'password'; }
 
-if ($errors) {
+if ($fields) {
     http_response_code(422);
-    echo json_encode(['ok' => false, 'error' => 'invalid', 'fields' => $errors]);
+    echo json_encode(['ok' => false, 'error' => 'invalid', 'fields' => $fields]);
     exit;
 }
 
@@ -47,14 +51,22 @@ if (store_find_phone($rows, $phone) !== null) {
     echo json_encode(['ok' => false, 'error' => 'already_registered']);
     exit;
 }
+if ($email !== '' && merchant_by_login($email) !== null) {
+    http_response_code(409);
+    echo json_encode(['ok' => false, 'error' => 'email_taken']);
+    exit;
+}
 
 $trialDays = (int) ($config['trial_days'] ?? 3);
 $now = time();
 $merchant = [
-    'id'         => bin2hex(random_bytes(6)),
+    'id'         => new_id(),
     'shop'       => $shop,
+    'slug'       => unique_slug($shop),
     'owner'      => $owner,
+    'email'      => $email,
     'phone'      => $phone,
+    'password'   => password_hash($pass, PASSWORD_DEFAULT),
     'category'   => $cat,
     'city'       => $city,
     'created_at' => date('c', $now),
@@ -62,11 +74,12 @@ $merchant = [
     'status'     => 'essai',
 ];
 store_add($merchant);
+notify_merchant($merchant['id'], 'Bienvenue sur Marsa ! Votre boutique « ' . $shop . ' » est prête. Ajoutez vos premiers produits.');
+login_merchant($merchant);
 
 echo json_encode([
-    'ok'         => true,
-    'id'         => $merchant['id'],
-    'shop'       => $shop,
-    'trial_ends' => $merchant['trial_ends'],
-    'trial_days' => $trialDays,
+    'ok'       => true,
+    'redirect' => 'compte.php',
+    'slug'     => $merchant['slug'],
+    'domain'   => shop_domain($merchant),
 ]);

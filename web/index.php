@@ -70,6 +70,7 @@ $prods = [
         <button class="icon-btn" id="theme" type="button" aria-label="Thème clair / sombre">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
         </button>
+        <a class="btn btn-ghost nav-login" href="connexion.php" <?= attrs('nav_login') ?>><?= t('nav_login', $lang) ?></a>
         <a class="btn btn-primary nav-cta" href="inscription.php" <?= attrs('nav_cta') ?>><?= t('nav_cta', $lang) ?></a>
       </div>
     </div>
