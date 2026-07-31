@@ -1,126 +1,80 @@
 <?php
-/**
- * Marsa — inscription vendeur façon Shopify (identité, boutique, offre).
- */
-$config = require __DIR__ . '/includes/config.php';
-require __DIR__ . '/includes/i18n.php';
-require __DIR__ . '/includes/auth.php';
+/** Marsa — inscription (identité, pays, offre) puis vérification e-mail. */
+require __DIR__ . '/includes/layout.php';
 
-if (current_merchant() !== null) { header('Location: compte.php'); exit; }
+if (current_user() !== null) { redirect('compte.php'); }
 $csrf = csrf_token();
+$err = '';
+$old = ['nom' => '', 'email' => '', 'telephone' => '', 'pays' => 'MR', 'plan' => 'basique'];
 
-$lang = 'fr';
-$dir = 'ltr';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok($_POST['csrf'] ?? '')) {
+        $err = 'Session expirée, réessayez.';
+    } else {
+        foreach ($old as $k => $_) { $old[$k] = trim((string) ($_POST[$k] ?? $old[$k])); }
+        $pass = (string) ($_POST['mot_de_passe'] ?? '');
+        $phone = preg_replace('/\D+/', '', $old['telephone']);
+        $plan = isset(cfg()['plans'][$old['plan']]) ? $old['plan'] : 'basique';
+        $pays = in_array($old['pays'], ['MR', 'SN'], true) ? $old['pays'] : 'MR';
 
-$types = ['Électronique', 'Mode & tissus', 'Alimentaire', 'Artisanat', 'Maison', 'Beauté', 'Autre'];
+        if (mb_strlen($old['nom']) < 2) { $err = 'Indiquez votre nom.'; }
+        elseif (!filter_var($old['email'], FILTER_VALIDATE_EMAIL)) { $err = 'E-mail invalide.'; }
+        elseif (strlen($phone) < 8) { $err = 'Téléphone invalide.'; }
+        elseif (strlen($pass) < 6) { $err = 'Mot de passe : 6 caractères minimum.'; }
+        elseif (q1('SELECT id FROM utilisateurs WHERE email = ?', [$old['email']])) { $err = 'Un compte existe déjà avec cet e-mail. Connectez-vous.'; }
+        else {
+            q('INSERT INTO utilisateurs (nom, email, telephone, mot_de_passe, pays, plan, statut, cree_le) VALUES (?,?,?,?,?,?,?,?)',
+              [$old['nom'], $old['email'], $phone, password_hash($pass, PASSWORD_DEFAULT), $pays, $plan, 'non_verifie', date('c')]);
+            $u = q1('SELECT * FROM utilisateurs WHERE email = ?', [$old['email']]);
+            $code = gen_code((int) $u['id'], 'email');
+            send_code($u, $code, 'email');
+            login_user($u);
+            redirect('verification.php');
+        }
+    }
+}
+head('Marsa — Créer un compte');
+topbar(back_button('index.php', 'Accueil'), '<a class="mini-back" href="connexion.php">Se connecter</a>');
 ?>
-<!DOCTYPE html>
-<html lang="fr" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Marsa — Créer votre boutique</title>
-  <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-  <header class="top">
-    <div class="shell mini-top">
-      <a class="mini-back" href="index.php">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        <span>Retour à l'accueil</span>
-      </a>
-      <a class="brand" href="index.php" aria-label="Marsa">
-        <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <circle cx="20" cy="17" r="12.5" stroke="var(--accent)" stroke-width="2.4"/>
-          <circle cx="20" cy="17" r="4.2" fill="var(--accent)"/>
-          <path d="M4 31c4 2.6 7 2.6 10.6 0M14.6 31c3.6 2.6 7 2.6 10.8 0M25.4 31c3.6 2.6 6.6 2.6 10.6 0" stroke="var(--emerald)" stroke-width="2.4" stroke-linecap="round"/>
-        </svg>
-        <span class="brand-text"><span class="brand-ar">مرسى</span><span class="brand-la">Marsa</span></span>
-      </a>
-      <a class="mini-back" href="connexion.php">Se connecter</a>
-    </div>
-  </header>
-
-  <main class="access-main">
-    <div class="access-card signup-card">
-      <div>
-        <span class="eyebrow">Créer votre boutique</span>
-        <h1 style="margin-top:8px">Lancez votre commerce en ligne</h1>
+<main class="access-main">
+  <div class="access-card signup-card">
+    <div><span class="eyebrow">Créer un compte</span><h1 style="margin-top:8px">Lancez votre boutique en ligne</h1></div>
+    <p class="sub">Un compte, une boutique. <b>3 jours d'essai gratuit</b> après vérification de votre e-mail.</p>
+    <?= flash_banner($err, 'err') ?>
+    <form class="access-form" method="post" action="inscription.php" novalidate>
+      <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+      <div class="field"><label>Nom complet</label><input name="nom" required value="<?= e($old['nom']) ?>" placeholder="Ex. Salma Mint Ahmed"></div>
+      <div class="field-grid">
+        <div class="field"><label>E-mail</label><input name="email" type="email" required value="<?= e($old['email']) ?>" placeholder="vous@exemple.com"></div>
+        <div class="field"><label>Téléphone</label><input name="telephone" type="tel" inputmode="tel" required value="<?= e($old['telephone']) ?>" placeholder="22 00 00 00"></div>
       </div>
-      <p class="sub">Quelques informations et votre boutique est prête. <b>3 jours d'essai gratuit</b>, sans paiement.</p>
-
-      <form class="access-form" id="register-form" novalidate>
-        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-
-        <p class="form-section">Vous</p>
-        <div class="field-grid">
-          <div class="field"><label for="f-first">Prénom</label><input id="f-first" name="first_name" required autocomplete="given-name" placeholder="Ex. Salma"></div>
-          <div class="field"><label for="f-last">Nom</label><input id="f-last" name="last_name" required autocomplete="family-name" placeholder="Ex. Mint Ahmed"></div>
-        </div>
-        <div class="field-grid">
-          <div class="field"><label for="f-email">E-mail (pour les notifications)</label><input id="f-email" name="email" type="email" autocomplete="email" placeholder="vous@exemple.com"></div>
-          <div class="field"><label for="f-phone">Téléphone (WhatsApp)</label><input id="f-phone" name="phone" type="tel" inputmode="tel" required autocomplete="tel" placeholder="Ex. 22 00 00 00"></div>
-        </div>
-        <div class="field-grid">
-          <div class="field"><label for="f-country">Pays</label>
-            <select id="f-country" name="country">
-              <?php foreach ($config['countries'] as $code => $c): ?>
-                <option value="<?= htmlspecialchars($code) ?>"<?= $code === $config['default_country'] ? ' selected' : '' ?>><?= htmlspecialchars($c['name']['fr']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="field"><label for="f-city">Ville</label><input id="f-city" name="city" placeholder="Ex. Nouakchott"></div>
-        </div>
-        <div class="field"><label for="f-pass">Mot de passe</label><input id="f-pass" name="password" type="password" required autocomplete="new-password" minlength="6" placeholder="Au moins 6 caractères"></div>
-
-        <p class="form-section">Votre boutique</p>
-        <div class="field">
-          <label for="f-shop">Nom de la boutique</label>
-          <input id="f-shop" name="shop" required autocomplete="organization" placeholder="Ex. Boutique Salma">
-          <p class="sub-url"><span class="u-slug" id="shop-slug">votre-boutique</span><span class="u-prefix">.marsa.mr</span></p>
-        </div>
-        <div class="field">
-          <label for="f-type">Que vendez-vous ?</label>
-          <select id="f-type" name="shop_type">
-            <?php foreach ($types as $ty): ?><option value="<?= htmlspecialchars($ty) ?>"><?= htmlspecialchars($ty) ?></option><?php endforeach; ?>
+      <div class="field-grid">
+        <div class="field"><label>Pays</label>
+          <select name="pays">
+            <option value="MR"<?= $old['pays'] === 'MR' ? ' selected' : '' ?>>Mauritanie (MRU)</option>
+            <option value="SN"<?= $old['pays'] === 'SN' ? ' selected' : '' ?>>Sénégal (XOF)</option>
           </select>
         </div>
-
-        <p class="form-section">Votre offre <span class="tiny">· 3 jours gratuits, aucune carte demandée</span></p>
-        <div class="plan-choice">
-          <?php $i = 0; foreach ($config['plans'] as $key => $pl): ?>
-            <label class="plan-opt">
-              <input type="radio" name="plan" value="<?= htmlspecialchars($key) ?>"<?= $key === 'decouverte' ? ' checked' : '' ?>>
-              <span class="plan-opt-in">
-                <b><?= htmlspecialchars($pl['name']) ?></b>
-                <span class="p"><?= number_format($pl['price'], 0, ',', ' ') ?> <small>MRU/mois</small></span>
-                <span class="ai-tag">IA incluse</span>
-              </span>
-            </label>
-          <?php $i++; endforeach; ?>
-        </div>
-
-        <button class="btn btn-primary btn-lg" type="submit">Créer ma boutique — 3 jours gratuits</button>
-        <p class="access-msg" id="register-msg"
-           data-fr-err="Vérifiez les champs et réessayez." data-ar-err="تحقق من الحقول وأعد المحاولة."
-           data-fr-dup="Ce numéro ou e-mail a déjà une boutique. Connectez-vous." data-ar-dup="هذا الرقم أو البريد لديه متجر بالفعل."></p>
-      </form>
-
-      <div class="signup-ok" id="register-ok" hidden>
-        <div class="ok-badge">✓</div>
-        <h2>Boutique créée 🎉</h2>
-        <p class="sub">Votre essai gratuit de 3 jours démarre maintenant. Après 3 jours, la boutique se ferme et notre assistante vous contacte sur WhatsApp pour activer votre offre.</p>
-        <a class="btn btn-primary btn-lg" href="compte.php">Aller à mon espace</a>
+        <div class="field"><label>Mot de passe</label><input name="mot_de_passe" type="password" required minlength="6" placeholder="6 caractères min."></div>
       </div>
 
-      <div class="access-foot">
-        <span>Vous avez déjà une boutique ?</span>
-        <a href="connexion.php">Se connecter</a>
+      <p class="form-section">Choisissez votre offre <span class="tiny">· 3 jours gratuits, aucun paiement maintenant</span></p>
+      <div class="plan-choice">
+        <?php foreach (cfg()['plans'] as $key => $pl): ?>
+          <label class="plan-opt">
+            <input type="radio" name="plan" value="<?= e($key) ?>"<?= $old['plan'] === $key ? ' checked' : '' ?>>
+            <span class="plan-opt-in">
+              <b><?= e($pl['name']) ?></b>
+              <span class="p"><?= number_format($pl['price'], 0, ',', ' ') ?> <small>MRU/mois</small></span>
+              <span class="ai-tag"><?= $pl['max_produits'] < 0 ? 'Produits illimités' : $pl['max_produits'] . ' produits' ?></span>
+            </span>
+          </label>
+        <?php endforeach; ?>
       </div>
-    </div>
-  </main>
 
-  <script src="assets/js/app.js"></script>
-</body>
-</html>
+      <button class="btn btn-primary btn-lg" type="submit">Créer mon compte</button>
+    </form>
+    <div class="access-foot"><span>Vous avez déjà un compte ?</span><a href="connexion.php">Se connecter</a></div>
+  </div>
+</main>
+<?php foot(false); ?>

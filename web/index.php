@@ -60,7 +60,6 @@ $prods = [
         <a href="#themes" <?= attrs('nav_themes') ?>><?= t('nav_themes', $lang) ?></a>
         <a href="#market" <?= attrs('nav_market') ?>><?= t('nav_market', $lang) ?></a>
         <a href="#pricing" <?= attrs('nav_pricing') ?>><?= t('nav_pricing', $lang) ?></a>
-        <a href="acces.php" <?= attrs('nav_access') ?>><?= t('nav_access', $lang) ?></a>
       </nav>
       <div class="controls">
         <div class="lang" role="group" aria-label="Langue / اللغة">

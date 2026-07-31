@@ -1,122 +1,87 @@
 <?php
-/**
- * Marsa — boutique publique d'un vendeur (routée par slug), au thème choisi.
- * Commande en paiement à la livraison ; le stock est décrémenté à la commande.
- */
-$config = require __DIR__ . '/includes/config.php';
-require __DIR__ . '/includes/store.php';
+/** Marsa — boutique publique (catalogue). Hors-ligne si compte verrouillé. */
+require __DIR__ . '/includes/app.php';
 
 $slug = (string) ($_GET['s'] ?? '');
-$m = $slug !== '' ? merchant_by_slug($slug) : null;
-$available = $m !== null && in_array($m['status'] ?? '', ['essai', 'autorise'], true);
-$products = $m ? products_of($m['id']) : [];
-$theme = $config['themes'][$m['theme'] ?? 'souk'] ?? $config['themes']['souk'];
+$b = $slug !== '' ? q1('SELECT * FROM boutiques WHERE slug = ?', [$slug]) : null;
+$owner = $b ? q1('SELECT * FROM utilisateurs WHERE id = ?', [$b['user_id']]) : null;
+if ($owner) { $owner = sync_status($owner); $b = q1('SELECT * FROM boutiques WHERE id = ?', [$b['id']]); }
+$live = $b && (int) $b['en_ligne'] === 1 && (int) $b['configuree'] === 1 && $owner && in_array($owner['statut'], ['essai', 'actif'], true);
 
-function money(int $n): string { return number_format($n, 0, ',', ' ') . ' MRU'; }
-function is_url(string $s): bool { return (bool) preg_match('#^https?://#i', $s); }
+$theme = cfg()['themes'][$b['theme'] ?? 'souk'] ?? cfg()['themes']['souk'];
+$devise = $b['devise'] ?? 'MRU';
+
+if ($b && $live) {
+    // Comptage de visite (basique)
+    q('INSERT INTO visites (boutique_id, jour, ip, cree_le) VALUES (?,?,?,?)', [$b['id'], date('Y-m-d'), $_SERVER['REMOTE_ADDR'] ?? '', date('c')]);
+}
+function money2(int $n, string $d): string { return number_format($n, 0, ',', ' ') . ' ' . $d; }
 ?>
-<!DOCTYPE html>
-<html lang="fr" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= $m ? htmlspecialchars($m['shop']) . ' — Marsa' : 'Boutique introuvable — Marsa' ?></title>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <?php if ($available): ?>
-  <style>
-    :root{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>;--harbor:<?= $theme['hero'] ?>}
-    :root[data-theme="dark"]{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>}
-  </style>
-  <?php endif; ?>
-</head>
-<body>
-  <header class="top">
-    <div class="shell mini-top">
-      <a class="brand" href="index.php" aria-label="Marsa">
-        <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <circle cx="20" cy="17" r="12.5" stroke="var(--accent)" stroke-width="2.4"/>
-          <circle cx="20" cy="17" r="4.2" fill="var(--accent)"/>
-          <path d="M4 31c4 2.6 7 2.6 10.6 0M14.6 31c3.6 2.6 7 2.6 10.8 0M25.4 31c3.6 2.6 6.6 2.6 10.6 0" stroke="var(--emerald)" stroke-width="2.4" stroke-linecap="round"/>
-        </svg>
-        <span class="brand-text"><span class="brand-ar">مرسى</span><span class="brand-la">Marsa</span></span>
-      </a>
-      <a class="mini-back" href="index.php">Marketplace</a>
+<!DOCTYPE html><html lang="fr" dir="ltr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?= $b ? e($b['nom']) . ' — Marsa' : 'Boutique — Marsa' ?></title>
+<link rel="stylesheet" href="assets/css/style.css">
+<?php if ($live): ?><style>:root{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>;--harbor:<?= $theme['hero'] ?>}:root[data-theme="dark"]{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>}</style><?php endif; ?>
+</head><body>
+<header class="top"><div class="shell mini-top"><?= brand_mark('Marsa') ?><a class="mini-back" href="index.php">Marketplace</a></div></header>
+
+<?php if (!$b || !$live): ?>
+  <main class="access-main"><div class="access-card" style="max-width:460px;text-align:center">
+    <h1><?= $b ? 'Boutique temporairement indisponible' : 'Boutique introuvable' ?></h1>
+    <p class="sub"><?= $b ? 'Cette boutique est momentanément hors ligne. Revenez bientôt.' : 'Cette adresse ne correspond à aucune boutique.' ?></p>
+    <a class="btn btn-primary" href="index.php">Retour à l'accueil</a>
+  </div></main>
+<?php else:
+  $produits = q('SELECT * FROM produits WHERE boutique_id=? AND visible=1 ORDER BY ordre, id DESC', [$b['id']])->fetchAll(); ?>
+  <section class="shop-hero" <?= $b['banniere'] ? 'style="background-image:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url(' . e($b['banniere']) . ');background-size:cover;background-position:center"' : '' ?>>
+    <div class="shell shop-hero-in">
+      <div class="shop-logo"><?php if ($b['logo']): ?><img src="<?= e($b['logo']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px"><?php else: ?><?= e(mb_substr($b['nom'], 0, 1)) ?><?php endif; ?></div>
+      <div>
+        <h1><?= e($b['nom']) ?></h1>
+        <p class="shop-meta"><?php if ($b['categorie']): ?><span><?= e($b['categorie']) ?></span><?php endif; ?><span class="cod-inline">· Paiement à la livraison</span></p>
+        <?php if ($b['description']): ?><p class="shop-desc"><?= e($b['description']) ?></p><?php endif; ?>
+      </div>
     </div>
-  </header>
+  </section>
 
-  <?php if (!$available): ?>
-    <main class="access-main">
-      <div class="access-card" style="max-width:440px;text-align:center">
-        <h1>Boutique indisponible</h1>
-        <p class="sub">Cette boutique n'existe pas ou n'est pas encore ouverte.</p>
-        <a class="btn btn-primary" href="index.php">Retour à l'accueil</a>
-      </div>
-    </main>
-  <?php else: ?>
-    <section class="shop-hero">
-      <div class="shell shop-hero-in">
-        <div class="shop-logo"><?= htmlspecialchars(mb_substr($m['shop'], 0, 1)) ?></div>
-        <div>
-          <h1><?= htmlspecialchars($m['shop']) ?></h1>
-          <p class="shop-meta">
-            <?php if (!empty($m['category'])): ?><span><?= htmlspecialchars($m['category']) ?></span><?php endif; ?>
-            <?php if (!empty($m['city'])): ?><span>· <?= htmlspecialchars($m['city']) ?></span><?php endif; ?>
-            <span class="cod-inline">· Paiement à la livraison</span>
-          </p>
-          <?php if (!empty($m['shop_desc'])): ?><p class="shop-desc"><?= htmlspecialchars($m['shop_desc']) ?></p><?php endif; ?>
+  <main class="shell" style="padding-block:34px">
+    <?php if (!$produits): ?><div class="empty-state">Cette boutique n'a pas encore de produits.</div>
+    <?php else: ?>
+    <div class="market-grid">
+      <?php foreach ($produits as $i => $p):
+        $photos = array_filter(array_map('trim', explode(',', (string) $p['photos'])));
+        $img = $photos[0] ?? '';
+        $stock = (int) $p['stock']; $comp = (int) $p['prix_compare'];
+        $pal = ['linear-gradient(135deg,#C8912A,#8a5a12)','linear-gradient(135deg,#0E2A27,#1E5248)','linear-gradient(135deg,#B5502F,#7a2f18)','linear-gradient(135deg,#2E7263,#134a3a)'];
+        $bg = $pal[$i % 4]; ?>
+      <a class="pcard" href="produit.php?s=<?= e($b['slug']) ?>&id=<?= (int) $p['id'] ?>">
+        <div class="thumb" style="background:<?= $bg ?>">
+          <?php if ($comp > $p['prix']): ?><span class="badge-promo">-<?= (int) round(100 - $p['prix'] * 100 / $comp) ?>%</span><?php endif; ?>
+          <?php if ($img && preg_match('#^https?://#', $img)): ?><img src="<?= e($img) ?>" alt="<?= e($p['nom']) ?>" style="width:100%;height:100%;object-fit:cover">
+          <?php elseif ($img): ?><span style="font-size:2.4rem"><?= e($img) ?></span><?php else: ?>🛍️<?php endif; ?>
         </div>
-      </div>
-    </section>
-
-    <main class="shell" style="padding-block:34px">
-      <?php if (!$products): ?>
-        <div class="empty-state">Cette boutique n'a pas encore ajouté de produits.</div>
-      <?php else: ?>
-      <div class="market-grid">
-        <?php foreach ($products as $i => $p):
-          $title = $p['title'] ?? $p['name'] ?? '';
-          $img = trim((string) ($p['image'] ?? ''));
-          $stock = (int) ($p['stock'] ?? 0);
-          $compare = (int) ($p['compare_at'] ?? 0);
-          $palette = ['linear-gradient(135deg,#C8912A,#8a5a12)','linear-gradient(135deg,#0E2A27,#1E5248)','linear-gradient(135deg,#B5502F,#7a2f18)','linear-gradient(135deg,#2E7263,#134a3a)'];
-          $bg = $palette[$i % count($palette)]; ?>
-        <div class="pcard">
-          <div class="thumb" style="background:<?= $bg ?>">
-            <?php if ($compare > $p['price']): ?><span class="badge-promo">-<?= (int) round(100 - $p['price'] * 100 / $compare) ?>%</span><?php endif; ?>
-            <span class="badge-cod">Livraison</span>
-            <?php if ($img !== '' && is_url($img)): ?><img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($title) ?>" style="width:100%;height:100%;object-fit:cover">
-            <?php elseif ($img !== ''): ?><span style="font-size:2.4rem"><?= htmlspecialchars($img) ?></span>
-            <?php else: ?>🛍️<?php endif; ?>
-          </div>
-          <div class="pmeta">
-            <b><?= htmlspecialchars($title) ?></b>
-            <?php if (!empty($p['description'])): ?><span class="pdesc"><?= htmlspecialchars($p['description']) ?></span><?php endif; ?>
-            <span class="price-row"><span class="price"><?= money((int) $p['price']) ?></span><?php if ($compare > $p['price']): ?><span class="price-old"><?= money($compare) ?></span><?php endif; ?></span>
-            <?php if ($stock <= 0): ?>
-              <span class="sold-out">Épuisé</span>
-            <?php else: ?>
-              <button class="btn btn-primary order-toggle" type="button" style="margin-top:8px;justify-content:center">Commander</button>
-            <?php endif; ?>
-          </div>
-          <?php if ($stock > 0): ?>
-          <form class="order-form" data-product="<?= htmlspecialchars($p['id']) ?>" data-slug="<?= htmlspecialchars($m['slug']) ?>" hidden>
-            <input name="customer_name" placeholder="Votre nom" required>
-            <input name="customer_phone" type="tel" inputmode="tel" placeholder="Votre téléphone" required>
-            <input name="address" placeholder="Adresse (quartier, moughataa)" required>
-            <div class="order-row">
-              <input name="qty" type="number" min="1" max="<?= $stock ?>" value="1" class="qty">
-              <button class="btn btn-primary" type="submit">Valider (paiement livraison)</button>
-            </div>
-            <p class="order-msg" data-ok="Commande envoyée ✓ Le vendeur vous contactera." data-err="Vérifiez les champs et réessayez."></p>
-          </form>
-          <?php endif; ?>
+        <div class="pmeta">
+          <b><?= e($p['nom']) ?></b>
+          <span class="price-row"><span class="price"><?= e(money2((int) $p['prix'], $devise)) ?></span><?php if ($comp > $p['prix']): ?><span class="price-old"><?= e(money2($comp, $devise)) ?></span><?php endif; ?></span>
+          <?php if ($stock <= 0): ?><span class="sold-out">Épuisé</span><?php else: ?><span class="btn btn-primary" style="margin-top:8px;justify-content:center">Voir le produit</span><?php endif; ?>
         </div>
-        <?php endforeach; ?>
-      </div>
-      <?php endif; ?>
-    </main>
-  <?php endif; ?>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  </main>
 
-  <script src="assets/js/app.js"></script>
-</body>
-</html>
+  <footer class="shop-foot">
+    <div class="shell">
+      <div><b><?= e($b['nom']) ?></b><?php if ($b['description']): ?><p><?= e($b['description']) ?></p><?php endif; ?></div>
+      <div class="shop-foot-contact">
+        <a href="contact.php?s=<?= e($b['slug']) ?>">Contact</a>
+        <?php if ($b['contact_tel']): ?><span>📞 <?= e($b['contact_tel']) ?></span><?php endif; ?>
+        <?php if ($b['zones']): ?><span>🚚 <?= e($b['zones']) ?></span><?php endif; ?>
+      </div>
+    </div>
+    <p class="shop-foot-mini">Propulsé par <a href="index.php">Marsa</a> · Paiement à la livraison</p>
+  </footer>
+<?php endif; ?>
+<script src="assets/js/app.js"></script>
+</body></html>

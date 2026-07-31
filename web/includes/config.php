@@ -22,14 +22,15 @@ return [
     // ⚠️ Mot de passe à changer avant toute mise en ligne.
     'admin_password'   => 'marsa-admin',
 
-    // Offres (abonnement mensuel en MRU). L'option IA est incluse à partir de
-    // 600 MRU (donc dans toutes les offres actuelles).
+    // Offres (abonnement mensuel). Prix en MRU (marché de lancement).
+    // 'max_produits' = -1 signifie illimité. IA incluse à partir de 600 MRU.
     'plans' => [
-        'decouverte' => ['name' => 'Découverte', 'price' => 600],
-        'pro'        => ['name' => 'Pro',        'price' => 1000],
-        'business'   => ['name' => 'Business',   'price' => 1500],
+        'basique'  => ['name' => 'Basique',  'price' => 600,  'max_produits' => 20],
+        'standard' => ['name' => 'Standard', 'price' => 1000, 'max_produits' => 100],
+        'premium'  => ['name' => 'Premium',  'price' => 1500, 'max_produits' => -1],
     ],
     'ai_min_price' => 600,
+    'trial_days'   => 3,
 
     // Thèmes de boutique disponibles (personnalisation vendeur).
     'themes' => [
