@@ -129,6 +129,67 @@
     });
   }
 
+  /* ---------- Page Inscription (création de boutique) ---------- */
+  var regForm = document.getElementById('register-form');
+  if (regForm) {
+    var shopIn = document.getElementById('f-shop');
+    var slug = document.getElementById('shop-slug');
+    function slugify(s) {
+      return (s || '').toString().toLowerCase().trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
+    }
+    if (shopIn && slug) {
+      shopIn.addEventListener('input', function () {
+        slug.textContent = slugify(shopIn.value) || 'votre-boutique';
+      });
+    }
+    var regMsg = document.getElementById('register-msg');
+    var regOk = document.getElementById('register-ok');
+    regForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var lang = root.getAttribute('lang') || 'fr';
+      var data = {
+        shop: regForm.shop.value,
+        owner: regForm.owner.value,
+        phone: regForm.phone.value,
+        category: regForm.category.value,
+        city: regForm.city.value
+      };
+      var digits = (data.phone || '').replace(/\D+/g, '');
+      if (data.shop.trim().length < 2 || data.owner.trim().length < 2 || digits.length < 8) {
+        regMsg.className = 'access-msg err';
+        regMsg.textContent = regMsg.getAttribute(lang === 'ar' ? 'data-ar-err' : 'data-fr-err');
+        return;
+      }
+      regMsg.className = 'access-msg';
+      regMsg.textContent = '…';
+      fetch('api/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        .then(function (r) { return r.json().then(function (d) { return { s: r.status, d: d }; }); })
+        .then(function (res) {
+          if (res.d && res.d.ok) {
+            regForm.hidden = true;
+            regMsg.textContent = '';
+            if (regOk) { regOk.hidden = false; }
+          } else if (res.s === 409) {
+            regMsg.className = 'access-msg err';
+            regMsg.textContent = regMsg.getAttribute(lang === 'ar' ? 'data-ar-dup' : 'data-fr-dup');
+          } else {
+            regMsg.className = 'access-msg err';
+            regMsg.textContent = regMsg.getAttribute(lang === 'ar' ? 'data-ar-err' : 'data-fr-err');
+          }
+        })
+        .catch(function () {
+          regMsg.className = 'access-msg err';
+          regMsg.textContent = regMsg.getAttribute(lang === 'ar' ? 'data-ar-err' : 'data-fr-err');
+        });
+    });
+  }
+
   /* ---------- Langue mémorisée ---------- */
   var saved = null;
   try { saved = localStorage.getItem('marsa_lang'); } catch (e) {}

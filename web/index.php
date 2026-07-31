@@ -70,7 +70,7 @@ $prods = [
         <button class="icon-btn" id="theme" type="button" aria-label="Thème clair / sombre">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
         </button>
-        <a class="btn btn-primary nav-cta" href="#cta" <?= attrs('nav_cta') ?>><?= t('nav_cta', $lang) ?></a>
+        <a class="btn btn-primary nav-cta" href="inscription.php" <?= attrs('nav_cta') ?>><?= t('nav_cta', $lang) ?></a>
       </div>
     </div>
   </header>
@@ -84,7 +84,7 @@ $prods = [
         <h1 class="reveal" data-i="1" <?= attrs('hero_h1') ?>><?= t('hero_h1', $lang) ?></h1>
         <p class="lead reveal" data-i="2" <?= attrs('hero_lead') ?>><?= t('hero_lead', $lang) ?></p>
         <div class="cta-row reveal" data-i="3">
-          <a class="btn btn-primary btn-lg" href="#cta" <?= attrs('cta_create') ?>><?= t('cta_create', $lang) ?></a>
+          <a class="btn btn-primary btn-lg" href="inscription.php" <?= attrs('cta_create') ?>><?= t('cta_create', $lang) ?></a>
           <a class="btn btn-ghost btn-lg" href="#market" style="color:var(--harbor-ink);border-color:rgba(242,233,214,.35)" <?= attrs('cta_explore') ?>><?= t('cta_explore', $lang) ?></a>
         </div>
         <div class="hero-sub reveal" data-i="4">
@@ -243,7 +243,7 @@ $prods = [
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-ghost" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-ghost" href="inscription.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
         <div class="plan featured reveal" data-i="1">
           <span class="tag" <?= attrs('pl_featured') ?>><?= t('pl_featured', $lang) ?></span>
@@ -256,7 +256,7 @@ $prods = [
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-primary" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-primary" href="inscription.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
         <div class="plan reveal" data-i="2">
           <h3 <?= attrs('pl3_n') ?>><?= t('pl3_n', $lang) ?></h3>
@@ -268,7 +268,7 @@ $prods = [
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-ghost" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-ghost" href="inscription.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
       </div>
       <p class="note-indic reveal" <?= attrs('pr_note') ?>><?= t('pr_note', $lang) ?></p>
