@@ -37,12 +37,21 @@ if (mb_strlen($name) < 2 || strlen($phone) < 8 || mb_strlen($addr) < 2) {
     exit;
 }
 
+$title = $product['title'] ?? $product['name'] ?? 'Produit';
+$stock = (int) ($product['stock'] ?? 0);
+if ($stock <= 0) {
+    http_response_code(409);
+    echo json_encode(['ok' => false, 'error' => 'out_of_stock']);
+    exit;
+}
+if ($qty > $stock) { $qty = $stock; }
+
 $total = (int) $product['price'] * $qty;
 $order = [
     'id'             => new_id(),
     'merchant_id'    => $merchant['id'],
     'product_id'     => $product['id'],
-    'product_name'   => $product['name'],
+    'product_name'   => $title,
     'qty'            => $qty,
     'total'          => $total,
     'customer_name'  => $name,
@@ -53,11 +62,12 @@ $order = [
     'created_at'     => date('c'),
 ];
 store_insert('orders', $order);
+product_decrement_stock($product['id'], $qty);
 
 // Notification dans l'espace vendeur
 notify_merchant(
     $merchant['id'],
-    'Nouvelle commande : ' . $qty . '× ' . $product['name'] . ' — ' . number_format($total, 0, ',', ' ') . ' MRU (paiement à la livraison) de ' . $name . ' (' . $phone . ').'
+    'Nouvelle commande : ' . $qty . '× ' . $title . ' — ' . number_format($total, 0, ',', ' ') . ' MRU (paiement à la livraison) de ' . $name . ' (' . $phone . ').'
 );
 
 // E-mail au vendeur (nécessite un serveur mail configuré ; journalisé en local)
@@ -65,7 +75,7 @@ if (!empty($merchant['email'])) {
     $subject = 'Marsa — Nouvelle commande sur ' . $merchant['shop'];
     $body = "Bonjour {$merchant['owner']},\n\n"
           . "Nouvelle commande sur votre boutique \"{$merchant['shop']}\" :\n"
-          . "- Produit : {$qty}× {$product['name']}\n"
+          . "- Produit : {$qty}× {$title}\n"
           . "- Montant : " . number_format($total, 0, ',', ' ') . " MRU (paiement à la livraison)\n"
           . "- Client : {$name} ({$phone})\n"
           . "- Adresse : {$addr}\n\n"

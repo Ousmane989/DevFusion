@@ -151,16 +151,19 @@
       var lang = root.getAttribute('lang') || 'fr';
       var data = {
         csrf: regForm.csrf ? regForm.csrf.value : '',
+        first_name: regForm.first_name ? regForm.first_name.value : '',
+        last_name: regForm.last_name ? regForm.last_name.value : '',
         shop: regForm.shop.value,
-        owner: regForm.owner.value,
+        shop_type: regForm.shop_type ? regForm.shop_type.value : '',
         email: regForm.email ? regForm.email.value : '',
         phone: regForm.phone.value,
         password: regForm.password ? regForm.password.value : '',
-        category: regForm.category.value,
-        city: regForm.city.value
+        country: regForm.country ? regForm.country.value : 'MR',
+        city: regForm.city ? regForm.city.value : '',
+        plan: regForm.plan ? regForm.plan.value : 'decouverte'
       };
       var digits = (data.phone || '').replace(/\D+/g, '');
-      if (data.shop.trim().length < 2 || data.owner.trim().length < 2 || digits.length < 8 || (data.password || '').length < 6) {
+      if (data.first_name.trim().length < 2 || data.last_name.trim().length < 2 || data.shop.trim().length < 2 || digits.length < 8 || (data.password || '').length < 6) {
         regMsg.className = 'access-msg err';
         regMsg.textContent = regMsg.getAttribute(lang === 'ar' ? 'data-ar-err' : 'data-fr-err');
         return;
