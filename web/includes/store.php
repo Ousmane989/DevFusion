@@ -183,3 +183,89 @@ function notifications_mark_read(string $merchantId): void
     unset($n);
     store_write('notifications', $rows);
 }
+
+function product_update(string $id, string $merchantId, array $fields): void
+{
+    $rows = store_read('products');
+    foreach ($rows as &$p) {
+        if (($p['id'] ?? '') === $id && ($p['merchant_id'] ?? '') === $merchantId) {
+            $p = array_merge($p, $fields);
+        }
+    }
+    unset($p);
+    store_write('products', $rows);
+}
+
+function product_delete(string $id, string $merchantId): void
+{
+    $rows = array_values(array_filter(
+        store_read('products'),
+        fn($p) => !(($p['id'] ?? '') === $id && ($p['merchant_id'] ?? '') === $merchantId)
+    ));
+    store_write('products', $rows);
+}
+
+/** Diminue le stock d'un produit (jamais sous 0). */
+function product_decrement_stock(string $id, int $qty): void
+{
+    $rows = store_read('products');
+    foreach ($rows as &$p) {
+        if (($p['id'] ?? '') === $id) {
+            $p['stock'] = max(0, (int) ($p['stock'] ?? 0) - $qty);
+        }
+    }
+    unset($p);
+    store_write('products', $rows);
+}
+
+/* ---------- Offres / IA ---------- */
+
+function plan_price(array $config, string $plan): int
+{
+    return (int) ($config['plans'][$plan]['price'] ?? 0);
+}
+
+function merchant_can_ai(array $config, array $m): bool
+{
+    $plan = $m['plan'] ?? 'decouverte';
+    return plan_price($config, $plan) >= (int) ($config['ai_min_price'] ?? 600);
+}
+
+/**
+ * Tendances du marché : agrège les commandes de TOUTES les boutiques pour
+ * dégager les catégories et produits les plus demandés. Signal réel (données
+ * marketplace) présenté comme aide « IA ». Peut être branché sur un vrai LLM.
+ */
+function market_trends(int $limit = 5): array
+{
+    $orders = store_read('orders');
+    $products = store_read('products');
+    $prodCat = [];
+    foreach ($products as $p) { $prodCat[$p['id']] = $p['category'] ?? 'Autre'; }
+
+    $byProduct = [];
+    $byCategory = [];
+    foreach ($orders as $o) {
+        $name = $o['product_name'] ?? '—';
+        $qty = (int) ($o['qty'] ?? 1);
+        $byProduct[$name] = ($byProduct[$name] ?? 0) + $qty;
+        $cat = $prodCat[$o['product_id'] ?? ''] ?? 'Autre';
+        $byCategory[$cat] = ($byCategory[$cat] ?? 0) + $qty;
+    }
+    arsort($byProduct);
+    arsort($byCategory);
+    return [
+        'products'   => array_slice($byProduct, 0, $limit, true),
+        'categories' => array_slice($byCategory, 0, $limit, true),
+    ];
+}
+
+/** État de l'essai d'un vendeur : [classe, libellé, jours_restants]. */
+function trial_info(array $m): array
+{
+    $left = (int) ceil((strtotime($m['trial_ends'] ?? 'now') - time()) / 86400);
+    if (($m['status'] ?? '') === 'autorise') { return ['ok', 'Boutique active', $left]; }
+    if (($m['status'] ?? '') === 'suspendu') { return ['bad', 'Boutique suspendue', $left]; }
+    if ($left > 0) { return ['warn', 'Essai — ' . $left . ' j restant' . ($left > 1 ? 's' : ''), $left]; }
+    return ['bad', 'Essai expiré', 0];
+}

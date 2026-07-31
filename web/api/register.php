@@ -1,8 +1,8 @@
 <?php
 /**
- * Marsa — inscription vendeur (création de compte + boutique).
- * Crée un compte sécurisé (mot de passe haché), un slug unique de boutique,
- * démarre l'essai (J+3), connecte le vendeur et renvoie l'URL de redirection.
+ * Marsa — inscription vendeur (création de compte + boutique), façon Shopify.
+ * Recueille identité, pays, type de boutique et offre choisie ; crée un compte
+ * sécurisé, démarre l'essai (J+3), connecte le vendeur et renvoie la redirection.
  */
 header('Content-Type: application/json; charset=utf-8');
 
@@ -24,17 +24,24 @@ if (!csrf_ok($in['csrf'] ?? '')) {
     exit;
 }
 
-$shop  = trim((string) ($in['shop'] ?? ''));
-$owner = trim((string) ($in['owner'] ?? ''));
-$email = trim((string) ($in['email'] ?? ''));
-$phone = preg_replace('/\D+/', '', (string) ($in['phone'] ?? ''));
-$pass  = (string) ($in['password'] ?? '');
-$cat   = trim((string) ($in['category'] ?? ''));
-$city  = trim((string) ($in['city'] ?? ''));
+$first  = trim((string) ($in['first_name'] ?? ''));
+$last   = trim((string) ($in['last_name'] ?? ''));
+$shop   = trim((string) ($in['shop'] ?? ''));
+$type   = trim((string) ($in['shop_type'] ?? ''));
+$email  = trim((string) ($in['email'] ?? ''));
+$phone  = preg_replace('/\D+/', '', (string) ($in['phone'] ?? ''));
+$pass   = (string) ($in['password'] ?? '');
+$country= trim((string) ($in['country'] ?? 'MR'));
+$city   = trim((string) ($in['city'] ?? ''));
+$plan   = trim((string) ($in['plan'] ?? 'decouverte'));
+
+if (!isset($config['countries'][$country])) { $country = 'MR'; }
+if (!isset($config['plans'][$plan]))         { $plan = 'decouverte'; }
 
 $fields = [];
+if (mb_strlen($first) < 2) { $fields[] = 'first_name'; }
+if (mb_strlen($last) < 2)  { $fields[] = 'last_name'; }
 if (mb_strlen($shop) < 2)  { $fields[] = 'shop'; }
-if (mb_strlen($owner) < 2) { $fields[] = 'owner'; }
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) { $fields[] = 'email'; }
 if ($phone === '' || strlen($phone) < 8 || strlen($phone) > 15) { $fields[] = 'phone'; }
 if (strlen($pass) < 6) { $fields[] = 'password'; }
@@ -60,21 +67,28 @@ if ($email !== '' && merchant_by_login($email) !== null) {
 $trialDays = (int) ($config['trial_days'] ?? 3);
 $now = time();
 $merchant = [
-    'id'         => new_id(),
-    'shop'       => $shop,
-    'slug'       => unique_slug($shop),
-    'owner'      => $owner,
-    'email'      => $email,
-    'phone'      => $phone,
-    'password'   => password_hash($pass, PASSWORD_DEFAULT),
-    'category'   => $cat,
-    'city'       => $city,
-    'created_at' => date('c', $now),
-    'trial_ends' => date('c', $now + $trialDays * 86400),
-    'status'     => 'essai',
+    'id'          => new_id(),
+    'shop'        => $shop,
+    'slug'        => unique_slug($shop),
+    'first_name'  => $first,
+    'last_name'   => $last,
+    'owner'       => trim($first . ' ' . $last),
+    'email'       => $email,
+    'phone'       => $phone,
+    'password'    => password_hash($pass, PASSWORD_DEFAULT),
+    'country'     => $country,
+    'city'        => $city,
+    'category'    => $type,
+    'shop_type'   => $type,
+    'plan'        => $plan,
+    'theme'       => 'souk',
+    'shop_desc'   => '',
+    'created_at'  => date('c', $now),
+    'trial_ends'  => date('c', $now + $trialDays * 86400),
+    'status'      => 'essai',
 ];
 store_add($merchant);
-notify_merchant($merchant['id'], 'Bienvenue sur Marsa ! Votre boutique « ' . $shop . ' » est prête. Ajoutez vos premiers produits.');
+notify_merchant($merchant['id'], 'Bienvenue sur Marsa ! Votre boutique « ' . $shop . ' » est prête. Ajoutez vos premiers produits et personnalisez votre thème.');
 login_merchant($merchant);
 
 echo json_encode([

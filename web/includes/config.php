@@ -22,6 +22,23 @@ return [
     // ⚠️ Mot de passe à changer avant toute mise en ligne.
     'admin_password'   => 'marsa-admin',
 
+    // Offres (abonnement mensuel en MRU). L'option IA est incluse à partir de
+    // 600 MRU (donc dans toutes les offres actuelles).
+    'plans' => [
+        'decouverte' => ['name' => 'Découverte', 'price' => 600],
+        'pro'        => ['name' => 'Pro',        'price' => 1000],
+        'business'   => ['name' => 'Business',   'price' => 1500],
+    ],
+    'ai_min_price' => 600,
+
+    // Thèmes de boutique disponibles (personnalisation vendeur).
+    'themes' => [
+        'souk'  => ['name' => 'Souk',  'accent' => '#C8912A', 'hero' => '#0E2A27'],
+        'ocean' => ['name' => 'Océan', 'accent' => '#2E7263', 'hero' => '#0C2A28'],
+        'rubis' => ['name' => 'Rubis', 'accent' => '#B5502F', 'hero' => '#2A120C'],
+        'nuit'  => ['name' => 'Nuit',  'accent' => '#E0A94A', 'hero' => '#111317'],
+    ],
+
     'countries' => [
 
         // --- Phase 1 : Mauritanie -------------------------------------------
