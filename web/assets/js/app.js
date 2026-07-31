@@ -1,12 +1,13 @@
-/* Marsa — interactions front : bascule langue FR/AR (RTL), thème, liste d'attente. */
+/* Marsa — interactions : langue FR/AR (RTL), thème, reveal au scroll,
+   recherche animée, liste d'attente. Sans dépendance externe. */
 (function () {
   'use strict';
   var root = document.documentElement;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- Langue FR / AR (RTL réel) ---------- */
   var nodes = document.querySelectorAll('[data-fr]');
   var langBtns = document.querySelectorAll('.lang button');
-
   function setLang(lang) {
     var rtl = lang === 'ar';
     root.setAttribute('lang', lang);
@@ -20,7 +21,6 @@
     });
     try { localStorage.setItem('marsa_lang', lang); } catch (e) {}
   }
-
   langBtns.forEach(function (b) {
     b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
   });
@@ -38,7 +38,46 @@
     });
   }
 
-  /* ---------- Liste d'attente (POST vers api/subscribe.php) ---------- */
+  /* ---------- Reveal au scroll (staggered) ---------- */
+  var reveals = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          var el = e.target;
+          var i = Number(el.getAttribute('data-i') || 0);
+          el.style.transitionDelay = (i * 80) + 'ms';
+          el.classList.add('in');
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---------- Recherche animée (effet de saisie) ---------- */
+  var fake = document.getElementById('search-typed');
+  if (fake && !reduce) {
+    var words = (fake.getAttribute('data-words') || '').split('|').filter(Boolean);
+    if (words.length) {
+      var wi = 0, ci = 0, deleting = false;
+      var textSpan = fake.querySelector('.txt');
+      function tick() {
+        var w = words[wi % words.length];
+        ci += deleting ? -1 : 1;
+        textSpan.textContent = w.slice(0, ci);
+        var delay = deleting ? 45 : 95;
+        if (!deleting && ci === w.length) { deleting = true; delay = 1300; }
+        else if (deleting && ci === 0) { deleting = false; wi++; delay = 350; }
+        setTimeout(tick, delay);
+      }
+      tick();
+    }
+  }
+
+  /* ---------- Liste d'attente ---------- */
   var form = document.getElementById('wl-form');
   if (form) {
     var msg = document.getElementById('wl-msg');
@@ -71,10 +110,8 @@
     });
   }
 
-  /* ---------- Langue initiale (préférence mémorisée) ---------- */
+  /* ---------- Langue mémorisée ---------- */
   var saved = null;
   try { saved = localStorage.getItem('marsa_lang'); } catch (e) {}
-  if (saved && saved !== (root.getAttribute('lang') || 'fr')) {
-    setLang(saved);
-  }
+  if (saved && saved !== (root.getAttribute('lang') || 'fr')) { setLang(saved); }
 })();
