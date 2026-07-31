@@ -5,6 +5,11 @@
  */
 $config = require __DIR__ . '/includes/config.php';
 require __DIR__ . '/includes/i18n.php';
+require __DIR__ . '/includes/auth.php';
+
+// Déjà connecté ? -> espace vendeur.
+if (current_merchant() !== null) { header('Location: compte.php'); exit; }
+$csrf = csrf_token();
 
 $country = $config['countries'][$config['default_country']];
 $lang = $_GET['lang'] ?? $country['default_lang'];
@@ -62,11 +67,12 @@ $cities = $country['cities'];
       <p class="sub" <?= attrs('in_p') ?>><?= t('in_p', $lang) ?></p>
 
       <form class="access-form" id="register-form" novalidate>
+        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
         <div class="field">
           <label for="f-shop" <?= attrs('in_shop_l') ?>><?= t('in_shop_l', $lang) ?></label>
           <input id="f-shop" name="shop" required autocomplete="organization"
                  placeholder="<?= htmlspecialchars(t('in_shop_ph', $lang)) ?>">
-          <p class="sub-url"><span class="u-prefix">marsa.mr/</span><span class="u-slug" id="shop-slug">votre-boutique</span></p>
+          <p class="sub-url"><span class="u-slug" id="shop-slug">votre-boutique</span><span class="u-prefix">.marsa.mr</span></p>
         </div>
         <div class="field-grid">
           <div class="field">
@@ -78,6 +84,18 @@ $cities = $country['cities'];
             <label for="f-phone" <?= attrs('in_phone_l') ?>><?= t('in_phone_l', $lang) ?></label>
             <input id="f-phone" name="phone" type="tel" inputmode="tel" required autocomplete="tel"
                    placeholder="<?= htmlspecialchars(t('in_phone_ph', $lang)) ?>">
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="f-email" <?= attrs('in_email_l') ?>><?= t('in_email_l', $lang) ?></label>
+            <input id="f-email" name="email" type="email" autocomplete="email"
+                   placeholder="<?= htmlspecialchars(t('in_email_ph', $lang)) ?>">
+          </div>
+          <div class="field">
+            <label for="f-pass" <?= attrs('in_pass_l') ?>><?= t('in_pass_l', $lang) ?></label>
+            <input id="f-pass" name="password" type="password" required autocomplete="new-password" minlength="6"
+                   placeholder="<?= htmlspecialchars(t('in_pass_ph', $lang)) ?>">
           </div>
         </div>
         <div class="field-grid">
@@ -109,7 +127,7 @@ $cities = $country['cities'];
         <div class="ok-badge">✓</div>
         <h2 <?= attrs('in_ok_t') ?>><?= t('in_ok_t', $lang) ?></h2>
         <p class="sub" <?= attrs('in_ok_p') ?>><?= t('in_ok_p', $lang) ?></p>
-        <a class="btn btn-primary btn-lg" href="acces.php" <?= attrs('in_ok_go') ?>><?= t('in_ok_go', $lang) ?></a>
+        <a class="btn btn-primary btn-lg" href="compte.php" <?= attrs('in_ok_go') ?>><?= t('in_ok_go', $lang) ?></a>
       </div>
 
       <div class="access-foot">
