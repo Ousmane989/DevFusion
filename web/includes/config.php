@@ -12,6 +12,12 @@ return [
     // Pays actif au lancement.
     'default_country' => 'MR',
 
+    // Support / autorisation d'accès (pas de paiement en ligne pour l'instant :
+    // l'accès après l'essai gratuit est autorisé manuellement via WhatsApp).
+    // ⚠️ Numéro à remplacer par le vrai numéro WhatsApp de Marsa.
+    'support_whatsapp' => '22200000000',
+    'trial_days'       => 3,
+
     'countries' => [
 
         // --- Phase 1 : Mauritanie -------------------------------------------

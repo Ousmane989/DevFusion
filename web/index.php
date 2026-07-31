@@ -60,6 +60,7 @@ $prods = [
         <a href="#themes" <?= attrs('nav_themes') ?>><?= t('nav_themes', $lang) ?></a>
         <a href="#market" <?= attrs('nav_market') ?>><?= t('nav_market', $lang) ?></a>
         <a href="#pricing" <?= attrs('nav_pricing') ?>><?= t('nav_pricing', $lang) ?></a>
+        <a href="acces.php" <?= attrs('nav_access') ?>><?= t('nav_access', $lang) ?></a>
       </nav>
       <div class="controls">
         <div class="lang" role="group" aria-label="Langue / اللغة">
@@ -234,37 +235,40 @@ $prods = [
       <div class="pricing">
         <div class="plan reveal" data-i="0">
           <h3 <?= attrs('pl1_n') ?>><?= t('pl1_n', $lang) ?></h3>
-          <div class="price" <?= attrs('pl1_price') ?>><?= t('pl1_price', $lang) ?></div>
-          <p style="color:var(--muted);font-size:.86rem;margin-top:-6px" <?= attrs('pl1_sub') ?>><?= t('pl1_sub', $lang) ?></p>
+          <div class="price"><span <?= attrs('pl1_price') ?>><?= t('pl1_price', $lang) ?></span> <small <?= attrs('price_unit') ?>><?= t('price_unit', $lang) ?></small></div>
+          <span class="trial-pill" <?= attrs('trial_badge') ?>><?= t('trial_badge', $lang) ?></span>
+          <p style="color:var(--muted);font-size:.86rem;margin-top:-2px" <?= attrs('pl1_sub') ?>><?= t('pl1_sub', $lang) ?></p>
           <ul>
             <?php foreach (['pl1_f1','pl1_f2','pl1_f3'] as $k): ?>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-ghost" href="#cta" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-ghost" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
         <div class="plan featured reveal" data-i="1">
           <span class="tag" <?= attrs('pl_featured') ?>><?= t('pl_featured', $lang) ?></span>
           <h3 <?= attrs('pl2_n') ?>><?= t('pl2_n', $lang) ?></h3>
-          <div class="price" <?= attrs('pl2_price') ?>><?= t('pl2_price', $lang) ?></div>
-          <p style="color:var(--muted);font-size:.86rem;margin-top:-6px" <?= attrs('pl2_sub') ?>><?= t('pl2_sub', $lang) ?></p>
+          <div class="price"><span <?= attrs('pl2_price') ?>><?= t('pl2_price', $lang) ?></span> <small <?= attrs('price_unit') ?>><?= t('price_unit', $lang) ?></small></div>
+          <span class="trial-pill" <?= attrs('trial_badge') ?>><?= t('trial_badge', $lang) ?></span>
+          <p style="color:var(--muted);font-size:.86rem;margin-top:-2px" <?= attrs('pl2_sub') ?>><?= t('pl2_sub', $lang) ?></p>
           <ul>
             <?php foreach (['pl2_f1','pl2_f2','pl2_f3'] as $k): ?>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-primary" href="#cta" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-primary" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
         <div class="plan reveal" data-i="2">
           <h3 <?= attrs('pl3_n') ?>><?= t('pl3_n', $lang) ?></h3>
-          <div class="price" <?= attrs('pl3_price') ?>><?= t('pl3_price', $lang) ?></div>
-          <p style="color:var(--muted);font-size:.86rem;margin-top:-6px" <?= attrs('pl3_sub') ?>><?= t('pl3_sub', $lang) ?></p>
+          <div class="price"><span <?= attrs('pl3_price') ?>><?= t('pl3_price', $lang) ?></span> <small <?= attrs('price_unit') ?>><?= t('price_unit', $lang) ?></small></div>
+          <span class="trial-pill" <?= attrs('trial_badge') ?>><?= t('trial_badge', $lang) ?></span>
+          <p style="color:var(--muted);font-size:.86rem;margin-top:-2px" <?= attrs('pl3_sub') ?>><?= t('pl3_sub', $lang) ?></p>
           <ul>
             <?php foreach (['pl3_f1','pl3_f2','pl3_f3'] as $k): ?>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span <?= attrs($k) ?>><?= t($k, $lang) ?></span></li>
             <?php endforeach; ?>
           </ul>
-          <a class="btn btn-ghost" href="#cta" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
+          <a class="btn btn-ghost" href="acces.php" <?= attrs('pl_cta') ?>><?= t('pl_cta', $lang) ?></a>
         </div>
       </div>
       <p class="note-indic reveal" <?= attrs('pr_note') ?>><?= t('pr_note', $lang) ?></p>
