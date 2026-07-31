@@ -18,6 +18,10 @@ return [
     'support_whatsapp' => '22200000000',
     'trial_days'       => 3,
 
+    // Accès au back-office d'autorisation (page admin).
+    // ⚠️ Mot de passe à changer avant toute mise en ligne.
+    'admin_password'   => 'marsa-admin',
+
     'countries' => [
 
         // --- Phase 1 : Mauritanie -------------------------------------------
