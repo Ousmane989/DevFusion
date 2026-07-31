@@ -110,6 +110,25 @@
     });
   }
 
+  /* ---------- Page Accès : identification locale ---------- */
+  var accForm = document.getElementById('access-form');
+  if (accForm) {
+    var accMsg = document.getElementById('access-msg');
+    accForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = accForm.querySelector('input[name="phone"]');
+      var lang = root.getAttribute('lang') || 'fr';
+      var digits = (input.value || '').replace(/\D+/g, '');
+      if (digits.length >= 8 && digits.length <= 15) {
+        accMsg.className = 'access-msg ok';
+        accMsg.textContent = accMsg.getAttribute(lang === 'ar' ? 'data-ar-ok' : 'data-fr-ok');
+      } else {
+        accMsg.className = 'access-msg err';
+        accMsg.textContent = accMsg.getAttribute(lang === 'ar' ? 'data-ar-err' : 'data-fr-err');
+      }
+    });
+  }
+
   /* ---------- Langue mémorisée ---------- */
   var saved = null;
   try { saved = localStorage.getItem('marsa_lang'); } catch (e) {}
