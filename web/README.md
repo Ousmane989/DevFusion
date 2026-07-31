@@ -1,58 +1,63 @@
-# Marsa — page de pré-lancement (HTML · CSS · PHP · JS)
+# Marsa — plateforme e-commerce (Mauritanie / Sénégal)
 
-Vitrine bilingue **français / arabe (RTL)** pour la place de marché Marsa
-(Mauritanie → Sénégal). Sert de socle réutilisable : i18n côté serveur,
-configuration multi-pays, endpoint liste d'attente.
+SaaS de création de boutiques en ligne (façon Shopify / Adafrik) :
+inscription + vérification e-mail, essai de 3 jours puis abonnement,
+personnalisation de boutique, gestion produits/commandes, statistiques,
+et boutique publique avec paiement à la livraison.
 
 ## Lancer en local
 
-Prérequis : PHP 8+.
+Prérequis : **PHP 8+** (extension `pdo_sqlite`, incluse par défaut).
 
 ```bash
 cd web
 php -S localhost:8000 -t .
 ```
 
-Puis ouvrir :
+Ouvrir <http://localhost:8000/>. La base **SQLite** (`storage/marsa.sqlite`)
+est créée automatiquement au premier accès.
 
-- <http://localhost:8000/> — français (par défaut)
-- <http://localhost:8000/?lang=ar> — arabe (RTL)
+> ⚠️ Il faut un **serveur PHP** — ouvrir les `.php` en statique (ou via un
+> hébergeur sans PHP comme Vercel) renvoie « unsupported media type ».
+> Pour les e-mails réels et les sous-domaines `slug.marsa.mr`, configurer
+> SMTP + DNS joker chez l'hébergeur.
 
-La bascule **FR ⇄ عربية** et le thème clair/sombre fonctionnent aussi côté
-client (JS), sans rechargement.
+## Architecture
 
-> ⚠️ L'ouverture directe du fichier `index.php` dans un navigateur n'exécute
-> pas le PHP. Il faut passer par un serveur PHP (commande ci-dessus) ou tout
-> hébergement PHP.
+- **Base de données relationnelle** : SQLite via PDO (`includes/db.php`).
+  Tables : `utilisateurs`, `abonnements`, `paiements`, `boutiques`,
+  `categories`, `produits`, `commandes`, `lignes_commande`,
+  `codes_verification`, `visites`. Modèle standard → migration PostgreSQL aisée.
+- **Socle** (`includes/app.php`) : sessions httponly, CSRF, états de compte,
+  gardes d'accès, codes de vérification, e-mail, statistiques (calcul serveur),
+  navigation (retour + fil d'Ariane). Tout contrôle critique est côté serveur.
+- **Paiement** (`includes/payment.php`) : interface `PaymentProvider`
+  (mobile money, carte, virement) — brancher un opérateur sans toucher au reste.
 
-## Structure
+## Parcours & pages
 
-```
-web/
-├── index.php              # page assemblée, rendu i18n côté serveur
-├── includes/
-│   ├── config.php         # config MULTI-PAYS (devise, langues, wallets, zones)
-│   └── i18n.php           # chaînes FR/AR + helpers t() et attrs()
-├── api/
-│   └── subscribe.php      # POST liste d'attente -> storage/subscribers.csv
-├── assets/
-│   ├── css/style.css      # thème sable/port, bidirectionnel, 2 thèmes
-│   └── js/app.js          # bascule langue (RTL), thème, envoi liste d'attente
-└── storage/               # généré au runtime (ignoré par git)
-```
+| Page | Rôle |
+|---|---|
+| `index.php` | Accueil / marketing (bilingue FR/AR) |
+| `inscription.php` → `verification.php` | Création de compte + code e-mail (6 chiffres, 15 min) |
+| `connexion.php` · `mot-de-passe-oublie.php` · `reinitialiser.php` | Connexion, réinitialisation par code |
+| `assistant.php` | Création / personnalisation de la boutique |
+| `compte.php` | Espace client : Accueil (stats+graphique), Produits, Commandes, Ma boutique, Abonnement, export CSV |
+| `paiement.php` → `facture.php` | Abonnement (montant exact du tarif), facture imprimable |
+| `boutique.php` · `produit.php` · `contact.php` | Boutique publique, fiche produit, commande COD, contact |
 
-## Principes portés par ce socle
+## États du compte
 
-- **Multi-pays par configuration** : le pays est une dimension dans
-  `includes/config.php` (MR actif, SN déclaré/phase 2), jamais codé en dur.
-- **Bidirectionnel natif** : `dir="rtl"` piloté par la langue, styles en
-  propriétés logiques (`margin-inline`, `text-align:start`…).
-- **Mobile-first / faible bande passante** : CSS et JS légers, sans dépendance
-  externe, images vectorielles (SVG) inline.
-- **Paiement à la livraison mis en avant** comme pilier de confiance.
+`non_verifie` → `essai` (3 jours) → `verrouille` (essai/abo expiré, boutique
+hors ligne, redirection paiement) → `actif` (après paiement, +30 jours,
+boutique en ligne). Recalcul côté serveur à chaque accès.
 
-## Statut
+## Offres
 
-Page **pré-lancement** : présentation + liste d'attente uniquement. Le tunnel
-d'achat, l'espace vendeur et les paiements relèvent du développement de la
-plateforme (voir `docs/` à la racine du dépôt).
+| Offre | Prix | Produits |
+|---|---|---|
+| Basique | 600 MRU/mois | 20 |
+| Standard | 1000 MRU/mois | 100 |
+| Premium | 1500 MRU/mois | illimité |
+
+Devise selon le pays de la boutique : **MRU** (Mauritanie) / **XOF** (Sénégal).

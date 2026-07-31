@@ -1,296 +1,293 @@
 <?php
-/**
- * Marsa — espace partenaire (tableau de bord complet, façon Shopify/Adafrik).
- * Sections : Accueil, Produits, Boutique (thèmes), Tendances IA, Commandes,
- * Notifications. Gestion de stock, personnalisation, IA réservée aux offres.
- */
-$config = require __DIR__ . '/includes/config.php';
-require __DIR__ . '/includes/auth.php';
+/** Marsa — espace client (tableau de bord). Accès cloisonné par utilisateur. */
+require __DIR__ . '/includes/layout.php';
 
-$m = require_login();
-$id = $m['id'];
+$u = guard_app();                 // connecté, vérifié, non verrouillé
+$b = boutique_of((int) $u['id']);
+if (!$b) { redirect('assistant.php'); }
+$bid = (int) $b['id'];
+$csrf = csrf_token();
+$devise = $b['devise'] ?: currency_of_country($u['pays']);
+$plan = plan_info($u['plan']);
 
-if (($_GET['action'] ?? '') === 'logout') { logout(); header('Location: index.php'); exit; }
+/* -------- Export CSV (avant tout affichage) -------- */
+if (($_GET['export'] ?? '') === 'commandes') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="commandes-marsa.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Date', 'Client', 'Téléphone', 'Adresse', 'Total', 'Devise', 'Statut']);
+    foreach (q('SELECT * FROM commandes WHERE boutique_id=? ORDER BY id DESC', [$bid])->fetchAll() as $o) {
+        fputcsv($out, [$o['cree_le'], $o['client_nom'], $o['client_tel'], $o['adresse'], $o['total'], $o['devise'], $o['statut']]);
+    }
+    fclose($out); exit;
+}
 
-$tab = $_GET['tab'] ?? 'accueil';
-$flash = '';
-
-// Actions POST (CSRF)
+/* -------- Actions POST (CSRF + propriété vérifiée côté serveur) -------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok($_POST['csrf'] ?? '')) {
     $act = $_POST['action'] ?? '';
     if ($act === 'add_product' || $act === 'edit_product') {
         $data = [
-            'title'          => trim((string) ($_POST['title'] ?? '')),
-            'description'    => trim((string) ($_POST['description'] ?? '')),
-            'price'          => (int) preg_replace('/\D+/', '', (string) ($_POST['price'] ?? '')),
-            'compare_at'     => (int) preg_replace('/\D+/', '', (string) ($_POST['compare_at'] ?? '')),
-            'stock'          => (int) preg_replace('/\D+/', '', (string) ($_POST['stock'] ?? '')),
-            'category'       => trim((string) ($_POST['category'] ?? '')),
-            'image'          => trim((string) ($_POST['image'] ?? '')),
+            'nom' => trim((string) ($_POST['nom'] ?? '')),
+            'description' => trim((string) ($_POST['description'] ?? '')),
+            'prix' => (int) preg_replace('/\D+/', '', (string) ($_POST['prix'] ?? '')),
+            'prix_compare' => (int) preg_replace('/\D+/', '', (string) ($_POST['prix_compare'] ?? '')),
+            'stock' => (int) preg_replace('/\D+/', '', (string) ($_POST['stock'] ?? '')),
+            'categorie' => trim((string) ($_POST['categorie'] ?? '')),
+            'photos' => trim((string) ($_POST['photos'] ?? '')),
+            'visible' => isset($_POST['visible']) ? 1 : 0,
         ];
-        if (mb_strlen($data['title']) >= 2 && $data['price'] > 0) {
-            if ($act === 'add_product') {
-                store_insert('products', array_merge($data, [
-                    'id' => new_id(), 'merchant_id' => $id, 'created_at' => date('c'),
-                ]));
-                $flash = 'Produit ajouté.';
+        $f = '';
+        if (mb_strlen($data['nom']) < 2 || $data['prix'] <= 0) { $f = 'Nom ou prix invalide.'; }
+        elseif ($act === 'add_product') {
+            $count = (int) q1('SELECT COUNT(*) c FROM produits WHERE boutique_id=?', [$bid])['c'];
+            if ($plan['max_produits'] >= 0 && $count >= $plan['max_produits']) {
+                $f = 'Limite de votre offre atteinte (' . $plan['max_produits'] . ' produits). Passez à une offre supérieure.';
             } else {
-                product_update((string) ($_POST['pid'] ?? ''), $id, $data);
-                $flash = 'Produit mis à jour.';
+                q('INSERT INTO produits (boutique_id, nom, description, prix, prix_compare, stock, categorie, photos, visible, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?)',
+                  [$bid, $data['nom'], $data['description'], $data['prix'], $data['prix_compare'], $data['stock'], $data['categorie'], $data['photos'], $data['visible'], date('c')]);
+                $f = 'Produit ajouté.';
             }
-        } else { $flash = 'Titre ou prix invalide.'; }
-        header('Location: compte.php?tab=produits&f=' . rawurlencode($flash)); exit;
+        } else {
+            $pid = (int) ($_POST['pid'] ?? 0);
+            // Propriété : le produit doit appartenir à CETTE boutique.
+            if (q1('SELECT id FROM produits WHERE id=? AND boutique_id=?', [$pid, $bid])) {
+                q('UPDATE produits SET nom=?, description=?, prix=?, prix_compare=?, stock=?, categorie=?, photos=?, visible=? WHERE id=? AND boutique_id=?',
+                  [$data['nom'], $data['description'], $data['prix'], $data['prix_compare'], $data['stock'], $data['categorie'], $data['photos'], $data['visible'], $pid, $bid]);
+                $f = 'Produit mis à jour.';
+            }
+        }
+        redirect('compte.php?tab=produits&f=' . rawurlencode($f));
     }
     if ($act === 'delete_product') {
-        product_delete((string) ($_POST['pid'] ?? ''), $id);
-        header('Location: compte.php?tab=produits&f=' . rawurlencode('Produit supprimé.')); exit;
+        q('DELETE FROM produits WHERE id=? AND boutique_id=?', [(int) ($_POST['pid'] ?? 0), $bid]);
+        redirect('compte.php?tab=produits&f=' . rawurlencode('Produit supprimé.'));
     }
-    if ($act === 'save_shop') {
-        $theme = (string) ($_POST['theme'] ?? 'souk');
-        if (!isset($config['themes'][$theme])) { $theme = 'souk'; }
-        merchant_update($id, fn($r) => array_merge($r, [
-            'theme' => $theme,
-            'shop_desc' => trim((string) ($_POST['shop_desc'] ?? '')),
-        ]));
-        header('Location: compte.php?tab=boutique&f=' . rawurlencode('Boutique mise à jour.')); exit;
+    if ($act === 'order_status') {
+        $st = (string) ($_POST['statut'] ?? '');
+        if (in_array($st, ['en_attente', 'confirmee', 'expediee', 'livree', 'annulee'], true)) {
+            q('UPDATE commandes SET statut=? WHERE id=? AND boutique_id=?', [$st, (int) ($_POST['oid'] ?? 0), $bid]);
+        }
+        redirect('compte.php?tab=commandes&f=' . rawurlencode('Statut mis à jour.'));
     }
-    if ($act === 'read_notifs') { notifications_mark_read($id); header('Location: compte.php?tab=notifications'); exit; }
+    if ($act === 'save_boutique') {
+        $theme = isset(cfg()['themes'][$_POST['theme'] ?? '']) ? $_POST['theme'] : $b['theme'];
+        q('UPDATE boutiques SET nom=?, description=?, categorie=?, theme=?, couleur=?, contact_tel=?, contact_email=?, reseaux=?, zones=?, logo=?, banniere=? WHERE user_id=?',
+          [trim((string) $_POST['nom']), trim((string) $_POST['description']), trim((string) $_POST['categorie']), $theme, cfg()['themes'][$theme]['accent'],
+           trim((string) $_POST['contact_tel']), trim((string) $_POST['contact_email']), trim((string) $_POST['reseaux']), trim((string) $_POST['zones']),
+           trim((string) $_POST['logo']), trim((string) $_POST['banniere']), $u['id']]);
+        redirect('compte.php?tab=boutique&f=' . rawurlencode('Boutique mise à jour.'));
+    }
 }
+
+$tab = $_GET['tab'] ?? 'accueil';
 $flash = (string) ($_GET['f'] ?? '');
-$csrf = csrf_token();
-$m = merchant_by_id($id); // rafraîchir après éventuelle maj
+$s = stats_boutique($bid);
+$unread = 0;
+$produits = q('SELECT * FROM produits WHERE boutique_id=? ORDER BY id DESC', [$bid])->fetchAll();
+$commandes = q('SELECT * FROM commandes WHERE boutique_id=? ORDER BY id DESC', [$bid])->fetchAll();
 
-// Données
-$orders   = orders_of($id);
-$products  = products_of($id);
-$notifs    = notifications_of($id);
-$unread    = count(array_filter($notifs, fn($n) => empty($n['read'])));
-$ca        = array_sum(array_map(fn($o) => (int) ($o['total'] ?? 0), $orders));
-$ventes    = count($orders);
-$lowStock  = count(array_filter($products, fn($p) => (int) ($p['stock'] ?? 0) <= 3));
-[$sc, $sl] = trial_info($m);
-$canAI     = merchant_can_ai($config, $m);
-$planName  = $config['plans'][$m['plan'] ?? 'decouverte']['name'] ?? 'Découverte';
-
-function money(int $n): string { return number_format($n, 0, ',', ' ') . ' MRU'; }
-
-$nav = [
-    'accueil'       => ['Accueil', '🏠'],
-    'produits'      => ['Produits', '📦'],
-    'boutique'      => ['Ma boutique', '🎨'],
-    'tendances'     => ['Tendances IA', '✨'],
-    'commandes'     => ['Commandes', '🧾'],
-    'notifications' => ['Notifications', '🔔'],
-];
+$nav = ['accueil' => ['Accueil', '🏠'], 'produits' => ['Produits', '📦'], 'commandes' => ['Commandes', '🧾'], 'boutique' => ['Ma boutique', '🎨'], 'abonnement' => ['Abonnement', '💳']];
 $editing = null;
-if ($tab === 'produits' && !empty($_GET['edit'])) { $editing = product_by_id((string) $_GET['edit']); if ($editing && $editing['merchant_id'] !== $id) { $editing = null; } }
+if ($tab === 'produits' && !empty($_GET['edit'])) {
+    $editing = q1('SELECT * FROM produits WHERE id=? AND boutique_id=?', [(int) $_GET['edit'], $bid]);
+}
+$statutFr = ['en_attente' => 'En attente', 'confirmee' => 'Confirmée', 'expediee' => 'Expédiée', 'livree' => 'Livrée', 'annulee' => 'Annulée'];
+
+// Points du graphique CA (30 j)
+$vals = array_values($s['serie']);
+$max = max(1, max($vals));
+$pts = [];
+$n = count($vals);
+foreach ($vals as $i => $v) {
+    $x = $n > 1 ? ($i / ($n - 1)) * 100 : 0;
+    $y = 100 - ($v / $max) * 92 - 4;
+    $pts[] = round($x, 2) . ',' . round($y, 2);
+}
+$poly = implode(' ', $pts);
+
+head('Marsa — Tableau de bord · ' . $b['nom']);
+topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_blank" rel="noopener" style="padding:9px 16px">Voir ma boutique ↗</a> <a class="mini-back" href="deconnexion.php">Se déconnecter</a>', 'Espace client');
 ?>
-<!DOCTYPE html>
-<html lang="fr" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Marsa — Espace partenaire · <?= htmlspecialchars($m['shop'] ?? '') ?></title>
-  <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-  <header class="top">
-    <div class="shell mini-top">
-      <a class="brand" href="compte.php" aria-label="Marsa">
-        <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <circle cx="20" cy="17" r="12.5" stroke="var(--accent)" stroke-width="2.4"/>
-          <circle cx="20" cy="17" r="4.2" fill="var(--accent)"/>
-          <path d="M4 31c4 2.6 7 2.6 10.6 0M14.6 31c3.6 2.6 7 2.6 10.8 0M25.4 31c3.6 2.6 6.6 2.6 10.6 0" stroke="var(--emerald)" stroke-width="2.4" stroke-linecap="round"/>
-        </svg>
-        <span class="brand-text"><span class="brand-ar">مرسى</span><span class="brand-la">Partenaire</span></span>
-      </a>
-      <div style="display:flex;gap:10px;align-items:center">
-        <a class="btn btn-ghost" href="<?= htmlspecialchars(shop_url($m)) ?>" target="_blank" rel="noopener" style="padding:9px 16px">Voir ma boutique ↗</a>
-        <a class="mini-back" href="compte.php?action=logout">Se déconnecter</a>
-      </div>
+<div class="dash-shell">
+  <aside class="dash-side">
+    <?php foreach ($nav as $key => $it): ?>
+      <a class="side-link<?= $tab === $key ? ' active' : '' ?>" href="compte.php?tab=<?= $key ?>"><span class="ic"><?= $it[1] ?></span><span><?= $it[0] ?></span></a>
+    <?php endforeach; ?>
+    <div class="side-plan">
+      <span class="st st-ok">Offre <?= e($plan['name']) ?></span>
+      <small><?= $u['statut'] === 'actif' ? 'Actif jusqu\'au ' . e(date('d/m/Y', strtotime($u['abo_fin']))) : 'Essai — fin ' . e(date('d/m', strtotime($u['essai_fin']))) ?></small>
     </div>
-  </header>
+  </aside>
 
-  <div class="dash-shell">
-    <!-- Sidebar -->
-    <aside class="dash-side">
-      <?php foreach ($nav as $key => $n): ?>
-        <a class="side-link<?= $tab === $key ? ' active' : '' ?>" href="compte.php?tab=<?= $key ?>">
-          <span class="ic"><?= $n[1] ?></span><span><?= $n[0] ?></span>
-          <?php if ($key === 'notifications' && $unread): ?><span class="badge-n"><?= $unread ?></span><?php endif; ?>
-        </a>
-      <?php endforeach; ?>
-      <div class="side-plan">
-        <span class="st st-<?= $sc ?>"><?= htmlspecialchars($sl) ?></span>
-        <small>Offre <?= htmlspecialchars($planName) ?></small>
+  <main class="dash-main">
+    <?php
+    $crumbMap = ['accueil' => 'Accueil', 'produits' => 'Produits', 'commandes' => 'Commandes', 'boutique' => 'Ma boutique', 'abonnement' => 'Abonnement'];
+    $crumb = [['Tableau de bord', 'compte.php']];
+    if ($tab !== 'accueil') { $crumb[] = [$crumbMap[$tab] ?? $tab, $editing ? 'compte.php?tab=produits' : null]; }
+    if ($editing) { $crumb[] = ['Modifier un produit', null]; }
+    echo breadcrumb($crumb);
+    echo flash_banner($flash, 'ok');
+    ?>
+
+    <?php if ($tab === 'accueil'): ?>
+      <h1 class="dash-title">Bonjour <?= e(explode(' ', $u['nom'])[0]) ?> 👋</h1>
+      <p class="dash-addr"><a href="<?= e(shop_url($b)) ?>" target="_blank" rel="noopener"><?= e(shop_domain($b)) ?> ↗</a></p>
+      <section class="kpis" style="margin-top:18px">
+        <div class="kpi"><span class="kpi-l">Chiffre d'affaires</span><b class="kpi-v"><?= e(money($s['ca'], $devise)) ?></b></div>
+        <div class="kpi"><span class="kpi-l">Commandes</span><b class="kpi-v"><?= $s['commandes'] ?></b></div>
+        <div class="kpi"><span class="kpi-l">Panier moyen</span><b class="kpi-v"><?= e(money($s['panier'], $devise)) ?></b></div>
+        <div class="kpi"><span class="kpi-l">Produits en ligne</span><b class="kpi-v"><?= $s['produits'] ?></b></div>
+      </section>
+      <section class="kpis" style="margin-top:14px">
+        <div class="kpi"><span class="kpi-l">CA aujourd'hui</span><b class="kpi-v"><?= e(money($s['ca_jour'], $devise)) ?></b></div>
+        <div class="kpi"><span class="kpi-l">CA 7 jours</span><b class="kpi-v"><?= e(money($s['ca_semaine'], $devise)) ?></b>
+          <?php $d = $s['ca_semaine'] - $s['ca_semaine_prec']; ?><small style="color:<?= $d >= 0 ? 'var(--emerald)' : 'var(--clay)' ?>"><?= $d >= 0 ? '▲' : '▼' ?> vs 7 j préc.</small></div>
+        <div class="kpi"><span class="kpi-l">CA 30 jours</span><b class="kpi-v"><?= e(money($s['ca_mois'], $devise)) ?></b></div>
+        <div class="kpi"><span class="kpi-l">Visiteurs</span><b class="kpi-v"><?= $s['visiteurs'] ?></b></div>
+      </section>
+      <div class="dash-grid" style="margin-top:20px">
+        <section class="panel">
+          <div class="panel-head"><h2>Évolution du CA (30 jours)</h2></div>
+          <svg class="chart" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="<?= e($poly) ?>" fill="none" stroke="var(--accent)" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Produits les plus vendus</h2></div>
+          <?php if (!$s['top']): ?><div class="empty-state" style="padding:22px">Pas encore de vente.</div>
+          <?php else: $tmax = max(array_map(fn($t) => (int) $t['q'], $s['top'])); ?>
+            <ul class="trend-list"><?php foreach ($s['top'] as $t): ?><li><span><?= e($t['nom']) ?></span><span class="trend-bar" style="--w:<?= max(6, round($t['q'] / max(1, $tmax) * 100)) ?>%"></span><b><?= (int) $t['q'] ?></b></li><?php endforeach; ?></ul>
+          <?php endif; ?>
+        </section>
       </div>
-    </aside>
+      <section class="panel" style="margin-top:20px">
+        <div class="panel-head"><h2>Dernières commandes</h2><a class="mini-back" href="compte.php?tab=commandes">Tout voir</a></div>
+        <?php if (!$commandes): ?><div class="empty-state">Aucune commande. Partagez l'adresse de votre boutique.</div>
+        <?php else: ?><ul class="mini-list"><?php foreach (array_slice($commandes, 0, 5) as $o): ?><li><span><b><?= e($o['client_nom']) ?></b> · <?= e($statutFr[$o['statut']] ?? $o['statut']) ?></span><b><?= e(money((int) $o['total'], $devise)) ?></b></li><?php endforeach; ?></ul><?php endif; ?>
+      </section>
 
-    <!-- Contenu -->
-    <main class="dash-main">
-      <?php if ($flash): ?><div class="flash"><?= htmlspecialchars($flash) ?></div><?php endif; ?>
-
-      <?php if ($sc === 'bad' && ($m['status'] ?? '') !== 'autorise'): ?>
-        <div class="trial-over">
-          <b>Votre essai est terminé.</b> Pour continuer avec votre boutique, contactez notre assistante afin d'activer votre offre <?= htmlspecialchars($planName) ?>.
-          <a class="btn btn-primary" href="acces.php">Contacter l'assistante (WhatsApp)</a>
-        </div>
-      <?php endif; ?>
-
-      <?php if ($tab === 'accueil'): ?>
-        <h1 class="dash-title">Bonjour <?= htmlspecialchars($m['first_name'] ?? $m['owner'] ?? '') ?> 👋</h1>
-        <p class="dash-addr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
-          <a href="<?= htmlspecialchars(shop_url($m)) ?>" target="_blank" rel="noopener"><?= htmlspecialchars(shop_domain($m)) ?></a></p>
-        <section class="kpis" style="margin-top:20px">
-          <div class="kpi"><span class="kpi-l">Chiffre d'affaires</span><b class="kpi-v"><?= money($ca) ?></b></div>
-          <div class="kpi"><span class="kpi-l">Ventes</span><b class="kpi-v"><?= $ventes ?></b></div>
-          <div class="kpi"><span class="kpi-l">Produits</span><b class="kpi-v"><?= count($products) ?></b></div>
-          <div class="kpi"><span class="kpi-l">Stock faible</span><b class="kpi-v"><?= $lowStock ?></b></div>
-        </section>
-        <div class="dash-grid" style="margin-top:20px">
-          <section class="panel">
-            <div class="panel-head"><h2>Dernières commandes</h2><a class="mini-back" href="compte.php?tab=commandes">Tout voir</a></div>
-            <?php if (!$orders): ?><div class="empty-state">Aucune commande. Partagez l'adresse de votre boutique.</div>
-            <?php else: ?><ul class="mini-list"><?php foreach (array_slice($orders, 0, 5) as $o): ?>
-              <li><span><b><?= htmlspecialchars($o['product_name'] ?? '') ?></b> · <?= htmlspecialchars($o['customer_name'] ?? '') ?></span><b><?= money((int) ($o['total'] ?? 0)) ?></b></li>
-            <?php endforeach; ?></ul><?php endif; ?>
-          </section>
-          <section class="panel">
-            <div class="panel-head"><h2>Notifications</h2><?php if ($unread): ?><span class="badge-n"><?= $unread ?></span><?php endif; ?></div>
-            <?php if (!$notifs): ?><div class="empty-state" style="padding:22px">Rien pour l'instant.</div>
-            <?php else: ?><ul class="notif-list"><?php foreach (array_slice($notifs, 0, 5) as $n): ?>
-              <li class="<?= empty($n['read']) ? 'unread' : '' ?>"><span class="dot"></span><div><p><?= htmlspecialchars($n['text'] ?? '') ?></p><small><?= htmlspecialchars(date('d/m H:i', strtotime($n['created_at'] ?? 'now'))) ?></small></div></li>
-            <?php endforeach; ?></ul><?php endif; ?>
-          </section>
-        </div>
-
-      <?php elseif ($tab === 'produits'): ?>
-        <h1 class="dash-title"><?= $editing ? 'Modifier le produit' : 'Produits' ?></h1>
-        <section class="panel">
-          <div class="panel-head"><h2><?= $editing ? 'Modifier' : 'Nouveau produit' ?></h2><?php if ($editing): ?><a class="mini-back" href="compte.php?tab=produits">+ Nouveau</a><?php endif; ?></div>
-          <form method="post" action="compte.php" class="prod-editor">
-            <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-            <input type="hidden" name="action" value="<?= $editing ? 'edit_product' : 'add_product' ?>">
-            <?php if ($editing): ?><input type="hidden" name="pid" value="<?= htmlspecialchars($editing['id']) ?>"><?php endif; ?>
-            <div class="field"><label>Titre du produit</label><input name="title" required value="<?= htmlspecialchars($editing['title'] ?? $editing['name'] ?? '') ?>" placeholder="Ex. Robe brodée"></div>
-            <div class="field"><label>Description</label><textarea name="description" rows="3" placeholder="Décrivez votre produit…"><?= htmlspecialchars($editing['description'] ?? '') ?></textarea></div>
-            <div class="field-grid">
-              <div class="field"><label>Prix (MRU)</label><input name="price" inputmode="numeric" required value="<?= htmlspecialchars((string) ($editing['price'] ?? '')) ?>" placeholder="5500"></div>
-              <div class="field"><label>Prix avant réduction (MRU)</label><input name="compare_at" inputmode="numeric" value="<?= htmlspecialchars((string) ($editing['compare_at'] ?? '')) ?>" placeholder="Optionnel"></div>
-            </div>
-            <div class="field-grid">
-              <div class="field"><label>Stock</label><input name="stock" inputmode="numeric" value="<?= htmlspecialchars((string) ($editing['stock'] ?? '')) ?>" placeholder="10"></div>
-              <div class="field"><label>Catégorie</label><input name="category" value="<?= htmlspecialchars($editing['category'] ?? ($m['shop_type'] ?? '')) ?>" placeholder="Mode"></div>
-            </div>
-            <div class="field"><label>Image (emoji ou lien URL)</label><input name="image" value="<?= htmlspecialchars($editing['image'] ?? '') ?>" placeholder="👗 ou https://…"></div>
-            <button class="btn btn-primary" type="submit"><?= $editing ? 'Enregistrer' : 'Ajouter le produit' ?></button>
-          </form>
-        </section>
-        <section class="panel" style="margin-top:20px">
-          <div class="panel-head"><h2>Mes produits (<?= count($products) ?>)</h2></div>
-          <?php if (!$products): ?><div class="empty-state">Aucun produit. Ajoutez votre premier article ci-dessus.</div>
-          <?php else: ?>
-          <div class="table-scroll"><table class="admin-table"><thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th></th></tr></thead><tbody>
-            <?php foreach ($products as $p): $t = $p['title'] ?? $p['name'] ?? ''; ?>
-            <tr>
-              <td><b><?= htmlspecialchars($t) ?></b><?php if (!empty($p['category'])): ?><small><?= htmlspecialchars($p['category']) ?></small><?php endif; ?></td>
-              <td><?= money((int) ($p['price'] ?? 0)) ?><?php if (!empty($p['compare_at']) && $p['compare_at'] > $p['price']): ?><small style="text-decoration:line-through"><?= money((int) $p['compare_at']) ?></small><?php endif; ?></td>
-              <td><?php $s = (int) ($p['stock'] ?? 0); ?><span class="st <?= $s <= 3 ? 'st-bad' : 'st-ok' ?>"><?= $s ?></span></td>
-              <td><div class="row-actions">
-                <a class="btn-mini" href="compte.php?tab=produits&edit=<?= htmlspecialchars($p['id']) ?>">Modifier</a>
-                <form method="post" action="compte.php" onsubmit="return confirm('Supprimer ce produit ?')" style="margin:0"><input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>"><input type="hidden" name="action" value="delete_product"><input type="hidden" name="pid" value="<?= htmlspecialchars($p['id']) ?>"><button class="btn-mini bad" type="submit">Suppr.</button></form>
-              </div></td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody></table></div>
-          <?php endif; ?>
-        </section>
-
-      <?php elseif ($tab === 'boutique'): ?>
-        <h1 class="dash-title">Ma boutique</h1>
-        <p class="dash-addr"><a href="<?= htmlspecialchars(shop_url($m)) ?>" target="_blank" rel="noopener"><?= htmlspecialchars(shop_domain($m)) ?> ↗</a></p>
-        <section class="panel" style="margin-top:16px">
-          <form method="post" action="compte.php">
-            <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-            <input type="hidden" name="action" value="save_shop">
-            <div class="panel-head"><h2>Thème de la boutique</h2></div>
-            <div class="theme-choice">
-              <?php foreach ($config['themes'] as $key => $th): ?>
-                <label class="theme-opt">
-                  <input type="radio" name="theme" value="<?= htmlspecialchars($key) ?>"<?= ($m['theme'] ?? 'souk') === $key ? ' checked' : '' ?>>
-                  <span class="theme-swatch" style="background:linear-gradient(135deg,<?= $th['accent'] ?>,<?= $th['hero'] ?>)"></span>
-                  <b><?= htmlspecialchars($th['name']) ?></b>
-                </label>
-              <?php endforeach; ?>
-            </div>
-            <div class="field" style="margin-top:16px"><label>Description de la boutique</label><textarea name="shop_desc" rows="3" placeholder="Présentez votre boutique en quelques mots…"><?= htmlspecialchars($m['shop_desc'] ?? '') ?></textarea></div>
-            <button class="btn btn-primary" type="submit">Enregistrer</button>
-          </form>
-        </section>
-
-      <?php elseif ($tab === 'tendances'): ?>
-        <h1 class="dash-title">Tendances du marché <span class="ai-pill">IA</span></h1>
-        <?php if (!$canAI): ?>
-          <div class="locked">
-            <div class="lock-ic">🔒</div>
-            <h2>Fonctionnalité des offres payantes</h2>
-            <p>L'assistant IA « Tendances » est inclus à partir de l'offre <b>Découverte (600 MRU/mois)</b>. Activez votre offre pour découvrir les produits qui marchent sur votre marché.</p>
-            <a class="btn btn-primary" href="acces.php">Activer mon offre</a>
+    <?php elseif ($tab === 'produits'): ?>
+      <h1 class="dash-title"><?= $editing ? 'Modifier le produit' : 'Produits' ?></h1>
+      <section class="panel">
+        <div class="panel-head"><h2><?= $editing ? 'Modifier' : 'Nouveau produit' ?></h2><?php if ($editing): ?><a class="mini-back" href="compte.php?tab=produits">+ Nouveau</a><?php endif; ?></div>
+        <form method="post" action="compte.php" class="prod-editor">
+          <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+          <input type="hidden" name="action" value="<?= $editing ? 'edit_product' : 'add_product' ?>">
+          <?php if ($editing): ?><input type="hidden" name="pid" value="<?= (int) $editing['id'] ?>"><?php endif; ?>
+          <div class="field"><label>Nom du produit</label><input name="nom" required value="<?= e($editing['nom'] ?? '') ?>" placeholder="Ex. Robe brodée"></div>
+          <div class="field"><label>Description</label><textarea name="description" rows="3" placeholder="Décrivez votre produit…"><?= e($editing['description'] ?? '') ?></textarea></div>
+          <div class="field-grid">
+            <div class="field"><label>Prix (<?= e($devise) ?>)</label><input name="prix" inputmode="numeric" required value="<?= e((string) ($editing['prix'] ?? '')) ?>" placeholder="5500"></div>
+            <div class="field"><label>Prix avant réduction</label><input name="prix_compare" inputmode="numeric" value="<?= e((string) ($editing['prix_compare'] ?? '')) ?>" placeholder="Optionnel"></div>
           </div>
-        <?php else: $tr = market_trends(6); ?>
-          <p class="sub" style="max-width:60ch">Analyse des ventes de l'ensemble du marché Marsa pour repérer ce qui se vend. Mis à jour en continu.</p>
-          <div class="dash-grid" style="margin-top:18px">
-            <section class="panel">
-              <div class="panel-head"><h2>🔥 Catégories en tendance</h2></div>
-              <?php if (!$tr['categories']): ?><div class="empty-state" style="padding:22px">Pas encore assez de données de marché.</div>
-              <?php else: ?><ul class="trend-list"><?php foreach ($tr['categories'] as $cat => $q): ?><li><span><?= htmlspecialchars($cat) ?></span><span class="trend-bar" style="--w:<?= min(100, $q * 20) ?>%"></span><b><?= (int) $q ?></b></li><?php endforeach; ?></ul><?php endif; ?>
-            </section>
-            <section class="panel">
-              <div class="panel-head"><h2>⭐ Produits les plus demandés</h2></div>
-              <?php if (!$tr['products']): ?><div class="empty-state" style="padding:22px">Pas encore de ventes sur le marché.</div>
-              <?php else: ?><ul class="mini-list"><?php foreach ($tr['products'] as $name => $q): ?><li><span><?= htmlspecialchars($name) ?></span><b><?= (int) $q ?> vendus</b></li><?php endforeach; ?></ul><?php endif; ?>
-            </section>
+          <div class="field-grid">
+            <div class="field"><label>Stock</label><input name="stock" inputmode="numeric" value="<?= e((string) ($editing['stock'] ?? '')) ?>" placeholder="10"></div>
+            <div class="field"><label>Catégorie</label><input name="categorie" value="<?= e($editing['categorie'] ?? $b['categorie']) ?>"></div>
           </div>
-          <section class="panel" style="margin-top:20px">
-            <div class="panel-head"><h2>💡 Suggestions pour « <?= htmlspecialchars($m['shop_type'] ?? 'votre marché') ?> »</h2></div>
-            <p class="sub">Idées d'articles à mettre en avant selon votre catégorie et la demande actuelle : soignez vos <b>photos</b>, proposez un <b>prix avant réduction</b> visible, et gardez du <b>stock</b> sur vos best-sellers.</p>
-          </section>
+          <div class="field"><label>Photos (liens séparés par des virgules, ou emoji)</label><input name="photos" value="<?= e($editing['photos'] ?? '') ?>" placeholder="👗 ou https://…, https://…"></div>
+          <label class="check"><input type="checkbox" name="visible" <?= ($editing['visible'] ?? 1) ? 'checked' : '' ?>> Visible sur la boutique</label>
+          <button class="btn btn-primary" type="submit"><?= $editing ? 'Enregistrer' : 'Ajouter le produit' ?></button>
+        </form>
+      </section>
+      <section class="panel" style="margin-top:20px">
+        <div class="panel-head"><h2>Mes produits (<?= count($produits) ?><?= $plan['max_produits'] >= 0 ? ' / ' . $plan['max_produits'] : '' ?>)</h2></div>
+        <?php if (!$produits): ?><div class="empty-state">Aucun produit. Ajoutez votre premier article ci-dessus.</div>
+        <?php else: ?>
+        <div class="table-scroll"><table class="admin-table"><thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>État</th><th></th></tr></thead><tbody>
+          <?php foreach ($produits as $p): ?>
+          <tr>
+            <td><b><?= e($p['nom']) ?></b><?php if ($p['categorie']): ?><small><?= e($p['categorie']) ?></small><?php endif; ?></td>
+            <td><?= e(money((int) $p['prix'], $devise)) ?><?php if ($p['prix_compare'] > $p['prix']): ?><small style="text-decoration:line-through"><?= e(money((int) $p['prix_compare'], $devise)) ?></small><?php endif; ?></td>
+            <td><span class="st <?= $p['stock'] <= 3 ? 'st-bad' : 'st-ok' ?>"><?= (int) $p['stock'] ?></span></td>
+            <td><span class="st <?= $p['visible'] ? 'st-ok' : 'st-warn' ?>"><?= $p['visible'] ? 'Visible' : 'Masqué' ?></span></td>
+            <td><div class="row-actions">
+              <a class="btn-mini" href="compte.php?tab=produits&edit=<?= (int) $p['id'] ?>">Modifier</a>
+              <form method="post" action="compte.php" onsubmit="return confirm('Supprimer « <?= e($p['nom']) ?> » ?')" style="margin:0"><input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="delete_product"><input type="hidden" name="pid" value="<?= (int) $p['id'] ?>"><button class="btn-mini bad" type="submit">Suppr.</button></form>
+            </div></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
         <?php endif; ?>
+      </section>
 
-      <?php elseif ($tab === 'commandes'): ?>
-        <h1 class="dash-title">Commandes (<?= $ventes ?>)</h1>
-        <section class="panel">
-          <?php if (!$orders): ?><div class="empty-state">Aucune commande pour l'instant.</div>
-          <?php else: ?>
-          <div class="table-scroll"><table class="admin-table"><thead><tr><th>Produit</th><th>Client</th><th>Adresse</th><th>Montant</th><th>Paiement</th><th>Date</th></tr></thead><tbody>
-            <?php foreach ($orders as $o): ?>
-            <tr>
-              <td><b><?= htmlspecialchars($o['product_name'] ?? '') ?></b><small>x<?= (int) ($o['qty'] ?? 1) ?></small></td>
-              <td><?= htmlspecialchars($o['customer_name'] ?? '') ?><small><?= htmlspecialchars($o['customer_phone'] ?? '') ?></small></td>
-              <td><small><?= htmlspecialchars($o['address'] ?? '') ?></small></td>
-              <td><b><?= money((int) ($o['total'] ?? 0)) ?></b></td>
-              <td><span class="st st-warn">Livraison</span></td>
-              <td><small><?= htmlspecialchars(date('d/m H:i', strtotime($o['created_at'] ?? 'now'))) ?></small></td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody></table></div>
-          <?php endif; ?>
-        </section>
+    <?php elseif ($tab === 'commandes'): ?>
+      <h1 class="dash-title">Commandes (<?= count($commandes) ?>)</h1>
+      <div class="panel-head" style="margin-bottom:12px"><span></span><a class="btn-mini" href="compte.php?export=commandes">Exporter CSV</a></div>
+      <section class="panel">
+        <?php if (!$commandes): ?><div class="empty-state">Aucune commande pour l'instant.</div>
+        <?php else: ?>
+        <div class="table-scroll"><table class="admin-table"><thead><tr><th>Client</th><th>Adresse</th><th>Total</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+          <?php foreach ($commandes as $o): $lignes = q('SELECT * FROM lignes_commande WHERE commande_id=?', [$o['id']])->fetchAll(); ?>
+          <tr>
+            <td><b><?= e($o['client_nom']) ?></b><small><?= e($o['client_tel']) ?></small><small><?php foreach ($lignes as $l) { echo e($l['qte'] . '× ' . $l['nom']) . '<br>'; } ?></small></td>
+            <td><small><?= e($o['adresse']) ?></small></td>
+            <td><b><?= e(money((int) $o['total'], $devise)) ?></b><small>Livraison</small></td>
+            <td>
+              <form method="post" action="compte.php" style="margin:0">
+                <input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="order_status"><input type="hidden" name="oid" value="<?= (int) $o['id'] ?>">
+                <select name="statut" onchange="this.form.submit()" class="statut-select st-sel-<?= e($o['statut']) ?>">
+                  <?php foreach ($statutFr as $k => $lab): ?><option value="<?= $k ?>"<?= $o['statut'] === $k ? ' selected' : '' ?>><?= $lab ?></option><?php endforeach; ?>
+                </select>
+              </form>
+            </td>
+            <td><small><?= e(date('d/m H:i', strtotime($o['cree_le']))) ?></small></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
+        <?php endif; ?>
+      </section>
 
-      <?php elseif ($tab === 'notifications'): ?>
-        <h1 class="dash-title">Notifications</h1>
-        <section class="panel">
-          <div class="panel-head"><h2><?= $unread ?> non lue<?= $unread > 1 ? 's' : '' ?></h2>
-            <?php if ($unread): ?><form method="post" action="compte.php" style="margin:0"><input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>"><button class="btn-mini" name="action" value="read_notifs" type="submit">Tout marquer lu</button></form><?php endif; ?>
+    <?php elseif ($tab === 'boutique'): ?>
+      <h1 class="dash-title">Ma boutique</h1>
+      <p class="dash-addr"><a href="<?= e(shop_url($b)) ?>" target="_blank" rel="noopener"><?= e(shop_domain($b)) ?> ↗</a></p>
+      <section class="panel" style="margin-top:14px">
+        <form method="post" action="compte.php">
+          <input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save_boutique">
+          <div class="field-grid">
+            <div class="field"><label>Nom</label><input name="nom" value="<?= e($b['nom']) ?>" required></div>
+            <div class="field"><label>Catégorie</label><input name="categorie" value="<?= e($b['categorie']) ?>"></div>
           </div>
-          <?php if (!$notifs): ?><div class="empty-state">Aucune notification.</div>
-          <?php else: ?><ul class="notif-list"><?php foreach ($notifs as $n): ?>
-            <li class="<?= empty($n['read']) ? 'unread' : '' ?>"><span class="dot"></span><div><p><?= htmlspecialchars($n['text'] ?? '') ?></p><small><?= htmlspecialchars(date('d/m/Y H:i', strtotime($n['created_at'] ?? 'now'))) ?></small></div></li>
-          <?php endforeach; ?></ul><?php endif; ?>
-        </section>
-      <?php endif; ?>
-    </main>
-  </div>
-</body>
-</html>
+          <div class="field"><label>Description</label><textarea name="description" rows="2"><?= e($b['description']) ?></textarea></div>
+          <div class="field-grid">
+            <div class="field"><label>Logo (lien)</label><input name="logo" value="<?= e($b['logo']) ?>"></div>
+            <div class="field"><label>Bannière (lien)</label><input name="banniere" value="<?= e($b['banniere']) ?>"></div>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Téléphone contact</label><input name="contact_tel" value="<?= e($b['contact_tel']) ?>"></div>
+            <div class="field"><label>E-mail contact</label><input name="contact_email" value="<?= e($b['contact_email']) ?>"></div>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Réseaux (lien)</label><input name="reseaux" value="<?= e($b['reseaux']) ?>"></div>
+            <div class="field"><label>Zones de livraison</label><input name="zones" value="<?= e($b['zones']) ?>"></div>
+          </div>
+          <p class="form-section">Thème</p>
+          <div class="theme-choice">
+            <?php foreach (cfg()['themes'] as $key => $th): ?>
+              <label class="theme-opt"><input type="radio" name="theme" value="<?= e($key) ?>"<?= $b['theme'] === $key ? ' checked' : '' ?>><span class="theme-swatch" style="background:linear-gradient(135deg,<?= $th['accent'] ?>,<?= $th['hero'] ?>)"></span><b><?= e($th['name']) ?></b></label>
+            <?php endforeach; ?>
+          </div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+    <?php elseif ($tab === 'abonnement'): ?>
+      <h1 class="dash-title">Abonnement</h1>
+      <section class="panel">
+        <div class="kpis">
+          <div class="kpi"><span class="kpi-l">Offre</span><b class="kpi-v" style="font-size:1.3rem"><?= e($plan['name']) ?></b></div>
+          <div class="kpi"><span class="kpi-l">Montant</span><b class="kpi-v" style="font-size:1.3rem"><?= e(money((int) $plan['price'], $devise)) ?>/mois</b></div>
+          <div class="kpi"><span class="kpi-l">Statut</span><b class="kpi-v" style="font-size:1.3rem"><?= $u['statut'] === 'actif' ? 'Actif' : 'Essai' ?></b></div>
+        </div>
+        <p class="sub" style="margin-top:14px"><?= $u['statut'] === 'actif' ? 'Renouvellement le ' . e(date('d/m/Y', strtotime($u['abo_fin']))) : 'Essai gratuit jusqu\'au ' . e(date('d/m/Y', strtotime($u['essai_fin']))) . '. Réglez pour continuer sans interruption.' ?></p>
+        <a class="btn btn-primary" href="paiement.php" style="margin-top:12px"><?= $u['statut'] === 'actif' ? 'Renouveler maintenant' : 'Régler mon abonnement' ?></a>
+      </section>
+      <section class="panel" style="margin-top:20px">
+        <div class="panel-head"><h2>Historique des paiements</h2></div>
+        <?php $pays = q('SELECT * FROM paiements WHERE user_id=? ORDER BY id DESC', [$u['id']])->fetchAll(); ?>
+        <?php if (!$pays): ?><div class="empty-state">Aucun paiement pour l'instant.</div>
+        <?php else: ?><div class="table-scroll"><table class="admin-table"><thead><tr><th>Date</th><th>Montant</th><th>Méthode</th><th>Réf.</th><th></th></tr></thead><tbody>
+          <?php foreach ($pays as $p): ?><tr><td><small><?= e(date('d/m/Y', strtotime($p['cree_le']))) ?></small></td><td><b><?= e(money((int) $p['montant'], $p['devise'])) ?></b></td><td><?= e($p['methode']) ?></td><td><small><?= e($p['reference']) ?></small></td><td><a class="btn-mini" href="facture.php?p=<?= (int) $p['id'] ?>">Facture</a></td></tr><?php endforeach; ?>
+        </tbody></table></div><?php endif; ?>
+      </section>
+    <?php endif; ?>
+  </main>
+</div>
+<?php foot(false); ?>
