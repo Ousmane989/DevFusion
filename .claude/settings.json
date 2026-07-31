@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/auto-commit.sh",
+            "timeout": 90,
+            "statusMessage": "Sauvegarde automatique sur GitHub…"
+          }
+        ]
+      }
+    ]
+  }
+}
