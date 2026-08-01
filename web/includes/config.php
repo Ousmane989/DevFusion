@@ -18,9 +18,9 @@ return [
     'support_whatsapp' => '22200000000',
     'trial_days'       => 3,
 
-    // Accès au back-office d'autorisation (page admin).
-    // ⚠️ Mot de passe à changer avant toute mise en ligne.
-    'admin_password'   => 'marsa-admin',
+    // Jeton pour déclencher les rappels d'expiration via cron (à changer).
+    // Ex. cron quotidien : curl "https://…/rappels.php?token=CE_JETON"
+    'cron_token'       => 'marsa-cron',
 
     // Offres (abonnement mensuel). Prix en MRU (marché de lancement).
     // 'max_produits' = -1 signifie illimité. IA incluse à partir de 600 MRU.

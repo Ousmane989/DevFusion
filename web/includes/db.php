@@ -170,5 +170,12 @@ function db_init(PDO $pdo): void
         ip TEXT,
         cree_le TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS rappels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        jalon TEXT NOT NULL, -- J-2|J-1|J0
+        cree_le TEXT NOT NULL
+    );
     ");
 }

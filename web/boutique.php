@@ -1,6 +1,7 @@
 <?php
 /** Marsa — boutique publique (catalogue). Hors-ligne si compte verrouillé. */
 require __DIR__ . '/includes/app.php';
+app_start();
 
 $slug = (string) ($_GET['s'] ?? '');
 $b = $slug !== '' ? q1('SELECT * FROM boutiques WHERE slug = ?', [$slug]) : null;
@@ -23,7 +24,8 @@ function money2(int $n, string $d): string { return number_format($n, 0, ',', ' 
 <link rel="stylesheet" href="assets/css/style.css">
 <?php if ($live): ?><style>:root{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>;--harbor:<?= $theme['hero'] ?>}:root[data-theme="dark"]{--accent:<?= $theme['accent'] ?>;--accent-strong:<?= $theme['accent'] ?>}</style><?php endif; ?>
 </head><body>
-<header class="top"><div class="shell mini-top"><?= brand_mark('Marsa') ?><a class="mini-back" href="index.php">Marketplace</a></div></header>
+<?php $cartCount = $b ? array_sum($_SESSION['cart'][$b['slug']] ?? []) : 0; ?>
+<header class="top"><div class="shell mini-top"><a class="mini-back" href="index.php">Marketplace</a><?= brand_mark('Marsa') ?><?php if ($live): ?><a class="mini-back" href="panier.php?s=<?= e($b['slug']) ?>">🛒 Panier<?= $cartCount ? ' (' . (int) $cartCount . ')' : '' ?></a><?php else: ?><span></span><?php endif; ?></div></header>
 
 <?php if (!$b || !$live): ?>
   <main class="access-main"><div class="access-card" style="max-width:460px;text-align:center">
