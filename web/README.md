@@ -44,7 +44,28 @@ est créée automatiquement au premier accès.
 | `assistant.php` | Création / personnalisation de la boutique |
 | `compte.php` | Espace client : Accueil (stats+graphique), Produits, Commandes, Ma boutique, Abonnement, export CSV |
 | `paiement.php` → `facture.php` | Abonnement (montant exact du tarif), facture imprimable |
-| `boutique.php` · `produit.php` · `contact.php` | Boutique publique, fiche produit, commande COD, contact |
+| `boutique.php` · `produit.php` · `panier.php` · `contact.php` | Boutique publique, fiche produit, panier multi-articles, commande COD, contact |
+
+## Tâche planifiée (rappels d'expiration)
+
+Rappels J-2 / J-1 / J0 avant la fin de l'essai. À lancer une fois par jour :
+
+```bash
+# CLI
+php rappels.php
+# ou en cron web
+curl "https://VOTRE-DOMAINE/rappels.php?token=<cron_token>"
+```
+
+Le `cron_token` est dans `includes/config.php` (à changer). Chaque jalon
+n'est envoyé qu'une fois par utilisateur.
+
+## Divers
+
+- **Panier** multi-articles côté visiteur (session), commande = une entrée
+  `commandes` + plusieurs `lignes_commande`, stock décrémenté par ligne.
+- **Photos produits** : upload de fichiers (jusqu'à 5, images ≤ 4 Mo) stockés
+  sous `storage/uploads/`, ou liens/emoji.
 
 ## États du compte
 

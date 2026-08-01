@@ -245,6 +245,30 @@ function breadcrumb(array $items): string
 
 function e(?string $s): string { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); }
 
+/**
+ * Enregistre les images uploadées (champ <input type=file multiple>) et
+ * renvoie les chemins relatifs. Valide type et taille (max 4 Mo).
+ * @return string[]
+ */
+function save_uploads($files): array
+{
+    if (!is_array($files) || !isset($files['tmp_name'])) { return []; }
+    $dir = __DIR__ . '/../storage/uploads';
+    if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+    $exts = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+    $out = [];
+    foreach ((array) $files['tmp_name'] as $i => $tmp) {
+        if (!is_string($tmp) || !is_uploaded_file($tmp)) { continue; }
+        $size = (int) ($files['size'][$i] ?? 0);
+        if ($size <= 0 || $size > 4 * 1024 * 1024) { continue; }
+        $info = @getimagesize($tmp);
+        if ($info === false || !isset($exts[$info['mime']])) { continue; }
+        $name = 'p_' . bin2hex(random_bytes(6)) . '.' . $exts[$info['mime']];
+        if (@move_uploaded_file($tmp, $dir . '/' . $name)) { $out[] = 'storage/uploads/' . $name; }
+    }
+    return $out;
+}
+
 /** Logo + nom (utilisé aussi par les pages publiques sans layout complet). */
 function brand_mark(string $sub = 'Marsa'): string
 {

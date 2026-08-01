@@ -33,9 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok($_POST['csrf'] ?? '')) {
             'prix_compare' => (int) preg_replace('/\D+/', '', (string) ($_POST['prix_compare'] ?? '')),
             'stock' => (int) preg_replace('/\D+/', '', (string) ($_POST['stock'] ?? '')),
             'categorie' => trim((string) ($_POST['categorie'] ?? '')),
-            'photos' => trim((string) ($_POST['photos'] ?? '')),
             'visible' => isset($_POST['visible']) ? 1 : 0,
         ];
+        // Photos : fichiers uploadés + liens/emoji saisis (fusionnés).
+        $uploaded = save_uploads($_FILES['photos_files'] ?? null);
+        $typed = array_filter(array_map('trim', explode(',', (string) ($_POST['photos'] ?? ''))));
+        $data['photos'] = implode(',', array_slice(array_merge($uploaded, $typed), 0, 5));
         $f = '';
         if (mb_strlen($data['nom']) < 2 || $data['prix'] <= 0) { $f = 'Nom ou prix invalide.'; }
         elseif ($act === 'add_product') {
@@ -183,7 +186,7 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
       <h1 class="dash-title"><?= $editing ? 'Modifier le produit' : 'Produits' ?></h1>
       <section class="panel">
         <div class="panel-head"><h2><?= $editing ? 'Modifier' : 'Nouveau produit' ?></h2><?php if ($editing): ?><a class="mini-back" href="compte.php?tab=produits">+ Nouveau</a><?php endif; ?></div>
-        <form method="post" action="compte.php" class="prod-editor">
+        <form method="post" action="compte.php" class="prod-editor" enctype="multipart/form-data">
           <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
           <input type="hidden" name="action" value="<?= $editing ? 'edit_product' : 'add_product' ?>">
           <?php if ($editing): ?><input type="hidden" name="pid" value="<?= (int) $editing['id'] ?>"><?php endif; ?>
@@ -197,7 +200,9 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
             <div class="field"><label>Stock</label><input name="stock" inputmode="numeric" value="<?= e((string) ($editing['stock'] ?? '')) ?>" placeholder="10"></div>
             <div class="field"><label>Catégorie</label><input name="categorie" value="<?= e($editing['categorie'] ?? $b['categorie']) ?>"></div>
           </div>
-          <div class="field"><label>Photos (liens séparés par des virgules, ou emoji)</label><input name="photos" value="<?= e($editing['photos'] ?? '') ?>" placeholder="👗 ou https://…, https://…"></div>
+          <div class="field"><label>Photos (jusqu'à 5)</label><input type="file" name="photos_files[]" accept="image/*" multiple></div>
+          <?php if (!empty($editing['photos'])): ?><div class="pd-thumbs" style="margin:-4px 0 4px"><?php foreach (array_filter(array_map('trim', explode(',', $editing['photos']))) as $ph): ?><span class="pd-thumb" style="width:52px;height:52px"><?php if (preg_match('#^(https?:)?/#', $ph)): ?><img src="<?= e($ph) ?>" alt=""><?php else: ?><?= e($ph) ?><?php endif; ?></span><?php endforeach; ?></div><?php endif; ?>
+          <div class="field"><label>ou lien(s) / emoji</label><input name="photos" value="<?= e($editing['photos'] ?? '') ?>" placeholder="👗 ou https://…"></div>
           <label class="check"><input type="checkbox" name="visible" <?= ($editing['visible'] ?? 1) ? 'checked' : '' ?>> Visible sur la boutique</label>
           <button class="btn btn-primary" type="submit"><?= $editing ? 'Enregistrer' : 'Ajouter le produit' ?></button>
         </form>
