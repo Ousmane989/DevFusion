@@ -417,6 +417,15 @@ html[dir="rtl"] .mini-back svg{transform:scaleX(-1)}
 .check{display:flex;align-items:center;gap:9px;font-size:.9rem;color:var(--muted);font-weight:600}
 .check input{width:18px;height:18px}
 
+/* -------- Catégories (admin) -------- */
+.cat-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.cat-list li{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+.cat-list li:last-child{border-bottom:0}
+.cat-ord{width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:.82rem}
+.cat-count{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.btn-mini[disabled]{opacity:.4;cursor:not-allowed}
+.chip-on{background:var(--accent);color:#20160a;border-color:var(--accent)}
+
 /* -------- Onboarding admin -------- */
 .onboard{display:flex;gap:16px;align-items:flex-start;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,var(--surface)),var(--surface));border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:16px;box-shadow:var(--shadow)}
 .onboard .ob-badge{font-size:1.8rem;flex:0 0 auto}

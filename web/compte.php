@@ -80,6 +80,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok($_POST['csrf'] ?? '')) {
            trim((string) $_POST['logo']), trim((string) $_POST['banniere']), $u['id']]);
         redirect('compte.php?tab=boutique&f=' . rawurlencode('Boutique mise à jour.'));
     }
+    if ($act === 'add_category') {
+        $nom = trim((string) ($_POST['nom'] ?? ''));
+        if (mb_strlen($nom) >= 2 && !q1('SELECT id FROM categories WHERE boutique_id=? AND nom=?', [$bid, $nom])) {
+            $ordre = (int) q1('SELECT COUNT(*) c FROM categories WHERE boutique_id=?', [$bid])['c'];
+            q('INSERT INTO categories (boutique_id, nom, ordre) VALUES (?,?,?)', [$bid, $nom, $ordre]);
+        }
+        redirect('compte.php?tab=categories&f=' . rawurlencode('Catégorie ajoutée.'));
+    }
+    if ($act === 'del_category') {
+        q('DELETE FROM categories WHERE id=? AND boutique_id=?', [(int) ($_POST['cid'] ?? 0), $bid]);
+        redirect('compte.php?tab=categories&f=' . rawurlencode('Catégorie supprimée.'));
+    }
+    if ($act === 'move_category') {
+        $cid = (int) ($_POST['cid'] ?? 0);
+        $ids = array_map('intval', array_column(q('SELECT id FROM categories WHERE boutique_id=? ORDER BY ordre, id', [$bid])->fetchAll(), 'id'));
+        $pos = array_search($cid, $ids, true);
+        $new = ($_POST['dir'] ?? '') === 'up' ? $pos - 1 : $pos + 1;
+        if ($pos !== false && $new >= 0 && $new < count($ids)) {
+            [$ids[$pos], $ids[$new]] = [$ids[$new], $ids[$pos]];
+            foreach ($ids as $o => $id) { q('UPDATE categories SET ordre=? WHERE id=? AND boutique_id=?', [$o, $id, $bid]); }
+        }
+        redirect('compte.php?tab=categories');
+    }
 }
 
 $tab = $_GET['tab'] ?? 'accueil';
@@ -89,7 +112,8 @@ $unread = 0;
 $produits = q('SELECT * FROM produits WHERE boutique_id=? ORDER BY id DESC', [$bid])->fetchAll();
 $commandes = q('SELECT * FROM commandes WHERE boutique_id=? ORDER BY id DESC', [$bid])->fetchAll();
 
-$nav = ['accueil' => ['Accueil', '🏠'], 'produits' => ['Produits', '📦'], 'commandes' => ['Commandes', '🧾'], 'boutique' => ['Ma boutique', '🎨'], 'abonnement' => ['Abonnement', '💳']];
+$categories = q('SELECT * FROM categories WHERE boutique_id=? ORDER BY ordre, id', [$bid])->fetchAll();
+$nav = ['accueil' => ['Accueil', '🏠'], 'produits' => ['Produits', '📦'], 'categories' => ['Catégories', '🏷️'], 'commandes' => ['Commandes', '🧾'], 'boutique' => ['Ma boutique', '🎨'], 'abonnement' => ['Abonnement', '💳']];
 $editing = null;
 if ($tab === 'produits' && !empty($_GET['edit'])) {
     $editing = q1('SELECT * FROM produits WHERE id=? AND boutique_id=?', [(int) $_GET['edit'], $bid]);
@@ -198,7 +222,7 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
           </div>
           <div class="field-grid">
             <div class="field"><label>Stock</label><input name="stock" inputmode="numeric" value="<?= e((string) ($editing['stock'] ?? '')) ?>" placeholder="10"></div>
-            <div class="field"><label>Catégorie</label><input name="categorie" value="<?= e($editing['categorie'] ?? $b['categorie']) ?>"></div>
+            <div class="field"><label>Catégorie</label><input name="categorie" list="cat-list" value="<?= e($editing['categorie'] ?? $b['categorie']) ?>"><datalist id="cat-list"><?php foreach ($categories as $c): ?><option value="<?= e($c['nom']) ?>"><?php endforeach; ?></datalist></div>
           </div>
           <div class="field"><label>Photos (jusqu'à 5)</label><input type="file" name="photos_files[]" accept="image/*" multiple></div>
           <?php if (!empty($editing['photos'])): ?><div class="pd-thumbs" style="margin:-4px 0 4px"><?php foreach (array_filter(array_map('trim', explode(',', $editing['photos']))) as $ph): ?><span class="pd-thumb" style="width:52px;height:52px"><?php if (preg_match('#^(https?:)?/#', $ph)): ?><img src="<?= e($ph) ?>" alt=""><?php else: ?><?= e($ph) ?><?php endif; ?></span><?php endforeach; ?></div><?php endif; ?>
@@ -228,13 +252,44 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
         <?php endif; ?>
       </section>
 
+    <?php elseif ($tab === 'categories'): ?>
+      <h1 class="dash-title">Catégories</h1>
+      <section class="panel">
+        <div class="panel-head"><h2>Nouvelle catégorie</h2></div>
+        <form method="post" action="compte.php" class="product-form">
+          <input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="add_category">
+          <input name="nom" placeholder="Ex. Robes" required>
+          <button class="btn btn-primary" type="submit">Ajouter</button>
+        </form>
+      </section>
+      <section class="panel" style="margin-top:20px">
+        <div class="panel-head"><h2>Ordre d'affichage (<?= count($categories) ?>)</h2></div>
+        <?php if (!$categories): ?><div class="empty-state">Aucune catégorie. Ajoutez-en pour organiser votre boutique.</div>
+        <?php else: ?>
+        <ul class="cat-list">
+          <?php foreach ($categories as $i => $c): ?>
+            <li>
+              <span class="cat-ord"><?= $i + 1 ?></span>
+              <b><?= e($c['nom']) ?></b>
+              <span class="cat-count"><?= (int) q1('SELECT COUNT(*) c FROM produits WHERE boutique_id=? AND categorie=?', [$bid, $c['nom']])['c'] ?> produit(s)</span>
+              <div class="row-actions">
+                <form method="post" action="compte.php" style="margin:0"><input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="move_category"><input type="hidden" name="cid" value="<?= (int) $c['id'] ?>"><input type="hidden" name="dir" value="up"><button class="btn-mini" type="submit"<?= $i === 0 ? ' disabled' : '' ?>>↑</button></form>
+                <form method="post" action="compte.php" style="margin:0"><input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="move_category"><input type="hidden" name="cid" value="<?= (int) $c['id'] ?>"><input type="hidden" name="dir" value="down"><button class="btn-mini" type="submit"<?= $i === count($categories) - 1 ? ' disabled' : '' ?>>↓</button></form>
+                <form method="post" action="compte.php" onsubmit="return confirm('Supprimer cette catégorie ?')" style="margin:0"><input type="hidden" name="csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="del_category"><input type="hidden" name="cid" value="<?= (int) $c['id'] ?>"><button class="btn-mini bad" type="submit">Suppr.</button></form>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
+      </section>
+
     <?php elseif ($tab === 'commandes'): ?>
       <h1 class="dash-title">Commandes (<?= count($commandes) ?>)</h1>
       <div class="panel-head" style="margin-bottom:12px"><span></span><a class="btn-mini" href="compte.php?export=commandes">Exporter CSV</a></div>
       <section class="panel">
         <?php if (!$commandes): ?><div class="empty-state">Aucune commande pour l'instant.</div>
         <?php else: ?>
-        <div class="table-scroll"><table class="admin-table"><thead><tr><th>Client</th><th>Adresse</th><th>Total</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+        <div class="table-scroll"><table class="admin-table"><thead><tr><th>Client</th><th>Adresse</th><th>Total</th><th>Statut</th><th>Date</th><th></th></tr></thead><tbody>
           <?php foreach ($commandes as $o): $lignes = q('SELECT * FROM lignes_commande WHERE commande_id=?', [$o['id']])->fetchAll(); ?>
           <tr>
             <td><b><?= e($o['client_nom']) ?></b><small><?= e($o['client_tel']) ?></small><small><?php foreach ($lignes as $l) { echo e($l['qte'] . '× ' . $l['nom']) . '<br>'; } ?></small></td>
@@ -249,6 +304,7 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
               </form>
             </td>
             <td><small><?= e(date('d/m H:i', strtotime($o['cree_le']))) ?></small></td>
+            <td><a class="btn-mini" href="commande.php?id=<?= (int) $o['id'] ?>">Détail</a></td>
           </tr>
           <?php endforeach; ?>
         </tbody></table></div>

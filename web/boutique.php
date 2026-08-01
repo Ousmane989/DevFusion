@@ -34,7 +34,13 @@ function money2(int $n, string $d): string { return number_format($n, 0, ',', ' 
     <a class="btn btn-primary" href="index.php">Retour à l'accueil</a>
   </div></main>
 <?php else:
-  $produits = q('SELECT * FROM produits WHERE boutique_id=? AND visible=1 ORDER BY ordre, id DESC', [$b['id']])->fetchAll(); ?>
+  $cats = q('SELECT * FROM categories WHERE boutique_id=? ORDER BY ordre, id', [$b['id']])->fetchAll();
+  $catFilter = trim((string) ($_GET['cat'] ?? ''));
+  $sql = "SELECT p.* FROM produits p LEFT JOIN categories c ON c.boutique_id=p.boutique_id AND c.nom=p.categorie WHERE p.boutique_id=? AND p.visible=1";
+  $params = [$b['id']];
+  if ($catFilter !== '') { $sql .= " AND p.categorie=?"; $params[] = $catFilter; }
+  $sql .= " ORDER BY COALESCE(c.ordre,999), p.id DESC";
+  $produits = q($sql, $params)->fetchAll(); ?>
   <section class="shop-hero" <?= $b['banniere'] ? 'style="background-image:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url(' . e($b['banniere']) . ');background-size:cover;background-position:center"' : '' ?>>
     <div class="shell shop-hero-in">
       <div class="shop-logo"><?php if ($b['logo']): ?><img src="<?= e($b['logo']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px"><?php else: ?><?= e(mb_substr($b['nom'], 0, 1)) ?><?php endif; ?></div>
@@ -47,7 +53,13 @@ function money2(int $n, string $d): string { return number_format($n, 0, ',', ' 
   </section>
 
   <main class="shell" style="padding-block:34px">
-    <?php if (!$produits): ?><div class="empty-state">Cette boutique n'a pas encore de produits.</div>
+    <?php if ($cats): ?>
+    <div class="chips" style="margin-bottom:22px">
+      <a class="chip<?= $catFilter === '' ? ' chip-on' : '' ?>" href="boutique.php?s=<?= e($b['slug']) ?>">Tout</a>
+      <?php foreach ($cats as $c): ?><a class="chip<?= $catFilter === $c['nom'] ? ' chip-on' : '' ?>" href="boutique.php?s=<?= e($b['slug']) ?>&cat=<?= rawurlencode($c['nom']) ?>"><?= e($c['nom']) ?></a><?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+    <?php if (!$produits): ?><div class="empty-state">Aucun produit dans cette sélection.</div>
     <?php else: ?>
     <div class="market-grid">
       <?php foreach ($produits as $i => $p):
