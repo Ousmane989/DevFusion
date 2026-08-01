@@ -132,6 +132,21 @@ topbar('', '<a class="btn btn-ghost" href="' . e(shop_url($b)) . '" target="_bla
     <?php if ($tab === 'accueil'): ?>
       <h1 class="dash-title">Bonjour <?= e(explode(' ', $u['nom'])[0]) ?> 👋</h1>
       <p class="dash-addr"><a href="<?= e(shop_url($b)) ?>" target="_blank" rel="noopener"><?= e(shop_domain($b)) ?> ↗</a></p>
+
+      <?php if (count($produits) === 0): ?>
+      <section class="onboard">
+        <div class="ob-badge">🎉</div>
+        <div class="ob-body">
+          <h2>Votre boutique est en ligne — bienvenue dans votre espace admin</h2>
+          <p>Votre boutique est accessible à l'adresse <a href="<?= e(shop_url($b)) ?>" target="_blank" rel="noopener"><?= e(shop_domain($b)) ?></a>. Pour commencer, ajoutez votre premier produit.</p>
+          <div class="ob-actions">
+            <a class="btn btn-primary" href="compte.php?tab=produits">Ajouter un produit</a>
+            <a class="btn btn-ghost" href="<?= e(shop_url($b)) ?>" target="_blank" rel="noopener">Voir ma boutique ↗</a>
+            <a class="btn btn-ghost" href="compte.php?tab=boutique">Personnaliser</a>
+          </div>
+        </div>
+      </section>
+      <?php endif; ?>
       <section class="kpis" style="margin-top:18px">
         <div class="kpi"><span class="kpi-l">Chiffre d'affaires</span><b class="kpi-v"><?= e(money($s['ca'], $devise)) ?></b></div>
         <div class="kpi"><span class="kpi-l">Commandes</span><b class="kpi-v"><?= $s['commandes'] ?></b></div>
