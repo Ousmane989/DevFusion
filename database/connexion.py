@@ -27,9 +27,9 @@ class DatabaseConnection:
         """
         Ouvre la connexion à la base de données.
 
-        :param avec_bd: si False, on se connecte au serveur sans
-                        sélectionner la base (utile pour la créer).
-        :return: True si la connexion réussit, False sinon.
+        Le paramètre avec_bd, si False, permet de se connecter au serveur
+        sans sélectionner la base (utile pour la créer).
+        Retourne True si la connexion réussit, False sinon.
         """
         try:
             if config.TYPE_BD == "mysql":
@@ -68,7 +68,7 @@ class DatabaseConnection:
         """
         Exécute une requête SQL paramétrée (INSERT, UPDATE, DELETE, DDL).
 
-        :return: True si l'exécution réussit, False sinon.
+        Retourne True si l'exécution réussit, False sinon.
         """
         try:
             self.curseur.execute(sql, params or ())
