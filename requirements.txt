@@ -1,0 +1,6 @@
+# Dépendances du projet Gestion des Incidents
+# MySQL (XAMPP) :
+mysql-connector-python==8.3.0
+
+# PostgreSQL (décommenter si vous utilisez PostgreSQL à la place) :
+# psycopg2-binary==2.9.9
