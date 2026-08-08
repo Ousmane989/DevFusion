@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boutique — DevFusion</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="boutique.html" class="is-active">Boutique</a>
+      <a href="collections.html">Collections</a>
+      <a href="produit.html">Nouveautés</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" data-theme-toggle aria-label="Thème"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36-.7-.7M6.34 6.34l-.7-.7m12.72 0-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg></button>
+      <a href="connexion.html" class="icon-btn" aria-label="Compte"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></a>
+      <button class="icon-btn cart-btn" data-drawer-open="cart-drawer" aria-label="Panier"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="cart-count">0</span></button>
+      <button class="burger" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-menu">
+  <a href="index.html">Accueil</a><a href="boutique.html">Boutique</a><a href="collections.html">Collections</a><a href="produit.html">Nouveautés</a><a href="compte.html">Mon compte</a><a href="connexion.html">Connexion</a>
+</nav>
+
+<main class="page-fade">
+  <section class="section-sm" style="background:var(--bg-soft);border-bottom:1px solid var(--border)">
+    <div class="container">
+      <span class="eyebrow anim-up">Boutique</span>
+      <h1 class="anim-up d-1" style="margin-top:12px">Tous les modèles</h1>
+      <p class="anim-up d-2" style="margin-top:8px">128 produits · filtrez pour trouver la paire parfaite.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <!-- Filtres -->
+      <div class="flex items-center justify-between wrap gap reveal" style="margin-bottom:26px">
+        <div class="filter-row" id="filters">
+          <button class="chip-filter active" data-filter="all">Tout</button>
+          <button class="chip-filter" data-filter="Running">Running</button>
+          <button class="chip-filter" data-filter="Lifestyle">Lifestyle</button>
+          <button class="chip-filter" data-filter="Basketball">Basketball</button>
+        </div>
+        <button class="btn btn-outline btn-sm" id="reload-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.5 2.8M3 4v4h4"/></svg>
+          Recharger
+        </button>
+      </div>
+
+      <!-- Grille : skeletons puis produits -->
+      <div class="grid grid-4" id="shop-grid"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="foot-bottom" style="margin-top:0;border-top:none">
+      <span>© 2026 DevFusion. Tous droits réservés.</span>
+      <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    </div>
+  </div>
+</footer>
+
+<div class="drawer-backdrop" id="cart-drawer-bd"></div>
+<aside class="drawer" id="cart-drawer" aria-label="Panier">
+  <div class="drawer-head"><strong>Votre panier</strong><button class="icon-btn" data-drawer-close="cart-drawer" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="drawer-body"><p class="muted text-center" style="padding:40px 0">Votre panier se remplira ici.<br>Cliquez sur « Ajout rapide ».</p></div>
+  <div class="drawer-foot"><a href="checkout.html" class="btn btn-block btn-lg">Passer commande</a></div>
+</aside>
+
+<script src="js/animations.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  var ALL = [
+    { n:"Air Fusion 01", c:"Running", p:149, o:179, s:"dfp1", badge:"Promo", bt:"danger" },
+    { n:"Urbano Low", c:"Lifestyle", p:129, s:"dfp2", badge:"Nouveau", bt:"accent" },
+    { n:"Pace X Runner", c:"Running", p:169, s:"dfp3" },
+    { n:"Volta Court", c:"Basketball", p:139, s:"dfp4", badge:"-20%", bt:"success" },
+    { n:"North Trail", c:"Running", p:159, s:"dfp5" },
+    { n:"Aeroline Mid", c:"Basketball", p:189, s:"dfp6", badge:"Édition limitée", bt:"accent" },
+    { n:"Fusion Street", c:"Lifestyle", p:119, s:"dfp7" },
+    { n:"Volta Pro", c:"Basketball", p:199, s:"dfp8" },
+    { n:"Urbano High", c:"Lifestyle", p:139, s:"dfp9" },
+    { n:"Pace Air", c:"Running", p:175, s:"dfp10", badge:"Nouveau", bt:"accent" },
+    { n:"North Peak", c:"Running", p:165, s:"dfp11" },
+    { n:"Fusion Classic", c:"Lifestyle", p:109, o:129, s:"dfp12", badge:"Promo", bt:"danger" }
+  ];
+  var grid = document.getElementById("shop-grid");
+
+  function skeletons(n){
+    var html = "";
+    for (var i=0;i<n;i++){
+      html += '<div class="product-card"><div class="media skeleton"></div><div class="body">'
+        + '<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text"></div>'
+        + '<div class="skeleton skeleton-text" style="width:40%"></div></div></div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function cardHTML(p){
+    return '<article class="product-card reveal" data-cat="'+p.c+'">'
+      + '<div class="media zoom-frame">'
+      + (p.badge ? '<div class="card-badges"><span class="badge badge-'+(p.bt||'accent')+'">'+p.badge+'</span></div>' : '')
+      + '<button class="fav-btn" aria-label="Favori" onclick="this.classList.toggle(\'is-active\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg></button>'
+      + '<img src="https://picsum.photos/seed/'+p.s+'/600/600" alt="'+p.n+'" loading="lazy">'
+      + '<img class="img-alt" src="https://picsum.photos/seed/'+p.s+'b/600/600" alt="" loading="lazy">'
+      + '<div class="quick-add"><button class="btn btn-block btn-sm" data-add-to-cart data-name="'+p.n+'" data-open-drawer>Ajout rapide</button></div>'
+      + '</div><div class="body"><a href="produit.html"><div class="name">'+p.n+'</div></a><div class="cat">'+p.c+'</div>'
+      + '<div class="price-row"><span class="price">'+p.p+' €</span>'+(p.o?'<span class="price-old">'+p.o+' €</span>':'')+'</div></div></article>';
+  }
+
+  function render(filter){
+    skeletons(8); // état de chargement (section 18)
+    setTimeout(function(){
+      var list = ALL.filter(function(p){ return filter==="all" || p.c===filter; });
+      grid.innerHTML = list.map(cardHTML).join("");
+      window.DFReveal && DFReveal();
+    }, 650);
+  }
+
+  document.getElementById("filters").addEventListener("click", function(e){
+    var b = e.target.closest(".chip-filter"); if(!b) return;
+    this.querySelectorAll(".chip-filter").forEach(function(c){ c.classList.remove("active"); });
+    b.classList.add("active");
+    render(b.getAttribute("data-filter"));
+  });
+  document.getElementById("reload-btn").addEventListener("click", function(){
+    render(document.querySelector(".chip-filter.active").getAttribute("data-filter"));
+  });
+
+  render("all");
+</script>
+</body>
+</html>

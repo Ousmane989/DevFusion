@@ -1,0 +1,190 @@
+/* ==========================================================================
+   DevFusion — SYSTÈME D'ANIMATION
+   Cœur du projet. Uniquement transform + opacity (GPU-friendly, section 21).
+   - Keyframes réutilisables
+   - Utilitaires d'apparition au chargement
+   - Utilitaires "reveal" au défilement (pilotés par IntersectionObserver)
+   - Stagger (décalage) pour les listes
+   - Micro-interactions (boutons, cartes, liens, badges)
+   - Respect strict de prefers-reduced-motion (section 22)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. KEYFRAMES
+   -------------------------------------------------------------------------- */
+@keyframes df-fade-in      { from { opacity: 0 } to { opacity: 1 } }
+@keyframes df-slide-up     { from { opacity: 0; transform: translate3d(0, 24px, 0) }  to { opacity: 1; transform: none } }
+@keyframes df-slide-down   { from { opacity: 0; transform: translate3d(0,-24px, 0) }  to { opacity: 1; transform: none } }
+@keyframes df-slide-left   { from { opacity: 0; transform: translate3d(32px, 0, 0) }  to { opacity: 1; transform: none } }
+@keyframes df-slide-right  { from { opacity: 0; transform: translate3d(-32px,0, 0) }  to { opacity: 1; transform: none } }
+@keyframes df-zoom-in      { from { opacity: 0; transform: scale(.94) }               to { opacity: 1; transform: none } }
+@keyframes df-zoom-soft    { from { opacity: 0; transform: scale(1.03) }              to { opacity: 1; transform: none } }
+
+@keyframes df-pop          { 0% { transform: scale(1) } 40% { transform: scale(1.18) } 100% { transform: scale(1) } }
+@keyframes df-shake-x      { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+@keyframes df-spin         { to { transform: rotate(360deg) } }
+@keyframes df-pulse        { 0%,100%{ opacity:1 } 50%{ opacity:.45 } }
+@keyframes df-float        { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
+@keyframes df-ping         { 0%{ transform: scale(.4); opacity:.7 } 80%,100%{ transform: scale(2.2); opacity:0 } }
+@keyframes df-shimmer      { 100% { transform: translateX(100%) } }
+@keyframes df-bar-grow     { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+@keyframes df-underline    { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+@keyframes df-toast-in     { from { opacity:0; transform: translate3d(0, 16px, 0) scale(.98) } to { opacity:1; transform:none } }
+@keyframes df-toast-out    { to   { opacity:0; transform: translate3d(0, 8px, 0)  scale(.98) } }
+@keyframes df-drawer-in    { from { transform: translateX(100%) } to { transform: none } }
+@keyframes df-modal-in     { from { opacity:0; transform: translateY(12px) scale(.96) } to { opacity:1; transform:none } }
+@keyframes df-menu-in      { from { opacity:0; transform: translateY(-6px) scale(.98) } to { opacity:1; transform:none } }
+
+/* --------------------------------------------------------------------------
+   2. APPARITION AU CHARGEMENT (« on load »)
+   Classe .anim-* posée directement dans le HTML : joue immédiatement.
+   -------------------------------------------------------------------------- */
+[class*="anim-"] { animation-duration: var(--t-reveal); animation-fill-mode: both; animation-timing-function: var(--ease-emph); }
+.anim-fade       { animation-name: df-fade-in;    animation-duration: var(--t-slow); }
+.anim-up         { animation-name: df-slide-up; }
+.anim-down       { animation-name: df-slide-down; }
+.anim-left       { animation-name: df-slide-left; }
+.anim-right      { animation-name: df-slide-right; }
+.anim-zoom       { animation-name: df-zoom-in; }
+.anim-zoom-soft  { animation-name: df-zoom-soft; }
+
+/* Délais utilitaires (chaînage d'apparition) */
+.d-1 { animation-delay: 80ms }   .d-2 { animation-delay: 160ms }
+.d-3 { animation-delay: 240ms }  .d-4 { animation-delay: 320ms }
+.d-5 { animation-delay: 400ms }  .d-6 { animation-delay: 480ms }
+.d-7 { animation-delay: 560ms }  .d-8 { animation-delay: 640ms }
+
+/* --------------------------------------------------------------------------
+   3. REVEAL AU DÉFILEMENT (piloté par js/animations.js via IntersectionObserver)
+   État initial : masqué + décalé. La classe .is-visible déclenche l'arrivée.
+   -------------------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity var(--t-reveal) var(--ease-emph),
+    transform var(--t-reveal) var(--ease-emph);
+  will-change: opacity, transform;
+}
+.reveal.rv-left   { transform: translate3d(-36px, 0, 0); }
+.reveal.rv-right  { transform: translate3d(36px, 0, 0); }
+.reveal.rv-zoom   { transform: scale(.94); }
+.reveal.rv-zoom-soft { transform: scale(1.04); }
+.reveal.rv-fade   { transform: none; }
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+/* Libère la couche GPU une fois l'animation terminée */
+.reveal.is-visible.rv-done { will-change: auto; }
+
+/* Stagger : décalage progressif des enfants d'un conteneur .stagger.
+   L'index --i est posé par le JS (ou inline) → délai = i * --stagger. */
+.stagger > .reveal { transition-delay: calc(var(--i, 0) * var(--stagger)); }
+
+/* --------------------------------------------------------------------------
+   4. MICRO-INTERACTIONS TRANSVERSALES
+   -------------------------------------------------------------------------- */
+
+/* Élévation générique au survol (cartes, tuiles) */
+.lift { transition: transform var(--t-base) var(--ease-out), box-shadow var(--t-base) var(--ease-out); }
+.lift:hover { transform: translateY(-6px); box-shadow: var(--shadow-3); }
+.lift:active { transform: translateY(-2px); transition-duration: var(--t-fast); }
+
+/* Effet de pression au clic (boutons, tuiles cliquables) — section 17 */
+.press { transition: transform var(--t-fast) var(--ease-spring); }
+.press:active { transform: scale(.96); }
+
+/* Zoom léger d'image dans un cadre (le parent doit être overflow:hidden) */
+.zoom-frame { overflow: hidden; }
+.zoom-frame img { transition: transform var(--t-slow) var(--ease-out); will-change: transform; }
+.zoom-frame:hover img { transform: scale(1.06); }
+
+/* Soulignement animé de lien — section 2 */
+.link-underline { position: relative; }
+.link-underline::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 2px;
+  background: currentColor; border-radius: 2px;
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--t-base) var(--ease-out);
+}
+.link-underline:hover::after,
+.link-underline.is-active::after { transform: scaleX(1); }
+
+/* Petit rebond ponctuel — utilisé pour le compteur du panier, badges */
+.pop { animation: df-pop var(--t-base) var(--ease-spring); }
+.shake { animation: df-shake-x 420ms var(--ease-in-out); }
+.pulse { animation: df-pulse 1.4s var(--ease-in-out) infinite; }
+.float { animation: df-float 5s var(--ease-in-out) infinite; }
+
+/* --------------------------------------------------------------------------
+   5. ÉTATS DE CHARGEMENT — section 18
+   -------------------------------------------------------------------------- */
+
+/* Skeleton loader */
+.skeleton {
+  position: relative; overflow: hidden;
+  background: var(--surface-2); border-radius: var(--r-sm);
+  color: transparent !important;
+}
+.skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  animation: df-shimmer 1.3s infinite;
+}
+:root[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+}
+.skeleton-text { height: .8em; margin: .35em 0; }
+.skeleton-title { height: 1.2em; width: 60%; }
+
+/* Spinner */
+.spinner {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: df-spin .7s linear infinite;
+  display: inline-block; vertical-align: middle;
+}
+.spinner.sm { width: 14px; height: 14px; border-width: 2px; }
+.spinner.lg { width: 34px; height: 34px; border-width: 3px; }
+
+/* Bouton en chargement */
+.btn.is-loading { color: transparent !important; pointer-events: none; position: relative; }
+.btn.is-loading::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+  animation: df-spin .7s linear infinite;
+}
+.btn.btn-ghost.is-loading::after,
+.btn.btn-outline.is-loading::after { border-color: color-mix(in srgb, var(--ink) 30%, transparent); border-top-color: var(--ink); }
+
+/* --------------------------------------------------------------------------
+   6. TRANSITION ENTRE PAGES — sections 18/19 (piloté par animations.js)
+   -------------------------------------------------------------------------- */
+.page-fade { animation: df-fade-in var(--t-base) var(--ease-out) both; }
+body.is-leaving .page-fade { opacity: 0; transform: translateY(-6px); transition: opacity var(--t-fast) var(--ease-in-out), transform var(--t-fast) var(--ease-in-out); }
+
+/* --------------------------------------------------------------------------
+   7. ACCESSIBILITÉ — prefers-reduced-motion (section 22)
+   On neutralise mouvements & transitions non essentiels tout en gardant
+   le contenu parfaitement visible/utilisable.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .skeleton::after,
+  .spinner,
+  .btn.is-loading::after { animation: none !important; }
+  .float, .pulse { animation: none !important; }
+}

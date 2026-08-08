@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clients — DevFusion Pro</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar-backdrop" id="sb-bd"></div>
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    <div class="side-label">Pilotage</div>
+    <nav class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Vue d'ensemble</a>
+      <a href="admin-produits.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Produits</a>
+      <a href="admin-commandes.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Commandes</a>
+      <a href="admin-clients.html" class="is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg> Clients</a>
+      <div class="side-sep"></div>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg> Retour au site</a>
+    </nav>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <button class="icon-btn side-toggle" id="sb-open" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="input" id="client-search" placeholder="Rechercher un client…"></div>
+      <div class="avatar">OB</div>
+    </div>
+
+    <div class="main-area page-fade">
+      <div class="page-title reveal"><h1>Clients</h1><p>892 clients · recherchez, filtrez et consultez les profils.</p></div>
+
+      <div class="filter-row reveal" style="margin-bottom:18px">
+        <button class="chip-filter active">Tous</button>
+        <button class="chip-filter">VIP</button>
+        <button class="chip-filter">Nouveaux</button>
+        <button class="chip-filter">Inactifs</button>
+      </div>
+
+      <div class="grid stagger" id="clients" style="gap:12px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/animations.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  var sb = document.getElementById("sidebar"), bd = document.getElementById("sb-bd");
+  document.getElementById("sb-open").addEventListener("click", function(){ sb.classList.add("open"); bd.classList.add("open"); });
+  bd.addEventListener("click", function(){ sb.classList.remove("open"); bd.classList.remove("open"); });
+
+  document.querySelector(".filter-row").addEventListener("click", function(e){
+    var b = e.target.closest(".chip-filter"); if(!b) return;
+    this.querySelectorAll(".chip-filter").forEach(function(c){ c.classList.remove("active"); });
+    b.classList.add("active");
+  });
+
+  var CLIENTS = [
+    { n:"Awa Diallo", e:"awa@example.com", o:14, sp:"1 248 €", tag:"VIP", tg:"accent" },
+    { n:"Karim Benali", e:"karim@example.com", o:3, sp:"447 €", tag:"Nouveau", tg:"success" },
+    { n:"Léa Martin", e:"lea@example.com", o:9, sp:"892 €", tag:"Fidèle", tg:"info" },
+    { n:"Yusuf Cissé", e:"yusuf@example.com", o:1, sp:"169 €", tag:"Nouveau", tg:"success" },
+    { n:"Nora Haddad", e:"nora@example.com", o:22, sp:"2 310 €", tag:"VIP", tg:"accent" }
+  ];
+  function initials(n){ return n.split(" ").map(function(x){return x[0];}).join("").slice(0,2); }
+  var wrap = document.getElementById("clients");
+
+  function render(list){
+    wrap.innerHTML = list.map(function(c,i){
+      return '<div class="panel reveal" style="padding:0" data-name="'+c.n.toLowerCase()+'">'
+        + '<div class="order-item" style="border:none;cursor:pointer" onclick="toggleClient('+i+')">'
+        + '<div class="avatar">'+initials(c.n)+'</div>'
+        + '<div style="flex:1"><strong>'+c.n+'</strong><div class="muted" style="font-size:.85rem">'+c.e+'</div></div>'
+        + '<span class="badge badge-'+c.tg+'">'+c.tag+'</span>'
+        + '<div style="min-width:70px;text-align:right"><strong>'+c.o+'</strong><div class="muted" style="font-size:.78rem">commandes</div></div>'
+        + '<span class="chev" id="cchev-'+i+'" style="transition:transform .24s"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'
+        + '</div>'
+        + '<div class="expand" id="cexp-'+i+'"><div style="padding:0 16px 16px"><div class="divider" style="margin-bottom:14px"></div>'
+        + '<div class="flex items-center justify-between wrap gap">'
+        + '<div><div class="muted" style="font-size:.8rem">E-mail</div><strong>'+c.e+'</strong></div>'
+        + '<div><div class="muted" style="font-size:.8rem">Commandes</div><strong>'+c.o+'</strong></div>'
+        + '<div><div class="muted" style="font-size:.8rem">Total dépensé</div><strong>'+c.sp+'</strong></div></div>'
+        + '<div class="flex gap" style="margin-top:16px"><button class="btn btn-sm" onclick="event.stopPropagation();DFToast.info(\'Message\',\'Ouverture de la messagerie (démo).\')">Contacter</button>'
+        + '<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();DFToast.info(\'Historique\',\'Chargement des commandes (démo).\')">Voir les commandes</button></div>'
+        + '</div></div></div>';
+    }).join("");
+    window.DFReveal && DFReveal();
+  }
+  render(CLIENTS);
+
+  window.toggleClient = function(i){
+    document.getElementById("cexp-"+i).classList.toggle("open");
+    var ch = document.getElementById("cchev-"+i);
+    ch.style.transform = ch.style.transform ? "" : "rotate(180deg)";
+  };
+
+  // Recherche animée
+  document.getElementById("client-search").addEventListener("input", function(){
+    var q = this.value.toLowerCase();
+    render(CLIENTS.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 || c.e.indexOf(q) > -1; }));
+  });
+</script>
+</body>
+</html>

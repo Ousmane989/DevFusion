@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Fusion 01 — DevFusion</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a><a href="boutique.html">Boutique</a><a href="collections.html">Collections</a><a href="produit.html" class="is-active">Nouveautés</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" data-theme-toggle aria-label="Thème"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36-.7-.7M6.34 6.34l-.7-.7m12.72 0-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg></button>
+      <a href="connexion.html" class="icon-btn" aria-label="Compte"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></a>
+      <button class="icon-btn cart-btn" data-drawer-open="cart-drawer" aria-label="Panier"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="cart-count">0</span></button>
+      <button class="burger" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-menu"><a href="index.html">Accueil</a><a href="boutique.html">Boutique</a><a href="collections.html">Collections</a><a href="produit.html">Nouveautés</a><a href="connexion.html">Connexion</a></nav>
+
+<main class="page-fade">
+  <section class="section">
+    <div class="container">
+      <div class="pdp">
+        <!-- Galerie -->
+        <div class="gallery">
+          <div class="main zoom-frame reveal rv-zoom-soft"><img id="main-img" src="https://picsum.photos/seed/dfp1/800/800" alt="Air Fusion 01"></div>
+          <div class="thumbs reveal">
+            <button class="active" data-src="dfp1"><img src="https://picsum.photos/seed/dfp1/160/160" alt=""></button>
+            <button data-src="dfp1b"><img src="https://picsum.photos/seed/dfp1b/160/160" alt=""></button>
+            <button data-src="dfp3"><img src="https://picsum.photos/seed/dfp3/160/160" alt=""></button>
+            <button data-src="dfp5"><img src="https://picsum.photos/seed/dfp5/160/160" alt=""></button>
+          </div>
+        </div>
+
+        <!-- Infos -->
+        <div class="pdp-info">
+          <div class="reveal rv-right">
+            <div class="flex items-center gap-sm wrap" style="margin-bottom:10px">
+              <span class="badge badge-danger">Promo -17%</span>
+              <span class="badge">★ 4.9 (218 avis)</span>
+            </div>
+            <h1>Air Fusion 01</h1>
+            <p style="margin-top:6px">Running · Amorti réactif · Mesh respirant</p>
+            <div class="price" style="margin-top:16px">149&nbsp;€ <span class="old">179&nbsp;€</span></div>
+          </div>
+
+          <div class="reveal rv-right" style="margin-top:26px">
+            <label style="font-weight:650;font-size:.9rem">Couleur</label>
+            <div class="variants" data-variant-group>
+              <button class="swatch active" style="background:#1a1a1a" aria-label="Noir"></button>
+              <button class="swatch" style="background:#e8e8e8" aria-label="Blanc"></button>
+              <button class="swatch" style="background:#3b5bdb" aria-label="Bleu"></button>
+              <button class="swatch" style="background:#e5484d" aria-label="Rouge"></button>
+            </div>
+          </div>
+
+          <div class="reveal rv-right" style="margin-top:22px">
+            <label style="font-weight:650;font-size:.9rem">Taille (EU)</label>
+            <div class="variants" data-variant-group>
+              <button class="variant">39</button><button class="variant">40</button>
+              <button class="variant active">41</button><button class="variant">42</button>
+              <button class="variant">43</button><button class="variant">44</button>
+            </div>
+          </div>
+
+          <div class="reveal rv-right flex gap" style="margin-top:28px">
+            <button class="btn btn-lg" style="flex:1" data-add-to-cart data-name="Air Fusion 01" data-open-drawer>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              Ajouter au panier</button>
+            <button class="btn btn-outline btn-lg icon-btn" style="width:54px" aria-label="Favori" onclick="this.classList.toggle('is-active');this.classList.toggle('btn-danger')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+            </button>
+          </div>
+
+          <!-- Accordéon détails (section 3) -->
+          <div class="acc reveal" style="margin-top:30px">
+            <div class="acc-item open"><button class="acc-head">Description<span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></button><div class="acc-body"><div class="acc-body-inner">Une silhouette running pensée pour la ville. Semelle en mousse à retour d'énergie, tige en mesh recyclé et maintien renforcé au talon.</div></div></div>
+            <div class="acc-item"><button class="acc-head">Livraison &amp; retours<span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></button><div class="acc-body"><div class="acc-body-inner">Livraison 48h offerte dès 80&nbsp;€. Retours gratuits sous 30 jours.</div></div></div>
+            <div class="acc-item"><button class="acc-head">Entretien<span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></button><div class="acc-body"><div class="acc-body-inner">Nettoyage à la main, à l'eau tiède. Évitez le sèche-linge.</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Produits similaires -->
+      <div style="margin-top:70px">
+        <div class="section-head reveal"><h2>Vous aimerez aussi</h2></div>
+        <div class="grid grid-4 stagger" id="similar"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer"><div class="container"><div class="foot-bottom" style="margin-top:0;border-top:none"><span>© 2026 DevFusion.</span><a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a></div></div></footer>
+
+<div class="drawer-backdrop" id="cart-drawer-bd"></div>
+<aside class="drawer" id="cart-drawer" aria-label="Panier">
+  <div class="drawer-head"><strong>Votre panier</strong><button class="icon-btn" data-drawer-close="cart-drawer" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="drawer-body"><p class="muted text-center" style="padding:40px 0">Ajoutez ce modèle pour le voir ici.</p></div>
+  <div class="drawer-foot"><a href="checkout.html" class="btn btn-block btn-lg">Passer commande</a></div>
+</aside>
+
+<script src="js/animations.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  // Sélection de variantes (visuel)
+  document.querySelectorAll("[data-variant-group]").forEach(function(g){
+    g.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      g.querySelectorAll("button").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+      b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+    });
+  });
+
+  // Changement d'image (transition douce — section 3)
+  var mainImg = document.getElementById("main-img");
+  document.querySelectorAll(".thumbs button").forEach(function(t){
+    t.addEventListener("click", function(){
+      document.querySelectorAll(".thumbs button").forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      mainImg.classList.remove("swap");
+      mainImg.src = "https://picsum.photos/seed/"+t.getAttribute("data-src")+"/800/800";
+      void mainImg.offsetWidth; mainImg.classList.add("swap");
+    });
+  });
+
+  // Accordéon
+  document.querySelectorAll(".acc-head").forEach(function(h){
+    h.addEventListener("click", function(){ h.closest(".acc-item").classList.toggle("open"); });
+  });
+
+  // Produits similaires
+  var SIM = [
+    { n:"Pace X Runner", c:"Running", p:169, s:"dfp3" },
+    { n:"North Trail", c:"Running", p:159, s:"dfp5" },
+    { n:"Urbano Low", c:"Lifestyle", p:129, s:"dfp2", badge:"Nouveau", bt:"accent" },
+    { n:"Volta Court", c:"Basketball", p:139, s:"dfp4" }
+  ];
+  document.getElementById("similar").innerHTML = SIM.map(function(p){
+    return '<article class="product-card reveal"><div class="media zoom-frame">'
+      + (p.badge?'<div class="card-badges"><span class="badge badge-'+p.bt+'">'+p.badge+'</span></div>':'')
+      + '<img src="https://picsum.photos/seed/'+p.s+'/600/600" alt="'+p.n+'" loading="lazy">'
+      + '<div class="quick-add"><button class="btn btn-block btn-sm" data-add-to-cart data-name="'+p.n+'" data-open-drawer>Ajout rapide</button></div>'
+      + '</div><div class="body"><a href="produit.html"><div class="name">'+p.n+'</div></a><div class="cat">'+p.c+'</div>'
+      + '<div class="price-row"><span class="price">'+p.p+' €</span></div></div></article>';
+  }).join("");
+  window.DFReveal && DFReveal();
+  window.DFCart && DFCart.bindLines(document);
+</script>
+</body>
+</html>
