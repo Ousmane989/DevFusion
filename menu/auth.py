@@ -9,7 +9,7 @@ def se_connecter():
     """
     Demande login et mot de passe et vérifie les identifiants.
 
-    :return: l'objet Utilisateur connecté, ou None après 3 échecs.
+    Retourne l'objet Utilisateur connecté, ou None après 3 échecs.
     """
     utilisateur_dao = UtilisateurDAO()
 
