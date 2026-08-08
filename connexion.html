@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — DevFusion</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    <nav class="nav"><a href="index.html">Accueil</a><a href="boutique.html">Boutique</a><a href="collections.html">Collections</a><a href="produit.html">Nouveautés</a></nav>
+    <div class="header-actions">
+      <button class="icon-btn" data-theme-toggle aria-label="Thème"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36-.7-.7M6.34 6.34l-.7-.7m12.72 0-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg></button>
+      <button class="burger" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-menu"><a href="index.html">Accueil</a><a href="boutique.html">Boutique</a><a href="collections.html">Collections</a><a href="produit.html">Nouveautés</a></nav>
+
+<main class="page-fade">
+  <div class="auth-wrap">
+    <div class="auth-card anim-up">
+      <div class="text-center" style="margin-bottom:22px">
+        <h1 style="font-size:1.6rem">Bienvenue</h1>
+        <p style="margin-top:4px">Connectez-vous ou créez votre compte.</p>
+      </div>
+
+      <div class="auth-tabs" id="tabs">
+        <span class="thumb"></span>
+        <button class="active" data-tab="login">Connexion</button>
+        <button data-tab="register">Inscription</button>
+      </div>
+
+      <!-- Connexion -->
+      <form class="auth-form active" data-form="login" onsubmit="return submitForm(event,'login')">
+        <div class="float-field"><input type="email" id="l-email" placeholder=" " required><label for="l-email">E-mail</label></div>
+        <div class="float-field"><input type="password" id="l-pass" placeholder=" " required><label for="l-pass">Mot de passe</label></div>
+        <div class="flex items-center justify-between" style="margin:-6px 0 14px"><label class="muted" style="font-size:.85rem;display:flex;gap:6px;align-items:center"><input type="checkbox"> Se souvenir</label><a href="#" class="link-underline" style="font-size:.85rem;color:var(--accent)">Mot de passe oublié&nbsp;?</a></div>
+        <div class="form-msg" data-msg></div>
+        <button class="btn btn-block btn-lg" type="submit">Se connecter</button>
+      </form>
+
+      <!-- Inscription -->
+      <form class="auth-form" data-form="register" onsubmit="return submitForm(event,'register')">
+        <div class="float-field"><input type="text" id="r-name" placeholder=" " required><label for="r-name">Nom complet</label></div>
+        <div class="float-field"><input type="email" id="r-email" placeholder=" " required><label for="r-email">E-mail</label></div>
+        <div class="float-field"><input type="password" id="r-pass" placeholder=" " required><label for="r-pass">Mot de passe</label></div>
+        <div class="form-msg" data-msg></div>
+        <button class="btn btn-block btn-lg" type="submit">Créer mon compte</button>
+      </form>
+
+      <div class="flex items-center gap" style="margin:20px 0"><hr class="divider" style="flex:1"><span class="muted" style="font-size:.8rem">OU</span><hr class="divider" style="flex:1"></div>
+      <button class="btn btn-outline btn-block">Continuer avec Google</button>
+    </div>
+  </div>
+</main>
+
+<script src="js/animations.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  var tabs = document.getElementById("tabs");
+  tabs.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    var tab = b.getAttribute("data-tab");
+    tabs.querySelectorAll("button").forEach(function(x){ x.classList.toggle("active", x===b); });
+    tabs.classList.toggle("reg", tab==="register");
+    document.querySelectorAll(".auth-form").forEach(function(f){ f.classList.toggle("active", f.getAttribute("data-form")===tab); });
+  });
+
+  function submitForm(e, type){
+    e.preventDefault();
+    var form = e.target;
+    var msg = form.querySelector("[data-msg]");
+    var btn = form.querySelector("button[type=submit]");
+    btn.classList.add("is-loading");
+    msg.className = "form-msg";
+    setTimeout(function(){
+      btn.classList.remove("is-loading");
+      // Démo : succès animé (section 8)
+      msg.textContent = type==="login" ? "Connexion réussie, redirection…" : "Compte créé avec succès !";
+      msg.className = "form-msg success show";
+      DFToast.success(type==="login" ? "Bon retour !" : "Bienvenue chez DevFusion");
+      setTimeout(function(){ window.location.href = "compte.html"; }, 1000);
+    }, 1300);
+    return false;
+  }
+</script>
+</body>
+</html>

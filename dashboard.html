@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — DevFusion Pro</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="sidebar-backdrop" id="sb-bd"></div>
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="brand" data-no-transition><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 16 3-8 6 3 5-7 6 4-2 8H4z"/></svg></span> DevFusion</a>
+    <div class="side-label">Pilotage</div>
+    <nav class="side-nav">
+      <a href="dashboard.html" class="is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Vue d'ensemble</a>
+      <a href="admin-produits.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Produits</a>
+      <a href="admin-commandes.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Commandes</a>
+      <a href="admin-clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg> Clients</a>
+      <div class="side-sep"></div>
+      <div class="side-label">Réglages</div>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg> Paramètres</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg> Retour au site</a>
+    </nav>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <button class="icon-btn side-toggle" id="sb-open" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="input" placeholder="Rechercher…"></div>
+      <button class="icon-btn" data-theme-toggle aria-label="Thème"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36-.7-.7M6.34 6.34l-.7-.7m12.72 0-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg></button>
+      <button class="btn btn-sm" data-modal-open="new-modal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nouveau produit</button>
+      <div class="avatar">OB</div>
+    </div>
+
+    <div class="main-area page-fade">
+      <div class="page-title reveal">
+        <h1>Vue d'ensemble</h1>
+        <p>Performance de votre boutique · août 2026</p>
+      </div>
+
+      <!-- Statistiques (compteurs animés — section 10) -->
+      <div class="stat-grid stagger">
+        <div class="stat-card reveal"><div class="s-head"><span class="s-ic" style="background:var(--accent-soft);color:var(--accent)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="trend up">▲ 12,4%</span></div><div class="s-val"><span class="count" data-to="48920" data-suffix=" €">0</span></div><div class="s-lbl">Chiffre d'affaires</div></div>
+        <div class="stat-card reveal"><div class="s-head"><span class="s-ic" style="background:var(--info-soft);color:var(--info)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></span><span class="trend up">▲ 8,1%</span></div><div class="s-val"><span class="count" data-to="1284">0</span></div><div class="s-lbl">Commandes</div></div>
+        <div class="stat-card reveal"><div class="s-head"><span class="s-ic" style="background:var(--success-soft);color:var(--success)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><span class="trend up">▲ 5,3%</span></div><div class="s-val"><span class="count" data-to="892">0</span></div><div class="s-lbl">Nouveaux clients</div></div>
+        <div class="stat-card reveal"><div class="s-head"><span class="s-ic" style="background:var(--warning-soft);color:var(--warning)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span><span class="trend down">▼ 1,2%</span></div><div class="s-val"><span class="count" data-to="3.8" data-decimals="1" data-suffix="%">0</span></div><div class="s-lbl">Taux de conversion</div></div>
+      </div>
+
+      <!-- Graphiques -->
+      <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:24px">
+        <div class="chart-card reveal">
+          <div class="panel-head"><h3>Ventes par mois</h3><span class="badge badge-accent">2026</span></div>
+          <div class="chart" id="bars">
+            <div class="col"><div class="bar" data-h="45"></div><span class="c-lbl">Jan</span></div>
+            <div class="col"><div class="bar" data-h="60"></div><span class="c-lbl">Fév</span></div>
+            <div class="col"><div class="bar" data-h="52"></div><span class="c-lbl">Mar</span></div>
+            <div class="col"><div class="bar" data-h="70"></div><span class="c-lbl">Avr</span></div>
+            <div class="col"><div class="bar" data-h="65"></div><span class="c-lbl">Mai</span></div>
+            <div class="col"><div class="bar" data-h="82"></div><span class="c-lbl">Juin</span></div>
+            <div class="col"><div class="bar" data-h="90"></div><span class="c-lbl">Juil</span></div>
+            <div class="col"><div class="bar" data-h="100"></div><span class="c-lbl">Août</span></div>
+          </div>
+        </div>
+        <div class="chart-card reveal">
+          <div class="panel-head"><h3>Répartition</h3></div>
+          <div class="flex items-center" style="gap:22px;flex-direction:column;padding-top:10px">
+            <div class="donut" id="donut"></div>
+            <div style="width:100%">
+              <div class="flex items-center justify-between" style="font-size:.86rem;padding:5px 0"><span class="flex items-center gap-sm"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent)"></span> Running</span><strong>62%</strong></div>
+              <div class="flex items-center justify-between" style="font-size:.86rem;padding:5px 0"><span class="flex items-center gap-sm"><span style="width:10px;height:10px;border-radius:3px;background:var(--info)"></span> Lifestyle</span><strong>20%</strong></div>
+              <div class="flex items-center justify-between" style="font-size:.86rem;padding:5px 0"><span class="flex items-center gap-sm"><span style="width:10px;height:10px;border-radius:3px;background:var(--surface-2)"></span> Basketball</span><strong>18%</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dernières commandes (tableau) -->
+      <div class="panel reveal" style="margin-top:24px">
+        <div class="panel-head"><h3>Dernières commandes</h3><a href="admin-commandes.html" class="btn btn-ghost btn-sm">Gérer</a></div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Commande</th><th>Client</th><th>Date</th><th>Statut</th><th style="text-align:right">Montant</th></tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale : nouveau produit (section 15) -->
+<div class="modal-backdrop" id="new-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Nouveau produit</h3><button class="icon-btn" data-modal-close aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="field"><label>Nom du produit</label><input class="input" placeholder="Air Fusion 02"></div>
+    <div class="grid grid-2"><div class="field"><label>Prix (€)</label><input class="input" placeholder="149"></div><div class="field"><label>Stock</label><input class="input" placeholder="120"></div></div>
+    <div class="flex gap" style="margin-top:6px"><button class="btn btn-outline" style="flex:1" data-modal-close>Annuler</button><button class="btn" style="flex:1" data-loading="Produit créé" data-modal-close>Créer</button></div>
+  </div>
+</div>
+
+<script src="js/animations.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  var sb = document.getElementById("sidebar"), bd = document.getElementById("sb-bd");
+  document.getElementById("sb-open").addEventListener("click", function(){ sb.classList.add("open"); bd.classList.add("open"); });
+  bd.addEventListener("click", function(){ sb.classList.remove("open"); bd.classList.remove("open"); });
+
+  // Donut apparaît quand visible
+  var donut = document.getElementById("donut");
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function(e,o){ if(e[0].isIntersecting){ donut.classList.add("in"); o.disconnect(); } },{threshold:.4}).observe(donut);
+  } else { donut.classList.add("in"); }
+
+  // Tableau des commandes (apparition ligne par ligne)
+  var ROWS = [
+    { id:"#DF-0847", c:"Awa Diallo", d:"5 août", st:"shipped", stl:"Expédiée", m:"417,00 €" },
+    { id:"#DF-0846", c:"Karim Benali", d:"5 août", st:"pending", stl:"En attente", m:"149,00 €" },
+    { id:"#DF-0845", c:"Léa Martin", d:"4 août", st:"done", stl:"Livrée", m:"298,00 €" },
+    { id:"#DF-0844", c:"Yusuf Cissé", d:"4 août", st:"done", stl:"Livrée", m:"169,00 €" },
+    { id:"#DF-0843", c:"Nora Haddad", d:"3 août", st:"canceled", stl:"Annulée", m:"139,00 €" }
+  ];
+  document.getElementById("orders-tbody").innerHTML = ROWS.map(function(r,i){
+    return '<tr class="row-in" style="animation-delay:'+(i*70)+'ms"><td><strong>'+r.id+'</strong></td><td>'+r.c+'</td><td class="muted">'+r.d+'</td><td><span class="status '+r.st+'">'+r.stl+'</span></td><td style="text-align:right"><strong>'+r.m+'</strong></td></tr>';
+  }).join("");
+</script>
+</body>
+</html>

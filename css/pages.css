@@ -1,0 +1,155 @@
+/* ==========================================================================
+   DevFusion — Styles spécifiques aux pages storefront
+   ========================================================================== */
+
+/* ---------------- HERO (accueil) — section 1 ----------------------------- */
+.hero { position: relative; padding-block: clamp(56px, 9vw, 110px); overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(60% 60% at 15% 10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    radial-gradient(50% 50% at 90% 20%, color-mix(in srgb, var(--info) 12%, transparent), transparent 70%);
+}
+.hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+.hero h1 { margin-top: 16px; }
+.hero p.lead { font-size: 1.12rem; margin-top: 18px; max-width: 30ch; }
+.hero-cta { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.hero-stats { display: flex; gap: 34px; margin-top: 40px; }
+.hero-stats .num { font-size: 1.7rem; font-weight: 850; }
+.hero-stats .lbl { font-size: .84rem; color: var(--muted); }
+.hero-visual { position: relative; }
+.hero-visual .main-shot {
+  border-radius: var(--r-xl); box-shadow: var(--shadow-3); overflow: hidden; aspect-ratio: 4/5;
+}
+.hero-visual .main-shot img { width: 100%; height: 100%; object-fit: cover; }
+.hero-visual .chip {
+  position: absolute; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-2); padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px; font-size: .86rem; font-weight: 600;
+}
+.hero-visual .chip.c1 { top: 22px; left: -18px; }
+.hero-visual .chip.c2 { bottom: 30px; right: -14px; }
+
+/* Bandeau marques défilant */
+.marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee-track { display: flex; gap: 60px; width: max-content; animation: df-marquee 26s linear infinite; }
+@keyframes df-marquee { to { transform: translateX(-50%); } }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee span { font-weight: 800; font-size: 1.3rem; color: var(--muted-2); letter-spacing: -.02em; }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+
+/* ---------------- Barre d'avantages -------------------------------------- */
+.perks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.perk { display: flex; gap: 12px; align-items: flex-start; padding: 18px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); }
+.perk .p-ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+.perk h4 { font-size: .96rem; }
+.perk p { font-size: .84rem; margin-top: 2px; }
+
+/* ---------------- Newsletter --------------------------------------------- */
+.newsletter { background: linear-gradient(135deg, var(--accent), var(--accent-strong)); color: #fff; border-radius: var(--r-xl); padding: clamp(30px, 5vw, 56px); text-align: center; }
+.newsletter h2 { color: #fff; }
+.newsletter p { color: rgba(255,255,255,.85); margin-top: 10px; }
+.newsletter form { display: flex; gap: 10px; max-width: 460px; margin: 24px auto 0; }
+.newsletter input { flex: 1; border: none; border-radius: var(--r-pill); padding: 14px 18px; }
+.newsletter .btn { --btn-bg: #fff; --btn-ink: var(--accent-strong); }
+
+/* ==========================================================================
+   PAGE PRODUIT — section 3
+   ========================================================================== */
+.pdp { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: start; }
+.gallery .main {
+  border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 1/1; background: var(--surface-2);
+  cursor: zoom-in;
+}
+.gallery .main img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--t-slow) var(--ease-out); }
+.gallery .main:hover img { transform: scale(1.12); }
+.gallery .main img.swap { animation: df-fade-in var(--t-base) var(--ease-out); }
+.thumbs { display: flex; gap: 10px; margin-top: 12px; }
+.thumbs button {
+  width: 72px; height: 72px; border-radius: var(--r-sm); overflow: hidden;
+  border: 2px solid transparent; transition: border-color var(--t-base), transform var(--t-fast);
+}
+.thumbs button:hover { transform: translateY(-3px); }
+.thumbs button.active { border-color: var(--accent); }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+.pdp-info .price { font-size: 1.9rem; font-weight: 850; }
+.pdp-info .price .old { font-size: 1.1rem; color: var(--muted-2); text-decoration: line-through; margin-left: 10px; font-weight: 600; }
+.variants { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.variant {
+  min-width: 46px; padding: 10px 14px; border-radius: var(--r-sm); border: 1.5px solid var(--border-strong);
+  font-weight: 650; font-size: .9rem; text-align: center;
+  transition: border-color var(--t-fast) var(--ease-out), background var(--t-fast), transform var(--t-fast) var(--ease-spring), color var(--t-fast);
+}
+.variant:hover { border-color: var(--accent); transform: translateY(-2px); }
+.variant.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); position: relative; transition: transform var(--t-fast) var(--ease-spring); }
+.swatch:hover { transform: scale(1.12); }
+.swatch.active::after { content:""; position:absolute; inset:-5px; border:2px solid var(--accent); border-radius:50%; }
+
+.acc { border-top: 1px solid var(--border); }
+.acc-item { border-bottom: 1px solid var(--border); }
+.acc-head { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px 0; font-weight: 650; text-align: left; }
+.acc-head .chev { transition: transform var(--t-base) var(--ease-out); }
+.acc-item.open .acc-head .chev { transform: rotate(180deg); }
+.acc-body { overflow: hidden; max-height: 0; transition: max-height var(--t-base) var(--ease-in-out); }
+.acc-item.open .acc-body { max-height: 240px; }
+.acc-body-inner { padding-bottom: 18px; color: var(--muted); font-size: .92rem; }
+
+/* ==========================================================================
+   PANIER (page complète)
+   ========================================================================== */
+.cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+.summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 24px; position: sticky; top: 90px; }
+.summary .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: .94rem; }
+.summary .row.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 14px; font-size: 1.15rem; font-weight: 800; }
+
+/* ==========================================================================
+   CHECKOUT — section 7 (stepper animé)
+   ========================================================================== */
+.stepper { display: flex; align-items: center; gap: 0; max-width: 640px; margin: 0 auto 40px; }
+.step { display: flex; align-items: center; flex: 1; }
+.step:last-child { flex: none; }
+.step .dot {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: var(--surface-2); color: var(--muted); font-weight: 800; border: 2px solid var(--border);
+  transition: background var(--t-base) var(--ease-out), color var(--t-base), border-color var(--t-base), transform var(--t-base) var(--ease-spring);
+}
+.step .line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; position: relative; overflow: hidden; }
+.step .line::after { content:""; position:absolute; inset:0; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform var(--t-slow) var(--ease-out); }
+.step.done .dot { background: var(--success); border-color: var(--success); color: #fff; }
+.step.done .line::after { transform: scaleX(1); }
+.step.active .dot { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1.12); box-shadow: var(--shadow-accent); }
+.step .lbl { position: absolute; margin-top: 56px; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+.checkout-panel { display: none; }
+.checkout-panel.active { display: block; animation: df-slide-up var(--t-slow) var(--ease-emph) both; }
+
+/* ==========================================================================
+   AUTH (connexion / inscription) — section 8
+   ========================================================================== */
+.auth-wrap { min-height: calc(100vh - var(--header-h)); display: grid; place-items: center; padding: 40px 20px; }
+.auth-card { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-xl); box-shadow: var(--shadow-2); padding: 34px; }
+.auth-tabs { display: flex; background: var(--surface-2); border-radius: var(--r-pill); padding: 4px; margin-bottom: 26px; position: relative; }
+.auth-tabs button { flex: 1; padding: 10px; border-radius: var(--r-pill); font-weight: 650; color: var(--muted); z-index: 1; transition: color var(--t-base); }
+.auth-tabs button.active { color: var(--ink); }
+.auth-tabs .thumb { position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px); left: 4px;
+  background: var(--surface); border-radius: var(--r-pill); box-shadow: var(--shadow-1);
+  transition: transform var(--t-base) var(--ease-emph); }
+.auth-tabs.reg .thumb { transform: translateX(100%); }
+.auth-form { display: none; }
+.auth-form.active { display: block; animation: df-fade-in var(--t-base) var(--ease-out); }
+
+/* Responsive storefront */
+@media (max-width: 900px) {
+  .hero-grid, .pdp, .cart-layout { grid-template-columns: 1fr; }
+  .perks { grid-template-columns: 1fr 1fr; }
+  .summary { position: static; }
+  .hero-visual { order: -1; }
+}
+@media (max-width: 520px) {
+  .perks { grid-template-columns: 1fr; }
+  .hero-stats { gap: 22px; }
+  .newsletter form { flex-direction: column; }
+}
