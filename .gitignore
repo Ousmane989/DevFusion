@@ -1,0 +1,16 @@
+# Environnement virtuel Python
+.venv/
+venv/
+env/
+
+# Fichiers compilés Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configuration PyCharm
+.idea/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
