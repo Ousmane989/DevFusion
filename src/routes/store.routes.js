@@ -3,7 +3,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
-const { THEMES, themeById, defaultShipping } = require('../catalog');
+const { THEMES, themeById, defaultShipping, slugify } = require('../catalog');
 
 const router = express.Router();
 
@@ -25,15 +25,14 @@ function publicStore(user, row) {
   let shipping;
   try { shipping = JSON.parse(row.shipping_json); } catch { shipping = defaultShipping(); }
   const t = themeById(row.theme);
-  const slug = (user.shop_name || 'ma-boutique')
-    .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = slugify(user.shop_name);
   return {
     shopName: user.shop_name,
     theme: t.id,
     themeData: t,
     tagline: row.tagline,
     description: row.description,
+    slug,
     domain: row.domain || `${slug}.karat.shop`,
     defaultDomain: `${slug}.karat.shop`,
     shipping,

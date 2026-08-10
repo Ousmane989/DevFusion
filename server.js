@@ -13,6 +13,7 @@ const dashboardRoutes = require('./src/routes/dashboard.routes');
 const productsRoutes = require('./src/routes/products.routes');
 const storeRoutes = require('./src/routes/store.routes');
 const ordersRoutes = require('./src/routes/orders.routes');
+const publicRoutes = require('./src/routes/public.routes');
 const { hasSmtp } = require('./src/mailer');
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/public', publicRoutes);
 
 // ------------------------------------------------------------------
 // Pages protegees (rendues cote client, mais l'acces est garde ici).
@@ -48,6 +50,11 @@ app.get('/tableau-de-bord', (req, res, next) => {
 app.get('/paiement', (req, res, next) => {
   if (!req.user) return res.redirect('/connexion?suite=/paiement');
   next();
+});
+
+// Vitrine publique d'une boutique (rendue côté client).
+app.get('/boutique/:slug', (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'boutique.html'));
 });
 
 // Fichiers statiques (HTML, CSS, JS, images).
