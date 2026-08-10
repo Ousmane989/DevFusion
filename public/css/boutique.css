@@ -174,6 +174,57 @@ img { max-width: 100%; display: block; }
 .lay-minimal .sf-add.ghost:hover { border-color: var(--accent); background: none; color: var(--accent); }
 
 /* ==================================================================
+   Panier flottant + tiroir + commande (paiement à la livraison)
+   ================================================================== */
+.sf-fab { position: fixed; right: 22px; bottom: 22px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(120deg, var(--accent), var(--accent2)); color: var(--onaccent); border: none; padding: 13px 20px; border-radius: 50px; font-family: var(--body); font-weight: 600; font-size: 0.92rem; cursor: pointer; box-shadow: 0 16px 36px -10px rgba(0,0,0,.5); transition: transform .3s; }
+.sf-fab:hover { transform: translateY(-3px); }
+.sf-fab svg { width: 18px; height: 18px; }
+.sf-fab-count { background: rgba(0,0,0,.22); border-radius: 50px; padding: 1px 8px; font-size: 0.82rem; }
+
+.sf-drawer { position: fixed; inset: 0; z-index: 60; display: none; }
+.sf-drawer.open { display: block; }
+.sf-drawer-ov { position: absolute; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(3px); animation: sfFade .3s ease; }
+@keyframes sfFade { from { opacity: 0; } to { opacity: 1; } }
+.sf-drawer-p { position: absolute; top: 0; right: 0; bottom: 0; width: min(420px, 92vw); background: var(--bg); border-left: 1px solid var(--line); display: flex; flex-direction: column; animation: sfSlide .35s cubic-bezier(.16,1,.3,1); }
+@keyframes sfSlide { from { transform: translateX(30px); opacity: .6; } to { transform: none; opacity: 1; } }
+.sf-drawer-h { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.sf-drawer-h h3 { font-size: 1.3rem; }
+.sf-x { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+.sf-x:hover { color: var(--text); }
+.sf-drawer-body { flex: 1; overflow-y: auto; padding: 18px 22px 30px; }
+.sf-cart-empty { text-align: center; padding: 50px 10px; }
+
+.sf-lines { display: grid; gap: 12px; margin-bottom: 20px; }
+.sf-line { display: flex; align-items: center; gap: 12px; }
+.sf-line-i { width: 46px; height: 46px; border-radius: 10px; flex: none; display: grid; place-items: center; font-family: var(--head); font-weight: 700; color: var(--accent); background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent) 26%, var(--surface)), var(--surface)); }
+.sf-line-b { flex: 1; min-width: 0; }
+.sf-line-n { font-size: 0.92rem; }
+.sf-line-p { font-size: 0.8rem; color: var(--muted); }
+.sf-qty { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 50px; padding: 3px 6px; }
+.sf-qty button { width: 24px; height: 24px; border-radius: 50%; border: none; background: var(--soft); color: var(--text); cursor: pointer; font-size: 1rem; line-height: 1; }
+.sf-qty button:hover { background: var(--accent); color: var(--onaccent); }
+.sf-qty span { min-width: 16px; text-align: center; font-variant-numeric: tabular-nums; }
+
+.sf-checkout { display: grid; gap: 11px; border-top: 1px solid var(--line); padding-top: 18px; }
+.sf-checkout h4 { font-family: var(--body); font-weight: 600; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.sf-checkout input, .sf-checkout select, .sf-checkout textarea { width: 100%; padding: 12px 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-family: var(--body); font-size: 0.95rem; }
+.sf-checkout input:focus, .sf-checkout select:focus, .sf-checkout textarea:focus { outline: none; border-color: var(--accent); }
+.sf-checkout select option { color: #14110c; background: #f4f1ea; }
+.sf-cod { display: flex; gap: 12px; align-items: center; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 1.2rem; }
+.sf-cod div { display: flex; flex-direction: column; }
+.sf-cod strong { font-family: var(--body); font-size: 0.92rem; }
+.sf-cod span { font-size: 0.8rem; color: var(--muted); }
+.sf-totals { display: grid; gap: 7px; margin-top: 4px; }
+.sf-totals > div { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--muted); }
+.sf-totals .sf-grand { color: var(--text); font-family: var(--head); font-size: 1.2rem; font-weight: 700; border-top: 1px solid var(--line); padding-top: 8px; }
+.sf-confirm { width: 100%; margin-top: 6px; }
+.sf-msg { font-size: 0.84rem; text-align: center; min-height: 1em; }
+.sf-msg.err { color: #f0a29c; }
+.sf-done { text-align: center; padding: 30px 10px; display: grid; gap: 10px; }
+.sf-check { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto; display: grid; place-items: center; font-size: 1.8rem; color: var(--onaccent); background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+.sf-ref { color: var(--accent); font-family: var(--head); font-size: 1.3rem; font-weight: 700; }
+
+/* ==================================================================
    Responsive
    ================================================================== */
 @media (max-width: 900px) {

@@ -50,10 +50,22 @@ function publicProduct(p) {
 
 const CATEGORIES = ['Mode', 'Électronique', 'Alimentation', 'Cosmétique', 'Artisanat', 'Accessoires', 'Autre'];
 
+// Cycle de vie d'une commande — paiement a la livraison.
+const ORDER_STATUSES = [
+  { key: 'nouvelle', label: 'Nouvelle', tone: 'warning' },
+  { key: 'confirmee', label: 'Confirmée', tone: 'info' },
+  { key: 'expediee', label: 'Expédiée', tone: 'info' },
+  { key: 'livree', label: 'Livrée', tone: 'good' },
+  { key: 'annulee', label: 'Annulée', tone: 'critical' },
+];
+function statusMeta(key) {
+  return ORDER_STATUSES.find((s) => s.key === key) || ORDER_STATUSES[0];
+}
+
 function slugify(s) {
   return String(s || 'ma-boutique')
     .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 }
 
-module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify };
+module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta };
