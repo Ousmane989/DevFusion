@@ -32,44 +32,84 @@
     <div class="dash-body">
       <div class="container">
         <div class="dash-title">
-          <h1>Bonjour, <span class="gold-text" id="hello-name">…</span> 👋</h1>
-          <p>Voici les performances de votre boutique aujourd'hui.</p>
+          <div>
+            <h1>Bonjour, <span class="gold-text" id="hello-name">…</span> 👋</h1>
+            <p>Voici les performances de votre boutique sur les 30 derniers jours.</p>
+          </div>
+          <span class="period-note">Comparé aux 30 jours précédents</span>
         </div>
 
         <!-- Indicateurs clés -->
         <div class="kpi-grid">
           <div class="kpi">
-            <div class="k-label">Chiffre d'affaires</div>
-            <div class="k-val gold-text"><span id="kpi-rev">0</span> <span style="font-size:1rem">MRU</span></div>
+            <div class="kpi-top"><span class="k-label">Chiffre d'affaires</span><span id="kpi-rev-delta"></span></div>
+            <div class="k-val gold-text"><span id="kpi-rev">0</span> <span class="k-unit">MRU</span></div>
             <div class="k-sub" id="kpi-rev-fcfa">≈ 0 FCFA</div>
+            <div class="k-spark" id="kpi-rev-spark"></div>
           </div>
           <div class="kpi">
-            <div class="k-label">Commandes</div>
+            <div class="kpi-top"><span class="k-label">Commandes</span><span id="kpi-orders-delta"></span></div>
             <div class="k-val" id="kpi-orders">0</div>
-            <div class="k-sub">Ce mois-ci</div>
+            <div class="k-sub">Sur la période</div>
+            <div class="k-spark" id="kpi-orders-spark"></div>
           </div>
           <div class="kpi">
-            <div class="k-label">Visiteurs</div>
+            <div class="kpi-top"><span class="k-label">Visiteurs</span><span id="kpi-visitors-delta"></span></div>
             <div class="k-val" id="kpi-visitors">0</div>
-            <div class="k-sub">30 derniers jours</div>
+            <div class="k-sub">Sur la période</div>
+            <div class="k-spark" id="kpi-visitors-spark"></div>
           </div>
           <div class="kpi">
-            <div class="k-label">Taux de conversion</div>
-            <div class="k-val"><span id="kpi-conv">0</span><span style="font-size:1rem">%</span></div>
+            <div class="kpi-top"><span class="k-label">Conversion</span><span id="kpi-conv-delta"></span></div>
+            <div class="k-val"><span id="kpi-conv">0</span><span class="k-unit">%</span></div>
             <div class="k-sub">Visiteurs → clients</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top"><span class="k-label">Panier moyen</span><span id="kpi-basket-delta"></span></div>
+            <div class="k-val"><span id="kpi-basket">0</span> <span class="k-unit">MRU</span></div>
+            <div class="k-sub" id="kpi-basket-fcfa">≈ 0 FCFA</div>
           </div>
         </div>
 
+        <!-- Graphique du chiffre d'affaires -->
+        <div class="panel panel-chart">
+          <div class="panel-head">
+            <div>
+              <h3>Évolution du chiffre d'affaires</h3>
+              <p class="panel-sub">Passez la souris sur la courbe pour le détail par jour.</p>
+            </div>
+            <div class="period-toggle" role="tablist" aria-label="Période">
+              <button class="period-btn" data-period="7j">7 j</button>
+              <button class="period-btn active" data-period="30j">30 j</button>
+              <button class="period-btn" data-period="12m">12 mois</button>
+            </div>
+          </div>
+          <div class="chart-area" id="revenue-chart"></div>
+        </div>
+
         <div class="dash-cols">
-          <!-- Graphique CA -->
+          <!-- Ventes par catégorie -->
           <div class="panel">
-            <h3>Chiffre d'affaires — 6 derniers mois</h3>
-            <div class="chart" id="chart"></div>
+            <div class="panel-head"><h3>Ventes par catégorie</h3></div>
+            <div class="cat-list" id="cat-list"></div>
           </div>
           <!-- Meilleures ventes -->
           <div class="panel">
-            <h3>Meilleures ventes</h3>
+            <div class="panel-head"><h3>Meilleures ventes</h3></div>
             <ul class="top-list" id="top-list"></ul>
+          </div>
+        </div>
+
+        <!-- Commandes récentes -->
+        <div class="panel">
+          <div class="panel-head"><h3>Commandes récentes</h3><a href="#" class="panel-link">Tout voir</a></div>
+          <div class="table-wrap">
+            <table class="orders">
+              <thead>
+                <tr><th>Référence</th><th>Client</th><th>Produit</th><th class="num">Montant</th><th>Statut</th><th>Date</th></tr>
+              </thead>
+              <tbody id="orders-body"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -77,96 +117,6 @@
   </div>
 
   <script src="/js/api.js"></script>
-  <script>
-    (function () {
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      function countTo(el, target, suffix) {
-        suffix = suffix || '';
-        if (reduce) { el.textContent = Number(target).toLocaleString('fr-FR') + suffix; return; }
-        const dur = 1400, start = performance.now();
-        function tick(now) {
-          const p = Math.min(1, (now - start) / dur);
-          const e = 1 - Math.pow(1 - p, 3);
-          el.textContent = Math.floor(e * target).toLocaleString('fr-FR') + suffix;
-          if (p < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-      }
-
-      (async function init() {
-        const { ok, status, data } = await Karat.api('/api/dashboard');
-        if (!ok) {
-          if (status === 401) window.location.href = '/connexion?suite=/tableau-de-bord';
-          return;
-        }
-        const u = data.user, s = data.stats;
-
-        // Identité
-        const initials = (u.name || 'K').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-        document.getElementById('avatar').textContent = initials;
-        document.getElementById('user-name').textContent = u.name;
-        document.getElementById('shop-name').textContent = u.shopName;
-        document.getElementById('hello-name').textContent = (u.name || '').split(' ')[0];
-
-        // Bandeau statut
-        const bar = document.getElementById('trial-bar');
-        const txt = document.getElementById('trial-text');
-        if (u.status === 'trial') {
-          const end = u.trialEndsAt ? new Date(u.trialEndsAt) : null;
-          const days = end ? Math.max(0, Math.ceil((end - Date.now()) / 86400000)) : 0;
-          txt.textContent = '✦ Essai gratuit : ' + days + ' jour' + (days > 1 ? 's' : '') + ' restant' + (days > 1 ? 's' : '') + '. Activez votre abonnement pour continuer sans interruption.';
-          bar.style.display = 'block';
-        } else if (u.status === 'active') {
-          const end = u.subscriptionEndsAt ? new Date(u.subscriptionEndsAt).toLocaleDateString('fr-FR') : '';
-          txt.textContent = '✓ Abonnement ' + u.planName + ' actif' + (end ? ' jusqu\'au ' + end : '') + '.';
-          bar.querySelector('.btn').style.display = 'none';
-          bar.style.display = 'block';
-        }
-
-        // KPIs
-        countTo(document.getElementById('kpi-rev'), s.revenueMru);
-        document.getElementById('kpi-rev-fcfa').textContent = '≈ ' + Karat.money(s.revenueFcfa) + ' FCFA';
-        countTo(document.getElementById('kpi-orders'), s.orders);
-        countTo(document.getElementById('kpi-visitors'), s.visitors);
-        document.getElementById('kpi-conv').textContent = s.conversion;
-
-        // Graphique en barres
-        const chart = document.getElementById('chart');
-        const max = Math.max.apply(null, s.trend.map((t) => t.value));
-        chart.innerHTML = '';
-        s.trend.forEach((t, i) => {
-          const wrap = document.createElement('div');
-          wrap.className = 'bar-wrap';
-          const bar = document.createElement('div');
-          bar.className = 'bar';
-          bar.style.height = '0%';
-          bar.title = Karat.money(t.value) + ' MRU';
-          const label = document.createElement('div');
-          label.className = 'bar-label';
-          label.textContent = t.label;
-          wrap.appendChild(bar); wrap.appendChild(label);
-          chart.appendChild(wrap);
-          const target = Math.round((t.value / max) * 100);
-          setTimeout(() => { bar.style.height = target + '%'; }, reduce ? 0 : 120 * i);
-        });
-
-        // Meilleures ventes
-        const list = document.getElementById('top-list');
-        list.innerHTML = '';
-        s.topProducts.forEach((p) => {
-          const li = document.createElement('li');
-          li.innerHTML = '<div><div class="t-name">' + p.name + '</div><div class="t-sales">' + p.sales + ' ventes</div></div>' +
-                         '<div class="t-rev">' + Karat.money(p.revenue) + ' MRU</div>';
-          list.appendChild(li);
-        });
-      })();
-
-      document.getElementById('logout').addEventListener('click', async () => {
-        await Karat.api('/api/auth/logout', {});
-        window.location.href = '/';
-      });
-    })();
-  </script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>
