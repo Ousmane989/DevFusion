@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nouveau mot de passe — Karat</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,12 22,28 10,28 5,12' fill='%23D4AF37'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <aside class="auth-aside">
+      <div class="aside-glow"></div>
+      <a href="/" class="brand"><svg class="mark" viewBox="0 0 32 32"><polygon points="16,3 27,12 22,28 10,28 5,12" fill="#D4AF37"/></svg><span class="gold-text">Karat</span></a>
+      <div class="aside-body">
+        <h2>Définissez un nouveau <span class="gold-text">mot de passe</span>.</h2>
+        <p>Saisissez le code reçu par e-mail, puis choisissez un mot de passe solide pour protéger votre compte.</p>
+      </div>
+      <p class="aside-foot">Le code est valable 15 minutes.</p>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <a href="/mot-de-passe-oublie" class="auth-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg> Retour</a>
+        <h1>Nouveau mot de passe</h1>
+        <p class="lead">Code envoyé à <strong id="email-label">votre adresse</strong>.</p>
+
+        <div class="form-msg" id="msg"></div>
+
+        <form id="reset-form" novalidate>
+          <div class="field">
+            <label for="code">Code de réinitialisation</label>
+            <input id="code" name="code" type="text" inputmode="numeric" maxlength="6" placeholder="6 chiffres" />
+          </div>
+          <div class="field">
+            <label for="password">Nouveau mot de passe</label>
+            <div class="pw-wrap">
+              <input id="password" name="password" type="password" autocomplete="new-password" placeholder="8 caractères minimum" />
+              <button type="button" class="pw-toggle" aria-label="Afficher le mot de passe">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="hint">Au moins 8 caractères.</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">Mettre à jour le mot de passe</button>
+        </form>
+
+        <p class="auth-alt">Vous n'avez pas reçu de code ? <a href="/mot-de-passe-oublie" class="link-gold">Recommencer</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      Karat.bindPwToggles();
+      const email = sessionStorage.getItem('karat_reset_email');
+      const msgEl = document.getElementById('msg');
+      const btn = document.getElementById('submit-btn');
+
+      if (!email) { window.location.href = '/mot-de-passe-oublie'; return; }
+      document.getElementById('email-label').textContent = email;
+
+      const devCode = sessionStorage.getItem('karat_reset_devcode');
+      if (devCode) {
+        Karat.msg(msgEl, 'info', 'Mode démo : votre code est ' + devCode + '.');
+        document.getElementById('code').value = devCode;
+      }
+
+      document.getElementById('reset-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        Karat.clearMsg(msgEl);
+        const code = document.getElementById('code').value.trim();
+        const password = document.getElementById('password').value;
+        if (code.length !== 6) { Karat.msg(msgEl, 'error', 'Saisissez le code à 6 chiffres.'); return; }
+        if (password.length < 8) { Karat.msg(msgEl, 'error', 'Mot de passe : 8 caractères minimum.'); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Mise à jour…';
+        const { ok, data } = await Karat.api('/api/auth/reset', { email, code, password });
+        btn.disabled = false;
+        btn.textContent = 'Mettre à jour le mot de passe';
+
+        if (!ok) { Karat.msg(msgEl, 'error', data.error || 'Code invalide ou expiré.'); return; }
+
+        sessionStorage.removeItem('karat_reset_email');
+        sessionStorage.removeItem('karat_reset_devcode');
+        Karat.msg(msgEl, 'success', 'Mot de passe mis à jour ! Redirection vers la connexion…');
+        setTimeout(() => { window.location.href = '/connexion'; }, 1100);
+      });
+    })();
+  </script>
+</body>
+</html>
