@@ -10,6 +10,9 @@ const { loadUser } = require('./src/middleware');
 const authRoutes = require('./src/routes/auth.routes');
 const billingRoutes = require('./src/routes/billing.routes');
 const dashboardRoutes = require('./src/routes/dashboard.routes');
+const productsRoutes = require('./src/routes/products.routes');
+const storeRoutes = require('./src/routes/store.routes');
+const ordersRoutes = require('./src/routes/orders.routes');
 const { hasSmtp } = require('./src/mailer');
 
 const app = express();
@@ -27,6 +30,9 @@ app.use(loadUser);
 app.use('/api/auth', authRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/store', storeRoutes);
+app.use('/api/orders', ordersRoutes);
 
 // ------------------------------------------------------------------
 // Pages protegees (rendues cote client, mais l'acces est garde ici).
