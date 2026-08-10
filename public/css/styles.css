@@ -486,6 +486,28 @@ img { max-width: 100%; display: block; }
 .top-list .t-bar { height: 100%; background: var(--gold-grad); border-radius: 50px; transition: width 1s var(--ease); }
 .top-list .t-sales { font-size: 0.76rem; color: var(--text-mute); margin-top: 5px; }
 
+/* --- Tunnel de conversion --- */
+.funnel { display: grid; gap: 16px; }
+.funnel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.funnel-name { font-size: 0.92rem; }
+.funnel-val { font-size: 0.9rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.funnel-step { color: var(--gold-light); font-size: 0.78rem; margin-left: 4px; }
+.funnel-track { height: 12px; background: var(--bg-soft); border-radius: 50px; overflow: hidden; }
+.funnel-bar { height: 100%; border-radius: 50px; transition: width 1s var(--ease); }
+
+/* --- Donut « Sources de trafic » --- */
+.donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.donut-chart { flex: none; width: 150px; }
+.donut { width: 150px; height: 150px; display: block; }
+.donut-seg { transition: opacity .5s var(--ease); }
+.donut-total { fill: var(--text); font-family: var(--serif); font-size: 22px; font-weight: 700; }
+.donut-cap { fill: var(--text-mute); font-size: 9px; font-family: var(--sans); letter-spacing: .5px; }
+.donut-legend { list-style: none; flex: 1; min-width: 160px; display: grid; gap: 11px; }
+.donut-legend li { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.donut-legend .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.donut-legend .lg-name { color: var(--text-dim); }
+.donut-legend .lg-val { margin-left: auto; color: var(--text); font-variant-numeric: tabular-nums; }
+
 /* --- Table des commandes --- */
 .table-wrap { overflow-x: auto; }
 .orders { width: 100%; border-collapse: collapse; min-width: 640px; }
