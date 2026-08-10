@@ -1,0 +1,188 @@
+/* ==================================================================
+   Karat — styles de la vitrine publique (6 mises en page distinctes)
+   ================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #0d0d0d; }
+img { max-width: 100%; display: block; }
+
+.storefront {
+  --bg: #0d0d0d; --surface: #171717; --accent: #d4af37; --accent2: #f5d77e; --text: #f4f1ea;
+  --muted: rgba(244,241,234,.62); --line: rgba(244,241,234,.14); --soft: rgba(244,241,234,.05);
+  --onaccent: #1a1400; --head: 'Cormorant Garamond', Georgia, serif; --body: 'Jost', system-ui, sans-serif;
+  background: var(--bg); color: var(--text); font-family: var(--body); font-weight: 300; line-height: 1.6;
+  min-height: 100vh; overflow-x: hidden; position: relative; -webkit-font-smoothing: antialiased;
+}
+.storefront a { color: inherit; text-decoration: none; cursor: pointer; }
+.storefront h1, .storefront h2, .storefront h3, .storefront h4 { font-family: var(--head); font-weight: 600; line-height: 1.1; }
+
+/* ---- éléments communs ---- */
+.sf-eyebrow { font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+.sf-btn { display: inline-block; padding: 13px 28px; border-radius: 50px; background: linear-gradient(120deg, var(--accent), var(--accent2)); color: var(--onaccent); font-weight: 600; font-family: var(--body); font-size: 0.95rem; border: none; cursor: pointer; transition: transform .35s, box-shadow .35s; }
+.sf-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -12px var(--accent); }
+.sf-btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
+.sf-btn.ghost:hover { border-color: var(--accent); color: var(--accent); box-shadow: none; }
+.sf-muted { color: var(--muted); }
+
+.sf-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 6vw; border-bottom: 1px solid var(--line); }
+.sf-brand { font-family: var(--head); font-size: 1.7rem; font-weight: 700; letter-spacing: .5px; }
+.sf-nav { display: flex; gap: 26px; }
+.sf-nav a { color: var(--muted); font-size: 0.9rem; transition: color .3s; }
+.sf-nav a:hover, .sf-nav a.on { color: var(--text); }
+.sf-cart { position: relative; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 50px; padding: 8px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.sf-cart svg { width: 18px; height: 18px; }
+.sf-cart-count { font-size: 0.8rem; min-width: 16px; text-align: center; color: var(--accent); }
+.sf-logo-dot { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+
+.sf-hero { padding: 8vw 6vw; }
+.sf-hero h1 { font-size: clamp(2.4rem, 6vw, 4.6rem); margin: 16px 0; }
+.sf-lead { color: var(--muted); max-width: 560px; font-size: 1.08rem; margin-bottom: 26px; }
+.sf-divider { width: 90px; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); margin: 40px auto 0; }
+
+.sf-products { padding: 40px 6vw 30px; }
+.sf-sec-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); margin-bottom: 28px; }
+.sf-sec-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 26px; }
+.sf-count { color: var(--muted); font-size: 0.9rem; }
+.sf-grid { display: grid; gap: 22px; }
+.sf-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
+.sf-grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+.sf-grid.cols4 { grid-template-columns: repeat(4, 1fr); }
+
+.sf-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: transform .4s, box-shadow .4s, border-color .4s; display: flex; flex-direction: column; }
+.sf-card-b { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 7px; }
+.sf-card h3 { font-size: 1.25rem; }
+.sf-cat, .sf-tag { font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.sf-tag { align-self: flex-start; background: var(--soft); padding: 3px 9px; border-radius: 50px; color: var(--accent); }
+.sf-desc { color: var(--muted); font-size: 0.88rem; }
+.sf-price { display: flex; flex-direction: column; margin: 4px 0 8px; }
+.sf-mru { font-family: var(--head); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+.sf-fcfa { font-size: 0.76rem; color: var(--muted); }
+.sf-add { margin-top: auto; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px; border-radius: 10px; font-family: var(--body); font-size: 0.86rem; cursor: pointer; transition: all .3s; }
+.sf-add:hover { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: var(--onaccent); }
+.sf-link { color: var(--accent); font-size: 0.88rem; margin-top: 4px; }
+.sf-plus { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent); background: transparent; font-size: 1.2rem; cursor: pointer; transition: all .3s; }
+.sf-plus:hover { background: var(--accent); color: var(--onaccent); }
+.sf-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+
+/* Visuel produit (dégradé + initiale) */
+.sf-img { aspect-ratio: 4/3; background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent) 26%, var(--surface)), var(--surface)); display: grid; place-items: center; position: relative; overflow: hidden; }
+.sf-img.tall { aspect-ratio: 3/4; }
+.sf-img.cover { aspect-ratio: auto; height: 100%; min-height: 220px; }
+.sf-mono { font-family: var(--head); font-size: 3.4rem; font-weight: 700; color: color-mix(in srgb, var(--accent) 55%, transparent); }
+
+.sf-band { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding: 20px 6vw; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; background: var(--soft); }
+
+.sf-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 50px 6vw; }
+.sf-foot-in { text-align: center; display: grid; gap: 8px; }
+.sf-foot-brand { font-family: var(--head); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+.sf-foot-tag { color: var(--muted); }
+.sf-foot-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; color: var(--muted); font-size: 0.82rem; margin-top: 10px; }
+.sf-powered strong { color: var(--accent); }
+.sf-empty { text-align: center; padding: 70px 20px; color: var(--text); }
+
+.sf-toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px); background: var(--surface); border: 1px solid var(--accent); color: var(--text); padding: 12px 20px; border-radius: 50px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: all .35s; z-index: 50; box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+.sf-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ==================================================================
+   1) LUXE — hero centré
+   ================================================================== */
+.lay-luxe .sf-head.center { flex-direction: column; gap: 14px; padding: 26px; }
+.lay-luxe .sf-hero.center { text-align: center; }
+.lay-luxe .sf-hero .sf-lead { margin-left: auto; margin-right: auto; }
+.lay-luxe .sf-btn { margin-top: 6px; }
+.lay-luxe .sf-card:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); box-shadow: 0 24px 50px -18px rgba(0,0,0,.7); }
+
+/* ==================================================================
+   2) WARM — hero deux colonnes + band
+   ================================================================== */
+.lay-warm .sf-hero.two { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+.lay-warm .sf-hero-art { position: relative; min-height: 300px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+.lay-warm .sf-halo { position: absolute; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 40%, transparent), transparent 70%); }
+.lay-warm .sf-collage { position: relative; display: flex; gap: 14px; }
+.lay-warm .sf-chip { width: 66px; height: 66px; border-radius: 20px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, var(--surface)), var(--surface)); display: grid; place-items: center; font-family: var(--head); font-size: 1.7rem; font-weight: 700; color: var(--accent); border: 1px solid var(--line); }
+.lay-warm .sf-chip:nth-child(2) { transform: translateY(18px); } .lay-warm .sf-chip:nth-child(3) { transform: translateY(-10px); } .lay-warm .sf-chip:nth-child(4) { transform: translateY(24px); }
+.lay-warm .sf-card.round { border-radius: 22px; }
+.lay-warm .sf-card.round .sf-img { aspect-ratio: 16/10; }
+.lay-warm .sf-card:hover { transform: translateY(-5px); box-shadow: 0 22px 44px -18px rgba(0,0,0,.6); }
+
+/* ==================================================================
+   3) FRESH — bannière + pills + grille 4 colonnes
+   ================================================================== */
+.lay-fresh .sf-nav.pills a { padding: 6px 14px; border-radius: 50px; }
+.lay-fresh .sf-nav.pills a.on { background: var(--soft); color: var(--accent); }
+.lay-fresh .sf-banner { padding: 0 6vw; }
+.lay-fresh .sf-banner-in { border-radius: 22px; margin: 26px 0 6px; padding: 60px 40px; background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 30%, var(--bg)), var(--surface)); border: 1px solid var(--line); }
+.lay-fresh .sf-banner h1 { font-size: clamp(2rem, 5vw, 3.4rem); }
+.lay-fresh .sf-banner p { color: var(--muted); margin-top: 12px; max-width: 520px; }
+.lay-fresh .sf-pills { display: flex; gap: 10px; flex-wrap: wrap; padding: 20px 6vw 0; }
+.lay-fresh .sf-pill { background: var(--soft); border: 1px solid var(--line); color: var(--muted); padding: 7px 16px; border-radius: 50px; cursor: pointer; font-family: var(--body); font-size: 0.85rem; }
+.lay-fresh .sf-pill.on { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: var(--onaccent); border-color: transparent; }
+.lay-fresh .sf-card.compact { border-radius: 14px; }
+.lay-fresh .sf-card.compact .sf-img { aspect-ratio: 1; }
+.lay-fresh .sf-card.compact h3 { font-size: 1.05rem; font-family: var(--body); font-weight: 500; }
+.lay-fresh .sf-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+
+/* ==================================================================
+   4) TECH — hero scindé, cartes hover marqué
+   ================================================================== */
+.lay-tech .sf-head.sticky { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(10px); }
+.lay-tech .sf-hero.grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+.lay-tech .sf-hero.grid h1 { font-family: var(--body); font-weight: 600; letter-spacing: -.5px; }
+.lay-tech .sf-cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.lay-tech .sf-hero-cards { display: grid; gap: 14px; }
+.lay-tech .sf-feat { display: flex; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+.lay-tech .sf-feat .sf-img { width: 88px; height: 88px; border-radius: 12px; flex: none; aspect-ratio: 1; }
+.lay-tech .sf-feat h4 { font-family: var(--body); font-weight: 600; margin-bottom: 4px; }
+.lay-tech .sf-card.hoverlift { transition: transform .4s, box-shadow .4s; }
+.lay-tech .sf-card.hoverlift:hover { transform: translateY(-8px); box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--accent) 40%, transparent); border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.lay-tech .sf-card h3 { font-family: var(--body); font-weight: 600; }
+
+/* ==================================================================
+   5) MAGAZINE — grand titre + vedette + tailles mixtes
+   ================================================================== */
+.lay-magazine .sf-head.mag { flex-direction: column; gap: 10px; padding: 24px; border-bottom: 2px solid var(--line); }
+.lay-magazine .sf-brand.up { text-transform: uppercase; letter-spacing: 6px; font-family: var(--body); font-weight: 600; font-size: 1.2rem; }
+.lay-magazine .sf-hero.mag { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch; padding: 5vw 6vw; }
+.lay-magazine .sf-mag-title { display: flex; flex-direction: column; justify-content: center; }
+.lay-magazine .sf-mag-title h1 { font-size: clamp(3rem, 8vw, 6rem); margin: 14px 0 24px; }
+.lay-magazine .sf-mag-feat { position: relative; border-radius: 18px; overflow: hidden; min-height: 360px; }
+.lay-magazine .sf-mag-feat .sf-img { height: 100%; }
+.lay-magazine .sf-ov { position: absolute; inset: auto 0 0 0; padding: 22px; background: linear-gradient(0deg, rgba(0,0,0,.75), transparent); }
+.lay-magazine .sf-ov.big h3 { font-size: 1.8rem; }
+.lay-magazine .sf-ov .sf-price { flex-direction: row; gap: 10px; align-items: baseline; }
+.lay-magazine .sf-card.overlay { position: relative; border: none; }
+.lay-magazine .sf-card.overlay .sf-img.cover { aspect-ratio: 4/5; }
+.lay-magazine .sf-card.overlay .sf-ov { position: absolute; }
+.lay-magazine .sf-card.overlay:hover .sf-img { transform: scale(1.04); }
+.lay-magazine .sf-card.overlay .sf-img { transition: transform .5s; }
+
+/* ==================================================================
+   6) MINIMAL — clair, épuré
+   ================================================================== */
+.lay-minimal .sf-head.mini { justify-content: center; border-bottom: 1px solid var(--line); padding: 22px; }
+.lay-minimal .sf-brand { font-weight: 600; font-size: 1.3rem; letter-spacing: 2px; }
+.lay-minimal .sf-hero.mini { text-align: center; padding: 12vw 6vw; }
+.lay-minimal .sf-hero.mini h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); margin: 18px 0; font-weight: 500; }
+.lay-minimal .sf-underline { border-bottom: 1px solid var(--accent); padding-bottom: 3px; color: var(--text); }
+.lay-minimal .sf-grid.airy { gap: 40px 30px; }
+.lay-minimal .sf-card.bare { background: none; border: none; border-radius: 0; text-align: center; gap: 6px; }
+.lay-minimal .sf-card.bare .sf-img { border-radius: 6px; margin-bottom: 12px; background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent) 20%, var(--surface)), var(--surface)); }
+.lay-minimal .sf-card.bare h3 { font-weight: 500; font-size: 1.1rem; }
+.lay-minimal .sf-card.bare .sf-price { align-items: center; }
+.lay-minimal .sf-add.ghost { border-color: var(--line); color: var(--text); align-self: center; padding: 8px 20px; border-radius: 50px; }
+.lay-minimal .sf-add.ghost:hover { border-color: var(--accent); background: none; color: var(--accent); }
+
+/* ==================================================================
+   Responsive
+   ================================================================== */
+@media (max-width: 900px) {
+  .sf-grid.cols3, .sf-grid.cols4 { grid-template-columns: repeat(2, 1fr); }
+  .lay-warm .sf-hero.two, .lay-tech .sf-hero.grid, .lay-magazine .sf-hero.mag { grid-template-columns: 1fr; }
+  .lay-magazine .sf-mag-feat { min-height: 300px; }
+}
+@media (max-width: 560px) {
+  .sf-grid.cols2, .sf-grid.cols3, .sf-grid.cols4 { grid-template-columns: 1fr; }
+  .sf-nav { display: none; }
+  .sf-hero { padding: 14vw 6vw; }
+}

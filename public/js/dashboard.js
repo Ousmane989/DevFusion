@@ -10,6 +10,7 @@
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const money = (n) => Number(Math.round(n)).toLocaleString('fr-FR');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const slugify = (s) => String(s || 'ma-boutique').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 
   // Racine : la page complète, ou l'écran démo #screen-dashboard.
   const root = document.getElementById('screen-dashboard') || document.querySelector('.dash') || document;
@@ -98,6 +99,12 @@
     q('#shop-name').textContent = user.shopName;
     q('#hello-name').textContent = (user.name || '').split(' ')[0];
     if (q('#side-plan')) q('#side-plan').textContent = user.planName || 'Pro';
+
+    const vs = q('#visit-shop');
+    if (vs) {
+      if (window.__KARAT_SPA__) { vs.href = '#/boutique'; vs.removeAttribute('target'); }
+      else vs.href = '/boutique/' + slugify(user.shopName);
+    }
 
     const bar = q('#trial-bar'), txt = q('#trial-text');
     if (user.status === 'trial') { const end = user.trialEndsAt ? new Date(user.trialEndsAt) : null; const days = end ? Math.max(0, Math.ceil((end - Date.now()) / 86400000)) : 0; txt.textContent = '✦ Essai gratuit : ' + days + ' jour' + (days > 1 ? 's' : '') + ' restant' + (days > 1 ? 's' : '') + '. Activez votre abonnement pour continuer.'; bar.style.display = 'block'; }
@@ -274,17 +281,17 @@
     q('#store-domain').value = store.domain || store.defaultDomain || '';
     q('#store-desc').value = store.description || '';
     q('#store-tagline').addEventListener('input', renderThemePreview);
-    updateVisitLink(store.domain || store.defaultDomain);
+    updateVisitLink(store.slug);
     renderThemePreview();
     loaded.store = true;
   }
   async function saveStore() {
     const payload = { theme: selectedTheme, tagline: q('#store-tagline').value.trim(), domain: q('#store-domain').value.trim(), description: q('#store-desc').value.trim() };
     const r = await api('/api/store', 'PUT', payload);
-    if (r.ok) { store = r.data.store; updateVisitLink(store.domain); msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.'); }
+    if (r.ok) { store = r.data.store; updateVisitLink(store.slug); msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.'); }
     else msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
   }
-  function updateVisitLink(domain) { const a = q('#visit-shop'); if (a && domain) a.href = 'https://' + domain; }
+  function updateVisitLink(slug) { if (window.__KARAT_SPA__) return; const a = q('#visit-shop'); if (a && slug) a.href = '/boutique/' + slug; }
 
   // ================================================================
   // Init
