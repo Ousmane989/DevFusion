@@ -140,31 +140,6 @@
     svg.addEventListener('touchend', leave);
   }
 
-  // -------- Barres horizontales (categories) -----------------------
-  function renderBars(container, rows, unit) {
-    const max = Math.max.apply(null, rows.map((c) => c.value));
-    container.innerHTML = rows.map((c, i) => {
-      const pct = (c.value / max) * 100;
-      const col = gold(1 - i / Math.max(1, rows.length - 1));
-      return `<div class="cat-row">
-        <div class="cat-head"><span class="cat-name">${c.name}</span><span class="cat-val">${money(c.value)}${unit} · ${c.share}%</span></div>
-        <div class="cat-track"><div class="cat-bar" data-w="${pct.toFixed(1)}" style="width:0;background:${col}"></div></div>
-      </div>`;
-    }).join('');
-    requestAnimationFrame(() => container.querySelectorAll('.cat-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 80 * i)));
-  }
-
-  // -------- Meilleures ventes --------------------------------------
-  function renderTop(list, products) {
-    const max = Math.max.apply(null, products.map((p) => p.revenue));
-    list.innerHTML = products.map((p) => `<li>
-        <div class="t-main"><span class="t-name">${p.name}</span><span class="t-rev">${money(p.revenue)} MRU</span></div>
-        <div class="t-track"><div class="t-bar" data-w="${((p.revenue / max) * 100).toFixed(1)}" style="width:0"></div></div>
-        <div class="t-sales">${p.sales} ventes</div>
-      </li>`).join('');
-    requestAnimationFrame(() => list.querySelectorAll('.t-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 90 * i)));
-  }
-
   // -------- Tunnel de conversion -----------------------------------
   function renderFunnel(container, stages) {
     const top = stages[0].value || 1;
@@ -294,8 +269,6 @@
     });
 
     // ---- Sections fixes ----
-    renderBars($('#cat-list'), st.categories, ' MRU');
-    renderTop($('#top-list'), st.topProducts);
     renderFunnel($('#funnel'), st.funnel);
     renderDonut($('#donut'), $('#donut-legend'), st.sources);
     renderOrders($('#orders-body'), st.recentOrders);
