@@ -46,6 +46,32 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_codes_user ON verification_codes(user_id, purpose);
+
+  CREATE TABLE IF NOT EXISTS products (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    name        TEXT    NOT NULL,
+    description TEXT    NOT NULL DEFAULT '',
+    price_mru   INTEGER NOT NULL DEFAULT 0,
+    stock       INTEGER NOT NULL DEFAULT 0,
+    category    TEXT    NOT NULL DEFAULT 'Autre',
+    active      INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id);
+
+  -- Une ligne de reglages de boutique par utilisateur (theme, livraison...).
+  CREATE TABLE IF NOT EXISTS store_settings (
+    user_id       INTEGER PRIMARY KEY,
+    theme         TEXT NOT NULL DEFAULT 'or-noir',
+    tagline       TEXT NOT NULL DEFAULT '',
+    domain        TEXT NOT NULL DEFAULT '',
+    description   TEXT NOT NULL DEFAULT '',
+    shipping_json TEXT NOT NULL DEFAULT '',
+    updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;
