@@ -76,10 +76,20 @@
   let currentUser = null;
   let overviewStats = null;
   let booted = false;
+  let notifiedPending = false;
   const loaded = {};
 
   function msg(el, type, text) { if (el) { el.className = 'form-msg show ' + type; el.textContent = text; } }
   function clearMsg(el) { if (el) el.className = 'form-msg'; }
+
+  // Notification in-app (nouvelle commande / a traiter)
+  function dashToast(text) {
+    let t = document.querySelector('.dash-toast');
+    if (!t) { t = document.createElement('div'); t.className = 'dash-toast'; document.body.appendChild(t); }
+    t.textContent = text; t.classList.add('show');
+    clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 4000);
+  }
+  function setOrdersBadge(n) { const el = q('#badge-orders'); if (!el) return; el.textContent = n || ''; el.classList.toggle('alert', n > 0); }
 
   function switchSection(name) {
     qa('.dash-section').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + name));
@@ -116,6 +126,11 @@
     if (st.today) {
       q('#kpi-today').textContent = st.today.orders;
       q('#kpi-today-sub').textContent = money(st.today.revenue) + ' MRU encaissés · ' + st.today.pending + ' à traiter';
+    }
+    setOrdersBadge(st.pending || 0);
+    if (!notifiedPending && st.pending > 0) {
+      notifiedPending = true;
+      dashToast('🔔 ' + st.pending + ' commande' + (st.pending > 1 ? 's' : '') + ' à traiter');
     }
     applyPeriod(st.defaultPeriod || '30j');
     renderFunnel(q('#funnel'), st.funnel);
@@ -212,7 +227,7 @@
   // Commandes
   // ================================================================
   let orderStatuses = [];
-  function applySummary(sm) { countTo(q('#ord-total'), sm.total); countTo(q('#ord-toprocess'), sm.toProcess); countTo(q('#ord-delivered'), sm.delivered); countTo(q('#ord-rev'), sm.revenue); q('#badge-orders').textContent = sm.total || ''; }
+  function applySummary(sm) { countTo(q('#ord-total'), sm.total); countTo(q('#ord-toprocess'), sm.toProcess); countTo(q('#ord-delivered'), sm.delivered); countTo(q('#ord-rev'), sm.revenue); setOrdersBadge(sm.toProcess); }
   function statusSelect(o) {
     const opts = orderStatuses.map((s) => `<option value="${s.key}" ${s.key === o.status ? 'selected' : ''}>${esc(s.label)}</option>`).join('');
     return `<span class="stsel tone-${o.tone}"><select data-order="${o.id}">${opts}</select></span>`;
@@ -224,7 +239,9 @@
     orderStatuses = statuses || [];
     applySummary(summary);
     q('#orders-full-body').innerHTML = orders.map((o) => `<tr data-row="${o.id}">
-      <td class="mono">${esc(o.ref)}</td><td>${esc(o.customer)}</td><td class="muted">${esc(o.city)}</td>
+      <td class="mono">${esc(o.ref)}</td>
+      <td>${esc(o.customer)}${o.phone ? `<div class="small"><a class="tel-link" href="tel:${esc(o.phone)}">📞 ${esc(o.phone)}</a></div>` : ''}</td>
+      <td class="muted">${esc(o.city)}</td>
       <td class="cell-prod">${esc(o.productsLabel)}</td><td class="mono num">${money(o.amount)} MRU</td>
       <td><span class="cod">À la livraison</span></td>
       <td>${statusSelect(o)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
