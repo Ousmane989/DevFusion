@@ -127,8 +127,9 @@ function realStats(user) {
   };
 
   const products = db.prepare('SELECT COUNT(*) AS c FROM products WHERE user_id = ?').get(user.id).c;
+  const pending = orders.filter((o) => ['nouvelle', 'confirmee', 'expediee'].includes(o.status)).length;
 
-  return { periods, defaultPeriod: '30j', funnel, sources, today, products };
+  return { periods, defaultPeriod: '30j', funnel, sources, today, products, pending };
 }
 
 // GET /api/dashboard
