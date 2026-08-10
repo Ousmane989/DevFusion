@@ -4,13 +4,13 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { ORDER_STATUSES } = require('../catalog');
-const { listOrders, summarize, seedIfEmpty } = require('../ordersStore');
+const { listOrders, summarize } = require('../ordersStore');
 
 const router = express.Router();
 
 // GET /api/orders  — liste des commandes + synthèse + statuts disponibles
+// (aucune donnee de demonstration : une nouvelle boutique commence a zero)
 router.get('/', requireAuth, (req, res) => {
-  seedIfEmpty(req.user.id);
   const orders = listOrders(req.user.id);
   res.json({ orders, summary: summarize(orders), statuses: ORDER_STATUSES });
 });

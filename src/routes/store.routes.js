@@ -32,6 +32,10 @@ function publicStore(user, row) {
     themeData: t,
     tagline: row.tagline,
     description: row.description,
+    phone: row.phone || '',
+    whatsapp: row.whatsapp || '',
+    email: row.email || '',
+    address: row.address || '',
     slug,
     domain: row.domain || `${slug}.karat.shop`,
     defaultDomain: `${slug}.karat.shop`,
@@ -50,13 +54,18 @@ router.put('/', requireAuth, (req, res) => {
   const row = getSettings(req.user);
   const b = req.body || {};
   const theme = THEMES.some((t) => t.id === b.theme) ? b.theme : row.theme;
+  const keep = (v, old, max) => (v !== undefined ? String(v).slice(0, max) : old);
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, domain = ?, description = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, domain = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
-    b.tagline !== undefined ? String(b.tagline).slice(0, 140) : row.tagline,
-    b.domain !== undefined ? String(b.domain).slice(0, 120) : row.domain,
-    b.description !== undefined ? String(b.description).slice(0, 400) : row.description,
+    keep(b.tagline, row.tagline, 140),
+    keep(b.domain, row.domain, 120),
+    keep(b.description, row.description, 400),
+    keep(b.phone, row.phone, 40),
+    keep(b.whatsapp, row.whatsapp, 40),
+    keep(b.email, row.email, 120),
+    keep(b.address, row.address, 160),
     req.user.id
   );
   res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });

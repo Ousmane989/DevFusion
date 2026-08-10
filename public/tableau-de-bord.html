@@ -80,6 +80,7 @@
             <div class="kpi"><div class="kpi-top"><span class="k-label">Visiteurs</span><span id="kpi-visitors-delta"></span></div><div class="k-val" id="kpi-visitors">0</div><div class="k-sub k-period">Sur 30 jours</div><div class="k-spark" id="kpi-visitors-spark"></div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Conversion</span><span id="kpi-conv-delta"></span></div><div class="k-val"><span id="kpi-conv">0</span><span class="k-unit">%</span></div><div class="k-sub">Visiteurs → clients</div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Panier moyen</span><span id="kpi-basket-delta"></span></div><div class="k-val"><span id="kpi-basket">0</span> <span class="k-unit">MRU</span></div><div class="k-sub" id="kpi-basket-fcfa">≈ 0 FCFA</div></div>
+            <div class="kpi kpi-today"><div class="kpi-top"><span class="k-label">Commandes aujourd'hui</span></div><div class="k-val"><span id="kpi-today">0</span></div><div class="k-sub" id="kpi-today-sub">0 MRU encaissés · 0 à traiter</div></div>
           </div>
           <div class="panel panel-chart">
             <div class="panel-head">
@@ -179,7 +180,14 @@
               <div class="field" style="margin-top:22px"><label for="store-tagline">Slogan de la boutique</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>
               <div class="field"><label for="store-domain">Nom de domaine</label><input id="store-domain" type="text" placeholder="ma-boutique.karat.shop" /><div class="hint">Sous-domaine gratuit inclus. Domaine personnalisé disponible en formule Pro.</div></div>
               <div class="field"><label for="store-desc">Description</label><textarea id="store-desc" rows="3" maxlength="400" placeholder="Présentez votre boutique à vos clients"></textarea></div>
-              <div class="pf-actions"><button type="button" class="btn btn-primary" id="store-save">Enregistrer</button></div>
+              <div class="pf-label" style="margin-top:4px">Coordonnées (affichées sur votre boutique)</div>
+              <div class="pf-grid">
+                <div class="field"><label for="store-phone">Téléphone</label><input id="store-phone" type="tel" placeholder="+222 …" /></div>
+                <div class="field"><label for="store-whatsapp">WhatsApp</label><input id="store-whatsapp" type="tel" placeholder="+222 …" /></div>
+                <div class="field"><label for="store-email">E-mail</label><input id="store-email" type="email" placeholder="contact@maboutique.mr" /></div>
+                <div class="field"><label for="store-address">Adresse</label><input id="store-address" type="text" placeholder="Ville, quartier" /></div>
+              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="store-save">Enregistrer les modifications</button></div>
             </div>
             <div class="panel store-preview-panel">
               <div class="panel-head"><h3>Aperçu</h3></div>

@@ -40,12 +40,39 @@ router.get('/store/:slug', (req, res) => {
     slug: slugify(user.shop_name),
     tagline: (settings && settings.tagline) || 'Bienvenue dans notre boutique.',
     description: (settings && settings.description) || '',
+    contact: {
+      phone: (settings && settings.phone) || '',
+      whatsapp: (settings && settings.whatsapp) || '',
+      email: (settings && settings.email) || '',
+      address: (settings && settings.address) || '',
+    },
     theme: theme.id,
     themeData: theme,
     shipping,
     products,
     categories: [...new Set(products.map((p) => p.category))],
   });
+});
+
+// Journalise un evenement de la vitrine (analytics reels).
+function logEvent(slug, type, source) {
+  const user = findUserBySlug(slug);
+  if (!user) return false;
+  db.prepare('INSERT INTO store_events (user_id, type, source) VALUES (?, ?, ?)').run(user.id, type, source || 'direct');
+  return true;
+}
+
+// POST /api/public/store/:slug/visit  { source }
+router.post('/store/:slug/visit', (req, res) => {
+  const src = ['direct', 'social', 'search', 'whatsapp', 'referral'].includes(req.body?.source) ? req.body.source : 'direct';
+  res.json({ ok: logEvent(req.params.slug, 'visit', src) });
+});
+
+// POST /api/public/store/:slug/event  { type }
+router.post('/store/:slug/event', (req, res) => {
+  const type = req.body?.type === 'add_cart' ? 'add_cart' : null;
+  if (!type) return res.status(400).json({ error: 'Type invalide.' });
+  res.json({ ok: logEvent(req.params.slug, type, 'direct') });
 });
 
 // POST /api/public/store/:slug/order  — passer une commande (paiement à la livraison)

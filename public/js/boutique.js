@@ -31,9 +31,17 @@
   function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
 
   function footer(d) {
+    const c = d.contact || {};
+    const items = [];
+    if (c.phone) items.push(`<a href="tel:${esc(c.phone)}">📞 ${esc(c.phone)}</a>`);
+    if (c.whatsapp) items.push(`<a href="https://wa.me/${esc(String(c.whatsapp).replace(/[^0-9]/g, ''))}" target="_blank" rel="noopener">💬 ${esc(c.whatsapp)}</a>`);
+    if (c.email) items.push(`<a href="mailto:${esc(c.email)}">✉️ ${esc(c.email)}</a>`);
+    if (c.address) items.push(`<span>📍 ${esc(c.address)}</span>`);
+    const contact = items.length ? `<div class="sf-contact">${items.join('')}</div>` : '';
     return `<footer class="sf-footer"><div class="sf-foot-in">
       <div class="sf-foot-brand">${esc(d.shopName)}</div>
       <p class="sf-foot-tag">${esc(d.tagline)}</p>
+      ${contact}
       <div class="sf-foot-meta"><span>© ${new Date().getFullYear()} ${esc(d.shopName)}</span><span class="sf-powered">Propulsé par <strong>Karat</strong> 💎</span></div>
     </div></footer>`;
   }
@@ -116,8 +124,27 @@
   function addToCart(id) {
     const p = byId[id]; if (!p) return;
     const line = cart.find((i) => i.id === p.id);
-    if (line) line.qty++; else cart.push({ id: p.id, name: p.name, priceMru: p.priceMru, qty: 1 });
+    if (line) line.qty++; else { cart.push({ id: p.id, name: p.name, priceMru: p.priceMru, qty: 1 }); track('add_cart'); }
     updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
+  }
+
+  // Analytics réels : visite (avec source) et ajout au panier.
+  function detectSource() {
+    const q = new URLSearchParams(location.search).get('src');
+    if (q) return ['direct', 'social', 'search', 'whatsapp', 'referral'].includes(q) ? q : 'referral';
+    const ref = document.referrer || '';
+    if (!ref) return 'direct';
+    if (/facebook|instagram|tiktok|t\.co|twitter|x\.com|snapchat/i.test(ref)) return 'social';
+    if (/whatsapp|wa\.me/i.test(ref)) return 'whatsapp';
+    if (/google|bing|yahoo|duckduck|search/i.test(ref)) return 'search';
+    return 'referral';
+  }
+  function track(type, source) {
+    if (window.__KARAT_TRACK__) { window.__KARAT_TRACK__(type, source || 'direct'); return; }
+    if (!data || !data.slug) return;
+    const url = '/api/public/store/' + encodeURIComponent(data.slug) + (type === 'visit' ? '/visit' : '/event');
+    const body = type === 'visit' ? { source: source || 'direct' } : { type };
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
   }
   function setQty(id, delta) { const line = cart.find((i) => i.id === id); if (!line) return; line.qty += delta; if (line.qty <= 0) cart = cart.filter((i) => i.id !== id); updateBadges(); renderCart(); }
 
@@ -220,6 +247,7 @@
     mountChrome();
     updateBadges();
     document.title = d.shopName + ' — Boutique Karat';
+    track('visit', detectSource());
   }
 
   async function load() {

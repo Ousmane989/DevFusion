@@ -82,17 +82,37 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 
-  -- Une ligne de reglages de boutique par utilisateur (theme, livraison...).
+  -- Une ligne de reglages de boutique par utilisateur (theme, livraison, contact...).
   CREATE TABLE IF NOT EXISTS store_settings (
     user_id       INTEGER PRIMARY KEY,
     theme         TEXT NOT NULL DEFAULT 'or-noir',
     tagline       TEXT NOT NULL DEFAULT '',
     domain        TEXT NOT NULL DEFAULT '',
     description   TEXT NOT NULL DEFAULT '',
+    phone         TEXT NOT NULL DEFAULT '',
+    whatsapp      TEXT NOT NULL DEFAULT '',
+    email         TEXT NOT NULL DEFAULT '',
+    address       TEXT NOT NULL DEFAULT '',
     shipping_json TEXT NOT NULL DEFAULT '',
     updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  -- Evenements de la vitrine (analytics reels : visites, ajouts au panier).
+  CREATE TABLE IF NOT EXISTS store_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    type       TEXT    NOT NULL,          -- 'visit' | 'add_cart'
+    source     TEXT    NOT NULL DEFAULT 'direct',
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_events_user ON store_events(user_id, type);
 `);
+
+// Migrations douces pour les bases existantes (colonnes de contact).
+for (const col of ['phone', 'whatsapp', 'email', 'address']) {
+  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+}
 
 module.exports = db;
