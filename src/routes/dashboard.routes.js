@@ -1,153 +1,139 @@
 'use strict';
 
 const express = require('express');
+const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { publicUser } = require('../account');
 
 const router = express.Router();
 
-// ------------------------------------------------------------------
-// Generateur de statistiques de demonstration, deterministe par
-// boutique : les memes chiffres s'affichent a chaque visite.
-// En production, ces valeurs proviendraient des vraies ventes.
-// ------------------------------------------------------------------
-function seededStats(user) {
-  let s = 0;
-  const key = `${user.id}:${user.shop_name}`;
-  for (const ch of key) s = (s * 31 + ch.charCodeAt(0)) % 2147483647;
-  if (s <= 0) s = 123457;
-  const next = () => { s = (s * 48271) % 2147483647; return s / 2147483647; };
-  const rand = (min, max) => min + next() * (max - min);
-  const randi = (min, max) => Math.floor(rand(min, max + 1));
+const SRC_LABELS = { direct: 'Direct', social: 'Réseaux sociaux', search: 'Recherche', whatsapp: 'WhatsApp', referral: 'Référence' };
+const MONTHS = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const MONTHS = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
+const parseDate = (s) => new Date(String(s).replace(' ', 'T') + 'Z');
+const dayKey = (d) => d.toISOString().slice(0, 10);
+const monthKey = (d) => d.toISOString().slice(0, 7);
+const delta = (cur, prev) => (prev ? Number((((cur - prev) / prev) * 100).toFixed(1)) : (cur > 0 ? 100 : 0));
+
+// ------------------------------------------------------------------
+// Statistiques REELLES, calculees a partir des commandes et des
+// evenements de la vitrine. Tout est a 0 pour une nouvelle boutique.
+// Le chiffre d'affaires ne compte que les commandes LIVREES.
+// ------------------------------------------------------------------
+function realStats(user) {
   const now = new Date();
+  const orders = db
+    .prepare('SELECT total_mru, status, created_at FROM orders WHERE user_id = ?')
+    .all(user.id)
+    .map((o) => ({ total: o.total_mru, status: o.status, d: parseDate(o.created_at) }));
+  const events = db
+    .prepare('SELECT type, source, created_at FROM store_events WHERE user_id = ?')
+    .all(user.id)
+    .map((e) => ({ type: e.type, source: e.source, d: parseDate(e.created_at) }));
 
-  const sum = (arr, k) => arr.reduce((t, x) => t + x[k], 0);
-  const last = (arr, n) => arr.slice(arr.length - n);
-  const delta = (cur, prev) => (prev ? Number((((cur - prev) / prev) * 100).toFixed(1)) : 0);
+  const visits = events.filter((e) => e.type === 'visit');
+  const addCarts = events.filter((e) => e.type === 'add_cart');
+  const isDelivered = (o) => o.status === 'livree';
 
-  // --- Serie journaliere sur 60 jours -------------------------------
-  const base = rand(2200, 9000);
-  const growth = rand(0.002, 0.008);
-  const daily = [];
-  for (let i = 59; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const weekend = d.getDay() === 5 || d.getDay() === 6 ? 1.28 : 1;
-    const revenue = Math.round(base * weekend * rand(0.6, 1.4) * Math.pow(1 + growth, 60 - i));
-    const orders = Math.max(1, Math.round(revenue / rand(1500, 3200)));
-    const visitors = orders * randi(11, 24);
-    daily.push({ label: `${d.getDate()}/${d.getMonth() + 1}`, revenue, orders, visitors });
+  // ---- Buckets journaliers (60 j) et mensuels (12 mois) ----
+  function dailyBuckets(n) {
+    const out = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(now); d.setUTCDate(now.getUTCDate() - i);
+      out.push({ key: dayKey(d), label: `${d.getUTCDate()}/${d.getUTCMonth() + 1}` });
+    }
+    return out;
   }
-
-  // --- Serie mensuelle sur 24 mois ----------------------------------
-  const monthly = [];
-  let mBase = rand(55000, 130000);
-  for (let i = 23; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    mBase = mBase * rand(1.008, 1.038);
-    const revenue = Math.round(mBase * rand(0.85, 1.12));
-    const orders = Math.max(1, Math.round(revenue / rand(1800, 2600)));
-    const visitors = orders * randi(12, 22);
-    monthly.push({ label: MONTHS[d.getMonth()], revenue, orders, visitors });
+  function monthlyBuckets(n) {
+    const out = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      out.push({ key: monthKey(d), label: MONTHS[d.getUTCMonth()] });
+    }
+    return out;
   }
+  const revByDay = {};
+  orders.filter(isDelivered).forEach((o) => { const k = dayKey(o.d); revByDay[k] = (revByDay[k] || 0) + o.total; });
+  const revByMonth = {};
+  orders.filter(isDelivered).forEach((o) => { const k = monthKey(o.d); revByMonth[k] = (revByMonth[k] || 0) + o.total; });
+  const ordByDay = {}; orders.forEach((o) => { const k = dayKey(o.d); ordByDay[k] = (ordByDay[k] || 0) + 1; });
+  const visByDay = {}; visits.forEach((v) => { const k = dayKey(v.d); visByDay[k] = (visByDay[k] || 0) + 1; });
 
-  // --- KPIs a partir d'une fenetre + fenetre precedente -------------
-  function kpisOf(win, prev, sparks) {
-    const rev = sum(win, 'revenue'), revP = sum(prev, 'revenue');
-    const ord = sum(win, 'orders'), ordP = sum(prev, 'orders');
-    const vis = sum(win, 'visitors'), visP = sum(prev, 'visitors');
-    const conv = vis ? (ord / vis) * 100 : 0, convP = visP ? (ordP / visP) * 100 : 0;
-    const bask = ord ? rev / ord : 0, baskP = ordP ? revP / ordP : 0;
+  // ---- KPIs sur une fenetre glissante (jours) ----
+  function windowKpis(days, sparkArr) {
+    const startCur = now.getTime() - days * 86400000;
+    const startPrev = now.getTime() - 2 * days * 86400000;
+    const inCur = (x) => x.d.getTime() >= startCur;
+    const inPrev = (x) => x.d.getTime() >= startPrev && x.d.getTime() < startCur;
+
+    const oCur = orders.filter(inCur), oPrev = orders.filter(inPrev);
+    const revCur = oCur.filter(isDelivered).reduce((s, o) => s + o.total, 0);
+    const revPrev = oPrev.filter(isDelivered).reduce((s, o) => s + o.total, 0);
+    const cmdCur = oCur.length, cmdPrev = oPrev.length;
+    const delCur = oCur.filter(isDelivered).length, delPrev = oPrev.filter(isDelivered).length;
+    const visCur = visits.filter(inCur).length, visPrev = visits.filter(inPrev).length;
+    const conv = visCur ? (cmdCur / visCur) * 100 : 0, convPrev = visPrev ? (cmdPrev / visPrev) * 100 : 0;
+    const basket = delCur ? revCur / delCur : 0, basketPrev = delPrev ? revPrev / delPrev : 0;
     return {
-      revenue: { value: rev, fcfa: rev * 6, delta: delta(rev, revP), spark: sparks.rev },
-      orders: { value: ord, delta: delta(ord, ordP), spark: sparks.ord },
-      visitors: { value: vis, delta: delta(vis, visP), spark: sparks.vis },
-      conversion: { value: Number(conv.toFixed(1)), delta: delta(conv, convP), spark: sparks.conv },
-      basket: { value: Math.round(bask), fcfa: Math.round(bask * 6), delta: delta(bask, baskP) },
+      revenue: { value: revCur, fcfa: revCur * 6, delta: delta(revCur, revPrev), spark: sparkArr.rev },
+      orders: { value: cmdCur, delta: delta(cmdCur, cmdPrev), spark: sparkArr.ord },
+      visitors: { value: visCur, delta: delta(visCur, visPrev), spark: sparkArr.vis },
+      conversion: { value: Number(conv.toFixed(1)), delta: delta(conv, convPrev), spark: sparkArr.ord },
+      basket: { value: Math.round(basket), fcfa: Math.round(basket * 6), delta: delta(basket, basketPrev) },
     };
   }
-  const series = (arr) => arr.map((x) => ({ label: x.label, value: x.revenue }));
 
-  // Fenetres 7 jours / 30 jours / 12 mois (chacune avec sa periode precedente)
-  const w7 = last(daily, 7), p7 = daily.slice(daily.length - 14, daily.length - 7);
-  const w30 = last(daily, 30), p30 = daily.slice(0, 30);
-  const w12 = last(monthly, 12), p12 = monthly.slice(0, 12);
+  const d7 = dailyBuckets(7), d30 = dailyBuckets(30), m12 = monthlyBuckets(12);
+  const spark14 = dailyBuckets(14);
+  const sparksDaily = {
+    rev: spark14.map((b) => revByDay[b.key] || 0),
+    ord: spark14.map((b) => ordByDay[b.key] || 0),
+    vis: spark14.map((b) => visByDay[b.key] || 0),
+  };
+  const sparks7 = { rev: d7.map((b) => revByDay[b.key] || 0), ord: d7.map((b) => ordByDay[b.key] || 0), vis: d7.map((b) => visByDay[b.key] || 0) };
+  const sparks12 = { rev: m12.map((b) => revByMonth[b.key] || 0), ord: m12.map((b) => revByMonth[b.key] || 0), vis: m12.map((b) => revByMonth[b.key] || 0) };
 
   const periods = {
-    '7j': {
-      rangeLabel: '7 derniers jours', subLabel: 'Sur 7 jours',
-      kpis: kpisOf(w7, p7, { rev: w7.map((x) => x.revenue), ord: w7.map((x) => x.orders), vis: w7.map((x) => x.visitors), conv: w7.map((x) => x.orders) }),
-      series: series(w7),
-    },
-    '30j': {
-      rangeLabel: '30 derniers jours', subLabel: 'Sur 30 jours',
-      kpis: kpisOf(w30, p30, { rev: last(w30, 14).map((x) => x.revenue), ord: last(w30, 14).map((x) => x.orders), vis: last(w30, 14).map((x) => x.visitors), conv: last(w30, 14).map((x) => x.orders) }),
-      series: series(w30),
-    },
-    '12m': {
-      rangeLabel: '12 derniers mois', subLabel: 'Sur 12 mois',
-      kpis: kpisOf(w12, p12, { rev: w12.map((x) => x.revenue), ord: w12.map((x) => x.orders), vis: w12.map((x) => x.visitors), conv: w12.map((x) => x.orders) }),
-      series: series(w12),
-    },
+    '7j': { rangeLabel: '7 derniers jours', subLabel: 'Sur 7 jours', kpis: windowKpis(7, sparks7), series: d7.map((b) => ({ label: b.label, value: revByDay[b.key] || 0 })) },
+    '30j': { rangeLabel: '30 derniers jours', subLabel: 'Sur 30 jours', kpis: windowKpis(30, sparksDaily), series: d30.map((b) => ({ label: b.label, value: revByDay[b.key] || 0 })) },
+    '12m': { rangeLabel: '12 derniers mois', subLabel: 'Sur 12 mois', kpis: windowKpis(365, sparks12), series: m12.map((b) => ({ label: b.label, value: revByMonth[b.key] || 0 })) },
   };
 
-  // --- Tunnel de conversion (base sur 30 jours) ---------------------
-  const vis30 = sum(w30, 'visitors');
-  const ord30 = sum(w30, 'orders');
-  const productViews = Math.round(vis30 * rand(0.58, 0.72));
-  const addToCart = Math.round(vis30 * rand(0.19, 0.28));
+  // ---- Tunnel de conversion reel (30 derniers jours) ----
+  const start30 = now.getTime() - 30 * 86400000;
+  const in30 = (x) => x.d.getTime() >= start30;
   const funnel = [
-    { stage: 'Visiteurs', value: vis30 },
-    { stage: 'Vues produit', value: productViews },
-    { stage: 'Ajouts au panier', value: addToCart },
-    { stage: 'Commandes', value: ord30 },
+    { stage: 'Visiteurs', value: visits.filter(in30).length },
+    { stage: 'Ajouts au panier', value: addCarts.filter(in30).length },
+    { stage: 'Commandes', value: orders.filter(in30).length },
+    { stage: 'Livrées', value: orders.filter((o) => in30(o) && isDelivered(o)).length },
   ];
 
-  // --- Sources de trafic --------------------------------------------
-  const srcNames = ['Direct', 'Réseaux sociaux', 'Recherche Google', 'WhatsApp', 'Référence'];
-  let sources = srcNames.map((name) => ({ name, w: rand(0.5, 3) }));
-  const wsum = sources.reduce((t, x) => t + x.w, 0);
-  sources = sources
-    .map((x) => ({ name: x.name, value: Math.round((x.w / wsum) * vis30), share: Number(((x.w / wsum) * 100).toFixed(1)) }))
+  // ---- Sources de trafic reelles (30 derniers jours) ----
+  const srcCount = {};
+  visits.filter(in30).forEach((v) => { const s = v.source || 'direct'; srcCount[s] = (srcCount[s] || 0) + 1; });
+  const srcTotal = Object.values(srcCount).reduce((a, b) => a + b, 0);
+  const sources = Object.entries(srcCount)
+    .map(([k, v]) => ({ name: SRC_LABELS[k] || k, value: v, share: srcTotal ? Number(((v / srcTotal) * 100).toFixed(1)) : 0 }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Commandes recentes -------------------------------------------
-  const productNames = ['Boubou brodé main', 'Sac en cuir artisanal', 'Casque sans fil', 'Montre dorée', 'Foulard en soie', 'Sandales cuir', 'Sérum éclat', 'Thé Touba premium'];
-  const clients = ['Fatimetou M.', 'Ousmane D.', 'Aicha B.', 'Moussa S.', 'Mariam K.', 'Cheikh N.', 'Ramata L.', 'Ibrahima F.'];
-  const st = [
-    { label: 'Payée', tone: 'good' },
-    { label: 'En cours', tone: 'warning' },
-    { label: 'Remboursée', tone: 'critical' },
-  ];
-  const recentOrders = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(now); d.setDate(now.getDate() - i);
-    const status = i === 4 ? st[1] : i === 5 ? st[2] : st[0];
-    recentOrders.push({
-      ref: '#KRT-' + (10480 - i * 7),
-      client: clients[randi(0, clients.length - 1)],
-      product: productNames[randi(0, productNames.length - 1)],
-      amount: Math.round(rand(1200, 14000)),
-      status: status.label, tone: status.tone,
-      date: `${d.getDate()}/${d.getMonth() + 1}`,
-    });
-  }
-
-  return {
-    periods,
-    defaultPeriod: '30j',
-    funnel,
-    sources,
-    recentOrders,
-    products: randi(14, 60),
+  // ---- Commandes d'aujourd'hui ----
+  const todayKey = dayKey(now);
+  const todayOrders = orders.filter((o) => dayKey(o.d) === todayKey);
+  const today = {
+    orders: todayOrders.length,
+    revenue: todayOrders.filter(isDelivered).reduce((s, o) => s + o.total, 0),
+    pending: todayOrders.filter((o) => !isDelivered(o) && o.status !== 'annulee').length,
   };
+
+  const products = db.prepare('SELECT COUNT(*) AS c FROM products WHERE user_id = ?').get(user.id).c;
+
+  return { periods, defaultPeriod: '30j', funnel, sources, today, products };
 }
 
-// GET /api/dashboard  — donnees agregees du tableau de bord
+// GET /api/dashboard
 router.get('/', requireAuth, (req, res) => {
-  res.json({ user: publicUser(req.user), stats: seededStats(req.user) });
+  res.json({ user: publicUser(req.user), stats: realStats(req.user) });
 });
 
 module.exports = router;

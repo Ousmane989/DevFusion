@@ -55,12 +55,15 @@
     svg.addEventListener('mousemove', move); svg.addEventListener('mouseleave', leave); svg.addEventListener('touchmove', move, { passive: true }); svg.addEventListener('touchend', leave);
   }
   function renderFunnel(container, stages) {
+    if (!stages.some((s) => s.value > 0)) { container.innerHTML = '<p class="dash-empty">Aucune donnée pour l\'instant.<br/>Les visites et commandes apparaîtront ici.</p>'; return; }
     const top = stages[0].value || 1;
     container.innerHTML = stages.map((st, i) => { const pctTop = (st.value / top) * 100; const step = i === 0 ? null : Math.round((st.value / (stages[i - 1].value || 1)) * 100); const col = gold(1 - i / Math.max(1, stages.length - 1)); return `<div class="funnel-row"><div class="funnel-head"><span class="funnel-name">${esc(st.stage)}</span><span class="funnel-val">${money(st.value)}${step !== null ? ` <span class="funnel-step">${step}%</span>` : ''}</span></div><div class="funnel-track"><div class="funnel-bar" data-w="${pctTop.toFixed(1)}" style="width:0;background:${col}"></div></div></div>`; }).join('');
     requestAnimationFrame(() => container.querySelectorAll('.funnel-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 110 * i)));
   }
   function renderDonut(container, legendEl, sources) {
-    const total = sources.reduce((t, x) => t + x.value, 0) || 1, R = 60, C = 80, cir = 2 * Math.PI * R, gap = 3; let acc = -90, segs = '';
+    const realTotal = sources.reduce((t, x) => t + x.value, 0);
+    if (!realTotal) { container.innerHTML = '<p class="dash-empty">Aucune visite pour l\'instant.</p>'; legendEl.innerHTML = ''; return; }
+    const total = realTotal, R = 60, C = 80, cir = 2 * Math.PI * R, gap = 3; let acc = -90, segs = '';
     sources.forEach((sc, i) => { const frac = sc.value / total; const sweep = frac * 360 - gap; const col = gold(1 - i / Math.max(1, sources.length - 1)); const dash = (Math.max(0, sweep) / 360) * cir; const off = (-(acc + 90) / 360) * cir; segs += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${col}" stroke-width="20" stroke-dasharray="${dash.toFixed(2)} ${(cir - dash).toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 ${C} ${C})" class="donut-seg" style="opacity:0"/>`; acc += frac * 360; });
     container.innerHTML = `<svg viewBox="0 0 160 160" class="donut" role="img" aria-label="Sources de trafic">${segs}<text x="${C}" y="${C - 4}" class="donut-total" text-anchor="middle">${money(total)}</text><text x="${C}" y="${C + 14}" class="donut-cap" text-anchor="middle">visiteurs</text></svg>`;
     legendEl.innerHTML = sources.map((sc, i) => `<li><span class="dot" style="background:${gold(1 - i / Math.max(1, sources.length - 1))}"></span><span class="lg-name">${esc(sc.name)}</span><span class="lg-val">${sc.share}%</span></li>`).join('');
@@ -110,6 +113,10 @@
     if (user.status === 'trial') { const end = user.trialEndsAt ? new Date(user.trialEndsAt) : null; const days = end ? Math.max(0, Math.ceil((end - Date.now()) / 86400000)) : 0; txt.textContent = '✦ Essai gratuit : ' + days + ' jour' + (days > 1 ? 's' : '') + ' restant' + (days > 1 ? 's' : '') + '. Activez votre abonnement pour continuer.'; bar.style.display = 'block'; }
     else if (user.status === 'active') { const end = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt).toLocaleDateString('fr-FR') : ''; txt.textContent = '✓ Abonnement ' + (user.planName || '') + ' actif' + (end ? ' jusqu\'au ' + end : '') + '.'; const cta = bar.querySelector('.btn'); if (cta) cta.style.display = 'none'; bar.style.display = 'block'; }
 
+    if (st.today) {
+      q('#kpi-today').textContent = st.today.orders;
+      q('#kpi-today-sub').textContent = money(st.today.revenue) + ' MRU encaissés · ' + st.today.pending + ' à traiter';
+    }
     applyPeriod(st.defaultPeriod || '30j');
     renderFunnel(q('#funnel'), st.funnel);
     renderDonut(q('#donut'), q('#donut-legend'), st.sources);
@@ -231,6 +238,9 @@
       const meta = orderStatuses.find((s) => s.key === status);
       const wrap = sel.closest('.stsel'); if (wrap && meta) wrap.className = 'stsel tone-' + meta.tone;
       if (r.data.summary) applySummary(r.data.summary);
+      // Le chiffre d'affaires depend des commandes livrees : on rafraichit la vue d'ensemble.
+      const rd = await api('/api/dashboard', 'GET');
+      if (rd.ok) { currentUser = rd.data.user; overviewStats = rd.data.stats; renderOverview(currentUser, overviewStats); }
     }
   }
 
@@ -296,13 +306,21 @@
     q('#store-tagline').value = store.tagline || '';
     q('#store-domain').value = store.domain || store.defaultDomain || '';
     q('#store-desc').value = store.description || '';
+    if (q('#store-phone')) q('#store-phone').value = store.phone || '';
+    if (q('#store-whatsapp')) q('#store-whatsapp').value = store.whatsapp || '';
+    if (q('#store-email')) q('#store-email').value = store.email || '';
+    if (q('#store-address')) q('#store-address').value = store.address || '';
     q('#store-tagline').addEventListener('input', renderThemePreview);
     updateVisitLink(store.slug);
     renderThemePreview();
     loaded.store = true;
   }
   async function saveStore() {
-    const payload = { theme: selectedTheme, tagline: q('#store-tagline').value.trim(), domain: q('#store-domain').value.trim(), description: q('#store-desc').value.trim() };
+    const val = (id) => (q(id) ? q(id).value.trim() : '');
+    const payload = {
+      theme: selectedTheme, tagline: val('#store-tagline'), domain: val('#store-domain'), description: val('#store-desc'),
+      phone: val('#store-phone'), whatsapp: val('#store-whatsapp'), email: val('#store-email'), address: val('#store-address'),
+    };
     const r = await api('/api/store', 'PUT', payload);
     if (r.ok) { store = r.data.store; updateVisitLink(store.slug); msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.'); }
     else msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
