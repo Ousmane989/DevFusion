@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tableau de bord — Karat</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,12 22,28 10,28 5,12' fill='%23D4AF37'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="dash">
+    <!-- En-tête du tableau de bord -->
+    <header class="dash-top">
+      <div class="container nav">
+        <a href="/" class="brand"><svg class="mark" viewBox="0 0 32 32"><polygon points="16,3 27,12 22,28 10,28 5,12" fill="#D4AF37"/></svg><span class="gold-text">Karat</span></a>
+        <div class="dash-user">
+          <div class="avatar" id="avatar">K</div>
+          <div class="meta"><div class="name" id="user-name">…</div><div class="shop" id="shop-name">…</div></div>
+          <button class="btn btn-ghost" id="logout" style="padding:9px 18px;font-size:.85rem">Déconnexion</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Bandeau essai / statut -->
+    <div class="trial-bar" id="trial-bar" style="display:none">
+      <div class="container inner">
+        <span class="txt" id="trial-text"></span>
+        <a href="/paiement" class="btn btn-primary" style="padding:8px 18px;font-size:.85rem">Activer mon abonnement</a>
+      </div>
+    </div>
+
+    <div class="dash-body">
+      <div class="container">
+        <div class="dash-title">
+          <h1>Bonjour, <span class="gold-text" id="hello-name">…</span> 👋</h1>
+          <p>Voici les performances de votre boutique aujourd'hui.</p>
+        </div>
+
+        <!-- Indicateurs clés -->
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="k-label">Chiffre d'affaires</div>
+            <div class="k-val gold-text"><span id="kpi-rev">0</span> <span style="font-size:1rem">MRU</span></div>
+            <div class="k-sub" id="kpi-rev-fcfa">≈ 0 FCFA</div>
+          </div>
+          <div class="kpi">
+            <div class="k-label">Commandes</div>
+            <div class="k-val" id="kpi-orders">0</div>
+            <div class="k-sub">Ce mois-ci</div>
+          </div>
+          <div class="kpi">
+            <div class="k-label">Visiteurs</div>
+            <div class="k-val" id="kpi-visitors">0</div>
+            <div class="k-sub">30 derniers jours</div>
+          </div>
+          <div class="kpi">
+            <div class="k-label">Taux de conversion</div>
+            <div class="k-val"><span id="kpi-conv">0</span><span style="font-size:1rem">%</span></div>
+            <div class="k-sub">Visiteurs → clients</div>
+          </div>
+        </div>
+
+        <div class="dash-cols">
+          <!-- Graphique CA -->
+          <div class="panel">
+            <h3>Chiffre d'affaires — 6 derniers mois</h3>
+            <div class="chart" id="chart"></div>
+          </div>
+          <!-- Meilleures ventes -->
+          <div class="panel">
+            <h3>Meilleures ventes</h3>
+            <ul class="top-list" id="top-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function countTo(el, target, suffix) {
+        suffix = suffix || '';
+        if (reduce) { el.textContent = Number(target).toLocaleString('fr-FR') + suffix; return; }
+        const dur = 1400, start = performance.now();
+        function tick(now) {
+          const p = Math.min(1, (now - start) / dur);
+          const e = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.floor(e * target).toLocaleString('fr-FR') + suffix;
+          if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+
+      (async function init() {
+        const { ok, status, data } = await Karat.api('/api/dashboard');
+        if (!ok) {
+          if (status === 401) window.location.href = '/connexion?suite=/tableau-de-bord';
+          return;
+        }
+        const u = data.user, s = data.stats;
+
+        // Identité
+        const initials = (u.name || 'K').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+        document.getElementById('avatar').textContent = initials;
+        document.getElementById('user-name').textContent = u.name;
+        document.getElementById('shop-name').textContent = u.shopName;
+        document.getElementById('hello-name').textContent = (u.name || '').split(' ')[0];
+
+        // Bandeau statut
+        const bar = document.getElementById('trial-bar');
+        const txt = document.getElementById('trial-text');
+        if (u.status === 'trial') {
+          const end = u.trialEndsAt ? new Date(u.trialEndsAt) : null;
+          const days = end ? Math.max(0, Math.ceil((end - Date.now()) / 86400000)) : 0;
+          txt.textContent = '✦ Essai gratuit : ' + days + ' jour' + (days > 1 ? 's' : '') + ' restant' + (days > 1 ? 's' : '') + '. Activez votre abonnement pour continuer sans interruption.';
+          bar.style.display = 'block';
+        } else if (u.status === 'active') {
+          const end = u.subscriptionEndsAt ? new Date(u.subscriptionEndsAt).toLocaleDateString('fr-FR') : '';
+          txt.textContent = '✓ Abonnement ' + u.planName + ' actif' + (end ? ' jusqu\'au ' + end : '') + '.';
+          bar.querySelector('.btn').style.display = 'none';
+          bar.style.display = 'block';
+        }
+
+        // KPIs
+        countTo(document.getElementById('kpi-rev'), s.revenueMru);
+        document.getElementById('kpi-rev-fcfa').textContent = '≈ ' + Karat.money(s.revenueFcfa) + ' FCFA';
+        countTo(document.getElementById('kpi-orders'), s.orders);
+        countTo(document.getElementById('kpi-visitors'), s.visitors);
+        document.getElementById('kpi-conv').textContent = s.conversion;
+
+        // Graphique en barres
+        const chart = document.getElementById('chart');
+        const max = Math.max.apply(null, s.trend.map((t) => t.value));
+        chart.innerHTML = '';
+        s.trend.forEach((t, i) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'bar-wrap';
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          bar.style.height = '0%';
+          bar.title = Karat.money(t.value) + ' MRU';
+          const label = document.createElement('div');
+          label.className = 'bar-label';
+          label.textContent = t.label;
+          wrap.appendChild(bar); wrap.appendChild(label);
+          chart.appendChild(wrap);
+          const target = Math.round((t.value / max) * 100);
+          setTimeout(() => { bar.style.height = target + '%'; }, reduce ? 0 : 120 * i);
+        });
+
+        // Meilleures ventes
+        const list = document.getElementById('top-list');
+        list.innerHTML = '';
+        s.topProducts.forEach((p) => {
+          const li = document.createElement('li');
+          li.innerHTML = '<div><div class="t-name">' + p.name + '</div><div class="t-sales">' + p.sales + ' ventes</div></div>' +
+                         '<div class="t-rev">' + Karat.money(p.revenue) + ' MRU</div>';
+          list.appendChild(li);
+        });
+      })();
+
+      document.getElementById('logout').addEventListener('click', async () => {
+        await Karat.api('/api/auth/logout', {});
+        window.location.href = '/';
+      });
+    })();
+  </script>
+</body>
+</html>
