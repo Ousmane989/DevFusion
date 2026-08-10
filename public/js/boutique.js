@@ -28,7 +28,7 @@
 
   function visual(p, extra) { return `<div class="sf-img ${extra || ''}"><span class="sf-mono">${esc(initial(p.name))}</span></div>`; }
   function price(p) { return `<div class="sf-price"><span class="sf-mru">${money(p.priceMru)} MRU</span><span class="sf-fcfa">≈ ${money(p.priceFcfa)} FCFA</span></div>`; }
-  function addBtn(p, label) { return `<button class="sf-add" data-add="${esc(p.name)}">${label || 'Ajouter au panier'}</button>`; }
+  function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
 
   function footer(d) {
     return `<footer class="sf-footer"><div class="sf-foot-in">
@@ -62,7 +62,7 @@
     },
     // 3) Fresh — bannière pleine largeur, pills catégories, grille dense 4 col
     fresh(d) {
-      const cards = d.products.map((p) => `<article class="sf-card compact">${visual(p)}<div class="sf-card-b"><span class="sf-tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="sf-row">${price(p)}<button class="sf-plus" data-add="${esc(p.name)}">+</button></div></div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card compact">${visual(p)}<div class="sf-card-b"><span class="sf-tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="sf-row">${price(p)}<button class="sf-plus" data-add="${p.id}">+</button></div></div></article>`).join('');
       const pills = ['Tout'].concat(d.categories || []).map((c, i) => `<button class="sf-pill ${i === 0 ? 'on' : ''}">${esc(c)}</button>`).join('');
       return `<header class="sf-head bar"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav pills"><a class="on">Accueil</a><a>Produits</a><a>Contact</a></nav>${cartBtn()}</header>
         <section class="sf-banner"><div class="sf-banner-in"><h1>${esc(d.tagline)}</h1><p>${esc(d.description || 'Découvrez notre catalogue, frais et de saison.')}</p></div></section>
@@ -71,7 +71,7 @@
     },
     // 4) Tech — hero scindé, cartes à survol marqué
     tech(d) {
-      const cards = d.products.map((p) => `<article class="sf-card hoverlift">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<a class="sf-link" data-add="${esc(p.name)}">Ajouter au panier →</a></div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card hoverlift">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<a class="sf-link" data-add="${p.id}">Ajouter au panier →</a></div></article>`).join('');
       const feats = d.products.slice(0, 2).map((p) => `<div class="sf-feat">${visual(p)}<div><h4>${esc(p.name)}</h4>${price(p)}</div></div>`).join('');
       return `<header class="sf-head sticky"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav"><a>Accueil</a><a>Catalogue</a><a>À propos</a></nav>${cartBtn()}</header>
         <section class="sf-hero grid"><div class="sf-hero-txt"><span class="sf-eyebrow">Nouvelle collection</span><h1>${esc(d.tagline)}</h1><p class="sf-lead">${esc(d.description || 'Le meilleur, livré rapidement et payé simplement.')}</p><div class="sf-cta-row"><a class="sf-btn" href="#produits">Acheter</a><a class="sf-btn ghost" href="#produits">Explorer</a></div></div><div class="sf-hero-cards">${feats || '<div class="sf-halo"></div>'}</div></section>
@@ -87,7 +87,7 @@
     },
     // 6) Minimal — clair, épuré, beaucoup de vide
     minimal(d) {
-      const cards = d.products.map((p) => `<article class="sf-card bare">${visual(p, 'tall')}<h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<button class="sf-add ghost" data-add="${esc(p.name)}">Ajouter</button></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card bare">${visual(p, 'tall')}<h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<button class="sf-add ghost" data-add="${p.id}">Ajouter</button></article>`).join('');
       return `<header class="sf-head mini"><div class="sf-brand">${esc(d.shopName)}</div></header>
         <section class="sf-hero mini"><span class="sf-eyebrow">${esc(d.description || 'Boutique en ligne')}</span><h1>${esc(d.tagline)}</h1><a class="sf-underline" href="#produits">Voir les produits</a></section>
         <section class="sf-products" id="produits">${d.products.length ? `<div class="sf-grid cols3 airy">${cards}</div>` : empty()}</section>${footer(d)}`;
@@ -97,27 +97,128 @@
   // ============================================================
   // Rendu + interactions
   // ============================================================
-  let cart = 0;
+  // ============================================================
+  // Panier + commande (paiement à la livraison)
+  // ============================================================
+  let cart = [];        // [{ id, name, priceMru, qty }]
+  let data = null;      // données boutique courantes
+  let byId = {};        // produits indexés par id
+
   function toast(text) {
     let t = root.querySelector('.sf-toast');
     if (!t) { t = document.createElement('div'); t.className = 'sf-toast'; root.appendChild(t); }
     t.textContent = text; t.classList.add('show');
-    clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 1600);
+    clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 1700);
   }
-  function wireCart() {
-    root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => {
-      e.preventDefault(); cart++;
-      root.querySelectorAll('.sf-cart-count').forEach((c) => (c.textContent = cart));
-      toast('« ' + b.dataset.add +' » ajouté au panier');
-    }));
+  const cartCount = () => cart.reduce((n, i) => n + i.qty, 0);
+  const cartSubtotal = () => cart.reduce((s, i) => s + i.priceMru * i.qty, 0);
+  function updateBadges() { const n = cartCount(); root.querySelectorAll('.sf-cart-count, .sf-fab-count').forEach((e) => (e.textContent = n)); const fab = root.querySelector('.sf-fab'); if (fab) fab.classList.toggle('has', n > 0); }
+  function addToCart(id) {
+    const p = byId[id]; if (!p) return;
+    const line = cart.find((i) => i.id === p.id);
+    if (line) line.qty++; else cart.push({ id: p.id, name: p.name, priceMru: p.priceMru, qty: 1 });
+    updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
+  }
+  function setQty(id, delta) { const line = cart.find((i) => i.id === id); if (!line) return; line.qty += delta; if (line.qty <= 0) cart = cart.filter((i) => i.id !== id); updateBadges(); renderCart(); }
+
+  function shippingFee(city) {
+    const sh = (data && data.shipping) || { zones: [], freeOver: 0 };
+    const zone = (sh.zones || []).find((z) => z.zone.toLowerCase() === String(city || '').toLowerCase());
+    let fee = zone ? zone.fee : 0;
+    if (sh.freeOver && cartSubtotal() >= sh.freeOver) fee = 0;
+    return { fee, known: !!zone };
+  }
+
+  function grabFields() {
+    const g = (id) => { const el = root.querySelector(id); return el ? el.value : ''; };
+    return { name: g('#sf-name'), phone: g('#sf-phone'), city: g('#sf-city'), address: g('#sf-address'), note: g('#sf-note') };
+  }
+  function setFields(v) {
+    const s = (id, val) => { const el = root.querySelector(id); if (el) el.value = val; };
+    s('#sf-name', v.name); s('#sf-phone', v.phone); s('#sf-address', v.address); s('#sf-note', v.note);
+  }
+  function renderCart() {
+    const panel = root.querySelector('.sf-drawer-body'); if (!panel) return;
+    if (!cart.length) { panel.innerHTML = `<div class="sf-cart-empty"><p>Votre panier est vide.</p><p class="sf-muted">Ajoutez des produits pour commander.</p></div>`; return; }
+    const prev = grabFields();
+    const zones = (data.shipping && data.shipping.zones) || [];
+    const city = prev.city || '';
+    const sub = cartSubtotal();
+    const ship = shippingFee(city);
+    const total = sub + (city ? ship.fee : 0);
+    panel.innerHTML = `
+      <div class="sf-lines">${cart.map((i) => `<div class="sf-line"><div class="sf-line-i">${esc(initial(i.name))}</div><div class="sf-line-b"><div class="sf-line-n">${esc(i.name)}</div><div class="sf-line-p">${money(i.priceMru)} MRU</div></div><div class="sf-qty"><button data-q="-" data-id="${i.id}">−</button><span>${i.qty}</span><button data-q="+" data-id="${i.id}">+</button></div></div>`).join('')}</div>
+      <form class="sf-checkout" id="sf-checkout">
+        <h4>Vos coordonnées</h4>
+        <input id="sf-name" placeholder="Nom complet" required />
+        <input id="sf-phone" placeholder="Téléphone" required />
+        <select id="sf-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}" ${z.zone === city ? 'selected' : ''}>${esc(z.zone)} — ${money(z.fee)} MRU</option>`).join('')}</select>
+        <input id="sf-address" placeholder="Adresse / quartier (facultatif)" />
+        <textarea id="sf-note" rows="2" placeholder="Note pour le livreur (facultatif)"></textarea>
+        <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez ${money(total)} MRU en espèces à la réception.</span></div></div>
+        <div class="sf-totals"><div><span>Sous-total</span><span>${money(sub)} MRU</span></div><div><span>Livraison</span><span>${city ? (ship.fee ? money(ship.fee) + ' MRU' : 'Offerte') : '—'}</span></div><div class="sf-grand"><span>Total</span><span>${money(total)} MRU</span></div></div>
+        <button type="submit" class="sf-btn sf-confirm">Confirmer la commande</button>
+        <p class="sf-msg" id="sf-msg"></p>
+      </form>`;
+    setFields(prev);
+    panel.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => setQty(Number(b.dataset.id), b.dataset.q === '+' ? 1 : -1)));
+    const sel = panel.querySelector('#sf-city'); if (sel) sel.addEventListener('change', renderCart);
+    panel.querySelector('#sf-checkout').addEventListener('submit', submitOrder);
+  }
+
+  async function submitOrder(e) {
+    e.preventDefault();
+    const msg = root.querySelector('#sf-msg');
+    const name = root.querySelector('#sf-name').value.trim();
+    const phone = root.querySelector('#sf-phone').value.trim();
+    const city = root.querySelector('#sf-city').value;
+    if (name.length < 2 || phone.length < 6 || !city) { if (msg) { msg.textContent = 'Renseignez votre nom, téléphone et ville.'; msg.className = 'sf-msg err'; } return; }
+    const payload = { name, phone, city, address: root.querySelector('#sf-address').value.trim(), note: root.querySelector('#sf-note').value.trim(), items: cart.map((i) => ({ id: i.id, qty: i.qty })) };
+    const btn = root.querySelector('.sf-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+    const r = await placeOrder(payload);
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmer la commande'; }
+    if (!r.ok) { if (msg) { msg.textContent = (r.data && (r.data.error || (r.data.errors && Object.values(r.data.errors)[0]))) || 'Commande impossible.'; msg.className = 'sf-msg err'; } return; }
+    const d = r.data;
+    cart = []; updateBadges();
+    root.querySelector('.sf-drawer-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${money(d.total)} MRU<br/><span class="sf-muted">(dont ${money(d.shipping)} MRU de livraison)</span></p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
+    root.querySelector('[data-close]').addEventListener('click', closeCart);
+  }
+
+  async function placeOrder(payload) {
+    if (window.__KARAT_PLACE_ORDER__) return window.__KARAT_PLACE_ORDER__(payload);
+    try {
+      const res = await fetch('/api/public/store/' + encodeURIComponent(data.slug) + '/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      let d = {}; try { d = await res.json(); } catch (_) {}
+      return { ok: res.ok, data: d };
+    } catch (e) { return { ok: false, data: {} }; }
+  }
+
+  function openCart() { const dr = root.querySelector('.sf-drawer'); if (dr) { renderCart(); dr.classList.add('open'); } }
+  function closeCart() { const dr = root.querySelector('.sf-drawer'); if (dr) dr.classList.remove('open'); }
+
+  function mountChrome() {
+    const fab = document.createElement('button');
+    fab.className = 'sf-fab'; fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Panier <span class="sf-fab-count">0</span>`;
+    fab.addEventListener('click', openCart); root.appendChild(fab);
+    const dr = document.createElement('div');
+    dr.className = 'sf-drawer';
+    dr.innerHTML = `<div class="sf-drawer-ov"></div><aside class="sf-drawer-p"><div class="sf-drawer-h"><h3>Votre panier</h3><button class="sf-x" aria-label="Fermer">✕</button></div><div class="sf-drawer-body"></div></aside>`;
+    root.appendChild(dr);
+    dr.querySelector('.sf-drawer-ov').addEventListener('click', closeCart);
+    dr.querySelector('.sf-x').addEventListener('click', closeCart);
+    root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
+    root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); addToCart(Number(b.dataset.add)); }));
   }
 
   function render(d) {
     const t = d.themeData;
+    data = d; cart = []; byId = {};
+    (d.products || []).forEach((p) => (byId[p.id] = p));
     applyTheme(t);
     root.className = 'storefront lay-' + (t.layout || 'luxe');
     root.innerHTML = (layouts[t.layout] || layouts.luxe)(d);
-    wireCart();
+    mountChrome();
+    updateBadges();
     document.title = d.shopName + ' — Boutique Karat';
   }
 

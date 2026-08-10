@@ -546,6 +546,17 @@ img { max-width: 100%; display: block; }
 .pill.info { color: #8fc7e6; background: rgba(59,158,219,.14); }
 .pill.muted-pill { color: var(--text-mute); background: rgba(255,255,255,.05); }
 .pill.muted-pill::before { background: currentColor; }
+
+/* Sélecteur de statut de commande (pastille cliquable) */
+.stsel { display: inline-flex; align-items: center; gap: 2px; border-radius: 50px; padding: 2px 6px 2px 12px; }
+.stsel::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.stsel select { background: transparent; border: none; color: inherit; font-family: var(--sans); font-size: 0.82rem; padding: 5px 4px; cursor: pointer; -webkit-appearance: none; appearance: none; outline: none; }
+.stsel select option { color: #14110c; background: #f4f1ea; }
+.stsel.tone-good { color: #8fe0ad; background: rgba(111,191,139,.12); }
+.stsel.tone-warning { color: #e6c67e; background: rgba(229,178,93,.14); }
+.stsel.tone-info { color: #8fc7e6; background: rgba(59,158,219,.14); }
+.stsel.tone-critical { color: #f0a29c; background: rgba(229,103,95,.12); }
+.cod { font-size: 0.76rem; color: var(--text-mute); white-space: nowrap; }
 .empty-state { text-align: center; padding: 50px 20px; }
 .empty-state p { color: var(--text); }
 .empty-state .muted { color: var(--text-mute); font-size: 0.9rem; margin-top: 6px; }

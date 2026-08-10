@@ -61,6 +61,27 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id);
 
+  -- Commandes passees par les clients (paiement a la livraison).
+  CREATE TABLE IF NOT EXISTS orders (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id        INTEGER NOT NULL,          -- le commercant proprietaire
+    ref            TEXT    NOT NULL,
+    customer_name  TEXT    NOT NULL,
+    customer_phone TEXT    NOT NULL DEFAULT '',
+    city           TEXT    NOT NULL DEFAULT '',
+    address        TEXT    NOT NULL DEFAULT '',
+    note           TEXT    NOT NULL DEFAULT '',
+    items_json     TEXT    NOT NULL DEFAULT '[]',
+    subtotal_mru   INTEGER NOT NULL DEFAULT 0,
+    shipping_mru   INTEGER NOT NULL DEFAULT 0,
+    total_mru      INTEGER NOT NULL DEFAULT 0,
+    payment        TEXT    NOT NULL DEFAULT 'cod',   -- cod = paiement a la livraison
+    status         TEXT    NOT NULL DEFAULT 'nouvelle',
+    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+
   -- Une ligne de reglages de boutique par utilisateur (theme, livraison...).
   CREATE TABLE IF NOT EXISTS store_settings (
     user_id       INTEGER PRIMARY KEY,

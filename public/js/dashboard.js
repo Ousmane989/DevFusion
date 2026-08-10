@@ -84,7 +84,7 @@
     const side = q('#dash-side'); if (side) side.classList.remove('open');
     window.scrollTo(0, 0);
     if (name === 'products' && !loaded.products) loadProducts();
-    if (name === 'orders' && !loaded.orders) loadOrders();
+    if (name === 'orders') loadOrders(); // toujours rafraichir (nouvelles commandes clients)
     if (name === 'shipping' && !loaded.store2) loadShipping();
     if (name === 'store' && !loaded.store) loadStore();
   }
@@ -204,18 +204,34 @@
   // ================================================================
   // Commandes
   // ================================================================
-  function orderPill(tone, label) { const map = { good: 'good', warning: 'warning', critical: 'critical', info: 'info' }; return `<span class="pill ${map[tone] || 'info'}">${esc(label)}</span>`; }
+  let orderStatuses = [];
+  function applySummary(sm) { countTo(q('#ord-total'), sm.total); countTo(q('#ord-toprocess'), sm.toProcess); countTo(q('#ord-delivered'), sm.delivered); countTo(q('#ord-rev'), sm.revenue); q('#badge-orders').textContent = sm.total || ''; }
+  function statusSelect(o) {
+    const opts = orderStatuses.map((s) => `<option value="${s.key}" ${s.key === o.status ? 'selected' : ''}>${esc(s.label)}</option>`).join('');
+    return `<span class="stsel tone-${o.tone}"><select data-order="${o.id}">${opts}</select></span>`;
+  }
   async function loadOrders() {
     const r = await api('/api/orders', 'GET');
     if (!r.ok) return;
-    const { orders, summary } = r.data;
-    q('#badge-orders').textContent = summary.total || '';
-    countTo(q('#ord-total'), summary.total); countTo(q('#ord-paid'), summary.paid); countTo(q('#ord-pending'), summary.pending); countTo(q('#ord-rev'), summary.revenue);
-    q('#orders-full-body').innerHTML = orders.map((o) => `<tr>
-      <td class="mono">${esc(o.ref)}</td><td>${esc(o.client)}</td><td class="muted">${esc(o.city)}</td>
-      <td class="cell-prod">${esc(o.product)}</td><td class="mono num">${o.items}</td><td class="mono num">${money(o.amount)} MRU</td>
-      <td>${orderPill(o.tone, o.status)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
+    const { orders, summary, statuses } = r.data;
+    orderStatuses = statuses || [];
+    applySummary(summary);
+    q('#orders-full-body').innerHTML = orders.map((o) => `<tr data-row="${o.id}">
+      <td class="mono">${esc(o.ref)}</td><td>${esc(o.customer)}</td><td class="muted">${esc(o.city)}</td>
+      <td class="cell-prod">${esc(o.productsLabel)}</td><td class="mono num">${money(o.amount)} MRU</td>
+      <td><span class="cod">À la livraison</span></td>
+      <td>${statusSelect(o)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
+    q('#orders-full-body').querySelectorAll('select[data-order]').forEach((sel) => sel.addEventListener('change', () => changeStatus(sel)));
     loaded.orders = true;
+  }
+  async function changeStatus(sel) {
+    const id = sel.dataset.order, status = sel.value;
+    const r = await api('/api/orders/' + id + '/status', 'PUT', { status });
+    if (r.ok) {
+      const meta = orderStatuses.find((s) => s.key === status);
+      const wrap = sel.closest('.stsel'); if (wrap && meta) wrap.className = 'stsel tone-' + meta.tone;
+      if (r.data.summary) applySummary(r.data.summary);
+    }
   }
 
   // ================================================================
