@@ -113,23 +113,8 @@ function seededStats(user) {
     .map((x) => ({ name: x.name, value: Math.round((x.w / wsum) * vis30), share: Number(((x.w / wsum) * 100).toFixed(1)) }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Ventes par categorie -----------------------------------------
-  const revenue30 = sum(w30, 'revenue');
-  const catNames = ['Mode', 'Électronique', 'Alimentation', 'Cosmétique', 'Artisanat', 'Accessoires'];
-  let cats = catNames.map((name) => ({ name, value: Math.round(rand(8000, revenue30 / 2)) }));
-  const catTotal = cats.reduce((t, c) => t + c.value, 0);
-  cats = cats
-    .map((c) => ({ ...c, share: Number(((c.value / catTotal) * 100).toFixed(1)) }))
-    .sort((a, b) => b.value - a.value);
-
-  // --- Meilleures ventes --------------------------------------------
-  const productNames = ['Boubou brodé main', 'Sac en cuir artisanal', 'Casque sans fil', 'Montre dorée', 'Foulard en soie', 'Sandales cuir', 'Sérum éclat', 'Thé Touba premium'];
-  const topProducts = productNames.slice(0, 5).map((name) => {
-    const sales = randi(12, 90);
-    return { name, sales, revenue: Math.round(sales * rand(900, 2600)) };
-  }).sort((a, b) => b.revenue - a.revenue);
-
   // --- Commandes recentes -------------------------------------------
+  const productNames = ['Boubou brodé main', 'Sac en cuir artisanal', 'Casque sans fil', 'Montre dorée', 'Foulard en soie', 'Sandales cuir', 'Sérum éclat', 'Thé Touba premium'];
   const clients = ['Fatimetou M.', 'Ousmane D.', 'Aicha B.', 'Moussa S.', 'Mariam K.', 'Cheikh N.', 'Ramata L.', 'Ibrahima F.'];
   const st = [
     { label: 'Payée', tone: 'good' },
@@ -155,8 +140,6 @@ function seededStats(user) {
     defaultPeriod: '30j',
     funnel,
     sources,
-    categories: cats,
-    topProducts,
     recentOrders,
     products: randi(14, 60),
   };
