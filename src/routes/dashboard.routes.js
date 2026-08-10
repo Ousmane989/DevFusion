@@ -16,7 +16,6 @@ function seededStats(user) {
   const key = `${user.id}:${user.shop_name}`;
   for (const ch of key) s = (s * 31 + ch.charCodeAt(0)) % 2147483647;
   if (s <= 0) s = 123457;
-  // PRNG (Lehmer) -> flottant [0,1)
   const next = () => { s = (s * 48271) % 2147483647; return s / 2147483647; };
   const rand = (min, max) => min + next() * (max - min);
   const randi = (min, max) => Math.floor(rand(min, max + 1));
@@ -24,83 +23,101 @@ function seededStats(user) {
   const MONTHS = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
   const now = new Date();
 
-  // --- Serie journaliere sur 60 jours (base pour 7j / 30j) ----------
-  const base = rand(2200, 9000);          // CA journalier moyen (MRU)
-  const growth = rand(0.002, 0.008);      // legere croissance quotidienne
+  const sum = (arr, k) => arr.reduce((t, x) => t + x[k], 0);
+  const last = (arr, n) => arr.slice(arr.length - n);
+  const delta = (cur, prev) => (prev ? Number((((cur - prev) / prev) * 100).toFixed(1)) : 0);
+
+  // --- Serie journaliere sur 60 jours -------------------------------
+  const base = rand(2200, 9000);
+  const growth = rand(0.002, 0.008);
   const daily = [];
   for (let i = 59; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(now.getDate() - i);
-    const weekday = d.getDay();
-    const weekend = weekday === 5 || weekday === 6 ? 1.28 : 1; // pics vendredi/samedi
-    const noise = rand(0.6, 1.4);
-    const drift = Math.pow(1 + growth, 60 - i);
-    const revenue = Math.round(base * weekend * noise * drift);
+    const weekend = d.getDay() === 5 || d.getDay() === 6 ? 1.28 : 1;
+    const revenue = Math.round(base * weekend * rand(0.6, 1.4) * Math.pow(1 + growth, 60 - i));
     const orders = Math.max(1, Math.round(revenue / rand(1500, 3200)));
     const visitors = orders * randi(11, 24);
-    daily.push({
-      date: d.toISOString().slice(0, 10),
-      label: `${d.getDate()}/${d.getMonth() + 1}`,
-      revenue,
-      orders,
-      visitors,
-    });
+    daily.push({ label: `${d.getDate()}/${d.getMonth() + 1}`, revenue, orders, visitors });
   }
 
-  // --- Serie mensuelle sur 12 mois ----------------------------------
+  // --- Serie mensuelle sur 24 mois ----------------------------------
   const monthly = [];
-  let mBase = rand(60000, 140000);
-  for (let i = 11; i >= 0; i--) {
+  let mBase = rand(55000, 130000);
+  for (let i = 23; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    mBase = mBase * rand(1.02, 1.16);
-    monthly.push({
-      label: MONTHS[d.getMonth()],
-      value: Math.round(mBase * rand(0.85, 1.12)),
-    });
+    mBase = mBase * rand(1.008, 1.038);
+    const revenue = Math.round(mBase * rand(0.85, 1.12));
+    const orders = Math.max(1, Math.round(revenue / rand(1800, 2600)));
+    const visitors = orders * randi(12, 22);
+    monthly.push({ label: MONTHS[d.getMonth()], revenue, orders, visitors });
   }
 
-  const sum = (arr, k) => arr.reduce((t, x) => t + (k ? x[k] : x), 0);
-  const last = (arr, n) => arr.slice(arr.length - n);
+  // --- KPIs a partir d'une fenetre + fenetre precedente -------------
+  function kpisOf(win, prev, sparks) {
+    const rev = sum(win, 'revenue'), revP = sum(prev, 'revenue');
+    const ord = sum(win, 'orders'), ordP = sum(prev, 'orders');
+    const vis = sum(win, 'visitors'), visP = sum(prev, 'visitors');
+    const conv = vis ? (ord / vis) * 100 : 0, convP = visP ? (ordP / visP) * 100 : 0;
+    const bask = ord ? rev / ord : 0, baskP = ordP ? revP / ordP : 0;
+    return {
+      revenue: { value: rev, fcfa: rev * 6, delta: delta(rev, revP), spark: sparks.rev },
+      orders: { value: ord, delta: delta(ord, ordP), spark: sparks.ord },
+      visitors: { value: vis, delta: delta(vis, visP), spark: sparks.vis },
+      conversion: { value: Number(conv.toFixed(1)), delta: delta(conv, convP), spark: sparks.conv },
+      basket: { value: Math.round(bask), fcfa: Math.round(bask * 6), delta: delta(bask, baskP) },
+    };
+  }
+  const series = (arr) => arr.map((x) => ({ label: x.label, value: x.revenue }));
 
-  // --- Fenetres 7j et 30j + variation vs periode precedente ---------
-  const win30 = last(daily, 30);
-  const prev30 = daily.slice(0, 30);
-  const win7 = last(daily, 7);
-  const prev7 = daily.slice(daily.length - 14, daily.length - 7);
+  // Fenetres 7 jours / 30 jours / 12 mois (chacune avec sa periode precedente)
+  const w7 = last(daily, 7), p7 = daily.slice(daily.length - 14, daily.length - 7);
+  const w30 = last(daily, 30), p30 = daily.slice(0, 30);
+  const w12 = last(monthly, 12), p12 = monthly.slice(0, 12);
 
-  const revenueMru = sum(win30, 'revenue');
-  const revenuePrev = sum(prev30, 'revenue');
-  const orders = sum(win30, 'orders');
-  const ordersPrev = sum(prev30, 'orders');
-  const visitors = sum(win30, 'visitors');
-  const visitorsPrev = sum(prev30, 'visitors');
-  const conversion = (orders / visitors) * 100;
-  const conversionPrev = (ordersPrev / visitorsPrev) * 100;
-  const basket = revenueMru / orders;
-  const basketPrev = revenuePrev / ordersPrev;
-
-  const delta = (cur, prev) => (prev ? Number((((cur - prev) / prev) * 100).toFixed(1)) : 0);
-  const spark = (arr, k) => last(arr, 14).map((x) => x[k]);
-
-  const kpis = {
-    revenue: { value: revenueMru, fcfa: revenueMru * 6, delta: delta(revenueMru, revenuePrev), spark: spark(win30.length >= 14 ? win30 : daily, 'revenue') },
-    orders: { value: orders, delta: delta(orders, ordersPrev), spark: spark(win30, 'orders') },
-    visitors: { value: visitors, delta: delta(visitors, visitorsPrev), spark: spark(win30, 'visitors') },
-    conversion: { value: Number(conversion.toFixed(1)), delta: delta(conversion, conversionPrev), spark: spark(win30, 'orders') },
-    basket: { value: Math.round(basket), fcfa: Math.round(basket * 6), delta: delta(basket, basketPrev) },
+  const periods = {
+    '7j': {
+      rangeLabel: '7 derniers jours', subLabel: 'Sur 7 jours',
+      kpis: kpisOf(w7, p7, { rev: w7.map((x) => x.revenue), ord: w7.map((x) => x.orders), vis: w7.map((x) => x.visitors), conv: w7.map((x) => x.orders) }),
+      series: series(w7),
+    },
+    '30j': {
+      rangeLabel: '30 derniers jours', subLabel: 'Sur 30 jours',
+      kpis: kpisOf(w30, p30, { rev: last(w30, 14).map((x) => x.revenue), ord: last(w30, 14).map((x) => x.orders), vis: last(w30, 14).map((x) => x.visitors), conv: last(w30, 14).map((x) => x.orders) }),
+      series: series(w30),
+    },
+    '12m': {
+      rangeLabel: '12 derniers mois', subLabel: 'Sur 12 mois',
+      kpis: kpisOf(w12, p12, { rev: w12.map((x) => x.revenue), ord: w12.map((x) => x.orders), vis: w12.map((x) => x.visitors), conv: w12.map((x) => x.orders) }),
+      series: series(w12),
+    },
   };
 
-  // --- Series de CA pour le selecteur de periode --------------------
-  const revenueTrend = {
-    '7j': win7.map((x) => ({ label: x.label, value: x.revenue })),
-    '30j': win30.map((x) => ({ label: x.label, value: x.revenue })),
-    '12m': monthly,
-  };
+  // --- Tunnel de conversion (base sur 30 jours) ---------------------
+  const vis30 = sum(w30, 'visitors');
+  const ord30 = sum(w30, 'orders');
+  const productViews = Math.round(vis30 * rand(0.58, 0.72));
+  const addToCart = Math.round(vis30 * rand(0.19, 0.28));
+  const funnel = [
+    { stage: 'Visiteurs', value: vis30 },
+    { stage: 'Vues produit', value: productViews },
+    { stage: 'Ajouts au panier', value: addToCart },
+    { stage: 'Commandes', value: ord30 },
+  ];
 
-  // --- Ventes par categorie (rampe doree = magnitude) ---------------
+  // --- Sources de trafic --------------------------------------------
+  const srcNames = ['Direct', 'Réseaux sociaux', 'Recherche Google', 'WhatsApp', 'Référence'];
+  let sources = srcNames.map((name) => ({ name, w: rand(0.5, 3) }));
+  const wsum = sources.reduce((t, x) => t + x.w, 0);
+  sources = sources
+    .map((x) => ({ name: x.name, value: Math.round((x.w / wsum) * vis30), share: Number(((x.w / wsum) * 100).toFixed(1)) }))
+    .sort((a, b) => b.value - a.value);
+
+  // --- Ventes par categorie -----------------------------------------
+  const revenue30 = sum(w30, 'revenue');
   const catNames = ['Mode', 'Électronique', 'Alimentation', 'Cosmétique', 'Artisanat', 'Accessoires'];
-  let cats = catNames.map((name) => ({ name, value: Math.round(rand(8000, revenueMru / 2)) }));
-  const catTotal = sum(cats, 'value');
+  let cats = catNames.map((name) => ({ name, value: Math.round(rand(8000, revenue30 / 2)) }));
+  const catTotal = cats.reduce((t, c) => t + c.value, 0);
   cats = cats
     .map((c) => ({ ...c, share: Number(((c.value / catTotal) * 100).toFixed(1)) }))
     .sort((a, b) => b.value - a.value);
@@ -114,41 +131,34 @@ function seededStats(user) {
 
   // --- Commandes recentes -------------------------------------------
   const clients = ['Fatimetou M.', 'Ousmane D.', 'Aicha B.', 'Moussa S.', 'Mariam K.', 'Cheikh N.', 'Ramata L.', 'Ibrahima F.'];
-  const statuses = [
-    { key: 'paid', label: 'Payée', tone: 'good' },
-    { key: 'pending', label: 'En cours', tone: 'warning' },
-    { key: 'refunded', label: 'Remboursée', tone: 'critical' },
+  const st = [
+    { label: 'Payée', tone: 'good' },
+    { label: 'En cours', tone: 'warning' },
+    { label: 'Remboursée', tone: 'critical' },
   ];
   const recentOrders = [];
   for (let i = 0; i < 6; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const st = i === 4 ? statuses[1] : i === 5 ? statuses[2] : statuses[randi(0, 0)] || statuses[0];
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    const status = i === 4 ? st[1] : i === 5 ? st[2] : st[0];
     recentOrders.push({
       ref: '#KRT-' + (10480 - i * 7),
       client: clients[randi(0, clients.length - 1)],
       product: productNames[randi(0, productNames.length - 1)],
       amount: Math.round(rand(1200, 14000)),
-      status: st.label,
-      tone: st.tone,
+      status: status.label, tone: status.tone,
       date: `${d.getDate()}/${d.getMonth() + 1}`,
     });
   }
 
-  const products = randi(14, 60);
   return {
-    kpis,
-    revenueTrend,
+    periods,
+    defaultPeriod: '30j',
+    funnel,
+    sources,
     categories: cats,
     topProducts,
     recentOrders,
-    products,
-    // conserve pour compatibilite eventuelle
-    revenueMru,
-    revenueFcfa: revenueMru * 6,
-    orders,
-    visitors,
-    conversion: kpis.conversion.value,
+    products: randi(14, 60),
   };
 }
 

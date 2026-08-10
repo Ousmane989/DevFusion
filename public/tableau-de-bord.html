@@ -34,9 +34,9 @@
         <div class="dash-title">
           <div>
             <h1>Bonjour, <span class="gold-text" id="hello-name">…</span> 👋</h1>
-            <p>Voici les performances de votre boutique sur les 30 derniers jours.</p>
+            <p id="dash-sub">Voici les performances de votre boutique sur les 30 derniers jours.</p>
           </div>
-          <span class="period-note">Comparé aux 30 jours précédents</span>
+          <span class="period-note">Comparé à la période précédente</span>
         </div>
 
         <!-- Indicateurs clés -->
@@ -50,13 +50,13 @@
           <div class="kpi">
             <div class="kpi-top"><span class="k-label">Commandes</span><span id="kpi-orders-delta"></span></div>
             <div class="k-val" id="kpi-orders">0</div>
-            <div class="k-sub">Sur la période</div>
+            <div class="k-sub k-period">Sur la période</div>
             <div class="k-spark" id="kpi-orders-spark"></div>
           </div>
           <div class="kpi">
             <div class="kpi-top"><span class="k-label">Visiteurs</span><span id="kpi-visitors-delta"></span></div>
             <div class="k-val" id="kpi-visitors">0</div>
-            <div class="k-sub">Sur la période</div>
+            <div class="k-sub k-period">Sur la période</div>
             <div class="k-spark" id="kpi-visitors-spark"></div>
           </div>
           <div class="kpi">
@@ -97,6 +97,24 @@
           <div class="panel">
             <div class="panel-head"><h3>Meilleures ventes</h3></div>
             <ul class="top-list" id="top-list"></ul>
+          </div>
+        </div>
+
+        <div class="dash-cols">
+          <!-- Tunnel de conversion -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3>Tunnel de conversion</h3><p class="panel-sub">Du visiteur à la commande — 30 derniers jours.</p></div>
+            </div>
+            <div class="funnel" id="funnel"></div>
+          </div>
+          <!-- Sources de trafic -->
+          <div class="panel">
+            <div class="panel-head"><h3>Sources de trafic</h3></div>
+            <div class="donut-wrap">
+              <div class="donut-chart" id="donut"></div>
+              <ul class="donut-legend" id="donut-legend"></ul>
+            </div>
           </div>
         </div>
 

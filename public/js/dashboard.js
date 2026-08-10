@@ -22,7 +22,7 @@
     opts = opts || {};
     const fmt = opts.fmt || money;
     if (reduce) { el.textContent = fmt(target); return; }
-    const dur = 1200, start = performance.now();
+    const dur = 900, start = performance.now();
     (function tick(now) {
       const p = Math.min(1, (now - start) / dur);
       const e = 1 - Math.pow(1 - p, 3);
@@ -37,7 +37,7 @@
     const max = Math.max.apply(null, values), min = Math.min.apply(null, values);
     const span = max - min || 1;
     const pts = values.map((v, i) => {
-      const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+      const x = pad + (i / (values.length - 1 || 1)) * (w - pad * 2);
       const y = h - pad - ((v - min) / span) * (h - pad * 2);
       return [x, y];
     });
@@ -45,22 +45,22 @@
     const area = line + ` L${pts[pts.length - 1][0].toFixed(1)} ${h} L${pts[0][0].toFixed(1)} ${h} Z`;
     const up = values[values.length - 1] >= values[0];
     const stroke = up ? '#D4AF37' : '#c98a80';
+    const uid = 'spk' + Math.random().toString(36).slice(2, 7);
     return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-      <defs><linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
+      <defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${stroke}" stop-opacity=".28"/><stop offset="1" stop-color="${stroke}" stop-opacity="0"/>
       </linearGradient></defs>
-      <path d="${area}" fill="url(#spk)"/>
+      <path d="${area}" fill="url(#${uid})"/>
       <path d="${line}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
   }
 
   function deltaChip(delta) {
     const up = delta >= 0;
-    const cls = up ? 'up' : 'down';
     const arrow = up
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17 17 7M9 7h8v8"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 7 7 17M15 17H7V9"/></svg>';
-    return `<span class="delta ${cls}">${arrow}${Math.abs(delta)}%</span>`;
+    return `<span class="delta ${up ? 'up' : 'down'}">${arrow}${Math.abs(delta)}%</span>`;
   }
 
   // -------- Graphique d'aire (CA dans le temps) ---------------------
@@ -68,40 +68,32 @@
     const W = 760, H = 260, padL = 8, padR = 8, padT = 18, padB = 28;
     const values = series.map((d) => d.value);
     const max = Math.max.apply(null, values) * 1.12;
-    const min = 0;
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const n = series.length;
-    const x = (i) => padL + (i / (n - 1)) * (W - padL - padR);
-    const y = (v) => padT + (1 - (v - min) / (max - min || 1)) * (H - padT - padB);
+    const x = (i) => padL + (i / (n - 1 || 1)) * (W - padL - padR);
+    const y = (v) => padT + (1 - v / (max || 1)) * (H - padT - padB);
 
-    const linePts = series.map((d, i) => [x(i), y(d.value)]);
-    const line = linePts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const pts = series.map((d, i) => [x(i), y(d.value)]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
     const area = line + ` L${x(n - 1).toFixed(1)} ${H - padB} L${x(0).toFixed(1)} ${H - padB} Z`;
 
-    // Lignes de grille + valeurs Y (4 niveaux)
     let grid = '';
     for (let g = 0; g <= 4; g++) {
-      const gv = (max / 4) * g;
-      const gy = y(gv);
+      const gy = y((max / 4) * g);
       grid += `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W - padR}" y2="${gy.toFixed(1)}" class="grid"/>`;
-      grid += `<text x="${padL}" y="${(gy - 4).toFixed(1)}" class="ytick">${money(gv)}</text>`;
+      grid += `<text x="${padL}" y="${(gy - 4).toFixed(1)}" class="ytick">${money((max / 4) * g)}</text>`;
     }
     const avgY = y(avg);
-
-    // Etiquettes X (on evite l'encombrement : ~7 max)
     const step = Math.ceil(n / 7);
     let xlabels = '';
     series.forEach((d, i) => {
-      if (i % step === 0 || i === n - 1) {
-        xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 8}" class="xtick">${d.label}</text>`;
-      }
+      if (i % step === 0 || i === n - 1) xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 8}" class="xtick">${d.label}</text>`;
     });
 
     container.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" class="area-chart" preserveAspectRatio="none" role="img" aria-label="Evolution du chiffre d'affaires">
         <defs><linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#F5D77E" stop-opacity=".38"/>
-          <stop offset="1" stop-color="#D4AF37" stop-opacity="0"/>
+          <stop offset="0" stop-color="#F5D77E" stop-opacity=".38"/><stop offset="1" stop-color="#D4AF37" stop-opacity="0"/>
         </linearGradient></defs>
         ${grid}
         <line x1="${padL}" y1="${avgY.toFixed(1)}" x2="${W - padR}" y2="${avgY.toFixed(1)}" class="avg-line"/>
@@ -109,10 +101,7 @@
         <path d="${area}" fill="url(#area-grad)"/>
         <path d="${line}" fill="none" stroke="#F5D77E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         ${xlabels}
-        <g class="hover-layer" style="opacity:0">
-          <line class="crosshair" y1="${padT}" y2="${H - padB}"/>
-          <circle class="hover-dot" r="4.5"/>
-        </g>
+        <g class="hover-layer" style="opacity:0"><line class="crosshair" y1="${padT}" y2="${H - padB}"/><circle class="hover-dot" r="4.5"/></g>
       </svg>
       <div class="chart-tip" style="opacity:0"></div>`;
 
@@ -126,27 +115,23 @@
       path.style.strokeDashoffset = '0';
     }
 
-    // Interaction : crosshair + infobulle
     const svg = container.querySelector('svg');
     const layer = container.querySelector('.hover-layer');
     const cross = container.querySelector('.crosshair');
     const dot = container.querySelector('.hover-dot');
     const tip = container.querySelector('.chart-tip');
-
     function move(ev) {
       const rect = svg.getBoundingClientRect();
       const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) / rect.width;
-      let i = Math.round(px * (n - 1));
-      i = Math.max(0, Math.min(n - 1, i));
+      let i = Math.max(0, Math.min(n - 1, Math.round(px * (n - 1))));
       const cx = x(i), cy = y(series[i].value);
       layer.style.opacity = 1;
       cross.setAttribute('x1', cx); cross.setAttribute('x2', cx);
       dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
       tip.style.opacity = 1;
       tip.innerHTML = `<span class="t-label">${series[i].label}</span><span class="t-val">${money(series[i].value)} MRU</span>`;
-      const leftPct = (cx / W) * 100;
-      tip.style.left = leftPct + '%';
-      tip.style.top = ((cy / H) * 100) + '%';
+      tip.style.left = (cx / W) * 100 + '%';
+      tip.style.top = (cy / H) * 100 + '%';
     }
     function leave() { layer.style.opacity = 0; tip.style.opacity = 0; }
     svg.addEventListener('mousemove', move);
@@ -155,49 +140,84 @@
     svg.addEventListener('touchend', leave);
   }
 
-  // -------- Barres horizontales par categorie (rampe doree) --------
-  function renderCategories(container, cats) {
-    const max = Math.max.apply(null, cats.map((c) => c.value));
-    container.innerHTML = cats.map((c, i) => {
+  // -------- Barres horizontales (categories) -----------------------
+  function renderBars(container, rows, unit) {
+    const max = Math.max.apply(null, rows.map((c) => c.value));
+    container.innerHTML = rows.map((c, i) => {
       const pct = (c.value / max) * 100;
-      const col = gold(1 - i / Math.max(1, cats.length - 1));
+      const col = gold(1 - i / Math.max(1, rows.length - 1));
       return `<div class="cat-row">
-        <div class="cat-head"><span class="cat-name">${c.name}</span><span class="cat-val">${money(c.value)} MRU · ${c.share}%</span></div>
+        <div class="cat-head"><span class="cat-name">${c.name}</span><span class="cat-val">${money(c.value)}${unit} · ${c.share}%</span></div>
         <div class="cat-track"><div class="cat-bar" data-w="${pct.toFixed(1)}" style="width:0;background:${col}"></div></div>
       </div>`;
     }).join('');
-    requestAnimationFrame(() => {
-      container.querySelectorAll('.cat-bar').forEach((b, i) => {
-        setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 80 * i);
-      });
-    });
+    requestAnimationFrame(() => container.querySelectorAll('.cat-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 80 * i)));
   }
 
-  // -------- Meilleures ventes (avec barre de part) ------------------
+  // -------- Meilleures ventes --------------------------------------
   function renderTop(list, products) {
     const max = Math.max.apply(null, products.map((p) => p.revenue));
-    list.innerHTML = products.map((p) => {
-      const pct = (p.revenue / max) * 100;
-      return `<li>
+    list.innerHTML = products.map((p) => `<li>
         <div class="t-main"><span class="t-name">${p.name}</span><span class="t-rev">${money(p.revenue)} MRU</span></div>
-        <div class="t-track"><div class="t-bar" data-w="${pct.toFixed(1)}" style="width:0"></div></div>
+        <div class="t-track"><div class="t-bar" data-w="${((p.revenue / max) * 100).toFixed(1)}" style="width:0"></div></div>
         <div class="t-sales">${p.sales} ventes</div>
-      </li>`;
-    }).join('');
-    requestAnimationFrame(() => {
-      list.querySelectorAll('.t-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 90 * i));
-    });
+      </li>`).join('');
+    requestAnimationFrame(() => list.querySelectorAll('.t-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 90 * i)));
   }
 
-  // -------- Commandes recentes (table + pastilles de statut) -------
+  // -------- Tunnel de conversion -----------------------------------
+  function renderFunnel(container, stages) {
+    const top = stages[0].value || 1;
+    container.innerHTML = stages.map((st, i) => {
+      const pctOfTop = (st.value / top) * 100;
+      const stepConv = i === 0 ? null : Math.round((st.value / (stages[i - 1].value || 1)) * 100);
+      const col = gold(1 - i / Math.max(1, stages.length - 1));
+      return `<div class="funnel-row">
+        <div class="funnel-head">
+          <span class="funnel-name">${st.stage}</span>
+          <span class="funnel-val">${money(st.value)}${stepConv !== null ? ` <span class="funnel-step">${stepConv}%</span>` : ''}</span>
+        </div>
+        <div class="funnel-track"><div class="funnel-bar" data-w="${pctOfTop.toFixed(1)}" style="width:0;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+    requestAnimationFrame(() => container.querySelectorAll('.funnel-bar').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 110 * i)));
+  }
+
+  // -------- Donut « Sources de trafic » (rampe doree) --------------
+  function renderDonut(container, legendEl, sources) {
+    const total = sources.reduce((t, x) => t + x.value, 0) || 1;
+    const R = 60, r = 40, C = 80, cir = 2 * Math.PI * R;
+    const gapDeg = 3;
+    let acc = -90; // depart en haut
+    let segs = '';
+    sources.forEach((sc, i) => {
+      const frac = sc.value / total;
+      const sweep = frac * 360 - gapDeg;
+      const col = gold(1 - i / Math.max(1, sources.length - 1));
+      const dash = (Math.max(0, sweep) / 360) * cir;
+      const offset = (-(acc + 90) / 360) * cir;
+      segs += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${col}" stroke-width="${R - r}"
+        stroke-dasharray="${dash.toFixed(2)} ${(cir - dash).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+        transform="rotate(-90 ${C} ${C})" class="donut-seg" style="opacity:0"/>`;
+      acc += frac * 360;
+    });
+    container.innerHTML = `<svg viewBox="0 0 160 160" class="donut" role="img" aria-label="Repartition des sources de trafic">
+        ${segs}
+        <text x="${C}" y="${C - 4}" class="donut-total" text-anchor="middle">${money(total)}</text>
+        <text x="${C}" y="${C + 14}" class="donut-cap" text-anchor="middle">visiteurs</text>
+      </svg>`;
+    legendEl.innerHTML = sources.map((sc, i) => `<li>
+        <span class="dot" style="background:${gold(1 - i / Math.max(1, sources.length - 1))}"></span>
+        <span class="lg-name">${sc.name}</span><span class="lg-val">${sc.share}%</span>
+      </li>`).join('');
+    requestAnimationFrame(() => container.querySelectorAll('.donut-seg').forEach((s, i) => setTimeout(() => { s.style.opacity = 1; }, reduce ? 0 : 90 * i)));
+  }
+
+  // -------- Commandes recentes -------------------------------------
   function renderOrders(tbody, orders) {
     tbody.innerHTML = orders.map((o) => `<tr>
-      <td class="mono">${o.ref}</td>
-      <td>${o.client}</td>
-      <td class="cell-prod">${o.product}</td>
-      <td class="mono num">${money(o.amount)} MRU</td>
-      <td><span class="pill ${o.tone}">${o.status}</span></td>
-      <td class="muted">${o.date}</td>
+      <td class="mono">${o.ref}</td><td>${o.client}</td><td class="cell-prod">${o.product}</td>
+      <td class="mono num">${money(o.amount)} MRU</td><td><span class="pill ${o.tone}">${o.status}</span></td><td class="muted">${o.date}</td>
     </tr>`).join('');
   }
 
@@ -207,13 +227,13 @@
   async function init() {
     let data;
     if (window.__KARAT_DEMO__) {
-      data = window.__KARAT_DEMO__;               // mode apercu (sans backend)
+      data = window.__KARAT_DEMO__;
     } else {
       const r = await Karat.api('/api/dashboard');
       if (!r.ok) { if (r.status === 401) window.location.href = '/connexion?suite=/tableau-de-bord'; return; }
       data = r.data;
     }
-    const u = data.user, st = data.stats, k = st.kpis;
+    const u = data.user, st = data.stats;
 
     // Identite
     const initials = (u.name || 'K').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -236,53 +256,54 @@
       bar.style.display = 'block';
     }
 
-    // KPIs
-    countTo($('#kpi-rev'), k.revenue.value);
-    $('#kpi-rev-fcfa').textContent = '≈ ' + money(k.revenue.fcfa) + ' FCFA';
-    $('#kpi-rev-delta').innerHTML = deltaChip(k.revenue.delta);
-    $('#kpi-rev-spark').innerHTML = sparkline(k.revenue.spark);
+    // ---- KPIs + courbe pilotes par la periode ----
+    function applyPeriod(key) {
+      const P = st.periods[key], k = P.kpis;
+      $('#dash-sub').textContent = 'Voici les performances de votre boutique sur les ' + P.rangeLabel + '.';
+      document.querySelectorAll('.k-period').forEach((e) => (e.textContent = P.subLabel));
 
-    countTo($('#kpi-orders'), k.orders.value);
-    $('#kpi-orders-delta').innerHTML = deltaChip(k.orders.delta);
-    $('#kpi-orders-spark').innerHTML = sparkline(k.orders.spark);
+      countTo($('#kpi-rev'), k.revenue.value);
+      $('#kpi-rev-fcfa').textContent = '≈ ' + money(k.revenue.fcfa) + ' FCFA';
+      $('#kpi-rev-delta').innerHTML = deltaChip(k.revenue.delta);
+      $('#kpi-rev-spark').innerHTML = sparkline(k.revenue.spark);
 
-    countTo($('#kpi-visitors'), k.visitors.value);
-    $('#kpi-visitors-delta').innerHTML = deltaChip(k.visitors.delta);
-    $('#kpi-visitors-spark').innerHTML = sparkline(k.visitors.spark);
+      countTo($('#kpi-orders'), k.orders.value);
+      $('#kpi-orders-delta').innerHTML = deltaChip(k.orders.delta);
+      $('#kpi-orders-spark').innerHTML = sparkline(k.orders.spark);
 
-    countTo($('#kpi-conv'), k.conversion.value, { fmt: (v) => v.toFixed(1) });
-    $('#kpi-conv-delta').innerHTML = deltaChip(k.conversion.delta);
+      countTo($('#kpi-visitors'), k.visitors.value);
+      $('#kpi-visitors-delta').innerHTML = deltaChip(k.visitors.delta);
+      $('#kpi-visitors-spark').innerHTML = sparkline(k.visitors.spark);
 
-    countTo($('#kpi-basket'), k.basket.value);
-    $('#kpi-basket-fcfa').textContent = '≈ ' + money(k.basket.fcfa) + ' FCFA';
-    $('#kpi-basket-delta').innerHTML = deltaChip(k.basket.delta);
+      countTo($('#kpi-conv'), k.conversion.value, { fmt: (v) => v.toFixed(1) });
+      $('#kpi-conv-delta').innerHTML = deltaChip(k.conversion.delta);
 
-    // Graphique CA + selecteur de periode
-    const chart = $('#revenue-chart');
-    const periods = { '7j': '7 jours', '30j': '30 jours', '12m': '12 mois' };
-    function draw(period) { renderArea(chart, st.revenueTrend[period]); }
-    draw('30j');
+      countTo($('#kpi-basket'), k.basket.value);
+      $('#kpi-basket-fcfa').textContent = '≈ ' + money(k.basket.fcfa) + ' FCFA';
+      $('#kpi-basket-delta').innerHTML = deltaChip(k.basket.delta);
+
+      renderArea($('#revenue-chart'), P.series);
+    }
+    applyPeriod(st.defaultPeriod || '30j');
     document.querySelectorAll('.period-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.period-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        draw(btn.dataset.period);
+        applyPeriod(btn.dataset.period);
       });
     });
 
-    // Catégories, meilleures ventes, commandes
-    renderCategories($('#cat-list'), st.categories);
+    // ---- Sections fixes ----
+    renderBars($('#cat-list'), st.categories, ' MRU');
     renderTop($('#top-list'), st.topProducts);
+    renderFunnel($('#funnel'), st.funnel);
+    renderDonut($('#donut'), $('#donut-legend'), st.sources);
     renderOrders($('#orders-body'), st.recentOrders);
-    $('#kpi-products') && ($('#kpi-products').textContent = st.products);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     init();
     const lo = $('#logout');
-    lo && lo.addEventListener('click', async () => {
-      await Karat.api('/api/auth/logout', {});
-      window.location.href = '/';
-    });
+    lo && lo.addEventListener('click', async () => { await Karat.api('/api/auth/logout', {}); window.location.href = '/'; });
   });
 })();
