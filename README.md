@@ -167,6 +167,11 @@ il faudrait le relier à l'API du prestataire et confirmer via un *webhook*.
 | GET     | `/api/billing/status`     | Statut du compte / jours d'essai restants   |
 | POST    | `/api/billing/pay`        | Activer l'abonnement (déverrouille)         |
 | GET     | `/api/dashboard`          | Données du tableau de bord                  |
+| GET/POST/PUT/DELETE | `/api/products`     | CRUD des produits                     |
+| GET/PUT | `/api/store`, `/api/store/shipping` | Boutique (thème, contenu, livraison) |
+| GET/PUT | `/api/orders`, `/api/orders/:id/status` | Commandes + statuts       |
+| GET/POST | `/api/public/store/:slug`(+`/order`,`/visit`,`/event`) | Vitrine publique |
+| GET     | `/api/health`, `/api` | Santé + index des routes (health check)         |
 
 ### Cycle de vie d'un compte
 
@@ -182,7 +187,15 @@ Un abonnement expiré repasse en `locked`.
 - Codes de vérification **hachés** (SHA-256), à expiration (15 min) et à
   nombre de tentatives limité.
 - Session par **JWT** dans un cookie `httpOnly` (`secure` en production).
-- Limitation du débit (rate limiting) sur les routes sensibles.
+- Limitation du débit (rate limiting) sur l'authentification **et** les routes
+  publiques (commandes, événements de la vitrine).
+- En-têtes de sécurité (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, `HSTS` en production).
+- `trust proxy` activé en production (cookies `secure` + IP correctes derrière
+  un proxy), corps JSON limité, **CORS** sur l'API publique, gestion d'erreurs
+  JSON, endpoint **health check** (`/api/health`) et arrêt propre (SIGTERM).
+- En production, le serveur **refuse de démarrer** si `JWT_SECRET` n'est pas
+  défini (valeur par défaut interdite).
 
 > Note : les statistiques du tableau de bord sont générées de façon
 > déterministe (démo). Branchez-les sur vos vraies données de ventes en
