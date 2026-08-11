@@ -114,5 +114,12 @@ db.exec(`
 for (const col of ['phone', 'whatsapp', 'email', 'address']) {
   try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
 }
+// Pays + devise du commercant (MR -> MRU, SN -> FCFA).
+try { db.exec("ALTER TABLE users ADD COLUMN country TEXT NOT NULL DEFAULT 'MR'"); } catch (_) { /* deja presente */ }
+try { db.exec("ALTER TABLE users ADD COLUMN currency TEXT NOT NULL DEFAULT 'MRU'"); } catch (_) { /* deja presente */ }
+// Contenu editable de la vitrine (au-dela du theme).
+for (const col of ['hero_title', 'about']) {
+  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+}
 
 module.exports = db;

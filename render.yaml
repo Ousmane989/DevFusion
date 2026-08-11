@@ -1,0 +1,37 @@
+# Déploiement en un clic sur Render (https://render.com)
+# 1. Poussez ce dépôt sur GitHub.
+# 2. Sur Render : New + > Blueprint > sélectionnez ce dépôt.
+# 3. Render lit ce fichier, crée le service, génère JWT_SECRET et monte un
+#    disque persistant pour la base SQLite.
+services:
+  - type: web
+    name: karat
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRIAL_DAYS
+        value: "3"
+      - key: JWT_SECRET
+        generateValue: true
+      # Renseignez ces variables pour l'envoi réel des e-mails (sinon mode démo) :
+      # - key: SMTP_HOST
+      #   sync: false
+      # - key: SMTP_PORT
+      #   value: "587"
+      # - key: SMTP_USER
+      #   sync: false
+      # - key: SMTP_PASS
+      #   sync: false
+      # - key: MAIL_FROM
+      #   value: "Karat <no-reply@votre-domaine>"
+    disk:
+      name: karat-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

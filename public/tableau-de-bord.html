@@ -75,11 +75,11 @@
             <span class="period-note">Comparé à la période précédente</span>
           </div>
           <div class="kpi-grid">
-            <div class="kpi"><div class="kpi-top"><span class="k-label">Chiffre d'affaires</span><span id="kpi-rev-delta"></span></div><div class="k-val gold-text"><span id="kpi-rev">0</span> <span class="k-unit">MRU</span></div><div class="k-sub" id="kpi-rev-fcfa">≈ 0 FCFA</div><div class="k-spark" id="kpi-rev-spark"></div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">Chiffre d'affaires</span><span id="kpi-rev-delta"></span></div><div class="k-val gold-text"><span id="kpi-rev">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="kpi-rev-fcfa">≈ 0 FCFA</div><div class="k-spark" id="kpi-rev-spark"></div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Commandes</span><span id="kpi-orders-delta"></span></div><div class="k-val" id="kpi-orders">0</div><div class="k-sub k-period">Sur 30 jours</div><div class="k-spark" id="kpi-orders-spark"></div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Visiteurs</span><span id="kpi-visitors-delta"></span></div><div class="k-val" id="kpi-visitors">0</div><div class="k-sub k-period">Sur 30 jours</div><div class="k-spark" id="kpi-visitors-spark"></div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Conversion</span><span id="kpi-conv-delta"></span></div><div class="k-val"><span id="kpi-conv">0</span><span class="k-unit">%</span></div><div class="k-sub">Visiteurs → clients</div></div>
-            <div class="kpi"><div class="kpi-top"><span class="k-label">Panier moyen</span><span id="kpi-basket-delta"></span></div><div class="k-val"><span id="kpi-basket">0</span> <span class="k-unit">MRU</span></div><div class="k-sub" id="kpi-basket-fcfa">≈ 0 FCFA</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">Panier moyen</span><span id="kpi-basket-delta"></span></div><div class="k-val"><span id="kpi-basket">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="kpi-basket-fcfa">≈ 0 FCFA</div></div>
             <div class="kpi kpi-today"><div class="kpi-top"><span class="k-label">Commandes aujourd'hui</span></div><div class="k-val"><span id="kpi-today">0</span></div><div class="k-sub" id="kpi-today-sub">0 MRU encaissés · 0 à traiter</div></div>
           </div>
           <div class="panel panel-chart">
@@ -111,7 +111,7 @@
               <div class="pf-grid">
                 <div class="field" data-field="name"><label for="pf-name">Nom du produit</label><input id="pf-name" type="text" placeholder="Ex. Boubou brodé main" /><div class="err">Nom requis.</div></div>
                 <div class="field" data-field="category"><label for="pf-category">Catégorie</label><select id="pf-category"></select></div>
-                <div class="field" data-field="priceMru"><label for="pf-price">Prix (MRU)</label><input id="pf-price" type="number" min="0" placeholder="0" /><div class="hint" id="pf-fcfa">≈ 0 FCFA</div><div class="err">Prix invalide.</div></div>
+                <div class="field" data-field="priceMru"><label for="pf-price" id="pf-price-label">Prix</label><input id="pf-price" type="number" min="0" placeholder="0" /><div class="hint" id="pf-fcfa">≈ 0 FCFA</div><div class="err">Prix invalide.</div></div>
                 <div class="field" data-field="stock"><label for="pf-stock">Stock</label><input id="pf-stock" type="number" min="0" placeholder="0" /><div class="err">Stock invalide.</div></div>
               </div>
               <div class="field"><label for="pf-desc">Description</label><textarea id="pf-desc" rows="2" placeholder="Décrivez votre produit en quelques mots"></textarea></div>
@@ -143,7 +143,7 @@
             <div class="kpi"><span class="k-label">Total commandes</span><div class="k-val" id="ord-total">0</div></div>
             <div class="kpi"><span class="k-label">À traiter</span><div class="k-val" id="ord-toprocess">0</div></div>
             <div class="kpi"><span class="k-label">Livrées</span><div class="k-val" id="ord-delivered">0</div></div>
-            <div class="kpi"><span class="k-label">CA encaissé (livrées)</span><div class="k-val gold-text"><span id="ord-rev">0</span> <span class="k-unit">MRU</span></div></div>
+            <div class="kpi"><span class="k-label">CA encaissé (livrées)</span><div class="k-val gold-text"><span id="ord-rev">0</span> <span class="k-unit k-cur">MRU</span></div></div>
           </div>
           <div class="panel">
             <div class="panel-head"><h3>Toutes les commandes</h3></div>
@@ -177,9 +177,12 @@
               <div class="panel-head"><h3>Choisir un thème</h3></div>
               <div class="form-msg" id="store-msg"></div>
               <div class="theme-grid" id="theme-grid"></div>
-              <div class="field" style="margin-top:22px"><label for="store-tagline">Slogan de la boutique</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>
+              <div class="pf-label" style="margin-top:22px">Contenu du site (modifiable)</div>
+              <div class="field"><label for="store-hero">Titre principal (héro)</label><input id="store-hero" type="text" maxlength="120" placeholder="Par défaut : le nom de votre boutique" /></div>
+              <div class="field"><label for="store-tagline">Slogan / sous-titre</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>
+              <div class="field"><label for="store-desc">Accroche (sous le titre)</label><textarea id="store-desc" rows="2" maxlength="400" placeholder="Une phrase qui présente votre boutique"></textarea></div>
+              <div class="field"><label for="store-about">À propos de la boutique</label><textarea id="store-about" rows="3" maxlength="600" placeholder="Racontez votre histoire, vos valeurs, votre savoir-faire…"></textarea></div>
               <div class="field"><label for="store-domain">Nom de domaine</label><input id="store-domain" type="text" placeholder="ma-boutique.karat.shop" /><div class="hint">Sous-domaine gratuit inclus. Domaine personnalisé disponible en formule Pro.</div></div>
-              <div class="field"><label for="store-desc">Description</label><textarea id="store-desc" rows="3" maxlength="400" placeholder="Présentez votre boutique à vos clients"></textarea></div>
               <div class="pf-label" style="margin-top:4px">Coordonnées (affichées sur votre boutique)</div>
               <div class="pf-grid">
                 <div class="field"><label for="store-phone">Téléphone</label><input id="store-phone" type="tel" placeholder="+222 …" /></div>

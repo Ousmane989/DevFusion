@@ -14,6 +14,7 @@ const {
   clearSessionCookie,
 } = require('../auth');
 const { PLANS, TRIAL_DAYS, isoIn, getUserByEmail, getUserById, publicUser } = require('../account');
+const { COUNTRIES, currencyOf } = require('../catalog');
 const { sendCode, hasSmtp } = require('../mailer');
 const { requireAuth } = require('../middleware');
 
@@ -42,6 +43,7 @@ function validSignup(b) {
   if (!b.password || String(b.password).length < 8)
     errors.password = 'Mot de passe : 8 caracteres minimum.';
   if (!b.plan || !PLANS[b.plan]) errors.plan = 'Choisissez une formule.';
+  if (!b.country || !COUNTRIES[b.country]) errors.country = 'Choisissez votre pays.';
   return errors;
 }
 
@@ -70,12 +72,14 @@ router.post('/signup', authLimiter, async (req, res) => {
   }
 
   const passwordHash = await hashPassword(String(b.password));
+  const country = COUNTRIES[b.country] ? b.country : 'MR';
+  const currency = currencyOf(country);
   const info = db
     .prepare(
-      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0)`
+      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`
     )
-    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, b.plan);
+    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, b.plan, country, currency);
 
   const userId = info.lastInsertRowid;
   const code = issueCode(userId, 'email');

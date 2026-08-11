@@ -10,6 +10,9 @@
   const money = (n) => Number(Math.round(n)).toLocaleString('fr-FR');
   const initial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
   const root = document.getElementById('store');
+  let SCUR = 'MRU';
+  const sMain = (n) => money(n) + ' ' + SCUR;
+  const sAlt = (n) => { const r = 6; const a = SCUR === 'FCFA' ? { v: Math.round(n / r), c: 'MRU' } : { v: Math.round(n * r), c: 'FCFA' }; return '≈ ' + money(a.v) + ' ' + a.c; };
 
   function hexToRgb(hex) { const h = hex.replace('#', ''); const v = h.length === 3 ? h.split('').map((c) => c + c).join('') : h; return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)]; }
   function rgba(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
@@ -27,7 +30,7 @@
   }
 
   function visual(p, extra) { return `<div class="sf-img ${extra || ''}"><span class="sf-mono">${esc(initial(p.name))}</span></div>`; }
-  function price(p) { return `<div class="sf-price"><span class="sf-mru">${money(p.priceMru)} MRU</span><span class="sf-fcfa">≈ ${money(p.priceFcfa)} FCFA</span></div>`; }
+  function price(p) { return `<div class="sf-price"><span class="sf-mru">${sMain(p.price)}</span><span class="sf-fcfa">${sAlt(p.price)}</span></div>`; }
   function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
 
   function footer(d) {
@@ -38,9 +41,11 @@
     if (c.email) items.push(`<a href="mailto:${esc(c.email)}">✉️ ${esc(c.email)}</a>`);
     if (c.address) items.push(`<span>📍 ${esc(c.address)}</span>`);
     const contact = items.length ? `<div class="sf-contact">${items.join('')}</div>` : '';
+    const about = d.about ? `<p class="sf-about">${esc(d.about)}</p>` : '';
     return `<footer class="sf-footer"><div class="sf-foot-in">
       <div class="sf-foot-brand">${esc(d.shopName)}</div>
       <p class="sf-foot-tag">${esc(d.tagline)}</p>
+      ${about}
       ${contact}
       <div class="sf-foot-meta"><span>© ${new Date().getFullYear()} ${esc(d.shopName)}</span><span class="sf-powered">Propulsé par <strong>Karat</strong> 💎</span></div>
     </div></footer>`;
@@ -119,12 +124,12 @@
     clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 1700);
   }
   const cartCount = () => cart.reduce((n, i) => n + i.qty, 0);
-  const cartSubtotal = () => cart.reduce((s, i) => s + i.priceMru * i.qty, 0);
+  const cartSubtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
   function updateBadges() { const n = cartCount(); root.querySelectorAll('.sf-cart-count, .sf-fab-count').forEach((e) => (e.textContent = n)); const fab = root.querySelector('.sf-fab'); if (fab) fab.classList.toggle('has', n > 0); }
   function addToCart(id) {
     const p = byId[id]; if (!p) return;
     const line = cart.find((i) => i.id === p.id);
-    if (line) line.qty++; else { cart.push({ id: p.id, name: p.name, priceMru: p.priceMru, qty: 1 }); track('add_cart'); }
+    if (line) line.qty++; else { cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 }); track('add_cart'); }
     updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
   }
 
@@ -174,7 +179,7 @@
     const ship = shippingFee(city);
     const total = sub + (city ? ship.fee : 0);
     panel.innerHTML = `
-      <div class="sf-lines">${cart.map((i) => `<div class="sf-line"><div class="sf-line-i">${esc(initial(i.name))}</div><div class="sf-line-b"><div class="sf-line-n">${esc(i.name)}</div><div class="sf-line-p">${money(i.priceMru)} MRU</div></div><div class="sf-qty"><button data-q="-" data-id="${i.id}">−</button><span>${i.qty}</span><button data-q="+" data-id="${i.id}">+</button></div></div>`).join('')}</div>
+      <div class="sf-lines">${cart.map((i) => `<div class="sf-line"><div class="sf-line-i">${esc(initial(i.name))}</div><div class="sf-line-b"><div class="sf-line-n">${esc(i.name)}</div><div class="sf-line-p">${sMain(i.price)}</div></div><div class="sf-qty"><button data-q="-" data-id="${i.id}">−</button><span>${i.qty}</span><button data-q="+" data-id="${i.id}">+</button></div></div>`).join('')}</div>
       <form class="sf-checkout" id="sf-checkout">
         <h4>Vos coordonnées</h4>
         <input id="sf-name" placeholder="Nom complet" required />
@@ -182,8 +187,8 @@
         <select id="sf-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}" ${z.zone === city ? 'selected' : ''}>${esc(z.zone)} — ${money(z.fee)} MRU</option>`).join('')}</select>
         <input id="sf-address" placeholder="Adresse / quartier (facultatif)" />
         <textarea id="sf-note" rows="2" placeholder="Note pour le livreur (facultatif)"></textarea>
-        <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez ${money(total)} MRU en espèces à la réception.</span></div></div>
-        <div class="sf-totals"><div><span>Sous-total</span><span>${money(sub)} MRU</span></div><div><span>Livraison</span><span>${city ? (ship.fee ? money(ship.fee) + ' MRU' : 'Offerte') : '—'}</span></div><div class="sf-grand"><span>Total</span><span>${money(total)} MRU</span></div></div>
+        <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez ${sMain(total)} en espèces à la réception.</span></div></div>
+        <div class="sf-totals"><div><span>Sous-total</span><span>${sMain(sub)}</span></div><div><span>Livraison</span><span>${city ? (ship.fee ? sMain(ship.fee) : 'Offerte') : '—'}</span></div><div class="sf-grand"><span>Total</span><span>${sMain(total)}</span></div></div>
         <button type="submit" class="sf-btn sf-confirm">Confirmer la commande</button>
         <p class="sf-msg" id="sf-msg"></p>
       </form>`;
@@ -207,7 +212,7 @@
     if (!r.ok) { if (msg) { msg.textContent = (r.data && (r.data.error || (r.data.errors && Object.values(r.data.errors)[0]))) || 'Commande impossible.'; msg.className = 'sf-msg err'; } return; }
     const d = r.data;
     cart = []; updateBadges();
-    root.querySelector('.sf-drawer-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${money(d.total)} MRU<br/><span class="sf-muted">(dont ${money(d.shipping)} MRU de livraison)</span></p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
+    root.querySelector('.sf-drawer-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${sMain(d.total)}<br/><span class="sf-muted">(dont ${sMain(d.shipping)} de livraison)</span></p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
     root.querySelector('[data-close]').addEventListener('click', closeCart);
   }
 
@@ -239,6 +244,8 @@
 
   function render(d) {
     const t = d.themeData;
+    SCUR = d.currency || 'MRU';
+    if (d.heroTitle) d.tagline = d.heroTitle; // le titre principal prime sur le slogan
     data = d; cart = []; byId = {};
     (d.products || []).forEach((p) => (byId[p.id] = p));
     applyTheme(t);

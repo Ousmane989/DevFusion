@@ -72,6 +72,8 @@ function publicUser(user) {
     trialEndsAt: user.trial_ends_at,
     subscriptionEndsAt: user.subscription_ends_at,
     createdAt: user.created_at,
+    country: user.country || 'MR',
+    currency: user.currency || 'MRU',
   };
 }
 

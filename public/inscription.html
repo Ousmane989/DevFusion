@@ -55,10 +55,21 @@
             <div class="err">E-mail invalide.</div>
           </div>
 
-          <div class="field" data-field="shopName">
-            <label for="shopName">Nom de la boutique</label>
-            <input id="shopName" name="shopName" type="text" placeholder="Ex. Boutique Éclat" />
-            <div class="err">Nom de la boutique requis.</div>
+          <div class="row-2">
+            <div class="field" data-field="shopName">
+              <label for="shopName">Nom de la boutique</label>
+              <input id="shopName" name="shopName" type="text" placeholder="Ex. Boutique Éclat" />
+              <div class="err">Nom de la boutique requis.</div>
+            </div>
+            <div class="field" data-field="country">
+              <label for="country">Pays</label>
+              <select id="country" name="country">
+                <option value="MR">🇲🇷 Mauritanie (MRU)</option>
+                <option value="SN">🇸🇳 Sénégal (FCFA)</option>
+              </select>
+              <div class="hint" id="country-hint">Devise : MRU</div>
+              <div class="err">Choisissez votre pays.</div>
+            </div>
           </div>
 
           <div class="field" data-field="password">
@@ -114,6 +125,12 @@
         if (radio) radio.checked = true;
       }
 
+      // Devise selon le pays choisi.
+      const countrySel = document.getElementById('country');
+      const hint = document.getElementById('country-hint');
+      const updCur = () => { hint.textContent = 'Devise : ' + (countrySel.value === 'SN' ? 'FCFA' : 'MRU'); };
+      countrySel.addEventListener('change', updCur); updCur();
+
       function setInvalid(fieldName, on, text) {
         const el = document.querySelector('[data-field="' + fieldName + '"]');
         if (!el) return;
@@ -131,6 +148,7 @@
           phone: form.phone.value.trim(),
           email: form.email.value.trim(),
           shopName: form.shopName.value.trim(),
+          country: form.country.value,
           password: form.password.value,
           plan: (form.querySelector('input[name="plan"]:checked') || {}).value,
         };

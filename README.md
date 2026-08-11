@@ -109,6 +109,32 @@ comme Brevo, Mailgun, Gmail SMTP…). Les codes seront alors envoyés par e-mail
 
 ---
 
+## 🚀 Déploiement en production
+
+Karat est une application Node + SQLite. Le plus simple est un hébergeur qui
+supporte un serveur Node persistant avec un disque (Render, Railway, Fly.io) —
+**pas** un hébergeur 100 % serverless comme Vercel, car SQLite a besoin d'un
+disque persistant.
+
+### Option A — Render (recommandé, fichier `render.yaml` fourni)
+
+1. Poussez ce dépôt sur GitHub.
+2. Sur [render.com](https://render.com) : **New + → Blueprint**, sélectionnez ce dépôt.
+3. Render lit `render.yaml`, crée le service, génère `JWT_SECRET` et monte un
+   disque persistant pour la base (`/data`). Cliquez sur **Apply**.
+4. (Optionnel) Renseignez les variables `SMTP_*` pour l'envoi réel des e-mails.
+
+### Option B — Docker (n'importe quel hébergeur)
+
+```bash
+docker build -t karat .
+docker run -p 3000:3000 -e JWT_SECRET=une-chaine-longue -v karat_data:/app/data karat
+```
+
+> Pensez à définir un `JWT_SECRET` fort et les variables `SMTP_*` en production.
+
+---
+
 ## 💳 Formules & paiements
 
 | Formule    | Prix mensuel        |

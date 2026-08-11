@@ -38,7 +38,10 @@ router.get('/store/:slug', (req, res) => {
   res.json({
     shopName: user.shop_name,
     slug: slugify(user.shop_name),
+    currency: user.currency || 'MRU',
     tagline: (settings && settings.tagline) || 'Bienvenue dans notre boutique.',
+    heroTitle: (settings && settings.hero_title) || '',
+    about: (settings && settings.about) || '',
     description: (settings && settings.description) || '',
     contact: {
       phone: (settings && settings.phone) || '',
