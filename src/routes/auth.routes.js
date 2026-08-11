@@ -42,7 +42,7 @@ function validSignup(b) {
   if (!b.shopName || String(b.shopName).trim().length < 2) errors.shopName = 'Nom de la boutique requis.';
   if (!b.password || String(b.password).length < 8)
     errors.password = 'Mot de passe : 8 caracteres minimum.';
-  if (!b.plan || !PLANS[b.plan]) errors.plan = 'Choisissez une formule.';
+  // Tarifs desactives (usage libre) : la formule n'est plus obligatoire.
   if (!b.country || !COUNTRIES[b.country]) errors.country = 'Choisissez votre pays.';
   return errors;
 }
@@ -74,12 +74,13 @@ router.post('/signup', authLimiter, async (req, res) => {
   const passwordHash = await hashPassword(String(b.password));
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
+  const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
   const info = db
     .prepare(
       `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`
     )
-    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, b.plan, country, currency);
+    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency);
 
   const userId = info.lastInsertRowid;
   const code = issueCode(userId, 'email');
@@ -124,11 +125,12 @@ router.post('/verify-email', authLimiter, (req, res) => {
     return res.status(400).json({ error: 'Code incorrect.' });
   }
 
-  // Succes : on active le compte en essai gratuit.
-  const trialEnd = isoIn(TRIAL_DAYS);
+  // Tarifs desactives (usage libre) : le compte est directement actif,
+  // sans essai ni verrouillage. La date lointaine evite tout blocage.
+  const subEnd = isoIn(3650);
   db.prepare(
-    `UPDATE users SET email_verified = 1, status = 'trial', trial_ends_at = ? WHERE id = ?`
-  ).run(trialEnd, user.id);
+    `UPDATE users SET email_verified = 1, status = 'active', subscription_ends_at = ? WHERE id = ?`
+  ).run(subEnd, user.id);
   db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'email');
 
   const fresh = getUserById(user.id);

@@ -18,7 +18,7 @@
         <h2>Lancez votre boutique <span class="gold-text">premium</span> en quelques minutes.</h2>
         <p>Rejoignez les commerçants de Mauritanie et du Sénégal qui vendent en ligne avec élégance.</p>
         <ul class="aside-points">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> 3 jours d'essai gratuit, sans carte</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Gratuit, sans engagement ni carte</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Paiements locaux Bankily, Wave, Orange Money</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Tableau de bord et statistiques en temps réel</li>
         </ul>
@@ -84,27 +84,8 @@
             <div class="err">Mot de passe : 8 caractères minimum.</div>
           </div>
 
-          <div class="field" data-field="plan">
-            <label>Choisir une formule</label>
-            <div class="plan-choice">
-              <div class="plan-opt">
-                <input type="radio" name="plan" id="plan-decouverte" value="decouverte" />
-                <label for="plan-decouverte"><span class="p-name">Découverte</span><span class="p-price">500 MRU · 3 000 FCFA / mois</span></label>
-              </div>
-              <div class="plan-opt">
-                <input type="radio" name="plan" id="plan-pro" value="pro" checked />
-                <label for="plan-pro"><span class="p-name">Pro — le plus choisi</span><span class="p-price">1 500 MRU · 9 000 FCFA / mois</span></label>
-              </div>
-              <div class="plan-opt">
-                <input type="radio" name="plan" id="plan-business" value="business" />
-                <label for="plan-business"><span class="p-name">Business</span><span class="p-price">3 500 MRU · 21 000 FCFA / mois</span></label>
-              </div>
-            </div>
-            <div class="err">Choisissez une formule.</div>
-          </div>
-
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">Créer mon compte</button>
-          <p class="hint" style="text-align:center;margin-top:14px">Essai gratuit de 3 jours · Aucun prélèvement immédiat</p>
+          <p class="hint" style="text-align:center;margin-top:14px">Gratuit · Sans engagement ni carte bancaire</p>
         </form>
       </div>
     </main>
@@ -117,13 +98,6 @@
       const form = document.getElementById('signup-form');
       const msgEl = document.getElementById('msg');
       const btn = document.getElementById('submit-btn');
-
-      // Pré-sélection de la formule via ?plan=
-      const wanted = Karat.qs('plan');
-      if (wanted) {
-        const radio = document.querySelector('input[name="plan"][value="' + wanted + '"]');
-        if (radio) radio.checked = true;
-      }
 
       // Devise selon le pays choisi.
       const countrySel = document.getElementById('country');
@@ -150,7 +124,6 @@
           shopName: form.shopName.value.trim(),
           country: form.country.value,
           password: form.password.value,
-          plan: (form.querySelector('input[name="plan"]:checked') || {}).value,
         };
 
         btn.disabled = true;
