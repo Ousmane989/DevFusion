@@ -9,6 +9,9 @@
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const money = (n) => Number(Math.round(n)).toLocaleString('fr-FR');
+  let CUR = 'MRU';
+  const mMain = (n) => money(n) + ' ' + CUR;
+  const mAlt = (n) => { const r = 6; const a = CUR === 'FCFA' ? { v: Math.round(n / r), c: 'MRU' } : { v: Math.round(n * r), c: 'FCFA' }; return '≈ ' + money(a.v) + ' ' + a.c; };
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const slugify = (s) => String(s || 'ma-boutique').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 
@@ -112,6 +115,8 @@
     q('#shop-name').textContent = user.shopName;
     q('#hello-name').textContent = (user.name || '').split(' ')[0];
     if (q('#side-plan')) q('#side-plan').textContent = user.planName || 'Pro';
+    CUR = user.currency || 'MRU';
+    qa('.k-cur').forEach((e) => (e.textContent = CUR));
 
     const vs = q('#visit-shop');
     if (vs) {
@@ -125,7 +130,7 @@
 
     if (st.today) {
       q('#kpi-today').textContent = st.today.orders;
-      q('#kpi-today-sub').textContent = money(st.today.revenue) + ' MRU encaissés · ' + st.today.pending + ' à traiter';
+      q('#kpi-today-sub').textContent = mMain(st.today.revenue) + ' encaissés · ' + st.today.pending + ' à traiter';
     }
     setOrdersBadge(st.pending || 0);
     if (!notifiedPending && st.pending > 0) {
@@ -141,11 +146,11 @@
     const st = overviewStats; const P = st.periods[key], k = P.kpis;
     q('#dash-sub').textContent = 'Voici les performances de votre boutique sur les ' + P.rangeLabel + '.';
     qa('.k-period').forEach((e) => (e.textContent = P.subLabel));
-    countTo(q('#kpi-rev'), k.revenue.value); q('#kpi-rev-fcfa').textContent = '≈ ' + money(k.revenue.fcfa) + ' FCFA'; q('#kpi-rev-delta').innerHTML = deltaChip(k.revenue.delta); q('#kpi-rev-spark').innerHTML = sparkline(k.revenue.spark);
+    countTo(q('#kpi-rev'), k.revenue.value); q('#kpi-rev-fcfa').textContent = mAlt(k.revenue.value); q('#kpi-rev-delta').innerHTML = deltaChip(k.revenue.delta); q('#kpi-rev-spark').innerHTML = sparkline(k.revenue.spark);
     countTo(q('#kpi-orders'), k.orders.value); q('#kpi-orders-delta').innerHTML = deltaChip(k.orders.delta); q('#kpi-orders-spark').innerHTML = sparkline(k.orders.spark);
     countTo(q('#kpi-visitors'), k.visitors.value); q('#kpi-visitors-delta').innerHTML = deltaChip(k.visitors.delta); q('#kpi-visitors-spark').innerHTML = sparkline(k.visitors.spark);
     countTo(q('#kpi-conv'), k.conversion.value, { fmt: (v) => v.toFixed(1) }); q('#kpi-conv-delta').innerHTML = deltaChip(k.conversion.delta);
-    countTo(q('#kpi-basket'), k.basket.value); q('#kpi-basket-fcfa').textContent = '≈ ' + money(k.basket.fcfa) + ' FCFA'; q('#kpi-basket-delta').innerHTML = deltaChip(k.basket.delta);
+    countTo(q('#kpi-basket'), k.basket.value); q('#kpi-basket-fcfa').textContent = mAlt(k.basket.value); q('#kpi-basket-delta').innerHTML = deltaChip(k.basket.delta);
     renderArea(q('#revenue-chart'), P.series);
   }
 
@@ -163,7 +168,7 @@
     body.innerHTML = products.map((p) => `<tr>
       <td class="cell-prod"><strong>${esc(p.name)}</strong>${p.description ? `<div class="muted small">${esc(p.description)}</div>` : ''}</td>
       <td class="muted">${esc(p.category)}</td>
-      <td class="mono num">${money(p.priceMru)} MRU<div class="muted small">≈ ${money(p.priceFcfa)} FCFA</div></td>
+      <td class="mono num">${mMain(p.price)}<div class="muted small">${mAlt(p.price)}</div></td>
       <td class="mono num">${p.stock}</td>
       <td>${statusPill(p.active)}</td>
       <td class="num row-actions">
@@ -193,11 +198,12 @@
     q('#pf-id').value = prod ? prod.id : '';
     q('#pf-name').value = prod ? prod.name : '';
     q('#pf-category').value = prod ? prod.category : (categories[0] || 'Autre');
-    q('#pf-price').value = prod ? prod.priceMru : '';
+    q('#pf-price').value = prod ? prod.price : '';
     q('#pf-stock').value = prod ? prod.stock : '';
     q('#pf-desc').value = prod ? prod.description : '';
     q('#pf-active').checked = prod ? prod.active : true;
-    q('#pf-fcfa').textContent = '≈ ' + money((prod ? prod.priceMru : 0) * 6) + ' FCFA';
+    if (q('#pf-price-label')) q('#pf-price-label').textContent = 'Prix (' + CUR + ')';
+    q('#pf-fcfa').textContent = mAlt(prod ? prod.price : 0);
     form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
   }
   function closeProductForm() { q('#product-form').style.display = 'none'; }
@@ -242,7 +248,7 @@
       <td class="mono">${esc(o.ref)}</td>
       <td>${esc(o.customer)}${o.phone ? `<div class="small"><a class="tel-link" href="tel:${esc(o.phone)}">📞 ${esc(o.phone)}</a></div>` : ''}</td>
       <td class="muted">${esc(o.city)}</td>
-      <td class="cell-prod">${esc(o.productsLabel)}</td><td class="mono num">${money(o.amount)} MRU</td>
+      <td class="cell-prod">${esc(o.productsLabel)}</td><td class="mono num">${mMain(o.amount)}</td>
       <td><span class="cod">À la livraison</span></td>
       <td>${statusSelect(o)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
     q('#orders-full-body').querySelectorAll('select[data-order]').forEach((sel) => sel.addEventListener('change', () => changeStatus(sel)));
@@ -269,7 +275,7 @@
     const wrap = q('#ship-zones');
     wrap.innerHTML = shipping.zones.map((z, i) => `<div class="ship-row">
       <input class="zone-name" data-i="${i}" type="text" value="${esc(z.zone)}" placeholder="Zone (ex. Nouakchott)" />
-      <div class="zone-fee"><input class="zone-fee-in" data-i="${i}" type="number" min="0" value="${z.fee}" /> <span>MRU</span></div>
+      <div class="zone-fee"><input class="zone-fee-in" data-i="${i}" type="number" min="0" value="${z.fee}" /> <span>${CUR}</span></div>
       <button class="icon-btn danger" data-rm="${i}" title="Retirer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('');
     wrap.querySelectorAll('.zone-name').forEach((el) => el.addEventListener('input', () => { shipping.zones[el.dataset.i].zone = el.value; }));
@@ -321,6 +327,8 @@
     q('#theme-grid').innerHTML = themes.map(themeCard).join('');
     qa('.theme-card').forEach((c) => c.addEventListener('click', () => selectTheme(c.dataset.theme)));
     q('#store-tagline').value = store.tagline || '';
+    if (q('#store-hero')) q('#store-hero').value = store.heroTitle || '';
+    if (q('#store-about')) q('#store-about').value = store.about || '';
     q('#store-domain').value = store.domain || store.defaultDomain || '';
     q('#store-desc').value = store.description || '';
     if (q('#store-phone')) q('#store-phone').value = store.phone || '';
@@ -335,7 +343,8 @@
   async function saveStore() {
     const val = (id) => (q(id) ? q(id).value.trim() : '');
     const payload = {
-      theme: selectedTheme, tagline: val('#store-tagline'), domain: val('#store-domain'), description: val('#store-desc'),
+      theme: selectedTheme, tagline: val('#store-tagline'), heroTitle: val('#store-hero'), about: val('#store-about'),
+      domain: val('#store-domain'), description: val('#store-desc'),
       phone: val('#store-phone'), whatsapp: val('#store-whatsapp'), email: val('#store-email'), address: val('#store-address'),
     };
     const r = await api('/api/store', 'PUT', payload);
@@ -355,7 +364,7 @@
     q('#add-product-btn') && q('#add-product-btn').addEventListener('click', () => openProductForm(null));
     q('#pf-cancel') && q('#pf-cancel').addEventListener('click', closeProductForm);
     q('#prod-form') && q('#prod-form').addEventListener('submit', submitProduct);
-    q('#pf-price') && q('#pf-price').addEventListener('input', () => { q('#pf-fcfa').textContent = '≈ ' + money((Number(q('#pf-price').value) || 0) * 6) + ' FCFA'; });
+    q('#pf-price') && q('#pf-price').addEventListener('input', () => { q('#pf-fcfa').textContent = mAlt(Number(q('#pf-price').value) || 0); });
     q('#ship-add') && q('#ship-add').addEventListener('click', () => { shipping.zones.push({ zone: '', fee: 0 }); renderZones(); });
     q('#ship-save') && q('#ship-save').addEventListener('click', saveShipping);
     q('#store-save') && q('#store-save').addEventListener('click', saveStore);

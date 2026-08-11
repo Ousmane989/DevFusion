@@ -29,6 +29,15 @@ window.Karat = (function () {
     return Number(n).toLocaleString('fr-FR');
   }
 
+  // Formatage monetaire selon la devise de la boutique (MRU ou FCFA).
+  const RATE = 6; // 1 MRU ≈ 6 FCFA
+  function moneyMain(n, cur) { return money(Math.round(n)) + ' ' + (cur || 'MRU'); }
+  function moneyAlt(n, cur) {
+    cur = cur || 'MRU';
+    const a = cur === 'FCFA' ? { v: Math.round(n / RATE), c: 'MRU' } : { v: Math.round(n * RATE), c: 'FCFA' };
+    return '≈ ' + money(a.v) + ' ' + a.c;
+  }
+
   // Affiche/masque un mot de passe.
   function bindPwToggles() {
     document.querySelectorAll('.pw-toggle').forEach((btn) => {
@@ -39,5 +48,5 @@ window.Karat = (function () {
     });
   }
 
-  return { api, msg, clearMsg, qs, money, bindPwToggles };
+  return { api, msg, clearMsg, qs, money, moneyMain, moneyAlt, bindPwToggles };
 })();

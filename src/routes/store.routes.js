@@ -31,11 +31,14 @@ function publicStore(user, row) {
     theme: t.id,
     themeData: t,
     tagline: row.tagline,
+    heroTitle: row.hero_title || '',
+    about: row.about || '',
     description: row.description,
     phone: row.phone || '',
     whatsapp: row.whatsapp || '',
     email: row.email || '',
     address: row.address || '',
+    currency: user.currency || 'MRU',
     slug,
     domain: row.domain || `${slug}.karat.shop`,
     defaultDomain: `${slug}.karat.shop`,
@@ -56,10 +59,12 @@ router.put('/', requireAuth, (req, res) => {
   const theme = THEMES.some((t) => t.id === b.theme) ? b.theme : row.theme;
   const keep = (v, old, max) => (v !== undefined ? String(v).slice(0, max) : old);
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, domain = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, domain = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
+    keep(b.heroTitle, row.hero_title, 120),
+    keep(b.about, row.about, 600),
     keep(b.domain, row.domain, 120),
     keep(b.description, row.description, 400),
     keep(b.phone, row.phone, 40),

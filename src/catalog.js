@@ -39,8 +39,7 @@ function publicProduct(p) {
     id: p.id,
     name: p.name,
     description: p.description,
-    priceMru: p.price_mru,
-    priceFcfa: p.price_mru * 6,
+    price: p.price_mru, // montant dans la devise de la boutique
     stock: p.stock,
     category: p.category,
     active: Boolean(p.active),
@@ -62,10 +61,24 @@ function statusMeta(key) {
   return ORDER_STATUSES.find((s) => s.key === key) || ORDER_STATUSES[0];
 }
 
+// Pays pris en charge et devise associee.
+const COUNTRIES = {
+  MR: { code: 'MR', name: 'Mauritanie', flag: '🇲🇷', currency: 'MRU', dial: '+222' },
+  SN: { code: 'SN', name: 'Sénégal', flag: '🇸🇳', currency: 'FCFA', dial: '+221' },
+};
+// Taux indicatif : 1 MRU ≈ 6 FCFA.
+const MRU_TO_FCFA = 6;
+function currencyOf(country) { return (COUNTRIES[country] || COUNTRIES.MR).currency; }
+// Renvoie la conversion approximative vers l'autre devise.
+function altAmount(amount, currency) {
+  if (currency === 'FCFA') return { value: Math.round(amount / MRU_TO_FCFA), currency: 'MRU' };
+  return { value: Math.round(amount * MRU_TO_FCFA), currency: 'FCFA' };
+}
+
 function slugify(s) {
   return String(s || 'ma-boutique')
     .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 }
 
-module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta };
+module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta, COUNTRIES, currencyOf, altAmount, MRU_TO_FCFA };

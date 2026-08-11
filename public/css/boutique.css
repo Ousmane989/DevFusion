@@ -77,7 +77,8 @@ img { max-width: 100%; display: block; }
 .sf-foot-in { text-align: center; display: grid; gap: 8px; }
 .sf-foot-brand { font-family: var(--head); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
 .sf-foot-tag { color: var(--muted); }
-.sf-contact { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; margin: 6px 0 4px; }
+.sf-about { color: var(--muted); max-width: 620px; margin: 8px auto 4px; font-size: 0.95rem; line-height: 1.7; }
+.sf-contact { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; margin: 10px 0 4px; }
 .sf-contact a, .sf-contact span { color: var(--text); font-size: 0.9rem; opacity: .9; }
 .sf-contact a:hover { color: var(--accent); }
 .sf-foot-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; color: var(--muted); font-size: 0.82rem; margin-top: 10px; }
