@@ -2,11 +2,16 @@
 
 // Vitrine publique d'une boutique — accessible sans authentification.
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { themeById, defaultShipping, publicProduct, slugify } = require('../catalog');
 const { createOrder } = require('../ordersStore');
 
 const router = express.Router();
+
+// Anti-spam : limite les commandes et les evenements par IP.
+const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de commandes. Reessayez dans une minute.' } });
+const eventLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de requetes.' } });
 
 function findUserBySlug(slug) {
   const users = db.prepare('SELECT * FROM users WHERE email_verified = 1').all();
@@ -66,20 +71,20 @@ function logEvent(slug, type, source) {
 }
 
 // POST /api/public/store/:slug/visit  { source }
-router.post('/store/:slug/visit', (req, res) => {
+router.post('/store/:slug/visit', eventLimiter, (req, res) => {
   const src = ['direct', 'social', 'search', 'whatsapp', 'referral'].includes(req.body?.source) ? req.body.source : 'direct';
   res.json({ ok: logEvent(req.params.slug, 'visit', src) });
 });
 
 // POST /api/public/store/:slug/event  { type }
-router.post('/store/:slug/event', (req, res) => {
+router.post('/store/:slug/event', eventLimiter, (req, res) => {
   const type = req.body?.type === 'add_cart' ? 'add_cart' : null;
   if (!type) return res.status(400).json({ error: 'Type invalide.' });
   res.json({ ok: logEvent(req.params.slug, type, 'direct') });
 });
 
 // POST /api/public/store/:slug/order  — passer une commande (paiement à la livraison)
-router.post('/store/:slug/order', (req, res) => {
+router.post('/store/:slug/order', orderLimiter, (req, res) => {
   const user = findUserBySlug(req.params.slug);
   if (!user) return res.status(404).json({ error: 'Boutique introuvable.' });
 
