@@ -114,7 +114,7 @@
     q('#user-name').textContent = user.name;
     q('#shop-name').textContent = user.shopName;
     q('#hello-name').textContent = (user.name || '').split(' ')[0];
-    if (q('#side-plan')) q('#side-plan').textContent = user.planName || 'Pro';
+    if (q('#side-plan')) q('#side-plan').textContent = 'Libre';
     CUR = user.currency || 'MRU';
     qa('.k-cur').forEach((e) => (e.textContent = CUR));
 
@@ -124,9 +124,8 @@
       else vs.href = '/boutique/' + slugify(user.shopName);
     }
 
-    const bar = q('#trial-bar'), txt = q('#trial-text');
-    if (user.status === 'trial') { const end = user.trialEndsAt ? new Date(user.trialEndsAt) : null; const days = end ? Math.max(0, Math.ceil((end - Date.now()) / 86400000)) : 0; txt.textContent = '✦ Essai gratuit : ' + days + ' jour' + (days > 1 ? 's' : '') + ' restant' + (days > 1 ? 's' : '') + '. Activez votre abonnement pour continuer.'; bar.style.display = 'block'; }
-    else if (user.status === 'active') { const end = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt).toLocaleDateString('fr-FR') : ''; txt.textContent = '✓ Abonnement ' + (user.planName || '') + ' actif' + (end ? ' jusqu\'au ' + end : '') + '.'; const cta = bar.querySelector('.btn'); if (cta) cta.style.display = 'none'; bar.style.display = 'block'; }
+    // Tarifs desactives (usage libre) : pas de bandeau d'essai/abonnement.
+    const bar = q('#trial-bar'); if (bar) bar.style.display = 'none';
 
     if (st.today) {
       q('#kpi-today').textContent = st.today.orders;
