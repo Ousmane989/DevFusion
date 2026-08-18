@@ -4,8 +4,26 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { THEMES, themeById, defaultShipping, slugify } = require('../catalog');
+const { config } = require('../config');
 
 const router = express.Router();
+
+// Slug effectif d'une boutique : personnalise ou derive du nom.
+function effectiveSlug(user, row) {
+  return (row && row.slug) ? row.slug : slugify(user.shop_name);
+}
+
+// Un slug est-il deja pris par une autre boutique ?
+function slugTaken(candidate, userId) {
+  const custom = db.prepare('SELECT user_id FROM store_settings WHERE slug = ? AND slug != \'\' AND user_id != ?').get(candidate, userId);
+  if (custom) return true;
+  // Boutiques sans slug personnalise : on compare au nom slugifie.
+  const others = db.prepare(
+    `SELECT u.shop_name FROM users u LEFT JOIN store_settings s ON s.user_id = u.id
+     WHERE u.id != ? AND (s.slug IS NULL OR s.slug = '')`
+  ).all(userId);
+  return others.some((o) => slugify(o.shop_name) === candidate);
+}
 
 // Recupere (ou cree a la volee) les reglages de boutique d'un utilisateur.
 function getSettings(user) {
@@ -25,7 +43,7 @@ function publicStore(user, row) {
   let shipping;
   try { shipping = JSON.parse(row.shipping_json); } catch { shipping = defaultShipping(); }
   const t = themeById(row.theme);
-  const slug = slugify(user.shop_name);
+  const slug = effectiveSlug(user, row);
   return {
     shopName: user.shop_name,
     theme: t.id,
@@ -40,8 +58,9 @@ function publicStore(user, row) {
     address: row.address || '',
     currency: user.currency || 'MRU',
     slug,
-    domain: row.domain || `${slug}.karat.shop`,
-    defaultDomain: `${slug}.karat.shop`,
+    baseDomain: config.baseDomain,
+    domain: `${slug}.${config.baseDomain}`,
+    storeUrl: `/boutique/${slug}`,
     shipping,
   };
 }
@@ -58,14 +77,26 @@ router.put('/', requireAuth, (req, res) => {
   const b = req.body || {};
   const theme = THEMES.some((t) => t.id === b.theme) ? b.theme : row.theme;
   const keep = (v, old, max) => (v !== undefined ? String(v).slice(0, max) : old);
+
+  // Slug personnalise (nom de domaine de la boutique).
+  let slug = row.slug;
+  if (b.slug !== undefined) {
+    const candidate = slugify(b.slug).slice(0, 40);
+    if (!candidate) return res.status(400).json({ errors: { slug: 'Adresse invalide.' } });
+    if (candidate !== effectiveSlug(req.user, row) && slugTaken(candidate, req.user.id)) {
+      return res.status(409).json({ errors: { slug: 'Cette adresse est déjà prise.' } });
+    }
+    slug = candidate;
+  }
+
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, domain = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
     keep(b.heroTitle, row.hero_title, 120),
     keep(b.about, row.about, 600),
-    keep(b.domain, row.domain, 120),
+    slug,
     keep(b.description, row.description, 400),
     keep(b.phone, row.phone, 40),
     keep(b.whatsapp, row.whatsapp, 40),

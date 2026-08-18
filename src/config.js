@@ -16,8 +16,11 @@ const config = {
   // Origine(s) autorisee(s) pour l'API publique (vitrine embarquee).
   // '*' par defaut (donnees publiques en lecture seule).
   corsOrigin: process.env.CORS_ORIGIN || '*',
-  jsonLimit: process.env.JSON_LIMIT || '1mb',
+  jsonLimit: process.env.JSON_LIMIT || '2mb', // marge pour les photos produits (data URL)
   trustProxy: process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : (isProd ? 1 : 0),
+  // Domaine de base des boutiques : <slug>.<baseDomain>. Necessite un DNS
+  // wildcard (*.baseDomain) chez l'hebergeur pour que les sous-domaines marchent.
+  baseDomain: process.env.BASE_DOMAIN || 'karat.shop',
 };
 
 // Verifie la configuration ; renvoie la liste des avertissements/erreurs.

@@ -42,6 +42,7 @@ function publicProduct(p) {
     price: p.price_mru, // montant dans la devise de la boutique
     stock: p.stock,
     category: p.category,
+    image: p.image || '',
     active: Boolean(p.active),
     createdAt: p.created_at,
   };

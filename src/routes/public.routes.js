@@ -14,6 +14,13 @@ const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: 
 const eventLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de requetes.' } });
 
 function findUserBySlug(slug) {
+  // 1) slug personnalise (nom de domaine choisi par le commercant)
+  const custom = db.prepare("SELECT user_id FROM store_settings WHERE slug = ? AND slug != ''").get(slug);
+  if (custom) {
+    const u = db.prepare('SELECT * FROM users WHERE id = ? AND email_verified = 1').get(custom.user_id);
+    if (u) return u;
+  }
+  // 2) sinon, nom de la boutique slugifie
   const users = db.prepare('SELECT * FROM users WHERE email_verified = 1').all();
   return users.find((u) => slugify(u.shop_name) === slug) || null;
 }

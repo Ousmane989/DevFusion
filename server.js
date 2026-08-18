@@ -32,6 +32,20 @@ app.use(express.json({ limit: config.jsonLimit }));
 app.use(cookieParser());
 app.use(loadUser);
 
+// Sous-domaine de boutique : <slug>.<baseDomain> sert la vitrine (necessite
+// un DNS wildcard chez l'hebergeur). Les assets et l'API restent accessibles.
+app.use((req, res, next) => {
+  const host = (req.hostname || '').toLowerCase();
+  const base = config.baseDomain.toLowerCase();
+  if (host.endsWith('.' + base)) {
+    const sub = host.slice(0, -(base.length + 1));
+    if (sub && sub !== 'www' && req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
+      return res.sendFile(path.join(PUBLIC_DIR, 'boutique.html'));
+    }
+  }
+  next();
+});
+
 // ------------------------------------------------------------------
 // Sante de l'API (utilise par l'hebergeur pour le health check)
 // ------------------------------------------------------------------

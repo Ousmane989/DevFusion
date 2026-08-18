@@ -29,8 +29,17 @@
     s.setProperty('--body', sans);
   }
 
+  function isNew(p) {
+    if (!p.createdAt) return false;
+    const t = new Date(String(p.createdAt).replace(' ', 'T') + 'Z').getTime();
+    return Date.now() - t < 14 * 86400000;
+  }
   function visual(p, extra) {
-    return `<div class="sf-img ${extra || ''}"><span class="sf-emblem">${esc(initial(p.name))}</span><span class="sf-view">Voir le produit →</span></div>`;
+    const badge = isNew(p) ? '<span class="sf-new">Nouveau</span>' : '';
+    const media = p.image
+      ? `<img class="sf-photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />`
+      : `<span class="sf-emblem">${esc(initial(p.name))}</span>`;
+    return `<div class="sf-img ${extra || ''}">${badge}${media}<span class="sf-view">Voir le produit →</span></div>`;
   }
   function price(p) { return `<div class="sf-price"><span class="sf-mru">${sMain(p.price)}</span><span class="sf-fcfa">${sAlt(p.price)}</span></div>`; }
   function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
@@ -315,7 +324,12 @@
   async function load() {
     if (window.__KARAT_STORE__) { render(window.__KARAT_STORE__); return; }
     const m = location.pathname.match(/\/boutique\/([^/]+)/);
-    const slug = m ? decodeURIComponent(m[1]) : '';
+    let slug = m ? decodeURIComponent(m[1]) : '';
+    // Sous-domaine <slug>.domaine.tld -> premier label comme slug.
+    if (!slug) {
+      const labels = location.hostname.split('.');
+      if (labels.length >= 3 && labels[0] !== 'www') slug = labels[0];
+    }
     try {
       const res = await fetch('/api/public/store/' + encodeURIComponent(slug), { credentials: 'same-origin' });
       if (!res.ok) throw new Error('404');

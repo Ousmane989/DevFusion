@@ -115,6 +115,18 @@
                 <div class="field" data-field="stock"><label for="pf-stock">Stock</label><input id="pf-stock" type="number" min="0" placeholder="0" /><div class="err">Stock invalide.</div></div>
               </div>
               <div class="field"><label for="pf-desc">Description</label><textarea id="pf-desc" rows="2" placeholder="Décrivez votre produit en quelques mots"></textarea></div>
+              <div class="field">
+                <label>Photo du produit</label>
+                <div class="pf-image">
+                  <div class="pf-image-preview" id="pf-image-preview"><span>Aucune image</span></div>
+                  <div class="pf-image-actions">
+                    <label class="btn btn-ghost btn-sm" for="pf-image-file">Choisir une image</label>
+                    <input type="file" id="pf-image-file" accept="image/*" hidden />
+                    <button type="button" class="btn btn-ghost btn-sm" id="pf-image-clear">Retirer</button>
+                  </div>
+                </div>
+                <div class="hint">JPG ou PNG — redimensionnée automatiquement.</div>
+              </div>
               <label class="pf-check"><input type="checkbox" id="pf-active" checked /> <span>Produit visible dans la boutique</span></label>
               <div class="pf-actions">
                 <button type="submit" class="btn btn-primary" id="pf-save">Enregistrer le produit</button>
@@ -182,7 +194,11 @@
               <div class="field"><label for="store-tagline">Slogan / sous-titre</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>
               <div class="field"><label for="store-desc">Accroche (sous le titre)</label><textarea id="store-desc" rows="2" maxlength="400" placeholder="Une phrase qui présente votre boutique"></textarea></div>
               <div class="field"><label for="store-about">À propos de la boutique</label><textarea id="store-about" rows="3" maxlength="600" placeholder="Racontez votre histoire, vos valeurs, votre savoir-faire…"></textarea></div>
-              <div class="field"><label for="store-domain">Nom de domaine</label><input id="store-domain" type="text" placeholder="ma-boutique.karat.shop" /><div class="hint">Sous-domaine gratuit inclus. Domaine personnalisé disponible en formule Pro.</div></div>
+              <div class="field" data-field="slug"><label for="store-slug">Adresse de la boutique (nom de domaine)</label>
+                <div class="slug-input"><input id="store-slug" type="text" placeholder="ma-boutique" /><span class="slug-suffix" id="slug-suffix">.karat.shop</span></div>
+                <div class="hint">Votre boutique : <a id="store-link" class="link-gold" target="_blank" rel="noopener">…</a></div>
+                <div class="err">Cette adresse est déjà prise ou invalide.</div>
+              </div>
               <div class="pf-label" style="margin-top:4px">Coordonnées (affichées sur votre boutique)</div>
               <div class="pf-grid">
                 <div class="field"><label for="store-phone">Téléphone</label><input id="store-phone" type="tel" placeholder="+222 …" /></div>
