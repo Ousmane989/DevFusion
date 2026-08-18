@@ -29,7 +29,9 @@
     s.setProperty('--body', sans);
   }
 
-  function visual(p, extra) { return `<div class="sf-img ${extra || ''}"><span class="sf-mono">${esc(initial(p.name))}</span></div>`; }
+  function visual(p, extra) {
+    return `<div class="sf-img ${extra || ''}"><span class="sf-emblem">${esc(initial(p.name))}</span><span class="sf-view">Voir le produit →</span></div>`;
+  }
   function price(p) { return `<div class="sf-price"><span class="sf-mru">${sMain(p.price)}</span><span class="sf-fcfa">${sAlt(p.price)}</span></div>`; }
   function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
 
@@ -59,14 +61,14 @@
   const layouts = {
     // 1) Luxe — hero centré, cartes bordées élégantes
     luxe(d) {
-      const cards = d.products.map((p) => `<article class="sf-card">${visual(p, 'tall')}<div class="sf-card-b"><span class="sf-cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3>${p.description ? `<p class="sf-desc">${esc(p.description)}</p>` : ''}${price(p)}${addBtn(p)}</div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card" data-detail="${p.id}">${visual(p, 'tall')}<div class="sf-card-b"><span class="sf-cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3>${p.description ? `<p class="sf-desc">${esc(p.description)}</p>` : ''}${price(p)}${addBtn(p)}</div></article>`).join('');
       return `<header class="sf-head center"><div class="sf-logo-dot"></div><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav"><a>Accueil</a><a>Boutique</a><a>Contact</a></nav></header>
         <section class="sf-hero center"><span class="sf-eyebrow">Maison ${esc(d.shopName)}</span><h1>${esc(d.tagline)}</h1>${d.description ? `<p class="sf-lead">${esc(d.description)}</p>` : ''}<a class="sf-btn" href="#produits">Découvrir la collection</a><div class="sf-divider"></div></section>
         <section class="sf-products" id="produits"><h2 class="sf-sec-title">Notre sélection</h2>${d.products.length ? `<div class="sf-grid cols3">${cards}</div>` : empty()}</section>${footer(d)}`;
     },
     // 2) Warm — hero deux colonnes, band de promesses, grandes cartes rondes
     warm(d) {
-      const cards = d.products.map((p) => `<article class="sf-card round">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}${addBtn(p, 'Commander')}</div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card round" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}${addBtn(p, 'Commander')}</div></article>`).join('');
       const collage = d.products.slice(0, 4).map((p) => `<span class="sf-chip">${esc(initial(p.name))}</span>`).join('');
       return `<header class="sf-head split"><div class="sf-brand">${esc(d.shopName)}</div>${cartBtn()}</header>
         <section class="sf-hero two"><div class="sf-hero-txt"><span class="sf-eyebrow">Bienvenue</span><h1>${esc(d.tagline)}</h1><p class="sf-lead">${esc(d.description || 'Des produits choisis avec soin, livrés près de chez vous.')}</p><a class="sf-btn" href="#produits">Voir les produits</a></div><div class="sf-hero-art"><div class="sf-halo"></div><div class="sf-collage">${collage}</div></div></section>
@@ -75,7 +77,7 @@
     },
     // 3) Fresh — bannière pleine largeur, pills catégories, grille dense 4 col
     fresh(d) {
-      const cards = d.products.map((p) => `<article class="sf-card compact">${visual(p)}<div class="sf-card-b"><span class="sf-tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="sf-row">${price(p)}<button class="sf-plus" data-add="${p.id}">+</button></div></div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card compact" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><span class="sf-tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="sf-row">${price(p)}<button class="sf-plus" data-add="${p.id}">+</button></div></div></article>`).join('');
       const pills = ['Tout'].concat(d.categories || []).map((c, i) => `<button class="sf-pill ${i === 0 ? 'on' : ''}">${esc(c)}</button>`).join('');
       return `<header class="sf-head bar"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav pills"><a class="on">Accueil</a><a>Produits</a><a>Contact</a></nav>${cartBtn()}</header>
         <section class="sf-banner"><div class="sf-banner-in"><h1>${esc(d.tagline)}</h1><p>${esc(d.description || 'Découvrez notre catalogue, frais et de saison.')}</p></div></section>
@@ -84,7 +86,7 @@
     },
     // 4) Tech — hero scindé, cartes à survol marqué
     tech(d) {
-      const cards = d.products.map((p) => `<article class="sf-card hoverlift">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<a class="sf-link" data-add="${p.id}">Ajouter au panier →</a></div></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card hoverlift" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<a class="sf-link" data-add="${p.id}">Ajouter au panier →</a></div></article>`).join('');
       const feats = d.products.slice(0, 2).map((p) => `<div class="sf-feat">${visual(p)}<div><h4>${esc(p.name)}</h4>${price(p)}</div></div>`).join('');
       return `<header class="sf-head sticky"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav"><a>Accueil</a><a>Catalogue</a><a>À propos</a></nav>${cartBtn()}</header>
         <section class="sf-hero grid"><div class="sf-hero-txt"><span class="sf-eyebrow">Nouvelle collection</span><h1>${esc(d.tagline)}</h1><p class="sf-lead">${esc(d.description || 'Le meilleur, livré rapidement et payé simplement.')}</p><div class="sf-cta-row"><a class="sf-btn" href="#produits">Acheter</a><a class="sf-btn ghost" href="#produits">Explorer</a></div></div><div class="sf-hero-cards">${feats || '<div class="sf-halo"></div>'}</div></section>
@@ -93,14 +95,14 @@
     // 5) Magazine — immense titre, produit vedette, tailles mixtes
     magazine(d) {
       const feat = d.products[0];
-      const rest = d.products.slice(1).map((p) => `<article class="sf-card overlay">${visual(p, 'cover')}<div class="sf-ov"><h3>${esc(p.name)}</h3>${price(p)}</div></article>`).join('');
+      const rest = d.products.slice(1).map((p) => `<article class="sf-card overlay" data-detail="${p.id}">${visual(p, 'cover')}<div class="sf-ov"><h3>${esc(p.name)}</h3>${price(p)}</div></article>`).join('');
       return `<header class="sf-head mag"><div class="sf-brand up">${esc(d.shopName)}</div><nav class="sf-nav"><a>Boutique</a><a>Éditos</a><a>Contact</a></nav></header>
-        <section class="sf-hero mag"><div class="sf-mag-title"><span class="sf-eyebrow">La sélection</span><h1>${esc(d.tagline)}</h1><a class="sf-btn" href="#produits">Explorer</a></div>${feat ? `<div class="sf-mag-feat">${visual(feat, 'cover')}<div class="sf-ov big"><span class="sf-cat">${esc(feat.category)}</span><h3>${esc(feat.name)}</h3>${price(feat)}${addBtn(feat)}</div></div>` : ''}</section>
+        <section class="sf-hero mag"><div class="sf-mag-title"><span class="sf-eyebrow">La sélection</span><h1>${esc(d.tagline)}</h1><a class="sf-btn" href="#produits">Explorer</a></div>${feat ? `<div class="sf-mag-feat" data-detail="${feat.id}">${visual(feat, 'cover')}<div class="sf-ov big"><span class="sf-cat">${esc(feat.category)}</span><h3>${esc(feat.name)}</h3>${price(feat)}${addBtn(feat)}</div></div>` : ''}</section>
         <section class="sf-products" id="produits"><h2 class="sf-sec-title">Toute la boutique</h2>${d.products.length ? `<div class="sf-grid cols3 mag">${rest || ''}</div>` : empty()}</section>${footer(d)}`;
     },
     // 6) Minimal — clair, épuré, beaucoup de vide
     minimal(d) {
-      const cards = d.products.map((p) => `<article class="sf-card bare">${visual(p, 'tall')}<h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<button class="sf-add ghost" data-add="${p.id}">Ajouter</button></article>`).join('');
+      const cards = d.products.map((p) => `<article class="sf-card bare" data-detail="${p.id}">${visual(p, 'tall')}<h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<button class="sf-add ghost" data-add="${p.id}">Ajouter</button></article>`).join('');
       return `<header class="sf-head mini"><div class="sf-brand">${esc(d.shopName)}</div></header>
         <section class="sf-hero mini"><span class="sf-eyebrow">${esc(d.description || 'Boutique en ligne')}</span><h1>${esc(d.tagline)}</h1><a class="sf-underline" href="#produits">Voir les produits</a></section>
         <section class="sf-products" id="produits">${d.products.length ? `<div class="sf-grid cols3 airy">${cards}</div>` : empty()}</section>${footer(d)}`;
@@ -126,12 +128,50 @@
   const cartCount = () => cart.reduce((n, i) => n + i.qty, 0);
   const cartSubtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
   function updateBadges() { const n = cartCount(); root.querySelectorAll('.sf-cart-count, .sf-fab-count').forEach((e) => (e.textContent = n)); const fab = root.querySelector('.sf-fab'); if (fab) fab.classList.toggle('has', n > 0); }
-  function addToCart(id) {
+  function addToCart(id, qty) {
+    qty = Math.max(1, qty || 1);
     const p = byId[id]; if (!p) return;
     const line = cart.find((i) => i.id === p.id);
-    if (line) line.qty++; else { cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 }); track('add_cart'); }
+    if (line) line.qty += qty; else { cart.push({ id: p.id, name: p.name, price: p.price, qty }); track('add_cart'); }
     updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
   }
+
+  // -------- Fiche produit (detail + commande) --------
+  let detailQty = 1;
+  function openDetail(id) {
+    const p = byId[id]; if (!p) return;
+    detailQty = 1;
+    const modal = root.querySelector('.sf-detail'); if (!modal) return;
+    const stock = p.stock > 0
+      ? `<span class="sf-instock">● En stock${p.stock <= 5 ? ' — plus que ' + p.stock : ''}</span>`
+      : '<span class="sf-oos">● Rupture de stock</span>';
+    modal.querySelector('.sf-detail-body').innerHTML = `
+      <div class="sf-detail-grid">
+        <div class="sf-detail-visual">${visual(p, 'cover')}</div>
+        <div class="sf-detail-info">
+          <span class="sf-cat">${esc(p.category)}</span>
+          <h3>${esc(p.name)}</h3>
+          <div class="sf-detail-price">${sMain(p.price)} <span class="sf-detail-alt">${sAlt(p.price)}</span></div>
+          <p class="sf-detail-desc${p.description ? '' : ' sf-muted'}">${esc(p.description || 'Aucune description pour ce produit.')}</p>
+          <div class="sf-detail-stock">${stock}</div>
+          <div class="sf-detail-qty"><span>Quantité</span><div class="sf-qty"><button data-dq="-">−</button><span class="sf-dqv">1</span><button data-dq="+">+</button></div></div>
+          <div class="sf-detail-actions">
+            <button class="sf-btn ghost" data-detail-add="${p.id}">Ajouter au panier</button>
+            <button class="sf-btn" data-detail-order="${p.id}">Commander maintenant</button>
+          </div>
+          <p class="sf-detail-note">💵 Paiement à la livraison</p>
+        </div>
+      </div>`;
+    modal.querySelectorAll('[data-dq]').forEach((b) => b.addEventListener('click', () => {
+      detailQty = Math.max(1, detailQty + (b.dataset.dq === '+' ? 1 : -1));
+      modal.querySelector('.sf-dqv').textContent = detailQty;
+    }));
+    modal.querySelector('[data-detail-add]').addEventListener('click', () => { addToCart(p.id, detailQty); closeDetail(); });
+    modal.querySelector('[data-detail-order]').addEventListener('click', () => { addToCart(p.id, detailQty); closeDetail(); openCart(); });
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDetail() { const m = root.querySelector('.sf-detail'); if (m) m.classList.remove('open'); document.body.style.overflow = ''; }
 
   // Analytics réels : visite (avec source) et ajout au panier.
   function detectSource() {
@@ -238,8 +278,23 @@
     root.appendChild(dr);
     dr.querySelector('.sf-drawer-ov').addEventListener('click', closeCart);
     dr.querySelector('.sf-x').addEventListener('click', closeCart);
+
+    // Fiche produit (modale)
+    const det = document.createElement('div');
+    det.className = 'sf-detail';
+    det.innerHTML = `<div class="sf-detail-ov"></div><div class="sf-detail-box"><button class="sf-detail-x" aria-label="Fermer">✕</button><div class="sf-detail-body"></div></div>`;
+    root.appendChild(det);
+    det.querySelector('.sf-detail-ov').addEventListener('click', closeDetail);
+    det.querySelector('.sf-detail-x').addEventListener('click', closeDetail);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); closeCart(); } });
+
     root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
-    root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); addToCart(Number(b.dataset.add)); }));
+    root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); addToCart(Number(b.dataset.add)); }));
+    // Clic sur une carte produit -> fiche detail (sauf sur le bouton d'ajout)
+    root.querySelectorAll('[data-detail]').forEach((el) => el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-add]')) return;
+      openDetail(Number(el.dataset.detail));
+    }));
   }
 
   function render(d) {
