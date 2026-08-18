@@ -157,7 +157,30 @@
   // Produits
   // ================================================================
   let categories = [];
+  let pfImage = ''; // photo du produit en cours d'edition (data URL)
   function statusPill(active) { return active ? '<span class="pill good">En ligne</span>' : '<span class="pill muted-pill">Brouillon</span>'; }
+  function thumb(p) { return p.image ? `<img class="prod-thumb" src="${esc(p.image)}" alt="" />` : `<span class="prod-thumb emblem">${esc((p.name[0] || '?').toUpperCase())}</span>`; }
+
+  // Redimensionne une image cote client (max 800px) en data URL JPEG.
+  function resizeImage(file, cb) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 800; let w = img.width, h = img.height;
+        if (w > h && w > max) { h = Math.round(h * max / w); w = max; } else if (h >= w && h > max) { w = Math.round(w * max / h); h = max; }
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  function renderPfImage() {
+    const el = q('#pf-image-preview'); if (!el) return;
+    el.innerHTML = pfImage ? `<img src="${esc(pfImage)}" alt="" />` : '<span>Aucune image</span>';
+  }
 
   function renderProducts(products) {
     const body = q('#products-body'), empty = q('#products-empty');
@@ -165,7 +188,7 @@
     if (!products.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     body.innerHTML = products.map((p) => `<tr>
-      <td class="cell-prod"><strong>${esc(p.name)}</strong>${p.description ? `<div class="muted small">${esc(p.description)}</div>` : ''}</td>
+      <td class="cell-prod"><div class="prod-cell">${thumb(p)}<div><strong>${esc(p.name)}</strong>${p.description ? `<div class="muted small">${esc(p.description)}</div>` : ''}</div></div></td>
       <td class="muted">${esc(p.category)}</td>
       <td class="mono num">${mMain(p.price)}<div class="muted small">${mAlt(p.price)}</div></td>
       <td class="mono num">${p.stock}</td>
@@ -203,6 +226,9 @@
     q('#pf-active').checked = prod ? prod.active : true;
     if (q('#pf-price-label')) q('#pf-price-label').textContent = 'Prix (' + CUR + ')';
     q('#pf-fcfa').textContent = mAlt(prod ? prod.price : 0);
+    pfImage = prod ? (prod.image || '') : '';
+    renderPfImage();
+    const fileInput = q('#pf-image-file'); if (fileInput) fileInput.value = '';
     form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
   }
   function closeProductForm() { q('#product-form').style.display = 'none'; }
@@ -212,7 +238,7 @@
     const m = q('#pf-msg'); clearMsg(m);
     qa('#prod-form .field').forEach((f) => f.classList.remove('invalid'));
     const id = q('#pf-id').value;
-    const payload = { name: q('#pf-name').value.trim(), category: q('#pf-category').value, priceMru: Number(q('#pf-price').value), stock: Number(q('#pf-stock').value), description: q('#pf-desc').value.trim(), active: q('#pf-active').checked };
+    const payload = { name: q('#pf-name').value.trim(), category: q('#pf-category').value, priceMru: Number(q('#pf-price').value), stock: Number(q('#pf-stock').value), description: q('#pf-desc').value.trim(), image: pfImage, active: q('#pf-active').checked };
     const r = await api('/api/products' + (id ? '/' + id : ''), id ? 'PUT' : 'POST', payload);
     if (!r.ok) {
       if (r.data && r.data.errors) { Object.keys(r.data.errors).forEach((f) => { const el = q('[data-field="' + f + '"]'); if (el) el.classList.add('invalid'); }); msg(m, 'error', 'Veuillez corriger les champs indiqués.'); }
@@ -328,7 +354,8 @@
     q('#store-tagline').value = store.tagline || '';
     if (q('#store-hero')) q('#store-hero').value = store.heroTitle || '';
     if (q('#store-about')) q('#store-about').value = store.about || '';
-    q('#store-domain').value = store.domain || store.defaultDomain || '';
+    if (q('#store-slug')) q('#store-slug').value = store.slug || '';
+    if (q('#slug-suffix')) q('#slug-suffix').textContent = '.' + (store.baseDomain || 'karat.shop');
     q('#store-desc').value = store.description || '';
     if (q('#store-phone')) q('#store-phone').value = store.phone || '';
     if (q('#store-whatsapp')) q('#store-whatsapp').value = store.whatsapp || '';
@@ -336,21 +363,38 @@
     if (q('#store-address')) q('#store-address').value = store.address || '';
     q('#store-tagline').addEventListener('input', renderThemePreview);
     updateVisitLink(store.slug);
+    updateStoreLink(store);
     renderThemePreview();
     loaded.store = true;
   }
   async function saveStore() {
     const val = (id) => (q(id) ? q(id).value.trim() : '');
+    const sf = q('[data-field="slug"]'); if (sf) sf.classList.remove('invalid');
     const payload = {
       theme: selectedTheme, tagline: val('#store-tagline'), heroTitle: val('#store-hero'), about: val('#store-about'),
-      domain: val('#store-domain'), description: val('#store-desc'),
+      slug: val('#store-slug'), description: val('#store-desc'),
       phone: val('#store-phone'), whatsapp: val('#store-whatsapp'), email: val('#store-email'), address: val('#store-address'),
     };
     const r = await api('/api/store', 'PUT', payload);
-    if (r.ok) { store = r.data.store; updateVisitLink(store.slug); msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.'); }
-    else msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
+    if (r.ok) {
+      store = r.data.store;
+      if (q('#store-slug')) q('#store-slug').value = store.slug || '';
+      updateVisitLink(store.slug); updateStoreLink(store);
+      msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.');
+    } else if (r.data && r.data.errors && r.data.errors.slug) {
+      if (sf) sf.classList.add('invalid');
+      msg(q('#store-msg'), 'error', 'Cette adresse de boutique est déjà prise. Choisissez-en une autre.');
+    } else {
+      msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
+    }
   }
   function updateVisitLink(slug) { if (window.__KARAT_SPA__) return; const a = q('#visit-shop'); if (a && slug) a.href = '/boutique/' + slug; }
+  function updateStoreLink(st) {
+    const a = q('#store-link'); if (!a || !st) return;
+    a.textContent = st.domain || ((st.slug || '') + '.' + (st.baseDomain || 'karat.shop'));
+    if (window.__KARAT_SPA__) { a.href = '#/boutique'; a.removeAttribute('target'); }
+    else a.href = st.storeUrl || ('/boutique/' + (st.slug || ''));
+  }
 
   // ================================================================
   // Init
@@ -364,6 +408,8 @@
     q('#pf-cancel') && q('#pf-cancel').addEventListener('click', closeProductForm);
     q('#prod-form') && q('#prod-form').addEventListener('submit', submitProduct);
     q('#pf-price') && q('#pf-price').addEventListener('input', () => { q('#pf-fcfa').textContent = mAlt(Number(q('#pf-price').value) || 0); });
+    q('#pf-image-file') && q('#pf-image-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; resizeImage(f, (data) => { pfImage = data; renderPfImage(); }); });
+    q('#pf-image-clear') && q('#pf-image-clear').addEventListener('click', () => { pfImage = ''; renderPfImage(); const fi = q('#pf-image-file'); if (fi) fi.value = ''; });
     q('#ship-add') && q('#ship-add').addEventListener('click', () => { shipping.zones.push({ zone: '', fee: 0 }); renderZones(); });
     q('#ship-save') && q('#ship-save').addEventListener('click', saveShipping);
     q('#store-save') && q('#store-save').addEventListener('click', saveStore);

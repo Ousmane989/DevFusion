@@ -23,6 +23,15 @@ router.get('/', requireAuth, (req, res) => {
   res.json({ products: rows.map(publicProduct), categories: CATEGORIES });
 });
 
+// Accepte une URL http(s) ou une data URL image, jusqu'a ~700 Ko.
+function sanitizeImage(v) {
+  const s = String(v || '').trim();
+  if (!s) return '';
+  if (s.length > 720000) return '';
+  if (/^https?:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s)) return s;
+  return '';
+}
+
 // POST /api/products  — ajouter un produit
 router.post('/', requireAuth, (req, res) => {
   const b = req.body || {};
@@ -31,8 +40,8 @@ router.post('/', requireAuth, (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       req.user.id,
@@ -41,7 +50,8 @@ router.post('/', requireAuth, (req, res) => {
       Math.round(Number(b.priceMru)),
       Math.round(Number(b.stock)),
       CATEGORIES.includes(b.category) ? b.category : 'Autre',
-      b.active === false ? 0 : 1
+      b.active === false ? 0 : 1,
+      sanitizeImage(b.image)
     );
   const row = db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json({ ok: true, product: publicProduct(row) });
@@ -56,7 +66,7 @@ router.put('/:id', requireAuth, (req, res) => {
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
   db.prepare(
-    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ? WHERE id = ?`
+    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ? WHERE id = ?`
   ).run(
     b.name !== undefined ? String(b.name).trim() : row.name,
     b.description !== undefined ? String(b.description).trim() : row.description,
@@ -64,6 +74,7 @@ router.put('/:id', requireAuth, (req, res) => {
     b.stock !== undefined ? Math.round(Number(b.stock)) : row.stock,
     b.category !== undefined && CATEGORIES.includes(b.category) ? b.category : row.category,
     b.active !== undefined ? (b.active ? 1 : 0) : row.active,
+    b.image !== undefined ? sanitizeImage(b.image) : row.image,
     row.id
   );
   const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(row.id);

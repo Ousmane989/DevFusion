@@ -661,6 +661,33 @@ img { max-width: 100%; display: block; }
 .orders .mono { font-variant-numeric: tabular-nums; color: var(--text); }
 .orders .cell-prod { color: var(--text); }
 .orders .muted { color: var(--text-mute); }
+
+/* Vignette produit dans le tableau */
+.prod-cell { display: flex; align-items: center; gap: 12px; }
+.prod-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
+  border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+.prod-thumb.emblem { display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; color: var(--gold-light); background: rgba(212,175,55,.1); }
+
+/* Champ photo du produit */
+.pf-image { display: flex; align-items: center; gap: 16px; }
+.pf-image-preview { width: 96px; height: 96px; border-radius: 12px; overflow: hidden; flex-shrink: 0;
+  border: 1px dashed var(--line); background: rgba(255,255,255,.03); display: flex; align-items: center;
+  justify-content: center; text-align: center; }
+.pf-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.pf-image-preview span { font-size: 0.76rem; color: var(--text-mute); padding: 0 8px; }
+.pf-image-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+/* Éditeur d'adresse de boutique (slug) */
+.slug-input { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; background: rgba(255,255,255,.03); }
+.slug-input input { flex: 1; border: none; background: transparent; padding: 11px 14px; color: var(--text);
+  font-size: 0.92rem; min-width: 0; }
+.slug-input input:focus { outline: none; }
+.slug-suffix { display: inline-flex; align-items: center; padding: 0 14px; font-size: 0.9rem;
+  color: var(--gold-light); background: rgba(212,175,55,.08); border-left: 1px solid var(--line);
+  white-space: nowrap; }
+.field.invalid .slug-input { border-color: #e6675f; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; padding: 4px 10px; border-radius: 50px; white-space: nowrap; }
 .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill.good { color: #8fe0ad; background: rgba(111,191,139,.12); }
