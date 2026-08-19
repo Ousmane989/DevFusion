@@ -17,8 +17,16 @@ const { PLANS, TRIAL_DAYS, isoIn, getUserByEmail, getUserById, publicUser } = re
 const { COUNTRIES, currencyOf } = require('../catalog');
 const { sendCode, hasSmtp } = require('../mailer');
 const { requireAuth } = require('../middleware');
+const { config } = require('../config');
 
 const router = express.Router();
+
+// Le code ne doit JAMAIS être renvoyé au navigateur en production (fuite de
+// sécurité) : il part uniquement par e-mail. On ne l'expose qu'en développement
+// local sans SMTP, pour faciliter les tests automatisés.
+function devCodeFor(result) {
+  return (!config.isProd && !hasSmtp) ? result.devCode : undefined;
+}
 
 const CODE_TTL_MIN = 15;
 const MAX_CODE_ATTEMPTS = 5;
@@ -91,7 +99,7 @@ router.post('/signup', authLimiter, async (req, res) => {
     email,
     message: 'Compte cree. Un code de verification vous a ete envoye par e-mail.',
     // En dev sans SMTP, on renvoie le code pour faciliter les tests.
-    devCode: hasSmtp ? undefined : result.devCode,
+    devCode: devCodeFor(result),
   });
 });
 
@@ -148,7 +156,7 @@ router.post('/resend-code', authLimiter, async (req, res) => {
 
   const code = issueCode(user.id, 'email');
   const result = await sendCode({ to: user.email, name: user.name, code, purpose: 'email' });
-  res.json({ ok: true, devCode: hasSmtp ? undefined : result.devCode });
+  res.json({ ok: true, devCode: devCodeFor(result) });
 });
 
 // ------------------------------------------------------------------
@@ -196,7 +204,7 @@ router.post('/forgot', authLimiter, async (req, res) => {
     return res.json({
       ok: true,
       message: 'Si un compte existe, un code a ete envoye.',
-      devCode: hasSmtp ? undefined : result.devCode,
+      devCode: devCodeFor(result),
     });
   }
   res.json({ ok: true, message: 'Si un compte existe, un code a ete envoye.' });

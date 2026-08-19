@@ -58,10 +58,7 @@
         btn.textContent = 'Envoyer le code';
 
         sessionStorage.setItem('karat_reset_email', email);
-        if (data.devCode) {
-          sessionStorage.setItem('karat_reset_devcode', data.devCode);
-        }
-        Karat.msg(msgEl, 'success', 'Si un compte existe, un code a été envoyé. Redirection…');
+        Karat.msg(msgEl, 'success', 'Si un compte existe, un code a été envoyé par e-mail. Redirection…');
         setTimeout(() => { window.location.href = '/reinitialiser'; }, 1100);
       });
     })();

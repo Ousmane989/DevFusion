@@ -58,11 +58,8 @@
       if (!email) { window.location.href = '/inscription'; return; }
       document.getElementById('email-label').textContent = email;
 
-      // Aide au développement : pré-remplir le code si fourni sans SMTP.
-      const devCode = sessionStorage.getItem('karat_devcode');
-      if (devCode) {
-        Karat.msg(msgEl, 'info', 'Mode démo : votre code est ' + devCode + '. (En production, il arrive par e-mail.)');
-      }
+      // Le code est envoyé par e-mail : on invite l'utilisateur à consulter sa boîte.
+      Karat.msg(msgEl, 'info', 'Un code de vérification a été envoyé à votre adresse e-mail. Pensez à vérifier vos spams.');
 
       // Navigation entre les cases du code.
       inputs.forEach((input, i) => {
@@ -98,7 +95,6 @@
 
         if (!ok) { Karat.msg(msgEl, 'error', data.error || 'Code incorrect.'); return; }
 
-        sessionStorage.removeItem('karat_devcode');
         Karat.msg(msgEl, 'success', 'Compte activé ! Redirection vers votre tableau de bord…');
         setTimeout(() => { window.location.href = '/tableau-de-bord'; }, 900);
       });
@@ -108,12 +104,7 @@
         Karat.clearMsg(msgEl);
         const { ok, data } = await Karat.api('/api/auth/resend-code', { email });
         if (!ok) { Karat.msg(msgEl, 'error', data.error || 'Impossible de renvoyer le code.'); return; }
-        if (data.devCode) {
-          sessionStorage.setItem('karat_devcode', data.devCode);
-          Karat.msg(msgEl, 'info', 'Nouveau code (mode démo) : ' + data.devCode);
-        } else {
-          Karat.msg(msgEl, 'success', 'Un nouveau code vous a été envoyé.');
-        }
+        Karat.msg(msgEl, 'success', 'Un nouveau code vous a été envoyé par e-mail.');
       });
     })();
   </script>

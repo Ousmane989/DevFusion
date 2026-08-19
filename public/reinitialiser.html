@@ -61,11 +61,7 @@
       if (!email) { window.location.href = '/mot-de-passe-oublie'; return; }
       document.getElementById('email-label').textContent = email;
 
-      const devCode = sessionStorage.getItem('karat_reset_devcode');
-      if (devCode) {
-        Karat.msg(msgEl, 'info', 'Mode démo : votre code est ' + devCode + '.');
-        document.getElementById('code').value = devCode;
-      }
+      Karat.msg(msgEl, 'info', 'Un code de réinitialisation a été envoyé à votre adresse e-mail. Pensez à vérifier vos spams.');
 
       document.getElementById('reset-form').addEventListener('submit', async (e) => {
         e.preventDefault();
