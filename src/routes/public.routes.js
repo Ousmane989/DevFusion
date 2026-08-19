@@ -6,23 +6,32 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { themeById, defaultShipping, publicProduct, slugify } = require('../catalog');
 const { createOrder } = require('../ordersStore');
+const { config } = require('../config');
+const { findStore } = require('../storefront');
 
 const router = express.Router();
+
+// Sources de trafic reconnues (dont les campagnes Facebook / Instagram).
+const TRAFFIC_SOURCES = ['direct', 'social', 'search', 'whatsapp', 'referral', 'facebook', 'instagram', 'ads'];
+
+// Slug effectif d'une boutique (personnalise ou derive du nom).
+function effectiveSlug(user, settings) {
+  return (settings && settings.slug) ? settings.slug : slugify(user.shop_name);
+}
+
+// Base absolue pour les liens publics (flux catalogue, Open Graph).
+function baseUrl(req) {
+  if (config.publicBaseUrl) return config.publicBaseUrl;
+  return req.protocol + '://' + req.get('host');
+}
 
 // Anti-spam : limite les commandes et les evenements par IP.
 const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de commandes. Reessayez dans une minute.' } });
 const eventLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de requetes.' } });
 
 function findUserBySlug(slug) {
-  // 1) slug personnalise (nom de domaine choisi par le commercant)
-  const custom = db.prepare("SELECT user_id FROM store_settings WHERE slug = ? AND slug != ''").get(slug);
-  if (custom) {
-    const u = db.prepare('SELECT * FROM users WHERE id = ? AND email_verified = 1').get(custom.user_id);
-    if (u) return u;
-  }
-  // 2) sinon, nom de la boutique slugifie
-  const users = db.prepare('SELECT * FROM users WHERE email_verified = 1').all();
-  return users.find((u) => slugify(u.shop_name) === slug) || null;
+  const s = findStore(slug);
+  return s ? s.user : null;
 }
 
 function shippingFor(userId, city) {
@@ -47,9 +56,10 @@ router.get('/store/:slug', (req, res) => {
     .all(user.id)
     .map(publicProduct);
 
+  const instagram = (settings && settings.instagram) || '';
   res.json({
     shopName: user.shop_name,
-    slug: slugify(user.shop_name),
+    slug: effectiveSlug(user, settings),
     currency: user.currency || 'MRU',
     tagline: (settings && settings.tagline) || 'Bienvenue dans notre boutique.',
     heroTitle: (settings && settings.hero_title) || '',
@@ -60,13 +70,60 @@ router.get('/store/:slug', (req, res) => {
       whatsapp: (settings && settings.whatsapp) || '',
       email: (settings && settings.email) || '',
       address: (settings && settings.address) || '',
+      facebook: (settings && settings.fb_page) || '',
+      instagram: instagram ? 'https://instagram.com/' + instagram : '',
     },
+    // Pixel Meta pour le suivi des campagnes Facebook / Instagram.
+    marketing: { metaPixelId: (settings && settings.meta_pixel_id) || '' },
     theme: theme.id,
     themeData: theme,
     shipping,
     products,
     categories: [...new Set(products.map((p) => p.category))],
   });
+});
+
+// GET /api/public/store/:slug/catalog.csv — flux produits pour le
+// Gestionnaire de ventes Meta (catalogue Facebook / Instagram Shopping,
+// publicités dynamiques). Format CSV conforme aux champs requis par Meta.
+router.get('/store/:slug/catalog.csv', (req, res) => {
+  const user = findUserBySlug(req.params.slug);
+  if (!user) return res.status(404).type('text/plain').send('Boutique introuvable.');
+  const settings = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+  const slug = effectiveSlug(user, settings);
+  const currency = user.currency || 'MRU';
+  const base = baseUrl(req);
+  const storeLink = base + '/boutique/' + slug;
+
+  const products = db
+    .prepare('SELECT * FROM products WHERE user_id = ? AND active = 1 ORDER BY id DESC')
+    .all(user.id)
+    .map(publicProduct);
+
+  const csvCell = (v) => {
+    const s = String(v == null ? '' : v).replace(/"/g, '""').replace(/[\r\n]+/g, ' ');
+    return /[",]/.test(s) ? `"${s}"` : s;
+  };
+  const rows = [['id', 'title', 'description', 'availability', 'condition', 'price', 'link', 'image_link', 'brand']];
+  for (const p of products) {
+    // Meta n'accepte pas les data URL en image_link : on n'exporte que les URL http(s).
+    const image = /^https?:\/\//i.test(p.image) ? p.image : '';
+    rows.push([
+      'KRT-' + p.id,
+      p.name,
+      p.description || p.name,
+      p.stock > 0 ? 'in stock' : 'out of stock',
+      'new',
+      `${Math.round(p.price)} ${currency}`,
+      `${storeLink}?produit=${p.id}`,
+      image,
+      user.shop_name,
+    ]);
+  }
+  const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n');
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', `inline; filename="catalogue-${slug}.csv"`);
+  res.send(csv);
 });
 
 // Journalise un evenement de la vitrine (analytics reels).
@@ -79,7 +136,7 @@ function logEvent(slug, type, source) {
 
 // POST /api/public/store/:slug/visit  { source }
 router.post('/store/:slug/visit', eventLimiter, (req, res) => {
-  const src = ['direct', 'social', 'search', 'whatsapp', 'referral'].includes(req.body?.source) ? req.body.source : 'direct';
+  const src = TRAFFIC_SOURCES.includes(req.body?.source) ? req.body.source : 'direct';
   res.json({ ok: logEvent(req.params.slug, 'visit', src) });
 });
 

@@ -103,6 +103,7 @@
     if (name === 'orders') loadOrders(); // toujours rafraichir (nouvelles commandes clients)
     if (name === 'shipping' && !loaded.store2) loadShipping();
     if (name === 'store' && !loaded.store) loadStore();
+    if (name === 'marketing' && !loaded.marketing) loadMarketing();
   }
 
   // ================================================================
@@ -397,6 +398,69 @@
   }
 
   // ================================================================
+  // Marketing (Facebook / Instagram)
+  // ================================================================
+  let mktStore = null;
+  // URL absolue de la boutique, base des liens de campagne.
+  function storeBaseUrl(st) {
+    if (!st) return '';
+    if (!window.__KARAT_SPA__) {
+      const p = st.storeUrl || ('/boutique/' + (st.slug || ''));
+      return location.origin + p;
+    }
+    return 'https://' + (st.domain || ((st.slug || 'ma-boutique') + '.karat.shop'));
+  }
+  function copyFrom(sel) {
+    const el = q(sel); if (!el) return;
+    el.select && el.select();
+    const done = () => dashToast('✓ Lien copié');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(el.value).then(done).catch(() => { try { document.execCommand('copy'); done(); } catch (_) {} });
+    else { try { document.execCommand('copy'); done(); } catch (_) {} }
+  }
+  function updateUtm() {
+    if (!mktStore) return;
+    const base = storeBaseUrl(mktStore);
+    const platform = (q('#utm-platform') && q('#utm-platform').value) || 'facebook';
+    const camp = slugify((q('#utm-campaign') && q('#utm-campaign').value) || 'campagne');
+    const medium = platform === 'whatsapp' ? 'social' : 'paid';
+    const link = base + '?utm_source=' + platform + '&utm_medium=' + medium + '&utm_campaign=' + encodeURIComponent(camp);
+    if (q('#utm-link')) q('#utm-link').value = link;
+    const share = q('#utm-share'); if (!share) return;
+    const enc = encodeURIComponent(link);
+    const wtext = encodeURIComponent('Découvrez ma boutique 🛍️ ' + link);
+    share.innerHTML = `<span class="mkt-share-l">Partager :</span>
+      <a class="btn btn-ghost btn-sm" href="https://www.facebook.com/sharer/sharer.php?u=${enc}" target="_blank" rel="noopener">📘 Facebook</a>
+      <a class="btn btn-ghost btn-sm" href="https://wa.me/?text=${wtext}" target="_blank" rel="noopener">💬 WhatsApp</a>`;
+  }
+  function fillMarketing(st) {
+    mktStore = st;
+    const mk = st.marketing || {};
+    if (q('#mkt-pixel')) q('#mkt-pixel').value = mk.metaPixelId || '';
+    if (q('#mkt-fb')) q('#mkt-fb').value = mk.fbPage || '';
+    if (q('#mkt-ig')) q('#mkt-ig').value = mk.instagram || '';
+    const cat = window.__KARAT_SPA__ ? '' : (location.origin + '/api/public/store/' + (st.slug || '') + '/catalog.csv');
+    if (q('#mkt-catalog')) q('#mkt-catalog').value = cat || (mk.catalogUrl || '');
+    const cl = q('#mkt-catalog-link'); if (cl) { const href = q('#mkt-catalog').value; cl.href = href; if (window.__KARAT_SPA__) { cl.href = '#'; } }
+    updateUtm();
+  }
+  async function loadMarketing() {
+    const r = await api('/api/store', 'GET');
+    if (!r.ok) return;
+    fillMarketing(r.data.store);
+    loaded.marketing = true;
+  }
+  async function saveMarketing() {
+    const payload = {
+      metaPixelId: (q('#mkt-pixel') && q('#mkt-pixel').value.trim()) || '',
+      fbPage: (q('#mkt-fb') && q('#mkt-fb').value.trim()) || '',
+      instagram: (q('#mkt-ig') && q('#mkt-ig').value.trim()) || '',
+    };
+    const r = await api('/api/store', 'PUT', payload);
+    if (r.ok) { fillMarketing(r.data.store); msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); }
+    else msg(q('#mkt-msg'), 'error', 'Erreur lors de l\'enregistrement.');
+  }
+
+  // ================================================================
   // Init
   // ================================================================
   function wireChrome() {
@@ -413,6 +477,11 @@
     q('#ship-add') && q('#ship-add').addEventListener('click', () => { shipping.zones.push({ zone: '', fee: 0 }); renderZones(); });
     q('#ship-save') && q('#ship-save').addEventListener('click', saveShipping);
     q('#store-save') && q('#store-save').addEventListener('click', saveStore);
+
+    q('#mkt-save') && q('#mkt-save').addEventListener('click', saveMarketing);
+    q('#utm-platform') && q('#utm-platform').addEventListener('change', updateUtm);
+    q('#utm-campaign') && q('#utm-campaign').addEventListener('input', updateUtm);
+    qa('[data-copy]').forEach((b) => b.addEventListener('click', () => copyFrom(b.dataset.copy)));
 
     const lo = q('#logout'); if (lo) lo.addEventListener('click', async () => { await api('/api/auth/logout', 'POST', {}); window.location.href = window.__KARAT_SPA__ ? '#/' : '/'; });
   }

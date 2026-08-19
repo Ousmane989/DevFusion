@@ -39,12 +39,35 @@ function getSettings(user) {
   return row;
 }
 
+// Nettoie un identifiant de Pixel Meta (chiffres uniquement, 8 à 20 caractères).
+function cleanPixelId(v) {
+  const s = String(v || '').replace(/\D/g, '').slice(0, 20);
+  return s.length >= 8 ? s : '';
+}
+// Nettoie une URL http(s) (page Facebook, etc.).
+function cleanUrl(v) {
+  const s = String(v || '').trim().slice(0, 200);
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  return 'https://' + s.replace(/^\/+/, '');
+}
+// Normalise un identifiant Instagram (sans @, sans URL).
+function cleanHandle(v) {
+  return String(v || '').trim().replace(/^@+/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?#].*$/, '').slice(0, 40);
+}
+
 function publicStore(user, row) {
   let shipping;
   try { shipping = JSON.parse(row.shipping_json); } catch { shipping = defaultShipping(); }
   const t = themeById(row.theme);
   const slug = effectiveSlug(user, row);
   return {
+    marketing: {
+      metaPixelId: row.meta_pixel_id || '',
+      fbPage: row.fb_page || '',
+      instagram: row.instagram || '',
+      catalogUrl: `${config.publicBaseUrl || ''}/api/public/store/${slug}/catalog.csv`,
+    },
     shopName: user.shop_name,
     theme: t.id,
     themeData: t,
@@ -89,8 +112,12 @@ router.put('/', requireAuth, (req, res) => {
     slug = candidate;
   }
 
+  const metaPixelId = b.metaPixelId !== undefined ? cleanPixelId(b.metaPixelId) : row.meta_pixel_id;
+  const fbPage = b.fbPage !== undefined ? cleanUrl(b.fbPage) : row.fb_page;
+  const instagram = b.instagram !== undefined ? cleanHandle(b.instagram) : row.instagram;
+
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -102,6 +129,7 @@ router.put('/', requireAuth, (req, res) => {
     keep(b.whatsapp, row.whatsapp, 40),
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
+    metaPixelId, fbPage, instagram,
     req.user.id
   );
   res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });

@@ -123,5 +123,9 @@ for (const col of ['hero_title', 'about', 'slug']) {
 }
 // Photo du produit (URL ou data URL).
 try { db.exec("ALTER TABLE products ADD COLUMN image TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
+// Marketing : Pixel Meta (Facebook/Instagram) + liens sociaux pour les campagnes.
+for (const col of ['meta_pixel_id', 'fb_page', 'instagram']) {
+  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+}
 
 module.exports = db;
