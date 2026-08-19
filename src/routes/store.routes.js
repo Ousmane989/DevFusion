@@ -55,6 +55,14 @@ function cleanUrl(v) {
 function cleanHandle(v) {
   return String(v || '').trim().replace(/^@+/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?#].*$/, '').slice(0, 40);
 }
+// Accepte une URL http(s) ou une data URL image (logo / banniere).
+function cleanImage(v) {
+  const s = String(v || '').trim();
+  if (!s) return '';
+  if (s.length > 1500000) return ''; // ~1,5 Mo max
+  if (/^https?:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s)) return s;
+  return '';
+}
 
 function publicStore(user, row) {
   let shipping;
@@ -72,6 +80,8 @@ function publicStore(user, row) {
       wave: row.wave_number || '',
       om: row.om_number || '',
     },
+    logo: row.logo || '',
+    banner: row.banner || '',
     shopName: user.shop_name,
     theme: t.id,
     themeData: t,
@@ -121,9 +131,11 @@ router.put('/', requireAuth, (req, res) => {
   const instagram = b.instagram !== undefined ? cleanHandle(b.instagram) : row.instagram;
   const waveNumber = b.wave !== undefined ? String(b.wave).trim().slice(0, 40) : row.wave_number;
   const omNumber = b.om !== undefined ? String(b.om).trim().slice(0, 40) : row.om_number;
+  const logo = b.logo !== undefined ? cleanImage(b.logo) : row.logo;
+  const banner = b.banner !== undefined ? cleanImage(b.banner) : row.banner;
 
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -135,7 +147,7 @@ router.put('/', requireAuth, (req, res) => {
     keep(b.whatsapp, row.whatsapp, 40),
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
-    metaPixelId, fbPage, instagram, waveNumber, omNumber,
+    metaPixelId, fbPage, instagram, waveNumber, omNumber, logo, banner,
     req.user.id
   );
   res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });

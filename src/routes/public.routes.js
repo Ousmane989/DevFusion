@@ -77,6 +77,9 @@ router.get('/store/:slug', (req, res) => {
     marketing: { metaPixelId: (settings && settings.meta_pixel_id) || '' },
     // Paiement mobile facultatif (en plus du paiement a la livraison).
     payment: { wave: (settings && settings.wave_number) || '', om: (settings && settings.om_number) || '' },
+    // Personnalisation visuelle.
+    logo: (settings && settings.logo) || '',
+    banner: (settings && settings.banner) || '',
     theme: theme.id,
     themeData: theme,
     shipping,
