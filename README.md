@@ -11,6 +11,27 @@ sans-serif lisible pour le texte (Jost).
 
 ---
 
+## 🚀 Mettre en ligne (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Ousmane989/DevFusion)
+
+1. Cliquez sur le bouton ci-dessus (connectez-vous à Render avec GitHub).
+2. Render lit `render.yaml`, crée le service, génère `JWT_SECRET` et monte un
+   disque persistant pour la base SQLite.
+3. Cliquez **Apply** → la boutique est en ligne en quelques minutes sur une URL
+   `https://karat-xxxx.onrender.com` (les liens du catalogue Meta et les balises
+   Open Graph s'y adaptent automatiquement).
+
+> ⚠ **Persistance des données** : la conservation des comptes et commandes
+> nécessite un disque persistant, donc un plan payant (**Starter, ~7 $/mois**,
+> déjà configuré dans `render.yaml`). Le plan gratuit de Render n'a pas de
+> disque : la base serait réinitialisée à chaque redémarrage.
+
+Options : branchez un **domaine** (Settings → Custom Domain, puis `BASE_DOMAIN`)
+et des **e-mails réels** (variables `SMTP_*`). Détails dans `render.yaml`.
+
+---
+
 ## ✨ Ce qui est inclus
 
 **Page d'accueil publique** (`/`)
