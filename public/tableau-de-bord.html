@@ -223,6 +223,29 @@
               <div class="panel-head"><h3>Choisir un thème</h3></div>
               <div class="form-msg" id="store-msg"></div>
               <div class="theme-grid" id="theme-grid"></div>
+
+              <div class="pf-label" style="margin-top:22px">Identité visuelle</div>
+              <div class="brand-uploads">
+                <div class="brand-up">
+                  <span class="brand-up-label">Logo</span>
+                  <div class="brand-preview logo" id="logo-preview"><span>Aucun</span></div>
+                  <div class="brand-up-actions">
+                    <label class="btn btn-ghost btn-sm" for="logo-file">Choisir</label>
+                    <input type="file" id="logo-file" accept="image/*" hidden />
+                    <button type="button" class="btn btn-ghost btn-sm" id="logo-clear">Retirer</button>
+                  </div>
+                </div>
+                <div class="brand-up">
+                  <span class="brand-up-label">Bannière (image de fond du héro)</span>
+                  <div class="brand-preview banner" id="banner-preview"><span>Aucune</span></div>
+                  <div class="brand-up-actions">
+                    <label class="btn btn-ghost btn-sm" for="banner-file">Choisir</label>
+                    <input type="file" id="banner-file" accept="image/*" hidden />
+                    <button type="button" class="btn btn-ghost btn-sm" id="banner-clear">Retirer</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="pf-label" style="margin-top:22px">Contenu du site (modifiable)</div>
               <div class="field"><label for="store-hero">Titre principal (héro)</label><input id="store-hero" type="text" maxlength="120" placeholder="Par défaut : le nom de votre boutique" /></div>
               <div class="field"><label for="store-tagline">Slogan / sous-titre</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>

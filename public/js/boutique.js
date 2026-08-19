@@ -55,11 +55,18 @@
     if (c.instagram) items.push(`<a href="${esc(c.instagram)}" target="_blank" rel="noopener">📸 Instagram</a>`);
     const contact = items.length ? `<div class="sf-contact">${items.join('')}</div>` : '';
     const about = d.about ? `<p class="sf-about">${esc(d.about)}</p>` : '';
-    return `<footer class="sf-footer"><div class="sf-foot-in">
+    const pay = d.payment || {};
+    const payItems = [];
+    payItems.push('<span class="sf-pay-chip">💵 Paiement à la livraison</span>');
+    if (pay.wave) payItems.push(`<span class="sf-pay-chip">🌊 Wave ${esc(pay.wave)}</span>`);
+    if (pay.om) payItems.push(`<span class="sf-pay-chip">🟠 Orange Money ${esc(pay.om)}</span>`);
+    const payment = `<div class="sf-pay">${payItems.join('')}</div>`;
+    return `<footer class="sf-footer" id="sf-contact"><div class="sf-foot-in">
       <div class="sf-foot-brand">${esc(d.shopName)}</div>
       <p class="sf-foot-tag">${esc(d.tagline)}</p>
       ${about}
       ${contact}
+      ${payment}
       <div class="sf-foot-meta"><span>© ${new Date().getFullYear()} ${esc(d.shopName)}</span><span class="sf-powered">Propulsé par <strong>Karat</strong> 💎</span></div>
     </div></footer>`;
   }
@@ -69,56 +76,56 @@
   // ============================================================
   // Layouts
   // ============================================================
-  const layouts = {
-    // 1) Luxe — hero centré, cartes bordées élégantes
-    luxe(d) {
-      const cards = d.products.map((p) => `<article class="sf-card" data-detail="${p.id}">${visual(p, 'tall')}<div class="sf-card-b"><span class="sf-cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3>${p.description ? `<p class="sf-desc">${esc(p.description)}</p>` : ''}${price(p)}${addBtn(p)}</div></article>`).join('');
-      return `<header class="sf-head center"><div class="sf-logo-dot"></div><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav"><a>Accueil</a><a>Boutique</a><a>Contact</a></nav></header>
-        <section class="sf-hero center"><span class="sf-eyebrow">Maison ${esc(d.shopName)}</span><h1>${esc(d.tagline)}</h1>${d.description ? `<p class="sf-lead">${esc(d.description)}</p>` : ''}<a class="sf-btn" href="#produits">Découvrir la collection</a><div class="sf-divider"></div></section>
-        <section class="sf-products" id="produits"><h2 class="sf-sec-title">Notre sélection</h2>${d.products.length ? `<div class="sf-grid cols3">${cards}</div>` : empty()}</section>${footer(d)}`;
-    },
-    // 2) Warm — hero deux colonnes, band de promesses, grandes cartes rondes
-    warm(d) {
-      const cards = d.products.map((p) => `<article class="sf-card round" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}${addBtn(p, 'Commander')}</div></article>`).join('');
-      const collage = d.products.slice(0, 4).map((p) => `<span class="sf-chip">${esc(initial(p.name))}</span>`).join('');
-      return `<header class="sf-head split"><div class="sf-brand">${esc(d.shopName)}</div>${cartBtn()}</header>
-        <section class="sf-hero two"><div class="sf-hero-txt"><span class="sf-eyebrow">Bienvenue</span><h1>${esc(d.tagline)}</h1><p class="sf-lead">${esc(d.description || 'Des produits choisis avec soin, livrés près de chez vous.')}</p><a class="sf-btn" href="#produits">Voir les produits</a></div><div class="sf-hero-art"><div class="sf-halo"></div><div class="sf-collage">${collage}</div></div></section>
-        <div class="sf-band"><span>🚚 Livraison locale</span><span>📱 Paiement mobile</span><span>✋ Sélection soignée</span></div>
-        <section class="sf-products" id="produits"><h2 class="sf-sec-title">Nos produits</h2>${d.products.length ? `<div class="sf-grid cols2">${cards}</div>` : empty()}</section>${footer(d)}`;
-    },
-    // 3) Fresh — bannière pleine largeur, pills catégories, grille dense 4 col
-    fresh(d) {
-      const cards = d.products.map((p) => `<article class="sf-card compact" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><span class="sf-tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="sf-row">${price(p)}<button class="sf-plus" data-add="${p.id}">+</button></div></div></article>`).join('');
-      const pills = ['Tout'].concat(d.categories || []).map((c, i) => `<button class="sf-pill ${i === 0 ? 'on' : ''}">${esc(c)}</button>`).join('');
-      return `<header class="sf-head bar"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav pills"><a class="on">Accueil</a><a>Produits</a><a>Contact</a></nav>${cartBtn()}</header>
-        <section class="sf-banner"><div class="sf-banner-in"><h1>${esc(d.tagline)}</h1><p>${esc(d.description || 'Découvrez notre catalogue, frais et de saison.')}</p></div></section>
-        <div class="sf-pills">${pills}</div>
-        <section class="sf-products"><div class="sf-grid cols4">${d.products.length ? cards : empty()}</div></section>${footer(d)}`;
-    },
-    // 4) Tech — hero scindé, cartes à survol marqué
-    tech(d) {
-      const cards = d.products.map((p) => `<article class="sf-card hoverlift" data-detail="${p.id}">${visual(p)}<div class="sf-card-b"><h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<a class="sf-link" data-add="${p.id}">Ajouter au panier →</a></div></article>`).join('');
-      const feats = d.products.slice(0, 2).map((p) => `<div class="sf-feat">${visual(p)}<div><h4>${esc(p.name)}</h4>${price(p)}</div></div>`).join('');
-      return `<header class="sf-head sticky"><div class="sf-brand">${esc(d.shopName)}</div><nav class="sf-nav"><a>Accueil</a><a>Catalogue</a><a>À propos</a></nav>${cartBtn()}</header>
-        <section class="sf-hero grid"><div class="sf-hero-txt"><span class="sf-eyebrow">Nouvelle collection</span><h1>${esc(d.tagline)}</h1><p class="sf-lead">${esc(d.description || 'Le meilleur, livré rapidement et payé simplement.')}</p><div class="sf-cta-row"><a class="sf-btn" href="#produits">Acheter</a><a class="sf-btn ghost" href="#produits">Explorer</a></div></div><div class="sf-hero-cards">${feats || '<div class="sf-halo"></div>'}</div></section>
-        <section class="sf-products" id="produits"><div class="sf-sec-row"><h2 class="sf-sec-title">Catalogue</h2><span class="sf-count">${d.products.length} article(s)</span></div>${d.products.length ? `<div class="sf-grid cols3">${cards}</div>` : empty()}</section>${footer(d)}`;
-    },
-    // 5) Magazine — immense titre, produit vedette, tailles mixtes
-    magazine(d) {
-      const feat = d.products[0];
-      const rest = d.products.slice(1).map((p) => `<article class="sf-card overlay" data-detail="${p.id}">${visual(p, 'cover')}<div class="sf-ov"><h3>${esc(p.name)}</h3>${price(p)}</div></article>`).join('');
-      return `<header class="sf-head mag"><div class="sf-brand up">${esc(d.shopName)}</div><nav class="sf-nav"><a>Boutique</a><a>Éditos</a><a>Contact</a></nav></header>
-        <section class="sf-hero mag"><div class="sf-mag-title"><span class="sf-eyebrow">La sélection</span><h1>${esc(d.tagline)}</h1><a class="sf-btn" href="#produits">Explorer</a></div>${feat ? `<div class="sf-mag-feat" data-detail="${feat.id}">${visual(feat, 'cover')}<div class="sf-ov big"><span class="sf-cat">${esc(feat.category)}</span><h3>${esc(feat.name)}</h3>${price(feat)}${addBtn(feat)}</div></div>` : ''}</section>
-        <section class="sf-products" id="produits"><h2 class="sf-sec-title">Toute la boutique</h2>${d.products.length ? `<div class="sf-grid cols3 mag">${rest || ''}</div>` : empty()}</section>${footer(d)}`;
-    },
-    // 6) Minimal — clair, épuré, beaucoup de vide
-    minimal(d) {
-      const cards = d.products.map((p) => `<article class="sf-card bare" data-detail="${p.id}">${visual(p, 'tall')}<h3>${esc(p.name)}</h3><span class="sf-cat">${esc(p.category)}</span>${price(p)}<button class="sf-add ghost" data-add="${p.id}">Ajouter</button></article>`).join('');
-      return `<header class="sf-head mini"><div class="sf-brand">${esc(d.shopName)}</div></header>
-        <section class="sf-hero mini"><span class="sf-eyebrow">${esc(d.description || 'Boutique en ligne')}</span><h1>${esc(d.tagline)}</h1><a class="sf-underline" href="#produits">Voir les produits</a></section>
-        <section class="sf-products" id="produits">${d.products.length ? `<div class="sf-grid cols3 airy">${cards}</div>` : empty()}</section>${footer(d)}`;
-    },
-  };
+  // Logo : image téléversée, sinon monogramme dérivé du nom.
+  function logoMark(d) {
+    return d.logo
+      ? `<img class="sf-logo-img" src="${esc(d.logo)}" alt="${esc(d.shopName)}" />`
+      : `<span class="sf-logo-mark">${esc(initial(d.shopName))}</span>`;
+  }
+  function header(d) {
+    return `<header class="sf-header" id="sf-top"><div class="sf-header-in">
+      <a class="sf-brand-row" href="#sf-top">${logoMark(d)}<span class="sf-brand-name">${esc(d.shopName)}</span></a>
+      <nav class="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a></nav>
+      ${cartBtn()}
+    </div></header>`;
+  }
+  function hero(d) {
+    const hasBanner = !!d.banner;
+    const style = hasBanner ? ` style="background-image:linear-gradient(105deg, rgba(0,0,0,.78) 20%, rgba(0,0,0,.35)), url('${esc(d.banner)}')"` : '';
+    const wa = d.contact && d.contact.whatsapp ? String(d.contact.whatsapp).replace(/[^0-9]/g, '') : '';
+    return `<section class="sf-hero2 ${hasBanner ? 'has-banner' : ''}"${style}><div class="sf-hero2-in">
+      <span class="sf-eyebrow">${esc(d.shopName)}</span>
+      <h1>${esc(d.tagline)}</h1>
+      ${d.description ? `<p class="sf-lead">${esc(d.description)}</p>` : ''}
+      <div class="sf-hero2-cta"><a class="sf-btn" href="#produits">Découvrir la boutique</a>${wa ? `<a class="sf-btn ghost" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">Nous écrire</a>` : ''}</div>
+    </div></section>`;
+  }
+  function trustBand() {
+    return `<div class="sf-trust"><span>🚚 Livraison à domicile</span><span>💵 Paiement à la livraison</span><span>🔒 Achat en toute confiance</span></div>`;
+  }
+  function filters(cats) {
+    const pills = ['Tout'].concat(cats || []).map((c, i) => `<button type="button" class="sf-pill2 ${i === 0 ? 'on' : ''}" data-cat="${i === 0 ? '' : esc(c)}">${esc(c)}</button>`).join('');
+    return `<div class="sf-filters">${pills}</div>`;
+  }
+  // Carte produit — SANS description (elle n'apparaît que dans la fiche détail).
+  function card(p) {
+    return `<article class="sf-card2" data-detail="${p.id}">${visual(p, 'tall')}
+      <div class="sf-card2-b">
+        <span class="sf-cat">${esc(p.category)}</span>
+        <h3>${esc(p.name)}</h3>
+        ${price(p)}
+        <div class="sf-card2-actions"><button type="button" class="sf-add" data-add="${p.id}">Ajouter au panier</button><button type="button" class="sf-see" data-detail-open="${p.id}">Voir</button></div>
+      </div></article>`;
+  }
+  function productsSection(d) {
+    return `<section class="sf-shop" id="produits"><div class="sf-shop-head"><h2 class="sf-sec-title">Nos produits</h2><span class="sf-count">${d.products.length} article${d.products.length > 1 ? 's' : ''}</span></div>
+      ${(d.categories && d.categories.length > 1) ? filters(d.categories) : ''}
+      <div class="sf-grid2" id="sf-grid">${d.products.length ? d.products.map(card).join('') : empty()}</div></section>`;
+  }
+  // Vitrine unifiée, professionnelle, adaptée aux couleurs du thème choisi.
+  function shopMarkup(d) {
+    return header(d) + hero(d) + trustBand() + productsSection(d) + footer(d);
+  }
 
   // ============================================================
   // Rendu + interactions
@@ -334,10 +341,30 @@
 
     root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
     root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); addToCart(Number(b.dataset.add)); }));
-    // Clic sur une carte produit -> fiche detail (sauf sur le bouton d'ajout)
+    root.querySelectorAll('[data-detail-open]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openDetail(Number(b.dataset.detailOpen)); }));
+    // Clic sur une carte produit -> fiche detail (sauf sur les boutons d'action)
     root.querySelectorAll('[data-detail]').forEach((el) => el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-add]')) return;
+      if (e.target.closest('[data-add]') || e.target.closest('[data-detail-open]')) return;
       openDetail(Number(el.dataset.detail));
+    }));
+
+    // Filtres par catégorie (fonctionnels).
+    const grid = root.querySelector('#sf-grid');
+    root.querySelectorAll('.sf-pill2').forEach((b) => b.addEventListener('click', () => {
+      root.querySelectorAll('.sf-pill2').forEach((x) => x.classList.toggle('on', x === b));
+      const cat = b.dataset.cat;
+      if (grid) grid.querySelectorAll('.sf-card2').forEach((cardEl) => {
+        const p = byId[Number(cardEl.dataset.detail)];
+        cardEl.style.display = (!cat || (p && p.category === cat)) ? '' : 'none';
+      });
+    }));
+
+    // Navigation interne : défilement doux vers les sections.
+    root.querySelectorAll('.sf-nav-l, .sf-hero2-cta a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href');
+      if (!href || !href.startsWith('#') || href.startsWith('#/')) return;
+      const target = root.querySelector(href);
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     }));
   }
 
@@ -348,8 +375,8 @@
     data = d; cart = []; byId = {};
     (d.products || []).forEach((p) => (byId[p.id] = p));
     applyTheme(t);
-    root.className = 'storefront lay-' + (t.layout || 'luxe');
-    root.innerHTML = (layouts[t.layout] || layouts.luxe)(d);
+    root.className = 'storefront pro';
+    root.innerHTML = shopMarkup(d);
     mountChrome();
     updateBadges();
     document.title = d.shopName + ' — Boutique Karat';
