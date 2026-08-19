@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vérification de l'e-mail — Karat</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,12 22,28 10,28 5,12' fill='%23D4AF37'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <aside class="auth-aside">
+      <div class="aside-glow"></div>
+      <a href="/" class="brand"><svg class="mark" viewBox="0 0 32 32"><polygon points="16,3 27,12 22,28 10,28 5,12" fill="#D4AF37"/></svg><span class="gold-text">Karat</span></a>
+      <div class="aside-body">
+        <h2>Une dernière étape avant d'ouvrir votre <span class="gold-text">boutique</span>.</h2>
+        <p>Pour protéger votre compte, nous vérifions votre adresse e-mail. Saisissez le code à 6 chiffres que nous venons de vous envoyer.</p>
+      </div>
+      <p class="aside-foot">Le code est valable 15 minutes.</p>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <a href="/inscription" class="auth-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg> Retour à l'inscription</a>
+        <h1>Vérifiez votre e-mail</h1>
+        <p class="lead">Nous avons envoyé un code à <strong id="email-label">votre adresse</strong>.</p>
+
+        <div class="form-msg" id="msg"></div>
+
+        <form id="verify-form" novalidate>
+          <div class="field">
+            <label>Code de vérification</label>
+            <div class="code-inputs" id="code-inputs">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 1" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 2" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 3" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 4" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 5" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Chiffre 6" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">Valider et activer mon compte</button>
+        </form>
+
+        <p class="auth-alt">Vous n'avez rien reçu ? <a href="#" id="resend" class="link-gold">Renvoyer le code</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      const email = sessionStorage.getItem('karat_email');
+      const msgEl = document.getElementById('msg');
+      const btn = document.getElementById('submit-btn');
+      const inputs = Array.from(document.querySelectorAll('#code-inputs input'));
+
+      if (!email) { window.location.href = '/inscription'; return; }
+      document.getElementById('email-label').textContent = email;
+
+      // Aide au développement : pré-remplir le code si fourni sans SMTP.
+      const devCode = sessionStorage.getItem('karat_devcode');
+      if (devCode) {
+        Karat.msg(msgEl, 'info', 'Mode démo : votre code est ' + devCode + '. (En production, il arrive par e-mail.)');
+      }
+
+      // Navigation entre les cases du code.
+      inputs.forEach((input, i) => {
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/\D/g, '').slice(0, 1);
+          if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+        });
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const txt = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+          txt.split('').forEach((c, k) => { if (inputs[k]) inputs[k].value = c; });
+          (inputs[Math.min(txt.length, 5)] || inputs[5]).focus();
+        });
+      });
+      inputs[0].focus();
+
+      function readCode() { return inputs.map((i) => i.value).join(''); }
+
+      document.getElementById('verify-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        Karat.clearMsg(msgEl);
+        const code = readCode();
+        if (code.length !== 6) { Karat.msg(msgEl, 'error', 'Saisissez les 6 chiffres du code.'); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Vérification…';
+        const { ok, data } = await Karat.api('/api/auth/verify-email', { email, code });
+        btn.disabled = false;
+        btn.textContent = 'Valider et activer mon compte';
+
+        if (!ok) { Karat.msg(msgEl, 'error', data.error || 'Code incorrect.'); return; }
+
+        sessionStorage.removeItem('karat_devcode');
+        Karat.msg(msgEl, 'success', 'Compte activé ! Redirection vers votre tableau de bord…');
+        setTimeout(() => { window.location.href = '/tableau-de-bord'; }, 900);
+      });
+
+      document.getElementById('resend').addEventListener('click', async (e) => {
+        e.preventDefault();
+        Karat.clearMsg(msgEl);
+        const { ok, data } = await Karat.api('/api/auth/resend-code', { email });
+        if (!ok) { Karat.msg(msgEl, 'error', data.error || 'Impossible de renvoyer le code.'); return; }
+        if (data.devCode) {
+          sessionStorage.setItem('karat_devcode', data.devCode);
+          Karat.msg(msgEl, 'info', 'Nouveau code (mode démo) : ' + data.devCode);
+        } else {
+          Karat.msg(msgEl, 'success', 'Un nouveau code vous a été envoyé.');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

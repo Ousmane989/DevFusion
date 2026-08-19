@@ -1,0 +1,51 @@
+# Déploiement en un clic sur Render (https://render.com)
+#
+#   1. Poussez ce dépôt sur GitHub (déjà fait).
+#   2. Sur Render : New + > Blueprint > sélectionnez ce dépôt.
+#   3. Render lit ce fichier, crée le service web, génère JWT_SECRET et
+#      monte un disque persistant pour la base SQLite.
+#   4. Cliquez « Apply » : la boutique est en ligne en quelques minutes.
+#
+# ⚠ IMPORTANT — persistance des données :
+#   Un disque persistant (donc la conservation des comptes et commandes)
+#   nécessite un plan payant (Starter, ~7 $/mois). Le plan « free » de Render
+#   n'a PAS de disque persistant : la base serait réinitialisée à chaque
+#   redémarrage. On utilise donc `plan: starter` ci-dessous.
+services:
+  - type: web
+    name: karat
+    runtime: node
+    plan: starter          # requis pour le disque persistant (SQLite)
+    region: frankfurt
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true      # secret aléatoire généré par Render
+      # RENDER_EXTERNAL_URL est fourni automatiquement : les liens absolus
+      # (catalogue Meta, Open Graph) s'y adaptent sans configuration.
+      #
+      # Nom de domaine des boutiques : décommentez et renseignez votre domaine
+      # si vous en branchez un (avec un DNS wildcard *.votre-domaine).
+      # - key: BASE_DOMAIN
+      #   value: karat.shop
+      #
+      # E-mails réels (sinon les codes s'affichent dans les logs, mode démo) :
+      # - key: SMTP_HOST
+      #   sync: false
+      # - key: SMTP_PORT
+      #   value: "587"
+      # - key: SMTP_USER
+      #   sync: false
+      # - key: SMTP_PASS
+      #   sync: false
+      # - key: MAIL_FROM
+      #   value: "Karat <no-reply@votre-domaine>"
+    disk:
+      name: karat-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
