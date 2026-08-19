@@ -7,7 +7,7 @@ const { publicUser } = require('../account');
 
 const router = express.Router();
 
-const SRC_LABELS = { direct: 'Direct', social: 'Réseaux sociaux', search: 'Recherche', whatsapp: 'WhatsApp', referral: 'Référence' };
+const SRC_LABELS = { direct: 'Direct', social: 'Réseaux sociaux', search: 'Recherche', whatsapp: 'WhatsApp', referral: 'Référence', facebook: 'Facebook', instagram: 'Instagram', ads: 'Publicités' };
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const parseDate = (s) => new Date(String(s).replace(' ', 'T') + 'Z');

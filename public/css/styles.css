@@ -688,6 +688,21 @@ img { max-width: 100%; display: block; }
   color: var(--gold-light); background: rgba(212,175,55,.08); border-left: 1px solid var(--line);
   white-space: nowrap; }
 .field.invalid .slug-input { border-color: #e6675f; }
+
+/* Marketing (Facebook / Instagram) */
+.mkt-lead { font-size: 0.9rem; color: var(--text-dim); line-height: 1.55; margin: 0 0 16px; }
+.copy-row { display: flex; gap: 8px; align-items: stretch; }
+.copy-row input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.03);
+  padding: 10px 12px; color: var(--text-dim); font-size: 0.82rem; font-family: var(--mono, ui-monospace, monospace); }
+.copy-row input:focus { outline: none; border-color: var(--gold); }
+.copy-row .btn { white-space: nowrap; }
+.mkt-share { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mkt-share-l { font-size: 0.82rem; color: var(--text-mute); }
+.mkt-guide { margin-top: 26px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line);
+  background: rgba(212,175,55,.05); }
+.mkt-guide h4 { margin: 0 0 12px; font-size: 0.95rem; color: var(--gold-light); }
+.mkt-guide ol { margin: 0; padding-left: 20px; display: grid; gap: 9px; }
+.mkt-guide li { font-size: 0.86rem; color: var(--text-dim); line-height: 1.5; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; padding: 4px 10px; border-radius: 50px; white-space: nowrap; }
 .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill.good { color: #8fe0ad; background: rgba(111,191,139,.12); }

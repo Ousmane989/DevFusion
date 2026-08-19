@@ -51,6 +51,8 @@
     if (c.whatsapp) items.push(`<a href="https://wa.me/${esc(String(c.whatsapp).replace(/[^0-9]/g, ''))}" target="_blank" rel="noopener">💬 ${esc(c.whatsapp)}</a>`);
     if (c.email) items.push(`<a href="mailto:${esc(c.email)}">✉️ ${esc(c.email)}</a>`);
     if (c.address) items.push(`<span>📍 ${esc(c.address)}</span>`);
+    if (c.facebook) items.push(`<a href="${esc(c.facebook)}" target="_blank" rel="noopener">📘 Facebook</a>`);
+    if (c.instagram) items.push(`<a href="${esc(c.instagram)}" target="_blank" rel="noopener">📸 Instagram</a>`);
     const contact = items.length ? `<div class="sf-contact">${items.join('')}</div>` : '';
     const about = d.about ? `<p class="sf-about">${esc(d.about)}</p>` : '';
     return `<footer class="sf-footer"><div class="sf-foot-in">
@@ -142,6 +144,7 @@
     const p = byId[id]; if (!p) return;
     const line = cart.find((i) => i.id === p.id);
     if (line) line.qty += qty; else { cart.push({ id: p.id, name: p.name, price: p.price, qty }); track('add_cart'); }
+    pixel('AddToCart', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price * qty, currency: pixCurrency() });
     updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
   }
 
@@ -179,19 +182,50 @@
     modal.querySelector('[data-detail-order]').addEventListener('click', () => { addToCart(p.id, detailQty); closeDetail(); openCart(); });
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
+    pixel('ViewContent', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price, currency: pixCurrency() });
   }
   function closeDetail() { const m = root.querySelector('.sf-detail'); if (m) m.classList.remove('open'); document.body.style.overflow = ''; }
 
   // Analytics réels : visite (avec source) et ajout au panier.
+  // Détecte la source d'une visite, en priorité depuis les paramètres de
+  // campagne (utm_source, fbclid…) pour attribuer le trafic Facebook/Instagram.
   function detectSource() {
-    const q = new URLSearchParams(location.search).get('src');
-    if (q) return ['direct', 'social', 'search', 'whatsapp', 'referral'].includes(q) ? q : 'referral';
+    const params = new URLSearchParams(location.search);
+    const known = ['direct', 'social', 'search', 'whatsapp', 'referral', 'facebook', 'instagram', 'ads'];
+    const q = params.get('src');
+    if (q) return known.includes(q) ? q : 'referral';
+    // Paramètres de campagne (liens publicitaires / posts).
+    const utm = (params.get('utm_source') || '').toLowerCase();
+    if (/facebook|fb/.test(utm) || params.has('fbclid')) return 'facebook';
+    if (/instagram|ig/.test(utm) || params.has('igshid')) return 'instagram';
+    if (utm) return known.includes(utm) ? utm : 'ads';
+    // Sinon, on déduit depuis le référent.
     const ref = document.referrer || '';
     if (!ref) return 'direct';
-    if (/facebook|instagram|tiktok|t\.co|twitter|x\.com|snapchat/i.test(ref)) return 'social';
+    if (/facebook|fb\.com|fb\.me/i.test(ref)) return 'facebook';
+    if (/instagram/i.test(ref)) return 'instagram';
+    if (/tiktok|t\.co|twitter|x\.com|snapchat/i.test(ref)) return 'social';
     if (/whatsapp|wa\.me/i.test(ref)) return 'whatsapp';
     if (/google|bing|yahoo|duckduck|search/i.test(ref)) return 'search';
     return 'referral';
+  }
+
+  // -------- Pixel Meta (Facebook / Instagram) --------
+  // Chargé uniquement si le commerçant a renseigné un identifiant de Pixel,
+  // et jamais dans la démo « un seul lien » (pas de réseau externe).
+  let pixelReady = false;
+  const pixCurrency = () => (SCUR === 'FCFA' ? 'XOF' : 'MRU'); // codes ISO attendus par Meta
+  function initPixel(id) {
+    if (!id || pixelReady || window.__KARAT_SPA__) return;
+    pixelReady = true;
+    /* eslint-disable */
+    !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+    try { window.fbq('init', id); window.fbq('track', 'PageView'); } catch (_) { /* silencieux */ }
+  }
+  function pixel(event, params) {
+    if (!pixelReady || !window.fbq) return;
+    try { window.fbq('track', event, params || {}); } catch (_) { /* silencieux */ }
   }
   function track(type, source) {
     if (window.__KARAT_TRACK__) { window.__KARAT_TRACK__(type, source || 'direct'); return; }
@@ -260,6 +294,7 @@
     if (btn) { btn.disabled = false; btn.textContent = 'Confirmer la commande'; }
     if (!r.ok) { if (msg) { msg.textContent = (r.data && (r.data.error || (r.data.errors && Object.values(r.data.errors)[0]))) || 'Commande impossible.'; msg.className = 'sf-msg err'; } return; }
     const d = r.data;
+    pixel('Purchase', { value: d.total, currency: pixCurrency(), num_items: cartCount(), content_type: 'product' });
     cart = []; updateBadges();
     root.querySelector('.sf-drawer-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${sMain(d.total)}<br/><span class="sf-muted">(dont ${sMain(d.shipping)} de livraison)</span></p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
     root.querySelector('[data-close]').addEventListener('click', closeCart);
@@ -274,7 +309,7 @@
     } catch (e) { return { ok: false, data: {} }; }
   }
 
-  function openCart() { const dr = root.querySelector('.sf-drawer'); if (dr) { renderCart(); dr.classList.add('open'); } }
+  function openCart() { const dr = root.querySelector('.sf-drawer'); if (dr) { renderCart(); dr.classList.add('open'); if (cart.length) pixel('InitiateCheckout', { value: cartSubtotal(), currency: pixCurrency(), num_items: cartCount() }); } }
   function closeCart() { const dr = root.querySelector('.sf-drawer'); if (dr) dr.classList.remove('open'); }
 
   function mountChrome() {
@@ -318,7 +353,11 @@
     mountChrome();
     updateBadges();
     document.title = d.shopName + ' — Boutique Karat';
+    initPixel(d.marketing && d.marketing.metaPixelId);
     track('visit', detectSource());
+    // Lien profond depuis le catalogue Meta / une publicité (?produit=ID).
+    const pid = Number(new URLSearchParams(location.search).get('produit'));
+    if (pid && byId[pid]) setTimeout(() => openDetail(pid), 350);
   }
 
   async function load() {

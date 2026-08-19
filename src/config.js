@@ -21,6 +21,10 @@ const config = {
   // Domaine de base des boutiques : <slug>.<baseDomain>. Necessite un DNS
   // wildcard (*.baseDomain) chez l'hebergeur pour que les sous-domaines marchent.
   baseDomain: process.env.BASE_DOMAIN || 'karat.shop',
+  // URL publique absolue de l'application (ex. https://karat.shop). Sert a
+  // construire les liens absolus (flux catalogue Meta, Open Graph). Vide en
+  // dev : on retombe alors sur l'hote de la requete.
+  publicBaseUrl: (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, ''),
 };
 
 // Verifie la configuration ; renvoie la liste des avertissements/erreurs.

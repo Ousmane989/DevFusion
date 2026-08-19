@@ -60,6 +60,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/><path d="M9 21v-6h6v6"/></svg>
             <span>Ma boutique</span>
           </button>
+          <button class="side-link" data-section="marketing">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
+            <span>Marketing</span>
+          </button>
         </nav>
         <div class="side-foot">
           <div class="side-plan"><span class="side-plan-label">Accès</span><span class="side-plan-name gold-text" id="side-plan">Libre</span></div>
@@ -211,6 +215,51 @@
             <div class="panel store-preview-panel">
               <div class="panel-head"><h3>Aperçu</h3></div>
               <div class="store-preview" id="store-preview"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= MARKETING (Facebook / Instagram) ================= -->
+        <section class="dash-section" id="sec-marketing">
+          <div class="dash-title"><div><h1>Marketing</h1><p>Faites la publicité de votre boutique sur Facebook et Instagram, et mesurez vos résultats.</p></div></div>
+          <div class="store-cols">
+            <div class="panel">
+              <div class="panel-head"><h3>Pixel Meta &amp; réseaux</h3></div>
+              <div class="form-msg" id="mkt-msg"></div>
+              <p class="mkt-lead">Le <strong>Pixel Meta</strong> mesure les visites, ajouts au panier et achats de votre boutique pour optimiser vos publicités Facebook et Instagram et recibler les visiteurs.</p>
+              <div class="field"><label for="mkt-pixel">Identifiant du Pixel Meta</label><input id="mkt-pixel" type="text" inputmode="numeric" placeholder="Ex. 1234567890123456" /><div class="hint">Depuis le Gestionnaire d'événements Meta → Sources de données → votre Pixel.</div></div>
+              <div class="pf-grid">
+                <div class="field"><label for="mkt-fb">Page Facebook</label><input id="mkt-fb" type="text" placeholder="facebook.com/ma-boutique" /></div>
+                <div class="field"><label for="mkt-ig">Compte Instagram</label><input id="mkt-ig" type="text" placeholder="@ma_boutique" /></div>
+              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="mkt-save">Enregistrer</button></div>
+
+              <div class="pf-label" style="margin-top:26px">Catalogue produits (Facebook / Instagram Shopping)</div>
+              <p class="mkt-lead">Importez ce flux dans le <strong>Gestionnaire de ventes Meta</strong> pour créer une boutique Instagram/Facebook et des <strong>publicités dynamiques</strong>. Il se met à jour automatiquement avec vos produits.</p>
+              <div class="copy-row"><input id="mkt-catalog" type="text" readonly /><button type="button" class="btn btn-ghost btn-sm" data-copy="#mkt-catalog">Copier</button></div>
+              <div class="hint"><a id="mkt-catalog-link" class="link-gold" target="_blank" rel="noopener">Aperçu du flux CSV →</a></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h3>Générateur de liens de campagne</h3></div>
+              <p class="mkt-lead">Créez un lien traqué pour chaque publicité : les visites et ventes apparaîtront par source dans votre tableau de bord.</p>
+              <div class="field"><label for="utm-platform">Plateforme</label>
+                <select id="utm-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="ads">Autre publicité</option></select>
+              </div>
+              <div class="field"><label for="utm-campaign">Nom de la campagne</label><input id="utm-campaign" type="text" placeholder="Ex. soldes-ramadan" /></div>
+              <div class="pf-label" style="margin-top:6px">Votre lien de campagne</div>
+              <div class="copy-row"><input id="utm-link" type="text" readonly /><button type="button" class="btn btn-ghost btn-sm" data-copy="#utm-link">Copier</button></div>
+              <div class="mkt-share" id="utm-share"></div>
+
+              <div class="mkt-guide">
+                <h4>Comment lancer une campagne</h4>
+                <ol>
+                  <li>Créez un compte <strong>Meta Business Suite</strong> (business.facebook.com) et reliez votre page Facebook + Instagram.</li>
+                  <li>Créez un <strong>Pixel</strong> et collez son identifiant ci-contre.</li>
+                  <li>Importez le <strong>catalogue produits</strong> dans le Gestionnaire de ventes.</li>
+                  <li>Lancez une publicité en utilisant votre <strong>lien de campagne</strong> comme destination.</li>
+                </ol>
+              </div>
             </div>
           </div>
         </section>

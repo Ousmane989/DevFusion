@@ -17,10 +17,23 @@ const storeRoutes = require('./src/routes/store.routes');
 const ordersRoutes = require('./src/routes/orders.routes');
 const publicRoutes = require('./src/routes/public.routes');
 const { hasSmtp } = require('./src/mailer');
+const { renderStorefrontHtml } = require('./src/storefront');
 
 const pkg = require('./package.json');
 const app = express();
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Sert la vitrine avec les balises Open Graph injectees (apercu riche sur
+// les reseaux sociaux). base = URL publique absolue si definie, sinon l'hote.
+function sendStorefront(req, res, slug) {
+  const base = config.publicBaseUrl || (req.protocol + '://' + req.get('host'));
+  try {
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(renderStorefrontHtml(slug, base));
+  } catch (_) {
+    res.sendFile(path.join(PUBLIC_DIR, 'boutique.html'));
+  }
+}
 
 // ------------------------------------------------------------------
 // Reglages de base
@@ -40,7 +53,7 @@ app.use((req, res, next) => {
   if (host.endsWith('.' + base)) {
     const sub = host.slice(0, -(base.length + 1));
     if (sub && sub !== 'www' && req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
-      return res.sendFile(path.join(PUBLIC_DIR, 'boutique.html'));
+      return sendStorefront(req, res, sub);
     }
   }
   next();
@@ -65,7 +78,7 @@ app.get('/api', (_req, res) => {
       products: ['GET /api/products', 'POST /api/products', 'PUT /api/products/:id', 'DELETE /api/products/:id'],
       store: ['GET /api/store', 'PUT /api/store', 'PUT /api/store/shipping'],
       orders: ['GET /api/orders', 'PUT /api/orders/:id/status'],
-      public: ['GET /api/public/store/:slug', 'POST /api/public/store/:slug/order', 'POST /api/public/store/:slug/visit', 'POST /api/public/store/:slug/event'],
+      public: ['GET /api/public/store/:slug', 'GET /api/public/store/:slug/catalog.csv', 'POST /api/public/store/:slug/order', 'POST /api/public/store/:slug/visit', 'POST /api/public/store/:slug/event'],
     },
   });
 });
@@ -98,9 +111,9 @@ app.get('/paiement', (req, res, next) => {
   next();
 });
 
-// Vitrine publique d'une boutique (rendue côté client).
-app.get('/boutique/:slug', (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'boutique.html'));
+// Vitrine publique d'une boutique (Open Graph injecté côté serveur).
+app.get('/boutique/:slug', (req, res) => {
+  sendStorefront(req, res, req.params.slug);
 });
 
 // Fichiers statiques (HTML, CSS, JS, images).
