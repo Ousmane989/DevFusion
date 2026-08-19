@@ -703,6 +703,85 @@ img { max-width: 100%; display: block; }
 .mkt-guide h4 { margin: 0 0 12px; font-size: 0.95rem; color: var(--gold-light); }
 .mkt-guide ol { margin: 0; padding-left: 20px; display: grid; gap: 9px; }
 .mkt-guide li { font-size: 0.86rem; color: var(--text-dim); line-height: 1.5; }
+
+/* ==================================================================
+   Nouvelles sections : Analyses, Paiement, Comptabilité, API, Paramètres
+   ================================================================== */
+/* Déconnexion dans le menu latéral */
+.side-logout { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 11px 14px;
+  border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--text-dim);
+  font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; }
+.side-logout:hover { border-color: #e6675f; color: #f0a29c; }
+.side-logout svg { width: 18px; height: 18px; }
+
+/* Barres horizontales (meilleures ventes, villes) */
+.bar-list { display: grid; gap: 14px; }
+.bar-row .bar-head { display: flex; justify-content: space-between; font-size: 0.86rem; margin-bottom: 6px; }
+.bar-name { color: var(--text); } .bar-val { color: var(--text-mute); white-space: nowrap; }
+.bar-track { height: 8px; border-radius: 50px; background: rgba(255,255,255,.05); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 50px; transition: width .7s var(--ease); }
+
+/* Barres de statut */
+.status-bars { display: grid; gap: 12px; }
+.sbar-top { display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 5px; color: var(--text-dim); }
+.sbar-track { height: 7px; border-radius: 50px; background: rgba(255,255,255,.05); overflow: hidden; }
+.sbar-fill { height: 100%; border-radius: 50px; background: var(--gold); }
+.sbar.tone-good .sbar-fill { background: #6fbf8b; } .sbar.tone-warning .sbar-fill { background: #e6b25d; }
+.sbar.tone-info .sbar-fill { background: #3b9edb; } .sbar.tone-critical .sbar-fill { background: #e6675f; }
+
+/* Paiement */
+.pay-method { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--line); background: rgba(255,255,255,.02); }
+.pay-method .pay-ic { font-size: 22px; }
+.pay-method strong { display: block; font-size: 0.92rem; } .pay-method span { font-size: 0.8rem; color: var(--text-mute); }
+.pay-method .pill { margin-left: auto; }
+.pay-recent { display: grid; gap: 10px; }
+.pay-line { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.pay-line:last-child { border-bottom: none; } .pay-line strong { display: block; font-size: 0.86rem; }
+
+/* Comptabilité — graphe CA vs dépenses */
+.dual-chart { padding-top: 8px; }
+.dc-cols { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding: 0 4px; }
+.dc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; }
+.dc-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; width: 100%; justify-content: center; }
+.dc-bar { width: 42%; max-width: 18px; border-radius: 4px 4px 0 0; min-height: 2px; position: relative; transition: height .6s var(--ease); }
+.dc-bar.rev { background: linear-gradient(180deg, #F5D77E, #D4AF37); }
+.dc-bar.exp { background: rgba(255,255,255,.18); }
+.dc-tip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font-size: 0.7rem; background: #000; color: #fff; padding: 3px 7px; border-radius: 5px; margin-bottom: 4px; }
+.dc-bar:hover .dc-tip { display: block; }
+.dc-label { font-size: 0.72rem; color: var(--text-mute); }
+.dc-legend { display: flex; gap: 20px; justify-content: center; margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); }
+.dc-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.dc-dot.rev { background: #D4AF37; } .dc-dot.exp { background: rgba(255,255,255,.3); }
+
+.exp-list { display: grid; gap: 10px; max-height: 340px; overflow-y: auto; }
+.exp-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.exp-row:last-child { border-bottom: none; } .exp-row strong { display: block; font-size: 0.86rem; }
+.exp-amt { display: flex; align-items: center; gap: 10px; }
+
+/* API & Webhooks */
+.dev-list { display: grid; gap: 10px; margin-top: 14px; }
+.dev-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.02); }
+.dev-item-b { min-width: 0; } .dev-item-b strong { display: block; overflow: hidden; text-overflow: ellipsis; }
+.dev-item-a { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.dev-reveal { margin: 14px 0; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--gold);
+  background: rgba(212,175,55,.08); }
+.dev-reveal p { font-size: 0.84rem; margin: 0 0 10px; color: var(--gold-light); }
+.endpoint-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.endpoint-list code { font-size: 0.8rem; color: var(--text-dim); background: rgba(255,255,255,.04);
+  padding: 6px 10px; border-radius: 7px; display: block; }
+code { font-family: ui-monospace, monospace; }
+
+/* Zone de danger + boutons */
+.danger-zone { margin-top: 28px; padding: 18px 20px; border: 1px solid rgba(230,103,95,.35); border-radius: 14px;
+  background: rgba(230,103,95,.05); }
+.danger-zone h4 { margin: 0 0 8px; color: #f0a29c; font-size: 0.95rem; }
+.danger-zone p { font-size: 0.83rem; color: var(--text-mute); margin: 0 0 14px; line-height: 1.5; }
+.danger-zone .btn { margin-right: 10px; margin-top: 4px; }
+.btn-danger { background: #e6675f; color: #fff; border: 1px solid #e6675f; }
+.btn-danger:hover { background: #d4544c; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; padding: 4px 10px; border-radius: 50px; white-space: nowrap; }
 .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill.good { color: #8fe0ad; background: rgba(111,191,139,.12); }

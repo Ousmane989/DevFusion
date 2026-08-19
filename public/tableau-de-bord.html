@@ -60,13 +60,37 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/><path d="M9 21v-6h6v6"/></svg>
             <span>Ma boutique</span>
           </button>
+          <button class="side-link" data-section="analytics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 4-6"/></svg>
+            <span>Analyses</span>
+          </button>
           <button class="side-link" data-section="marketing">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
             <span>Marketing</span>
           </button>
+          <button class="side-link" data-section="payment">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <span>Paiement</span>
+          </button>
+          <button class="side-link" data-section="finance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Comptabilité</span>
+          </button>
+          <button class="side-link" data-section="developer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/></svg>
+            <span>API &amp; Webhooks</span>
+          </button>
+          <button class="side-link" data-section="settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+            <span>Paramètres</span>
+          </button>
         </nav>
         <div class="side-foot">
           <div class="side-plan"><span class="side-plan-label">Accès</span><span class="side-plan-name gold-text" id="side-plan">Libre</span></div>
+          <button class="side-logout" id="logout-side">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Se déconnecter</span>
+          </button>
         </div>
       </aside>
 
@@ -187,7 +211,13 @@
 
         <!-- ================= MA BOUTIQUE ================= -->
         <section class="dash-section" id="sec-store">
-          <div class="dash-title"><div><h1>Ma boutique</h1><p>Personnalisez l'apparence et l'identité de votre boutique.</p></div></div>
+          <div class="dash-title">
+            <div><h1>Ma boutique</h1><p>Personnalisez l'apparence et l'identité de votre boutique.</p></div>
+            <a class="btn btn-ghost" id="store-visit-btn" target="_blank" rel="noopener">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>
+              Voir ma boutique
+            </a>
+          </div>
           <div class="store-cols">
             <div class="panel">
               <div class="panel-head"><h3>Choisir un thème</h3></div>
@@ -259,6 +289,136 @@
                   <li>Importez le <strong>catalogue produits</strong> dans le Gestionnaire de ventes.</li>
                   <li>Lancez une publicité en utilisant votre <strong>lien de campagne</strong> comme destination.</li>
                 </ol>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ANALYSES ================= -->
+        <section class="dash-section" id="sec-analytics">
+          <div class="dash-title"><div><h1>Analyses</h1><p>Comprenez vos ventes en profondeur — produits, villes et statuts.</p></div></div>
+          <div class="kpi-grid">
+            <div class="kpi"><span class="k-label">Taux de livraison</span><div class="k-val gold-text"><span id="an-delivrate">0</span><span class="k-unit">%</span></div><div class="k-sub" id="an-delivered">0 livrées</div></div>
+            <div class="kpi"><span class="k-label">Taux d'annulation</span><div class="k-val"><span id="an-cancelrate">0</span><span class="k-unit">%</span></div><div class="k-sub" id="an-cancelled">0 annulées</div></div>
+            <div class="kpi"><span class="k-label">Articles vendus</span><div class="k-val" id="an-units">0</div><div class="k-sub">Toutes commandes</div></div>
+            <div class="kpi"><span class="k-label">Panier moyen (livré)</span><div class="k-val"><span id="an-basket">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="an-basket-alt">≈ 0 FCFA</div></div>
+          </div>
+          <div class="dash-cols">
+            <div class="panel"><div class="panel-head"><h3>Meilleures ventes</h3></div><div id="an-products" class="bar-list"></div></div>
+            <div class="panel"><div class="panel-head"><h3>Ventes par ville</h3></div><div id="an-cities" class="bar-list"></div></div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>Répartition des commandes par statut</h3></div><div id="an-status" class="status-bars"></div></div>
+        </section>
+
+        <!-- ================= PAIEMENT ================= -->
+        <section class="dash-section" id="sec-payment">
+          <div class="dash-title"><div><h1>Paiement</h1><p>Paiement à la livraison par défaut. Ajoutez le paiement mobile en option.</p></div></div>
+          <div class="store-cols">
+            <div class="panel">
+              <div class="panel-head"><h3>Moyens de paiement</h3></div>
+              <div class="form-msg" id="pay-msg"></div>
+              <div class="pay-method on"><div class="pay-ic">💵</div><div><strong>Paiement à la livraison</strong><span>Activé — le client règle en espèces à la réception.</span></div><span class="pill good">Actif</span></div>
+              <p class="mkt-lead" style="margin-top:18px">Ajoutez vos numéros de paiement mobile : ils s'afficheront sur la boutique pour les clients qui souhaitent régler à l'avance.</p>
+              <div class="pf-grid">
+                <div class="field"><label for="pay-wave">Numéro Wave</label><input id="pay-wave" type="tel" placeholder="+221 …" /></div>
+                <div class="field"><label for="pay-om">Numéro Orange Money</label><input id="pay-om" type="tel" placeholder="+221 …" /></div>
+              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="pay-save">Enregistrer</button></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Encaissements</h3></div>
+              <p class="mkt-lead">Montants encaissés sur les commandes marquées « Livrée ».</p>
+              <div class="kpi" style="margin-bottom:14px"><span class="k-label">Total encaissé</span><div class="k-val gold-text"><span id="pay-collected">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="pay-collected-count">0 commandes livrées</div></div>
+              <div id="pay-recent" class="pay-recent"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= COMPTABILITÉ ================= -->
+        <section class="dash-section" id="sec-finance">
+          <div class="dash-title">
+            <div><h1>Comptabilité</h1><p>Suivez votre chiffre d'affaires, vos dépenses et votre bénéfice.</p></div>
+            <a class="btn btn-ghost" id="fin-export" download><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Exporter (CSV)</a>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi"><span class="k-label">Chiffre d'affaires</span><div class="k-val gold-text"><span id="fin-rev">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="fin-rev-count">0 commandes livrées</div></div>
+            <div class="kpi"><span class="k-label">Dépenses</span><div class="k-val"><span id="fin-exp">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub">Total saisi</div></div>
+            <div class="kpi"><span class="k-label">Bénéfice</span><div class="k-val"><span id="fin-profit">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="fin-margin">Marge 0 %</div></div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>CA vs Dépenses — 12 mois</h3></div><div id="fin-chart" class="dual-chart"></div></div>
+          <div class="store-cols">
+            <div class="panel">
+              <div class="panel-head"><h3>Ajouter une dépense</h3></div>
+              <div class="form-msg" id="exp-msg"></div>
+              <div class="pf-grid">
+                <div class="field" data-field="label"><label for="exp-label">Libellé</label><input id="exp-label" type="text" placeholder="Ex. Achat de tissu" /></div>
+                <div class="field"><label for="exp-cat">Catégorie</label><select id="exp-cat"></select></div>
+                <div class="field" data-field="amount"><label for="exp-amount" id="exp-amount-label">Montant (MRU)</label><input id="exp-amount" type="number" min="0" placeholder="0" /></div>
+                <div class="field"><label for="exp-date">Date</label><input id="exp-date" type="date" /></div>
+              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="exp-add">Ajouter la dépense</button></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Dépenses récentes</h3></div>
+              <div id="exp-list" class="exp-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= API & WEBHOOKS ================= -->
+        <section class="dash-section" id="sec-developer">
+          <div class="dash-title"><div><h1>API &amp; Webhooks</h1><p>Connectez Karat à vos outils : clés d'accès et notifications d'événements.</p></div></div>
+          <div class="store-cols">
+            <div class="panel">
+              <div class="panel-head"><h3>Clés API</h3><button class="btn btn-ghost btn-sm" id="key-new">+ Nouvelle clé</button></div>
+              <p class="mkt-lead">Utilisez une clé pour lire vos produits et commandes : <code>Authorization: Bearer &lt;clé&gt;</code></p>
+              <div class="dev-reveal" id="key-reveal" style="display:none">
+                <p>Copiez cette clé maintenant — elle ne sera plus affichée :</p>
+                <div class="copy-row"><input id="key-value" type="text" readonly /><button type="button" class="btn btn-ghost btn-sm" data-copy="#key-value">Copier</button></div>
+              </div>
+              <div id="keys-list" class="dev-list"></div>
+              <div class="pf-label" style="margin-top:18px">Points d'accès disponibles</div>
+              <ul class="endpoint-list" id="endpoint-list"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Webhooks</h3></div>
+              <p class="mkt-lead">Recevez une notification HTTP à chaque nouvelle commande ou changement de statut.</p>
+              <div class="form-msg" id="wh-msg"></div>
+              <div class="field" data-field="url"><label for="wh-url">URL de destination</label><input id="wh-url" type="url" placeholder="https://exemple.com/webhook" /></div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="wh-add">Ajouter le webhook</button></div>
+              <div id="wh-list" class="dev-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PARAMÈTRES ================= -->
+        <section class="dash-section" id="sec-settings">
+          <div class="dash-title"><div><h1>Paramètres</h1><p>Gérez votre compte et vos informations personnelles.</p></div></div>
+          <div class="store-cols">
+            <div class="panel">
+              <div class="panel-head"><h3>Profil</h3></div>
+              <div class="form-msg" id="set-msg"></div>
+              <div class="pf-grid">
+                <div class="field" data-field="name"><label for="set-name">Votre nom</label><input id="set-name" type="text" /></div>
+                <div class="field"><label for="set-email">E-mail</label><input id="set-email" type="email" disabled /></div>
+                <div class="field" data-field="phone"><label for="set-phone">Téléphone</label><input id="set-phone" type="tel" /></div>
+                <div class="field" data-field="shopName"><label for="set-shop">Nom de la boutique</label><input id="set-shop" type="text" /></div>
+              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="set-save">Enregistrer</button></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Mot de passe</h3></div>
+              <div class="form-msg" id="pw-msg"></div>
+              <div class="field" data-field="current"><label for="pw-current">Mot de passe actuel</label><input id="pw-current" type="password" /></div>
+              <div class="field" data-field="next"><label for="pw-next">Nouveau mot de passe</label><input id="pw-next" type="password" placeholder="8 caractères minimum" /></div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="pw-save">Changer le mot de passe</button></div>
+
+              <div class="danger-zone">
+                <h4>Zone de danger</h4>
+                <p>La suppression du compte efface définitivement votre boutique, vos produits et vos commandes.</p>
+                <div class="field"><label for="del-pw">Confirmez avec votre mot de passe</label><input id="del-pw" type="password" /></div>
+                <button type="button" class="btn btn-danger" id="account-delete">Supprimer mon compte</button>
+                <button type="button" class="btn btn-ghost" id="logout-settings">Se déconnecter</button>
               </div>
             </div>
           </div>

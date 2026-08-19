@@ -127,5 +127,52 @@ try { db.exec("ALTER TABLE products ADD COLUMN image TEXT NOT NULL DEFAULT ''");
 for (const col of ['meta_pixel_id', 'fb_page', 'instagram']) {
   try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
 }
+// Paiement mobile (Wave / Orange Money) affiche sur la boutique.
+for (const col of ['wave_number', 'om_number']) {
+  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+}
+
+// ------------------------------------------------------------------
+// Comptabilite : depenses saisies par le commercant.
+// ------------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS expenses (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    label      TEXT    NOT NULL DEFAULT '',
+    category   TEXT    NOT NULL DEFAULT 'Autre',
+    amount_mru INTEGER NOT NULL DEFAULT 0,
+    spent_on   TEXT    NOT NULL DEFAULT (date('now')),
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);
+
+  -- Cles API (acces programmatique) : on ne stocke que le hash.
+  CREATE TABLE IF NOT EXISTS api_keys (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    label        TEXT    NOT NULL DEFAULT '',
+    prefix       TEXT    NOT NULL,
+    key_hash     TEXT    NOT NULL,
+    last_used_at TEXT,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_apikeys_user ON api_keys(user_id);
+
+  -- Webhooks : URL notifiees lors des evenements de commande.
+  CREATE TABLE IF NOT EXISTS webhooks (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    url        TEXT    NOT NULL,
+    events     TEXT    NOT NULL DEFAULT 'order.created,order.updated',
+    secret     TEXT    NOT NULL DEFAULT '',
+    active     INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id);
+`);
 
 module.exports = db;
