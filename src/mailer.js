@@ -70,20 +70,30 @@ async function sendCode({ to, name, code, purpose }) {
       : 'Bienvenue sur Karat ! Voici le code pour verifier votre adresse e-mail et activer votre compte.';
 
   if (!transporter) {
-    // Mode developpement : pas de serveur SMTP configure.
+    // Aucun serveur SMTP configure : le code est journalise cote serveur
+    // (utile en developpement). En production, configurez SMTP_* pour un
+    // veritable envoi par e-mail.
     console.log('\n──────────────────────────────────────────────');
     console.log(`  [KARAT] Code ${purpose} pour ${to} : ${code}`);
+    console.log('  (SMTP non configure — definissez SMTP_HOST/SMTP_USER/SMTP_PASS)');
     console.log('──────────────────────────────────────────────\n');
     return { delivered: false, devCode: code };
   }
 
-  await transporter.sendMail({
-    from: MAIL_FROM,
-    to,
-    subject,
-    html: codeEmailHtml(name, code, intro),
-  });
-  return { delivered: true };
+  try {
+    await transporter.sendMail({
+      from: MAIL_FROM,
+      to,
+      subject,
+      html: codeEmailHtml(name, code, intro),
+    });
+    return { delivered: true };
+  } catch (err) {
+    // Un echec d'envoi ne doit pas casser l'inscription : on journalise et on
+    // signale l'echec. L'utilisateur pourra redemander un code.
+    console.error(`  ✖ Echec d'envoi de l'e-mail (${purpose}) a ${to} :`, err && err.message ? err.message : err);
+    return { delivered: false, error: true };
+  }
 }
 
 module.exports = { sendCode, hasSmtp };
