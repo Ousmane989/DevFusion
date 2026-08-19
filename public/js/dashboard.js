@@ -104,6 +104,11 @@
     if (name === 'shipping' && !loaded.store2) loadShipping();
     if (name === 'store' && !loaded.store) loadStore();
     if (name === 'marketing' && !loaded.marketing) loadMarketing();
+    if (name === 'analytics') loadAnalytics();       // toujours rafraichir
+    if (name === 'payment') loadPayment();            // encaissements a jour
+    if (name === 'finance' && !loaded.finance) loadFinance();
+    if (name === 'developer' && !loaded.developer) loadDeveloper();
+    if (name === 'settings' && !loaded.settings) loadSettings();
   }
 
   // ================================================================
@@ -119,11 +124,10 @@
     CUR = user.currency || 'MRU';
     qa('.k-cur').forEach((e) => (e.textContent = CUR));
 
-    const vs = q('#visit-shop');
-    if (vs) {
+    qa('#visit-shop, #store-visit-btn').forEach((vs) => {
       if (window.__KARAT_SPA__) { vs.href = '#/boutique'; vs.removeAttribute('target'); }
       else vs.href = '/boutique/' + slugify(user.shopName);
-    }
+    });
 
     // Tarifs desactives (usage libre) : pas de bandeau d'essai/abonnement.
     const bar = q('#trial-bar'); if (bar) bar.style.display = 'none';
@@ -389,7 +393,7 @@
       msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
     }
   }
-  function updateVisitLink(slug) { if (window.__KARAT_SPA__) return; const a = q('#visit-shop'); if (a && slug) a.href = '/boutique/' + slug; }
+  function updateVisitLink(slug) { if (window.__KARAT_SPA__ || !slug) return; qa('#visit-shop, #store-visit-btn').forEach((a) => { a.href = '/boutique/' + slug; }); }
   function updateStoreLink(st) {
     const a = q('#store-link'); if (!a || !st) return;
     a.textContent = st.domain || ((st.slug || '') + '.' + (st.baseDomain || 'karat.shop'));
@@ -461,6 +465,184 @@
   }
 
   // ================================================================
+  // Utilitaires communs aux nouvelles sections
+  // ================================================================
+  function fval(sel) { const el = q(sel); return el ? el.value.trim() : ''; }
+  function barList(el, items, fmt) {
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<p class="dash-empty">Aucune donnée pour l\'instant.</p>'; return; }
+    const max = Math.max.apply(null, items.map((i) => i.value)) || 1;
+    el.innerHTML = items.map((i, k) => `<div class="bar-row"><div class="bar-head"><span class="bar-name">${esc(i.name)}</span><span class="bar-val">${fmt ? fmt(i) : i.value}</span></div><div class="bar-track"><div class="bar-fill" data-w="${(i.value / max * 100).toFixed(1)}" style="width:0;background:${gold(1 - k / Math.max(1, items.length - 1))}"></div></div></div>`).join('');
+    requestAnimationFrame(() => el.querySelectorAll('.bar-fill').forEach((b, i) => setTimeout(() => { b.style.width = b.dataset.w + '%'; }, reduce ? 0 : 60 * i)));
+  }
+
+  // ================================================================
+  // Analyses
+  // ================================================================
+  async function loadAnalytics() {
+    const r = await api('/api/analytics', 'GET'); if (!r.ok) return;
+    const d = r.data, s = d.summary;
+    q('#an-delivrate').textContent = s.deliveryRate; q('#an-delivered').textContent = s.delivered + ' livrées';
+    q('#an-cancelrate').textContent = s.cancelRate; q('#an-cancelled').textContent = s.cancelled + ' annulées';
+    q('#an-units').textContent = s.unitsTotal;
+    q('#an-basket').textContent = money(s.avgBasket); q('#an-basket-alt').textContent = mAlt(s.avgBasket);
+    barList(q('#an-products'), d.topProducts.map((p) => ({ name: p.name, value: p.qty })), (i) => i.value + ' vendu' + (i.value > 1 ? 's' : ''));
+    barList(q('#an-cities'), d.byCity.map((c) => ({ name: c.city, value: c.orders })), (i) => i.value + ' cmd');
+    const st = d.byStatus, tot = st.reduce((a, b) => a + b.value, 0) || 1;
+    q('#an-status').innerHTML = st.map((x) => `<div class="sbar tone-${x.tone}"><div class="sbar-top"><span>${esc(x.label)}</span><span>${x.value}</span></div><div class="sbar-track"><div class="sbar-fill" style="width:${(x.value / tot * 100).toFixed(1)}%"></div></div></div>`).join('');
+    loaded.analytics = true;
+  }
+
+  // ================================================================
+  // Paiement
+  // ================================================================
+  async function loadPayment() {
+    const r = await api('/api/store', 'GET'); if (!r.ok) return;
+    const pay = r.data.store.payment || {};
+    if (q('#pay-wave')) q('#pay-wave').value = pay.wave || '';
+    if (q('#pay-om')) q('#pay-om').value = pay.om || '';
+    const ro = await api('/api/orders', 'GET');
+    if (ro.ok) {
+      const delivered = (ro.data.orders || []).filter((o) => o.status === 'livree');
+      const total = delivered.reduce((s, o) => s + o.amount, 0);
+      q('#pay-collected').textContent = money(total);
+      q('#pay-collected-count').textContent = delivered.length + ' commande' + (delivered.length > 1 ? 's' : '') + ' livrée' + (delivered.length > 1 ? 's' : '');
+      q('#pay-recent').innerHTML = delivered.length
+        ? delivered.slice(0, 8).map((o) => `<div class="pay-line"><div><strong>${esc(o.ref)}</strong><span class="muted small">${esc(o.customer)} · ${esc(o.city)}</span></div><span class="mono">${mMain(o.amount)}</span></div>`).join('')
+        : '<p class="dash-empty">Aucun encaissement pour l\'instant.</p>';
+    }
+    loaded.payment = true;
+  }
+  async function savePayment() {
+    const r = await api('/api/store', 'PUT', { wave: fval('#pay-wave'), om: fval('#pay-om') });
+    msg(q('#pay-msg'), r.ok ? 'success' : 'error', r.ok ? 'Moyens de paiement enregistrés.' : 'Erreur lors de l\'enregistrement.');
+  }
+
+  // ================================================================
+  // Comptabilité
+  // ================================================================
+  function renderDualChart(el, months) {
+    if (!el) return;
+    const max = Math.max(1, Math.max.apply(null, months.map((m) => Math.max(m.revenue, m.expense))));
+    const cols = months.map((m) => `<div class="dc-col"><div class="dc-bars"><div class="dc-bar rev" style="height:${(m.revenue / max * 100).toFixed(1)}%"><span class="dc-tip">CA ${money(m.revenue)}</span></div><div class="dc-bar exp" style="height:${(m.expense / max * 100).toFixed(1)}%"><span class="dc-tip">Dép. ${money(m.expense)}</span></div></div><span class="dc-label">${esc(m.label)}</span></div>`).join('');
+    el.innerHTML = `<div class="dc-cols">${cols}</div><div class="dc-legend"><span><i class="dc-dot rev"></i>Chiffre d'affaires</span><span><i class="dc-dot exp"></i>Dépenses</span></div>`;
+  }
+  function renderFinance(d) {
+    const s = d.summary;
+    q('#fin-rev').textContent = money(s.revenue); q('#fin-rev-count').textContent = s.ordersCount + ' commande' + (s.ordersCount > 1 ? 's' : '') + ' livrée' + (s.ordersCount > 1 ? 's' : '');
+    q('#fin-exp').textContent = money(s.expenses);
+    q('#fin-profit').textContent = money(s.profit); q('#fin-margin').textContent = 'Marge ' + s.margin + ' %';
+    renderDualChart(q('#fin-chart'), d.monthly);
+    const list = q('#exp-list');
+    list.innerHTML = d.expenses.length
+      ? d.expenses.map((e) => `<div class="exp-row"><div><strong>${esc(e.label)}</strong><span class="muted small">${esc(e.category)} · ${esc(e.spent_on)}</span></div><div class="exp-amt"><span class="mono">${mMain(e.amount_mru)}</span><button class="icon-btn danger" data-exp="${e.id}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>`).join('')
+      : '<p class="dash-empty">Aucune dépense enregistrée.</p>';
+    list.querySelectorAll('[data-exp]').forEach((b) => b.addEventListener('click', () => deleteExpense(b.dataset.exp)));
+  }
+  async function loadFinance() {
+    const r = await api('/api/finance', 'GET'); if (!r.ok) return;
+    renderFinance(r.data);
+    const sel = q('#exp-cat'); if (sel && !sel.children.length) sel.innerHTML = (r.data.categories || []).map((c) => `<option>${esc(c)}</option>`).join('');
+    if (q('#exp-date') && !q('#exp-date').value) q('#exp-date').value = new Date().toISOString().slice(0, 10);
+    if (q('#exp-amount-label')) q('#exp-amount-label').textContent = 'Montant (' + CUR + ')';
+    const ex = q('#fin-export');
+    if (ex) { if (window.__KARAT_SPA__) ex.style.display = 'none'; else ex.href = '/api/finance/export.csv'; }
+    loaded.finance = true;
+  }
+  async function addExpense() {
+    const m = q('#exp-msg'); clearMsg(m);
+    const payload = { label: fval('#exp-label'), category: q('#exp-cat').value, amount: Number(q('#exp-amount').value), date: q('#exp-date').value };
+    const r = await api('/api/finance/expense', 'POST', payload);
+    if (!r.ok) { msg(m, 'error', 'Vérifiez le libellé et le montant.'); return; }
+    q('#exp-label').value = ''; q('#exp-amount').value = '';
+    renderFinance(r.data);
+  }
+  async function deleteExpense(id) { const r = await api('/api/finance/expense/' + id, 'DELETE'); if (r.ok) renderFinance(r.data); }
+
+  // ================================================================
+  // API & Webhooks
+  // ================================================================
+  function renderDeveloper(d) {
+    q('#keys-list').innerHTML = d.keys.length
+      ? d.keys.map((k) => `<div class="dev-item"><div><strong>${esc(k.label)}</strong><div class="muted small mono">${esc(k.prefix)}…${k.lastUsedAt ? ' · utilisée' : ''}</div></div><button class="icon-btn danger" data-key="${k.id}" title="Révoquer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`).join('')
+      : '<p class="dash-empty">Aucune clé pour l\'instant.</p>';
+    q('#keys-list').querySelectorAll('[data-key]').forEach((b) => b.addEventListener('click', () => deleteKey(b.dataset.key)));
+    q('#wh-list').innerHTML = d.webhooks.length
+      ? d.webhooks.map((w) => `<div class="dev-item"><div class="dev-item-b"><strong class="mono small">${esc(w.url)}</strong><span class="muted small">${esc(w.events.join(', '))}</span></div><div class="dev-item-a"><button class="btn btn-ghost btn-sm" data-whtest="${w.id}">Tester</button><button class="icon-btn danger" data-wh="${w.id}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>`).join('')
+      : '<p class="dash-empty">Aucun webhook.</p>';
+    q('#wh-list').querySelectorAll('[data-wh]').forEach((b) => b.addEventListener('click', () => deleteWebhook(b.dataset.wh)));
+    q('#wh-list').querySelectorAll('[data-whtest]').forEach((b) => b.addEventListener('click', () => testWebhook(b.dataset.whtest, b)));
+  }
+  async function loadDeveloper() {
+    const r = await api('/api/dev', 'GET'); if (!r.ok) return;
+    renderDeveloper(r.data);
+    if (q('#endpoint-list')) q('#endpoint-list').innerHTML = (r.data.endpoints || []).map((e) => `<li><code>${esc(e)}</code></li>`).join('');
+    loaded.developer = true;
+  }
+  async function newKey() {
+    const r = await api('/api/dev/key', 'POST', { label: 'Clé du ' + new Date().toLocaleDateString('fr-FR') });
+    if (!r.ok) return;
+    q('#key-value').value = r.data.key; q('#key-reveal').style.display = 'block';
+    await loadDeveloper();
+  }
+  async function deleteKey(id) { if (!window.confirm('Révoquer cette clé ? Les intégrations qui l\'utilisent cesseront de fonctionner.')) return; const r = await api('/api/dev/key/' + id, 'DELETE'); if (r.ok) loadDeveloper(); }
+  async function addWebhook() {
+    const m = q('#wh-msg'); clearMsg(m);
+    const r = await api('/api/dev/webhook', 'POST', { url: fval('#wh-url') });
+    if (!r.ok) { msg(m, 'error', 'URL invalide (elle doit commencer par http/https).'); return; }
+    q('#wh-url').value = ''; loadDeveloper();
+  }
+  async function deleteWebhook(id) { const r = await api('/api/dev/webhook/' + id, 'DELETE'); if (r.ok) loadDeveloper(); }
+  async function testWebhook(id, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    const r = await api('/api/dev/webhook/' + id + '/test', 'POST', {});
+    if (btn) { btn.disabled = false; btn.textContent = 'Tester'; }
+    dashToast(r.ok && r.data && r.data.ok ? '✓ Webhook joignable' : '✖ Webhook injoignable (vérifiez l\'URL)');
+  }
+
+  // ================================================================
+  // Paramètres
+  // ================================================================
+  async function loadSettings() {
+    const r = await api('/api/account', 'GET'); if (!r.ok) return;
+    const u = r.data.user;
+    q('#set-name').value = u.name || ''; q('#set-email').value = u.email || '';
+    q('#set-phone').value = u.phone || ''; q('#set-shop').value = u.shopName || '';
+    loaded.settings = true;
+  }
+  async function saveSettings() {
+    const m = q('#set-msg'); clearMsg(m);
+    const r = await api('/api/account', 'PUT', { name: fval('#set-name'), phone: fval('#set-phone'), shopName: fval('#set-shop') });
+    if (!r.ok) { msg(m, 'error', 'Veuillez corriger les champs.'); return; }
+    currentUser = r.data.user;
+    if (q('#user-name')) q('#user-name').textContent = currentUser.name;
+    if (q('#shop-name')) q('#shop-name').textContent = currentUser.shopName;
+    msg(m, 'success', 'Profil mis à jour.');
+  }
+  async function changePassword() {
+    const m = q('#pw-msg'); clearMsg(m);
+    const r = await api('/api/account/password', 'POST', { current: q('#pw-current').value, next: q('#pw-next').value });
+    if (!r.ok) {
+      const e = (r.data && r.data.errors) || {};
+      msg(m, 'error', e.current ? 'Mot de passe actuel incorrect.' : (e.next ? 'Nouveau mot de passe : 8 caractères minimum.' : 'Erreur.'));
+      return;
+    }
+    q('#pw-current').value = ''; q('#pw-next').value = '';
+    msg(m, 'success', 'Mot de passe modifié.');
+  }
+  async function deleteAccount() {
+    if (!window.confirm('Supprimer définitivement votre compte, votre boutique et toutes vos commandes ? Cette action est irréversible.')) return;
+    const r = await api('/api/account', 'DELETE', { password: q('#del-pw').value });
+    if (!r.ok) { msg(q('#pw-msg'), 'error', 'Mot de passe incorrect.'); return; }
+    window.location.href = window.__KARAT_SPA__ ? '#/' : '/';
+  }
+
+  async function doLogout() {
+    await api('/api/auth/logout', 'POST', {});
+    window.location.href = window.__KARAT_SPA__ ? '#/' : '/';
+  }
+
+  // ================================================================
   // Init
   // ================================================================
   function wireChrome() {
@@ -483,7 +665,16 @@
     q('#utm-campaign') && q('#utm-campaign').addEventListener('input', updateUtm);
     qa('[data-copy]').forEach((b) => b.addEventListener('click', () => copyFrom(b.dataset.copy)));
 
-    const lo = q('#logout'); if (lo) lo.addEventListener('click', async () => { await api('/api/auth/logout', 'POST', {}); window.location.href = window.__KARAT_SPA__ ? '#/' : '/'; });
+    // Paiement / Comptabilité / API / Paramètres
+    q('#pay-save') && q('#pay-save').addEventListener('click', savePayment);
+    q('#exp-add') && q('#exp-add').addEventListener('click', addExpense);
+    q('#key-new') && q('#key-new').addEventListener('click', newKey);
+    q('#wh-add') && q('#wh-add').addEventListener('click', addWebhook);
+    q('#set-save') && q('#set-save').addEventListener('click', saveSettings);
+    q('#pw-save') && q('#pw-save').addEventListener('click', changePassword);
+    q('#account-delete') && q('#account-delete').addEventListener('click', deleteAccount);
+
+    qa('#logout, #logout-side, #logout-settings').forEach((b) => b.addEventListener('click', doLogout));
   }
 
   async function init() {

@@ -68,6 +68,10 @@ function publicStore(user, row) {
       instagram: row.instagram || '',
       catalogUrl: `${config.publicBaseUrl || ''}/api/public/store/${slug}/catalog.csv`,
     },
+    payment: {
+      wave: row.wave_number || '',
+      om: row.om_number || '',
+    },
     shopName: user.shop_name,
     theme: t.id,
     themeData: t,
@@ -115,9 +119,11 @@ router.put('/', requireAuth, (req, res) => {
   const metaPixelId = b.metaPixelId !== undefined ? cleanPixelId(b.metaPixelId) : row.meta_pixel_id;
   const fbPage = b.fbPage !== undefined ? cleanUrl(b.fbPage) : row.fb_page;
   const instagram = b.instagram !== undefined ? cleanHandle(b.instagram) : row.instagram;
+  const waveNumber = b.wave !== undefined ? String(b.wave).trim().slice(0, 40) : row.wave_number;
+  const omNumber = b.om !== undefined ? String(b.om).trim().slice(0, 40) : row.om_number;
 
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -129,7 +135,7 @@ router.put('/', requireAuth, (req, res) => {
     keep(b.whatsapp, row.whatsapp, 40),
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
-    metaPixelId, fbPage, instagram,
+    metaPixelId, fbPage, instagram, waveNumber, omNumber,
     req.user.id
   );
   res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });
