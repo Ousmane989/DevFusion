@@ -144,8 +144,6 @@
 
         // On stocke l'e-mail pour l'étape de vérification.
         sessionStorage.setItem('karat_email', payload.email);
-        // En mode dev sans SMTP, le code est renvoyé pour faciliter le test.
-        if (data.devCode) sessionStorage.setItem('karat_devcode', data.devCode);
         window.location.href = '/verification';
       });
     })();
