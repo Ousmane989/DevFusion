@@ -39,9 +39,11 @@ function renderStorefrontHtml(slug, base) {
   const title = (settings && settings.hero_title) || name;
   const desc = (settings && (settings.description || settings.tagline)) || 'Boutique en ligne — paiement à la livraison.';
   const url = base + '/boutique/' + (settings && settings.slug ? settings.slug : slugify(name));
-  // og:image : premiere photo produit en URL http(s) (Meta refuse les data URL).
+  // og:image : banniere/logo si URL http(s), sinon premiere photo produit
+  // (Meta refuse les data URL, on ne garde donc que les URL http).
+  const httpOnly = (v) => (/^https?:\/\//i.test(v || '') ? v : '');
   const prod = db.prepare("SELECT image FROM products WHERE user_id = ? AND active = 1 AND image LIKE 'http%' ORDER BY id DESC LIMIT 1").get(user.id);
-  const image = prod ? prod.image : '';
+  const image = httpOnly(settings && settings.banner) || httpOnly(settings && settings.logo) || (prod ? prod.image : '');
 
   const tags = [
     '<meta property="og:type" content="website" />',

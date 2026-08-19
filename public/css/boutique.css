@@ -291,3 +291,72 @@ img { max-width: 100%; display: block; }
   .sf-nav { display: none; }
   .sf-hero { padding: 14vw 6vw; }
 }
+
+/* ==================================================================
+   VITRINE PROFESSIONNELLE UNIFIÉE (.storefront.pro)
+   Une seule mise en page soignée, adaptée aux couleurs du thème,
+   avec logo, bannière et filtres par catégorie.
+   ================================================================== */
+.storefront.pro { font-weight: 400; }
+
+/* En-tête collant */
+.pro .sf-header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.pro .sf-header-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 13px 5vw; }
+.pro .sf-brand-row { display: flex; align-items: center; gap: 12px; }
+.pro .sf-logo-img { width: 42px; height: 42px; border-radius: 11px; object-fit: cover; border: 1px solid var(--line); background: var(--surface); }
+.pro .sf-logo-mark { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-family: var(--head); font-weight: 700; font-size: 1.25rem; color: var(--onaccent); background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+.pro .sf-brand-name { font-family: var(--head); font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
+.pro .sf-nav { display: flex; gap: 28px; }
+.pro .sf-nav-l { color: var(--muted); font-size: 0.92rem; position: relative; padding: 4px 0; transition: color .25s; }
+.pro .sf-nav-l::after { content: ''; position: absolute; left: 0; bottom: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
+.pro .sf-nav-l:hover { color: var(--text); } .pro .sf-nav-l:hover::after { width: 100%; }
+
+/* Héro (avec bannière optionnelle) */
+.pro .sf-hero2 { position: relative; padding: clamp(64px, 11vw, 130px) 5vw; background-size: cover; background-position: center; background-color: var(--surface);
+  background-image: radial-gradient(120% 130% at 12% 8%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 55%), linear-gradient(160deg, color-mix(in srgb, var(--accent) 8%, var(--bg)), var(--bg)); }
+.pro .sf-hero2-in { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.pro .sf-hero2 h1 { font-size: clamp(2.3rem, 6vw, 4.4rem); margin: 14px 0 18px; max-width: 16ch; }
+.pro .sf-hero2 .sf-lead { color: var(--muted); font-size: clamp(1rem, 2vw, 1.18rem); max-width: 560px; margin-bottom: 30px; line-height: 1.7; }
+.pro .sf-hero2.has-banner h1, .pro .sf-hero2.has-banner .sf-eyebrow { color: #fff; }
+.pro .sf-hero2.has-banner .sf-lead { color: rgba(255,255,255,.88); }
+.pro .sf-hero2-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Bandeau confiance */
+.pro .sf-trust { display: flex; justify-content: center; gap: clamp(18px, 5vw, 60px); flex-wrap: wrap; padding: 17px 5vw; background: var(--soft); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+
+/* Section boutique + filtres */
+.pro .sf-shop { max-width: 1200px; margin: 0 auto; padding: clamp(42px, 7vw, 74px) 5vw; }
+.pro .sf-shop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.pro .sf-sec-title { font-size: clamp(1.7rem, 3.5vw, 2.5rem); }
+.pro .sf-count { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+.pro .sf-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+.pro .sf-pill2 { background: var(--soft); border: 1px solid var(--line); color: var(--muted); padding: 8px 18px; border-radius: 50px; cursor: pointer; font-family: var(--body); font-size: 0.86rem; transition: all .25s; }
+.pro .sf-pill2:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.pro .sf-pill2.on { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: var(--onaccent); border-color: transparent; }
+
+/* Grille produits */
+.pro .sf-grid2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.pro .sf-card2 { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform .35s, box-shadow .35s, border-color .35s; }
+.pro .sf-card2:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: 0 26px 50px -22px rgba(0,0,0,.7); }
+.pro .sf-card2-b { padding: 14px 15px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.pro .sf-card2-b h3 { font-size: 1.08rem; line-height: 1.25; }
+.pro .sf-card2-b .sf-price { margin: 2px 0 0; }
+.pro .sf-card2-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+.pro .sf-card2-actions .sf-add { margin: 0; width: 100%; }
+.pro .sf-see { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 9px; padding: 8px 14px; font-family: var(--body); font-size: 0.82rem; cursor: pointer; transition: all .25s; }
+.pro .sf-see:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Moyens de paiement (pied de page) */
+.sf-pay { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+.sf-pay-chip { font-size: 0.8rem; color: var(--text); background: var(--soft); border: 1px solid var(--line); padding: 6px 14px; border-radius: 50px; }
+
+@media (max-width: 1000px) { .pro .sf-grid2 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) {
+  .pro .sf-grid2 { grid-template-columns: repeat(2, 1fr); }
+  .pro .sf-nav { display: none; }
+}
+@media (max-width: 440px) {
+  .pro .sf-grid2 { gap: 14px; }
+  .pro .sf-card2-b { padding: 11px 12px 13px; }
+  .pro .sf-card2-actions { grid-template-columns: 1fr; }
+}

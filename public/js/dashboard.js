@@ -167,12 +167,12 @@
   function thumb(p) { return p.image ? `<img class="prod-thumb" src="${esc(p.image)}" alt="" />` : `<span class="prod-thumb emblem">${esc((p.name[0] || '?').toUpperCase())}</span>`; }
 
   // Redimensionne une image cote client (max 800px) en data URL JPEG.
-  function resizeImage(file, cb) {
+  function resizeImage(file, cb, maxSize) {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const max = 800; let w = img.width, h = img.height;
+        const max = maxSize || 800; let w = img.width, h = img.height;
         if (w > h && w > max) { h = Math.round(h * max / w); w = max; } else if (h >= w && h > max) { w = Math.round(w * max / h); h = max; }
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
@@ -330,6 +330,11 @@
   // Ma boutique (thèmes)
   // ================================================================
   let themes = [], store = null, selectedTheme = 'or-noir';
+  let storeLogo = '', storeBanner = '';
+  function renderBrand() {
+    const lp = q('#logo-preview'); if (lp) lp.innerHTML = storeLogo ? `<img src="${esc(storeLogo)}" alt="" />` : '<span>Aucun</span>';
+    const bp = q('#banner-preview'); if (bp) bp.innerHTML = storeBanner ? `<img src="${esc(storeBanner)}" alt="" />` : '<span>Aucune</span>';
+  }
   function themeCard(t) {
     return `<button type="button" class="theme-card ${t.id === selectedTheme ? 'selected' : ''}" data-theme="${t.id}">
       <span class="theme-swatch" style="background:${t.bg}"><span class="sw-accent" style="background:linear-gradient(120deg,${t.accent},${t.accent2})"></span><span class="sw-dot" style="background:${t.surface};border-color:${t.accent}"></span></span>
@@ -366,6 +371,8 @@
     if (q('#store-whatsapp')) q('#store-whatsapp').value = store.whatsapp || '';
     if (q('#store-email')) q('#store-email').value = store.email || '';
     if (q('#store-address')) q('#store-address').value = store.address || '';
+    storeLogo = store.logo || ''; storeBanner = store.banner || '';
+    renderBrand();
     q('#store-tagline').addEventListener('input', renderThemePreview);
     updateVisitLink(store.slug);
     updateStoreLink(store);
@@ -379,6 +386,7 @@
       theme: selectedTheme, tagline: val('#store-tagline'), heroTitle: val('#store-hero'), about: val('#store-about'),
       slug: val('#store-slug'), description: val('#store-desc'),
       phone: val('#store-phone'), whatsapp: val('#store-whatsapp'), email: val('#store-email'), address: val('#store-address'),
+      logo: storeLogo, banner: storeBanner,
     };
     const r = await api('/api/store', 'PUT', payload);
     if (r.ok) {
@@ -659,6 +667,10 @@
     q('#ship-add') && q('#ship-add').addEventListener('click', () => { shipping.zones.push({ zone: '', fee: 0 }); renderZones(); });
     q('#ship-save') && q('#ship-save').addEventListener('click', saveShipping);
     q('#store-save') && q('#store-save').addEventListener('click', saveStore);
+    q('#logo-file') && q('#logo-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; resizeImage(f, (data) => { storeLogo = data; renderBrand(); }, 400); });
+    q('#logo-clear') && q('#logo-clear').addEventListener('click', () => { storeLogo = ''; renderBrand(); const fi = q('#logo-file'); if (fi) fi.value = ''; });
+    q('#banner-file') && q('#banner-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; resizeImage(f, (data) => { storeBanner = data; renderBrand(); }, 1400); });
+    q('#banner-clear') && q('#banner-clear').addEventListener('click', () => { storeBanner = ''; renderBrand(); const fi = q('#banner-file'); if (fi) fi.value = ''; });
 
     q('#mkt-save') && q('#mkt-save').addEventListener('click', saveMarketing);
     q('#utm-platform') && q('#utm-platform').addEventListener('change', updateUtm);
