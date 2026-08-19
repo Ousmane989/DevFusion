@@ -4,7 +4,8 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { ORDER_STATUSES } = require('../catalog');
-const { listOrders, summarize } = require('../ordersStore');
+const { listOrders, summarize, publicOrder } = require('../ordersStore');
+const { fireWebhooks } = require('../webhooks');
 
 const router = express.Router();
 
@@ -23,6 +24,8 @@ router.put('/:id/status', requireAuth, (req, res) => {
   }
   const info = db.prepare('UPDATE orders SET status = ? WHERE id = ? AND user_id = ?').run(status, req.params.id, req.user.id);
   if (!info.changes) return res.status(404).json({ error: 'Commande introuvable.' });
+  const row = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+  if (row) fireWebhooks(req.user.id, 'order.updated', publicOrder(row));
   const orders = listOrders(req.user.id);
   res.json({ ok: true, summary: summarize(orders) });
 });

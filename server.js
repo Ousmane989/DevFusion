@@ -16,6 +16,10 @@ const productsRoutes = require('./src/routes/products.routes');
 const storeRoutes = require('./src/routes/store.routes');
 const ordersRoutes = require('./src/routes/orders.routes');
 const publicRoutes = require('./src/routes/public.routes');
+const accountRoutes = require('./src/routes/account.routes');
+const analyticsRoutes = require('./src/routes/analytics.routes');
+const financeRoutes = require('./src/routes/finance.routes');
+const { router: developerRoutes, apiV1: apiV1Routes } = require('./src/routes/developer.routes');
 const { hasSmtp } = require('./src/mailer');
 const { renderStorefrontHtml } = require('./src/storefront');
 
@@ -78,6 +82,11 @@ app.get('/api', (_req, res) => {
       products: ['GET /api/products', 'POST /api/products', 'PUT /api/products/:id', 'DELETE /api/products/:id'],
       store: ['GET /api/store', 'PUT /api/store', 'PUT /api/store/shipping'],
       orders: ['GET /api/orders', 'PUT /api/orders/:id/status'],
+      account: ['GET /api/account', 'PUT /api/account', 'POST /api/account/password', 'DELETE /api/account'],
+      analytics: ['GET /api/analytics'],
+      finance: ['GET /api/finance', 'POST /api/finance/expense', 'DELETE /api/finance/expense/:id', 'GET /api/finance/export.csv'],
+      developer: ['GET /api/dev', 'POST /api/dev/key', 'DELETE /api/dev/key/:id', 'POST /api/dev/webhook', 'DELETE /api/dev/webhook/:id', 'POST /api/dev/webhook/:id/test'],
+      v1: ['GET /api/v1/products', 'GET /api/v1/orders', 'GET /api/v1/store'],
       public: ['GET /api/public/store/:slug', 'GET /api/public/store/:slug/catalog.csv', 'POST /api/public/store/:slug/order', 'POST /api/public/store/:slug/visit', 'POST /api/public/store/:slug/event'],
     },
   });
@@ -92,6 +101,11 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/account', accountRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/dev', developerRoutes);
+app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
 
 // 404 JSON pour toute route /api inconnue.

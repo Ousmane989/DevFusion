@@ -2,6 +2,7 @@
 
 const db = require('./db');
 const { statusMeta } = require('./catalog');
+const { fireWebhooks } = require('./webhooks');
 
 function publicOrder(row) {
   let items = [];
@@ -54,7 +55,9 @@ function createOrder({ userId, customer, phone, city, address, note, items, subt
     `INSERT INTO orders (user_id, ref, customer_name, customer_phone, city, address, note, items_json, subtotal_mru, shipping_mru, total_mru, payment, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'nouvelle')`
   ).run(userId, ref, customer, phone || '', city || '', address || '', note || '', JSON.stringify(items), subtotal, shipping, total);
-  return publicOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(info.lastInsertRowid));
+  const order = publicOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(info.lastInsertRowid));
+  fireWebhooks(userId, 'order.created', order);
+  return order;
 }
 
 // Cree quelques commandes de demonstration si la boutique n'en a aucune,
