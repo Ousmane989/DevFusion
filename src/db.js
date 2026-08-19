@@ -131,6 +131,10 @@ for (const col of ['meta_pixel_id', 'fb_page', 'instagram']) {
 for (const col of ['wave_number', 'om_number']) {
   try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
 }
+// Personnalisation visuelle : logo et image de banniere (URL ou data URL).
+for (const col of ['logo', 'banner']) {
+  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+}
 
 // ------------------------------------------------------------------
 // Comptabilite : depenses saisies par le commercant.
