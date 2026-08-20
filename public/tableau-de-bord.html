@@ -143,6 +143,13 @@
                 <div class="field" data-field="stock"><label for="pf-stock">Stock</label><input id="pf-stock" type="number" min="0" placeholder="0" /><div class="err">Stock invalide.</div></div>
               </div>
               <div class="field"><label for="pf-desc">Description</label><textarea id="pf-desc" rows="2" placeholder="Décrivez votre produit en quelques mots"></textarea></div>
+              <div class="field"><label for="pf-subtitle">Accroche courte (sous le prix)</label><input id="pf-subtitle" type="text" maxlength="160" placeholder="Ex. Son immersif Hi-Fi avec réduction de bruit active" /></div>
+              <div class="pf-grid">
+                <div class="field"><label for="pf-compare" id="pf-compare-label">Prix barré (promo)</label><input id="pf-compare" type="number" min="0" placeholder="0 = aucun" /><div class="hint">Ancien prix affiché barré à côté du prix.</div></div>
+                <div class="field"><label for="pf-variants">Variantes</label><input id="pf-variants" type="text" placeholder="Ex. Noir, Or (séparées par des virgules)" /></div>
+                <div class="field"><label for="pf-rating">Note (sur 5)</label><input id="pf-rating" type="number" min="0" max="5" step="0.1" placeholder="0 = masquée" /></div>
+                <div class="field"><label for="pf-reviews">Nombre d'avis</label><input id="pf-reviews" type="number" min="0" placeholder="0" /></div>
+              </div>
               <div class="field">
                 <label>Photo du produit</label>
                 <div class="pf-image">
@@ -251,6 +258,7 @@
               <div class="field"><label for="store-tagline">Slogan / sous-titre</label><input id="store-tagline" type="text" maxlength="140" placeholder="Ex. L'élégance à portée de main" /></div>
               <div class="field"><label for="store-desc">Accroche (sous le titre)</label><textarea id="store-desc" rows="2" maxlength="400" placeholder="Une phrase qui présente votre boutique"></textarea></div>
               <div class="field"><label for="store-about">À propos de la boutique</label><textarea id="store-about" rows="3" maxlength="600" placeholder="Racontez votre histoire, vos valeurs, votre savoir-faire…"></textarea></div>
+              <div class="field"><label for="store-returns">Politique de retours (affichée sur la fiche produit)</label><textarea id="store-returns" rows="2" maxlength="600" placeholder="Ex. Retours acceptés sous 7 jours, article non utilisé dans son emballage d'origine."></textarea></div>
               <div class="field" data-field="slug"><label for="store-slug">Adresse de la boutique (nom de domaine)</label>
                 <div class="slug-input"><input id="store-slug" type="text" placeholder="ma-boutique" /><span class="slug-suffix" id="slug-suffix">.karat.shop</span></div>
                 <div class="hint">Votre boutique : <a id="store-link" class="link-gold" target="_blank" rel="noopener">…</a></div>

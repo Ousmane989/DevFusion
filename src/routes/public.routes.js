@@ -80,6 +80,7 @@ router.get('/store/:slug', (req, res) => {
     // Personnalisation visuelle.
     logo: (settings && settings.logo) || '',
     banner: (settings && settings.banner) || '',
+    returnsPolicy: (settings && settings.returns_policy) || '',
     theme: theme.id,
     themeData: theme,
     shipping,
@@ -173,7 +174,11 @@ router.post('/store/:slug/order', orderLimiter, (req, res) => {
     if (!prod) continue;
     const qty = Math.max(1, Math.min(99, Math.round(Number(it.qty) || 1)));
     subtotal += prod.price_mru * qty;
-    items.push({ name: prod.name, price: prod.price_mru, qty });
+    // Variante choisie (ex. couleur), validée contre celles du produit.
+    const allowed = String(prod.variants || '').split(',').map((s) => s.trim()).filter(Boolean);
+    let variant = it.variant ? String(it.variant).trim().slice(0, 30) : '';
+    if (variant && allowed.length && !allowed.includes(variant)) variant = '';
+    items.push({ name: prod.name, price: prod.price_mru, qty, variant });
   }
   if (!items.length) return res.status(400).json({ errors: { items: 'Aucun produit valide.' } });
 
