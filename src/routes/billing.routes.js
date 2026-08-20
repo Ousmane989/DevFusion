@@ -15,7 +15,7 @@ const METHODS = ['bankily', 'wave', 'orange-money'];
 // En production, cet endpoint declencherait le prestataire de paiement
 // puis confirmerait via webhook. Ici, on active directement l'abonnement.
 // ------------------------------------------------------------------
-router.post('/pay', requireAuth, (req, res) => {
+router.post('/pay', requireAuth, async (req, res) => {
   const method = String(req.body?.method || '').toLowerCase();
   if (!METHODS.includes(method)) {
     return res.status(400).json({ error: 'Moyen de paiement non pris en charge.' });
@@ -25,14 +25,14 @@ router.post('/pay', requireAuth, (req, res) => {
   const plan = req.body?.plan && PLANS[req.body.plan] ? req.body.plan : req.user.plan;
   const subEnd = isoIn(30);
 
-  db.prepare(
+  await db.prepare(
     `UPDATE users SET plan = ?, status = 'active', subscription_ends_at = ? WHERE id = ?`
   ).run(plan, subEnd, req.user.id);
 
   res.json({
     ok: true,
     message: 'Paiement confirme. Votre abonnement est actif pour 30 jours.',
-    user: publicUser(getUserById(req.user.id)),
+    user: publicUser(await getUserById(req.user.id)),
   });
 });
 

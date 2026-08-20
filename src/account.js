@@ -20,7 +20,7 @@ function isoIn(days) {
  * Un abonnement expire repasse aussi en "locked".
  * Renvoie l'utilisateur (potentiellement mis a jour).
  */
-function refreshStatus(user) {
+async function refreshStatus(user) {
   if (!user) return user;
   const now = Date.now();
   let next = user.status;
@@ -37,19 +37,19 @@ function refreshStatus(user) {
   }
 
   if (next !== user.status) {
-    db.prepare('UPDATE users SET status = ? WHERE id = ?').run(next, user.id);
+    await db.prepare('UPDATE users SET status = ? WHERE id = ?').run(next, user.id);
     user.status = next;
   }
   return user;
 }
 
-function getUserById(id) {
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+async function getUserById(id) {
+  const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   return refreshStatus(user);
 }
 
-function getUserByEmail(email) {
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).toLowerCase());
+async function getUserByEmail(email) {
+  const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).toLowerCase());
   return refreshStatus(user);
 }
 

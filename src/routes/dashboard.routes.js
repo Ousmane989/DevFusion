@@ -20,15 +20,15 @@ const delta = (cur, prev) => (prev ? Number((((cur - prev) / prev) * 100).toFixe
 // evenements de la vitrine. Tout est a 0 pour une nouvelle boutique.
 // Le chiffre d'affaires ne compte que les commandes LIVREES.
 // ------------------------------------------------------------------
-function realStats(user) {
+async function realStats(user) {
   const now = new Date();
-  const orders = db
+  const orders = (await db
     .prepare('SELECT total_mru, status, created_at FROM orders WHERE user_id = ?')
-    .all(user.id)
+    .all(user.id))
     .map((o) => ({ total: o.total_mru, status: o.status, d: parseDate(o.created_at) }));
-  const events = db
+  const events = (await db
     .prepare('SELECT type, source, created_at FROM store_events WHERE user_id = ?')
-    .all(user.id)
+    .all(user.id))
     .map((e) => ({ type: e.type, source: e.source, d: parseDate(e.created_at) }));
 
   const visits = events.filter((e) => e.type === 'visit');
@@ -126,15 +126,16 @@ function realStats(user) {
     pending: todayOrders.filter((o) => !isDelivered(o) && o.status !== 'annulee').length,
   };
 
-  const products = db.prepare('SELECT COUNT(*) AS c FROM products WHERE user_id = ?').get(user.id).c;
+  const prodRow = await db.prepare('SELECT COUNT(*) AS c FROM products WHERE user_id = ?').get(user.id);
+  const products = Number(prodRow && prodRow.c) || 0;
   const pending = orders.filter((o) => ['nouvelle', 'confirmee', 'expediee'].includes(o.status)).length;
 
   return { periods, defaultPeriod: '30j', funnel, sources, today, products, pending };
 }
 
 // GET /api/dashboard
-router.get('/', requireAuth, (req, res) => {
-  res.json({ user: publicUser(req.user), stats: realStats(req.user) });
+router.get('/', requireAuth, async (req, res) => {
+  res.json({ user: publicUser(req.user), stats: await realStats(req.user) });
 });
 
 module.exports = router;
