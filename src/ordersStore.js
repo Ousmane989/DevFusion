@@ -19,7 +19,7 @@ function publicOrder(row) {
     note: row.note,
     items,
     itemsCount: items.reduce((t, x) => t + (x.qty || 1), 0),
-    productsLabel: items.map((x) => `${x.name} ×${x.qty}`).join(', '),
+    productsLabel: items.map((x) => `${x.name}${x.variant ? ' (' + x.variant + ')' : ''} ×${x.qty}`).join(', '),
     subtotal: row.subtotal_mru,
     shipping: row.shipping_mru,
     amount: row.total_mru,

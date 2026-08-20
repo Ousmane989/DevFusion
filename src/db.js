@@ -123,6 +123,14 @@ for (const col of ['hero_title', 'about', 'slug']) {
 }
 // Photo du produit (URL ou data URL).
 try { db.exec("ALTER TABLE products ADD COLUMN image TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
+// Fiche produit enrichie : accroche courte, prix barre (promo), note, avis, variantes.
+try { db.exec("ALTER TABLE products ADD COLUMN subtitle TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
+try { db.exec("ALTER TABLE products ADD COLUMN compare_at_mru INTEGER NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
+try { db.exec("ALTER TABLE products ADD COLUMN rating REAL NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
+try { db.exec("ALTER TABLE products ADD COLUMN reviews_count INTEGER NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
+try { db.exec("ALTER TABLE products ADD COLUMN variants TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
+// Politique de retours affichee sur la fiche produit.
+try { db.exec("ALTER TABLE store_settings ADD COLUMN returns_policy TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
 // Marketing : Pixel Meta (Facebook/Instagram) + liens sociaux pour les campagnes.
 for (const col of ['meta_pixel_id', 'fb_page', 'instagram']) {
   try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
