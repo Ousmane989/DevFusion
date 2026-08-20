@@ -36,12 +36,27 @@
   }
   const hasPromo = (p) => p.compareAt && p.compareAt > p.price;
   const discountPct = (p) => Math.round((1 - p.price / p.compareAt) * 100);
+  // Icône illustrative selon la catégorie (rend la vitrine plus jolie même
+  // sans photo). Renvoie un tracé SVG.
+  function catIcon(cat) {
+    const c = String(cat || '').toLowerCase();
+    if (/mode|vêtement|habill|textile/.test(c)) return '<path d="M8 4l4 2 4-2 4 3.2-3 2.8v9.5a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V10L4 7.2 8 4z"/>';
+    if (/cosm|beaut|soin|parfum/.test(c)) return '<path d="M10 3h4v3h-4zM9 6h6l1 3v10a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9l1-3z"/><path d="M8.5 13h7"/>';
+    if (/élect|electro|tech|téléph|phone|informa/.test(c)) return '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10.5 18h3"/>';
+    if (/alim|nourri|food|boisson|thé|the|café|cafe/.test(c)) return '<path d="M6 8h11v6a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V8z"/><path d="M17 10h2a2 2 0 0 1 0 4h-2"/><path d="M9 3v2M12 3v2"/>';
+    if (/artis|maroqu|cuir|sac|panier/.test(c)) return '<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/>';
+    if (/access|bijou|montre|horlog/.test(c)) return '<circle cx="12" cy="12" r="5"/><path d="M12 9v3l2 1M9 4h6M9 20h6"/>';
+    return '<path d="M6 4h12l3 5-9 11L3 9l3-5z"/><path d="M3 9h18M9 4l3 16 3-16"/>'; // gemme (défaut)
+  }
+  function emblemArt(p) {
+    return `<span class="sf-emblem2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${catIcon(p.category)}</svg><span class="sf-emblem2-i">${esc(initial(p.name))}</span></span>`;
+  }
   function visual(p, extra) {
     const badge = isNew(p) ? '<span class="sf-new">Nouveau</span>' : '';
     const promo = hasPromo(p) ? `<span class="sf-promo">-${discountPct(p)}%</span>` : '';
     const media = p.image
       ? `<img class="sf-photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />`
-      : `<span class="sf-emblem">${esc(initial(p.name))}</span>`;
+      : emblemArt(p);
     return `<div class="sf-img ${extra || ''}">${badge}${promo}${media}<span class="sf-view">Voir le produit →</span></div>`;
   }
   function price(p) {
