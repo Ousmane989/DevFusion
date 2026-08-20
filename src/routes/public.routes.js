@@ -29,31 +29,31 @@ function baseUrl(req) {
 const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de commandes. Reessayez dans une minute.' } });
 const eventLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de requetes.' } });
 
-function findUserBySlug(slug) {
-  const s = findStore(slug);
+async function findUserBySlug(slug) {
+  const s = await findStore(slug);
   return s ? s.user : null;
 }
 
-function shippingFor(userId, city) {
-  const row = db.prepare('SELECT shipping_json FROM store_settings WHERE user_id = ?').get(userId);
+async function shippingFor(userId) {
+  const row = await db.prepare('SELECT shipping_json FROM store_settings WHERE user_id = ?').get(userId);
   let sh = defaultShipping();
   try { if (row && row.shipping_json) sh = JSON.parse(row.shipping_json); } catch { /* défaut */ }
   return sh;
 }
 
 // GET /api/public/store/:slug  — données de la vitrine (thème + produits actifs)
-router.get('/store/:slug', (req, res) => {
-  const user = findUserBySlug(req.params.slug);
+router.get('/store/:slug', async (req, res) => {
+  const user = await findUserBySlug(req.params.slug);
   if (!user) return res.status(404).json({ error: 'Boutique introuvable.' });
 
-  let settings = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+  const settings = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   const theme = themeById(settings ? settings.theme : 'or-noir');
   let shipping = defaultShipping();
   try { if (settings && settings.shipping_json) shipping = JSON.parse(settings.shipping_json); } catch { /* défaut */ }
 
-  const products = db
+  const products = (await db
     .prepare('SELECT * FROM products WHERE user_id = ? AND active = 1 ORDER BY id DESC')
-    .all(user.id)
+    .all(user.id))
     .map(publicProduct);
 
   const instagram = (settings && settings.instagram) || '';
@@ -92,18 +92,18 @@ router.get('/store/:slug', (req, res) => {
 // GET /api/public/store/:slug/catalog.csv — flux produits pour le
 // Gestionnaire de ventes Meta (catalogue Facebook / Instagram Shopping,
 // publicités dynamiques). Format CSV conforme aux champs requis par Meta.
-router.get('/store/:slug/catalog.csv', (req, res) => {
-  const user = findUserBySlug(req.params.slug);
+router.get('/store/:slug/catalog.csv', async (req, res) => {
+  const user = await findUserBySlug(req.params.slug);
   if (!user) return res.status(404).type('text/plain').send('Boutique introuvable.');
-  const settings = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+  const settings = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   const slug = effectiveSlug(user, settings);
   const currency = user.currency || 'MRU';
   const base = baseUrl(req);
   const storeLink = base + '/boutique/' + slug;
 
-  const products = db
+  const products = (await db
     .prepare('SELECT * FROM products WHERE user_id = ? AND active = 1 ORDER BY id DESC')
-    .all(user.id)
+    .all(user.id))
     .map(publicProduct);
 
   const csvCell = (v) => {
@@ -133,29 +133,29 @@ router.get('/store/:slug/catalog.csv', (req, res) => {
 });
 
 // Journalise un evenement de la vitrine (analytics reels).
-function logEvent(slug, type, source) {
-  const user = findUserBySlug(slug);
+async function logEvent(slug, type, source) {
+  const user = await findUserBySlug(slug);
   if (!user) return false;
-  db.prepare('INSERT INTO store_events (user_id, type, source) VALUES (?, ?, ?)').run(user.id, type, source || 'direct');
+  await db.prepare('INSERT INTO store_events (user_id, type, source) VALUES (?, ?, ?)').run(user.id, type, source || 'direct');
   return true;
 }
 
 // POST /api/public/store/:slug/visit  { source }
-router.post('/store/:slug/visit', eventLimiter, (req, res) => {
+router.post('/store/:slug/visit', eventLimiter, async (req, res) => {
   const src = TRAFFIC_SOURCES.includes(req.body?.source) ? req.body.source : 'direct';
-  res.json({ ok: logEvent(req.params.slug, 'visit', src) });
+  res.json({ ok: await logEvent(req.params.slug, 'visit', src) });
 });
 
 // POST /api/public/store/:slug/event  { type }
-router.post('/store/:slug/event', eventLimiter, (req, res) => {
+router.post('/store/:slug/event', eventLimiter, async (req, res) => {
   const type = req.body?.type === 'add_cart' ? 'add_cart' : null;
   if (!type) return res.status(400).json({ error: 'Type invalide.' });
-  res.json({ ok: logEvent(req.params.slug, type, 'direct') });
+  res.json({ ok: await logEvent(req.params.slug, type, 'direct') });
 });
 
 // POST /api/public/store/:slug/order  — passer une commande (paiement à la livraison)
-router.post('/store/:slug/order', orderLimiter, (req, res) => {
-  const user = findUserBySlug(req.params.slug);
+router.post('/store/:slug/order', orderLimiter, async (req, res) => {
+  const user = await findUserBySlug(req.params.slug);
   if (!user) return res.status(404).json({ error: 'Boutique introuvable.' });
 
   const b = req.body || {};
@@ -170,7 +170,7 @@ router.post('/store/:slug/order', orderLimiter, (req, res) => {
   const items = [];
   let subtotal = 0;
   for (const it of b.items) {
-    const prod = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ? AND active = 1').get(it.id, user.id);
+    const prod = await db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ? AND active = 1').get(it.id, user.id);
     if (!prod) continue;
     const qty = Math.max(1, Math.min(99, Math.round(Number(it.qty) || 1)));
     subtotal += prod.price_mru * qty;
@@ -183,13 +183,13 @@ router.post('/store/:slug/order', orderLimiter, (req, res) => {
   if (!items.length) return res.status(400).json({ errors: { items: 'Aucun produit valide.' } });
 
   // Frais de livraison selon la ville / zone.
-  const sh = shippingFor(user.id);
+  const sh = await shippingFor(user.id);
   const zone = (sh.zones || []).find((z) => z.zone.toLowerCase() === String(b.city).trim().toLowerCase());
   let shipping = zone ? zone.fee : 0;
   if (sh.freeOver && subtotal >= sh.freeOver) shipping = 0;
   const total = subtotal + shipping;
 
-  const order = createOrder({
+  const order = await createOrder({
     userId: user.id, customer: String(b.name).trim(), phone: String(b.phone).trim(),
     city: String(b.city).trim(), address: String(b.address || '').trim(), note: String(b.note || '').trim(),
     items, subtotal, shipping, total,

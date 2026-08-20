@@ -14,11 +14,11 @@ function effectiveSlug(user, row) {
 }
 
 // Un slug est-il deja pris par une autre boutique ?
-function slugTaken(candidate, userId) {
-  const custom = db.prepare('SELECT user_id FROM store_settings WHERE slug = ? AND slug != \'\' AND user_id != ?').get(candidate, userId);
+async function slugTaken(candidate, userId) {
+  const custom = await db.prepare('SELECT user_id FROM store_settings WHERE slug = ? AND slug != \'\' AND user_id != ?').get(candidate, userId);
   if (custom) return true;
   // Boutiques sans slug personnalise : on compare au nom slugifie.
-  const others = db.prepare(
+  const others = await db.prepare(
     `SELECT u.shop_name FROM users u LEFT JOIN store_settings s ON s.user_id = u.id
      WHERE u.id != ? AND (s.slug IS NULL OR s.slug = '')`
   ).all(userId);
@@ -26,15 +26,15 @@ function slugTaken(candidate, userId) {
 }
 
 // Recupere (ou cree a la volee) les reglages de boutique d'un utilisateur.
-function getSettings(user) {
-  let row = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+async function getSettings(user) {
+  let row = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   if (!row) {
-    db.prepare('INSERT INTO store_settings (user_id, tagline, shipping_json) VALUES (?, ?, ?)').run(
+    await db.prepare('INSERT INTO store_settings (user_id, tagline, shipping_json) VALUES (?, ?, ?)').run(
       user.id,
       'Des produits de qualité, livrés près de chez vous.',
       JSON.stringify(defaultShipping())
     );
-    row = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+    row = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   }
   return row;
 }
@@ -104,14 +104,14 @@ function publicStore(user, row) {
 }
 
 // GET /api/store  — reglages + liste des themes disponibles
-router.get('/', requireAuth, (req, res) => {
-  const row = getSettings(req.user);
+router.get('/', requireAuth, async (req, res) => {
+  const row = await getSettings(req.user);
   res.json({ store: publicStore(req.user, row), themes: THEMES });
 });
 
 // PUT /api/store  — theme, slogan, domaine, description
-router.put('/', requireAuth, (req, res) => {
-  const row = getSettings(req.user);
+router.put('/', requireAuth, async (req, res) => {
+  const row = await getSettings(req.user);
   const b = req.body || {};
   const theme = THEMES.some((t) => t.id === b.theme) ? b.theme : row.theme;
   const keep = (v, old, max) => (v !== undefined ? String(v).slice(0, max) : old);
@@ -121,7 +121,7 @@ router.put('/', requireAuth, (req, res) => {
   if (b.slug !== undefined) {
     const candidate = slugify(b.slug).slice(0, 40);
     if (!candidate) return res.status(400).json({ errors: { slug: 'Adresse invalide.' } });
-    if (candidate !== effectiveSlug(req.user, row) && slugTaken(candidate, req.user.id)) {
+    if (candidate !== effectiveSlug(req.user, row) && (await slugTaken(candidate, req.user.id))) {
       return res.status(409).json({ errors: { slug: 'Cette adresse est déjà prise.' } });
     }
     slug = candidate;
@@ -135,7 +135,7 @@ router.put('/', requireAuth, (req, res) => {
   const logo = b.logo !== undefined ? cleanImage(b.logo) : row.logo;
   const banner = b.banner !== undefined ? cleanImage(b.banner) : row.banner;
 
-  db.prepare(
+  await db.prepare(
     `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
@@ -152,12 +152,12 @@ router.put('/', requireAuth, (req, res) => {
     keep(b.returnsPolicy, row.returns_policy, 600),
     req.user.id
   );
-  res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });
+  res.json({ ok: true, store: publicStore(req.user, await getSettings(req.user)) });
 });
 
 // PUT /api/store/shipping  — zones et frais de livraison
-router.put('/shipping', requireAuth, (req, res) => {
-  const row = getSettings(req.user);
+router.put('/shipping', requireAuth, async (req, res) => {
+  await getSettings(req.user);
   const b = req.body || {};
   let zones = Array.isArray(b.zones) ? b.zones : [];
   zones = zones
@@ -165,7 +165,7 @@ router.put('/shipping', requireAuth, (req, res) => {
     .slice(0, 12)
     .map((z) => ({ zone: String(z.zone).trim().slice(0, 60), fee: Math.max(0, Math.round(Number(z.fee) || 0)) }));
   const shipping = { freeOver: Math.max(0, Math.round(Number(b.freeOver) || 0)), zones };
-  db.prepare(`UPDATE store_settings SET shipping_json = ?, updated_at = datetime('now') WHERE user_id = ?`).run(
+  await db.prepare(`UPDATE store_settings SET shipping_json = ?, updated_at = datetime('now') WHERE user_id = ?`).run(
     JSON.stringify(shipping),
     req.user.id
   );

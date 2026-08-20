@@ -56,10 +56,10 @@ function validSignup(b) {
 }
 
 // Cree (ou remplace) un code de verification pour un utilisateur.
-function issueCode(userId, purpose) {
+async function issueCode(userId, purpose) {
   const code = generateCode();
-  db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(userId, purpose);
-  db.prepare(
+  await db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(userId, purpose);
+  await db.prepare(
     `INSERT INTO verification_codes (user_id, code_hash, purpose, expires_at)
      VALUES (?, ?, ?, ?)`
   ).run(userId, hashCode(code), purpose, new Date(Date.now() + CODE_TTL_MIN * 60000).toISOString());
@@ -75,7 +75,7 @@ router.post('/signup', authLimiter, async (req, res) => {
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
   const email = String(b.email).toLowerCase().trim();
-  if (getUserByEmail(email)) {
+  if (await getUserByEmail(email)) {
     return res.status(409).json({ errors: { email: 'Un compte existe deja avec cet e-mail.' } });
   }
 
@@ -83,7 +83,7 @@ router.post('/signup', authLimiter, async (req, res) => {
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
   const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
-  const info = db
+  const info = await db
     .prepare(
       `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`
@@ -91,7 +91,7 @@ router.post('/signup', authLimiter, async (req, res) => {
     .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency);
 
   const userId = info.lastInsertRowid;
-  const code = issueCode(userId, 'email');
+  const code = await issueCode(userId, 'email');
   const result = await sendCode({ to: email, name: String(b.name).trim(), code, purpose: 'email' });
 
   res.status(201).json({
@@ -106,15 +106,15 @@ router.post('/signup', authLimiter, async (req, res) => {
 // ------------------------------------------------------------------
 // POST /api/auth/verify-email  { email, code }
 // ------------------------------------------------------------------
-router.post('/verify-email', authLimiter, (req, res) => {
+router.post('/verify-email', authLimiter, async (req, res) => {
   const { email, code } = req.body || {};
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user) return res.status(404).json({ error: 'Compte introuvable.' });
   if (user.email_verified) {
     return res.json({ ok: true, alreadyVerified: true });
   }
 
-  const row = db
+  const row = await db
     .prepare(
       `SELECT * FROM verification_codes WHERE user_id = ? AND purpose = 'email'
        ORDER BY id DESC LIMIT 1`
@@ -129,19 +129,19 @@ router.post('/verify-email', authLimiter, (req, res) => {
     return res.status(429).json({ error: 'Trop de tentatives. Demandez un nouveau code.' });
   }
   if (row.code_hash !== hashCode(String(code || '').trim())) {
-    db.prepare('UPDATE verification_codes SET attempts = attempts + 1 WHERE id = ?').run(row.id);
+    await db.prepare('UPDATE verification_codes SET attempts = attempts + 1 WHERE id = ?').run(row.id);
     return res.status(400).json({ error: 'Code incorrect.' });
   }
 
   // Tarifs desactives (usage libre) : le compte est directement actif,
   // sans essai ni verrouillage. La date lointaine evite tout blocage.
   const subEnd = isoIn(3650);
-  db.prepare(
+  await db.prepare(
     `UPDATE users SET email_verified = 1, status = 'active', subscription_ends_at = ? WHERE id = ?`
   ).run(subEnd, user.id);
-  db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'email');
+  await db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'email');
 
-  const fresh = getUserById(user.id);
+  const fresh = await getUserById(user.id);
   setSessionCookie(res, signSession(fresh));
   res.json({ ok: true, user: publicUser(fresh) });
 });
@@ -150,11 +150,11 @@ router.post('/verify-email', authLimiter, (req, res) => {
 // POST /api/auth/resend-code  { email }
 // ------------------------------------------------------------------
 router.post('/resend-code', authLimiter, async (req, res) => {
-  const user = getUserByEmail(req.body?.email);
+  const user = await getUserByEmail(req.body?.email);
   if (!user) return res.status(404).json({ error: 'Compte introuvable.' });
   if (user.email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-  const code = issueCode(user.id, 'email');
+  const code = await issueCode(user.id, 'email');
   const result = await sendCode({ to: user.email, name: user.name, code, purpose: 'email' });
   res.json({ ok: true, devCode: devCodeFor(result) });
 });
@@ -164,7 +164,7 @@ router.post('/resend-code', authLimiter, async (req, res) => {
 // ------------------------------------------------------------------
 router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user || !(await verifyPassword(String(password || ''), user.password_hash))) {
     return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
   }
@@ -173,7 +173,7 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 
   setSessionCookie(res, signSession(user));
-  res.json({ ok: true, user: publicUser(getUserById(user.id)) });
+  res.json({ ok: true, user: publicUser(await getUserById(user.id)) });
 });
 
 // ------------------------------------------------------------------
@@ -196,10 +196,10 @@ router.get('/me', requireAuth, (req, res) => {
 // POST /api/auth/forgot  { email }
 // ------------------------------------------------------------------
 router.post('/forgot', authLimiter, async (req, res) => {
-  const user = getUserByEmail(req.body?.email);
+  const user = await getUserByEmail(req.body?.email);
   // Reponse volontairement identique, que le compte existe ou non.
   if (user) {
-    const code = issueCode(user.id, 'reset');
+    const code = await issueCode(user.id, 'reset');
     const result = await sendCode({ to: user.email, name: user.name, code, purpose: 'reset' });
     return res.json({
       ok: true,
@@ -218,10 +218,10 @@ router.post('/reset', authLimiter, async (req, res) => {
   if (!password || String(password).length < 8) {
     return res.status(400).json({ error: 'Mot de passe : 8 caracteres minimum.' });
   }
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user) return res.status(400).json({ error: 'Code invalide ou expire.' });
 
-  const row = db
+  const row = await db
     .prepare(
       `SELECT * FROM verification_codes WHERE user_id = ? AND purpose = 'reset'
        ORDER BY id DESC LIMIT 1`
@@ -234,13 +234,13 @@ router.post('/reset', authLimiter, async (req, res) => {
     return res.status(429).json({ error: 'Trop de tentatives. Demandez un nouveau code.' });
   }
   if (row.code_hash !== hashCode(String(code || '').trim())) {
-    db.prepare('UPDATE verification_codes SET attempts = attempts + 1 WHERE id = ?').run(row.id);
+    await db.prepare('UPDATE verification_codes SET attempts = attempts + 1 WHERE id = ?').run(row.id);
     return res.status(400).json({ error: 'Code incorrect.' });
   }
 
   const passwordHash = await hashPassword(String(password));
-  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, user.id);
-  db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'reset');
+  await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, user.id);
+  await db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'reset');
   res.json({ ok: true, message: 'Mot de passe mis a jour. Vous pouvez vous connecter.' });
 });
 

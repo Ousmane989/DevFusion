@@ -13,25 +13,25 @@ const { slugify } = require('./catalog');
 const BOUTIQUE_HTML = path.join(__dirname, '..', 'public', 'boutique.html');
 
 // Resout une boutique par slug personnalise, puis par nom slugifie.
-function findStore(slug) {
-  const custom = db.prepare("SELECT user_id FROM store_settings WHERE slug = ? AND slug != ''").get(slug);
+async function findStore(slug) {
+  const custom = await db.prepare("SELECT user_id FROM store_settings WHERE slug = ? AND slug != ''").get(slug);
   let user = null;
-  if (custom) user = db.prepare('SELECT * FROM users WHERE id = ? AND email_verified = 1').get(custom.user_id);
+  if (custom) user = await db.prepare('SELECT * FROM users WHERE id = ? AND email_verified = 1').get(custom.user_id);
   if (!user) {
-    const users = db.prepare('SELECT * FROM users WHERE email_verified = 1').all();
+    const users = await db.prepare('SELECT * FROM users WHERE email_verified = 1').all();
     user = users.find((u) => slugify(u.shop_name) === slug) || null;
   }
   if (!user) return null;
-  const settings = db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
+  const settings = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   return { user, settings };
 }
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // Renvoie le HTML de la vitrine avec les balises meta sociales injectees.
-function renderStorefrontHtml(slug, base) {
+async function renderStorefrontHtml(slug, base) {
   let html = fs.readFileSync(BOUTIQUE_HTML, 'utf8');
-  const store = findStore(slug);
+  const store = await findStore(slug);
   if (!store) return html; // la page cliente affichera « boutique introuvable »
 
   const { user, settings } = store;
@@ -42,7 +42,7 @@ function renderStorefrontHtml(slug, base) {
   // og:image : banniere/logo si URL http(s), sinon premiere photo produit
   // (Meta refuse les data URL, on ne garde donc que les URL http).
   const httpOnly = (v) => (/^https?:\/\//i.test(v || '') ? v : '');
-  const prod = db.prepare("SELECT image FROM products WHERE user_id = ? AND active = 1 AND image LIKE 'http%' ORDER BY id DESC LIMIT 1").get(user.id);
+  const prod = await db.prepare("SELECT image FROM products WHERE user_id = ? AND active = 1 AND image LIKE 'http%' ORDER BY id DESC LIMIT 1").get(user.id);
   const image = httpOnly(settings && settings.banner) || httpOnly(settings && settings.logo) || (prod ? prod.image : '');
 
   const tags = [
