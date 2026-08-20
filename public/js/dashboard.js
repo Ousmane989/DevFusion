@@ -228,8 +228,14 @@
     q('#pf-price').value = prod ? prod.price : '';
     q('#pf-stock').value = prod ? prod.stock : '';
     q('#pf-desc').value = prod ? prod.description : '';
+    if (q('#pf-subtitle')) q('#pf-subtitle').value = prod ? (prod.subtitle || '') : '';
+    if (q('#pf-compare')) q('#pf-compare').value = prod && prod.compareAt ? prod.compareAt : '';
+    if (q('#pf-variants')) q('#pf-variants').value = prod && prod.variants ? prod.variants.join(', ') : '';
+    if (q('#pf-rating')) q('#pf-rating').value = prod && prod.rating ? prod.rating : '';
+    if (q('#pf-reviews')) q('#pf-reviews').value = prod && prod.reviewsCount ? prod.reviewsCount : '';
     q('#pf-active').checked = prod ? prod.active : true;
     if (q('#pf-price-label')) q('#pf-price-label').textContent = 'Prix (' + CUR + ')';
+    if (q('#pf-compare-label')) q('#pf-compare-label').textContent = 'Prix barré / promo (' + CUR + ')';
     q('#pf-fcfa').textContent = mAlt(prod ? prod.price : 0);
     pfImage = prod ? (prod.image || '') : '';
     renderPfImage();
@@ -243,7 +249,16 @@
     const m = q('#pf-msg'); clearMsg(m);
     qa('#prod-form .field').forEach((f) => f.classList.remove('invalid'));
     const id = q('#pf-id').value;
-    const payload = { name: q('#pf-name').value.trim(), category: q('#pf-category').value, priceMru: Number(q('#pf-price').value), stock: Number(q('#pf-stock').value), description: q('#pf-desc').value.trim(), image: pfImage, active: q('#pf-active').checked };
+    const payload = {
+      name: q('#pf-name').value.trim(), category: q('#pf-category').value,
+      priceMru: Number(q('#pf-price').value), stock: Number(q('#pf-stock').value),
+      description: q('#pf-desc').value.trim(), image: pfImage, active: q('#pf-active').checked,
+      subtitle: q('#pf-subtitle') ? q('#pf-subtitle').value.trim() : '',
+      compareAt: q('#pf-compare') ? Number(q('#pf-compare').value) || 0 : 0,
+      variants: q('#pf-variants') ? q('#pf-variants').value : '',
+      rating: q('#pf-rating') ? Number(q('#pf-rating').value) || 0 : 0,
+      reviewsCount: q('#pf-reviews') ? Number(q('#pf-reviews').value) || 0 : 0,
+    };
     const r = await api('/api/products' + (id ? '/' + id : ''), id ? 'PUT' : 'POST', payload);
     if (!r.ok) {
       if (r.data && r.data.errors) { Object.keys(r.data.errors).forEach((f) => { const el = q('[data-field="' + f + '"]'); if (el) el.classList.add('invalid'); }); msg(m, 'error', 'Veuillez corriger les champs indiqués.'); }
@@ -364,6 +379,7 @@
     q('#store-tagline').value = store.tagline || '';
     if (q('#store-hero')) q('#store-hero').value = store.heroTitle || '';
     if (q('#store-about')) q('#store-about').value = store.about || '';
+    if (q('#store-returns')) q('#store-returns').value = store.returnsPolicy || '';
     if (q('#store-slug')) q('#store-slug').value = store.slug || '';
     if (q('#slug-suffix')) q('#slug-suffix').textContent = '.' + (store.baseDomain || 'karat.shop');
     q('#store-desc').value = store.description || '';
@@ -384,6 +400,7 @@
     const sf = q('[data-field="slug"]'); if (sf) sf.classList.remove('invalid');
     const payload = {
       theme: selectedTheme, tagline: val('#store-tagline'), heroTitle: val('#store-hero'), about: val('#store-about'),
+      returnsPolicy: val('#store-returns'),
       slug: val('#store-slug'), description: val('#store-desc'),
       phone: val('#store-phone'), whatsapp: val('#store-whatsapp'), email: val('#store-email'), address: val('#store-address'),
       logo: storeLogo, banner: storeBanner,

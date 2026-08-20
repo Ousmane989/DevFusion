@@ -360,3 +360,63 @@ img { max-width: 100%; display: block; }
   .pro .sf-card2-b { padding: 11px 12px 13px; }
   .pro .sf-card2-actions { grid-template-columns: 1fr; }
 }
+
+/* Badge promo + prix barré (cartes) */
+.sf-promo { position: absolute; top: 9px; right: 9px; z-index: 3; font-size: 0.68rem; font-weight: 700; letter-spacing: .3px;
+  color: #fff; background: #e0526a; padding: 3px 9px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.sf-price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sf-old { text-decoration: line-through; color: var(--muted); font-size: 0.82rem; }
+
+/* ==================================================================
+   FICHE PRODUIT REPENSÉE (mobile-first, style boutique pro)
+   ================================================================== */
+.sf-detail-box.pd { max-width: 460px; }
+.sf-pd { display: flex; flex-direction: column; }
+.sf-pd-media { width: 100%; }
+.sf-pd-media .sf-img { aspect-ratio: 1 / 1; height: auto; border-radius: 18px 18px 0 0; }
+.sf-pd-info { padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 12px; }
+.sf-pd-info .sf-cat { color: var(--accent); font-weight: 600; }
+.sf-pd-name { font-size: 1.9rem; line-height: 1.1; }
+.sf-pd-rating { display: flex; align-items: center; gap: 8px; margin-top: -4px; }
+.sf-stars { position: relative; display: inline-block; font-size: 0.98rem; letter-spacing: 2px; line-height: 1; }
+.sf-stars-bg { color: rgba(244,241,234,.26); }
+.sf-stars-fg { position: absolute; top: 0; left: 0; overflow: hidden; white-space: nowrap; color: #E8B84B; }
+.sf-pd-reviews { color: var(--muted); font-size: 0.84rem; }
+.sf-pd-price { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sf-pd-now { font-family: var(--head); font-size: 2rem; font-weight: 700; color: var(--accent); }
+.sf-pd-old { text-decoration: line-through; color: var(--muted); font-size: 1.1rem; }
+.sf-pd-save { color: #fff; background: #e0526a; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 50px; align-self: center; }
+.sf-pd-alt { color: var(--muted); font-size: 0.82rem; margin-top: -8px; }
+.sf-pd-sub { color: var(--text); opacity: .92; font-size: 1rem; line-height: 1.5; }
+.sf-pd-field { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.sf-pd-label { font-size: 0.9rem; color: var(--text); font-weight: 500; }
+.sf-var-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.sf-var { padding: 9px 20px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text);
+  font-family: var(--body); font-size: 0.9rem; cursor: pointer; transition: all .2s; }
+.sf-var:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.sf-var.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.sf-pd-buy { display: flex; align-items: stretch; gap: 12px; margin-top: 4px; }
+.sf-qty2 { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.sf-qty2 button { width: 42px; height: 100%; min-height: 48px; border: none; background: var(--soft); color: var(--text); font-size: 1.3rem; cursor: pointer; transition: background .2s; }
+.sf-qty2 button:hover { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.sf-dqv { min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; font-size: 1rem; }
+.sf-pd-add { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase;
+  letter-spacing: .5px; font-size: 0.9rem; padding: 14px 18px; border-radius: 12px; }
+.sf-pd-add svg { width: 19px; height: 19px; }
+.sf-pd-add[disabled] { opacity: .5; cursor: not-allowed; }
+.sf-pd-stock { font-size: 0.86rem; }
+.sf-pd-stock.ok { color: var(--muted); }
+.sf-pd-stock.oos { color: #e5675f; }
+
+/* Accordéons (Description / Livraison / Retours) */
+.sf-acc { margin-top: 8px; border-top: 1px solid var(--line); }
+.sf-acc-item { border-bottom: 1px solid var(--line); }
+.sf-acc-h { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 2px;
+  background: none; border: none; color: var(--text); font-family: var(--body); font-size: 1rem; font-weight: 500; cursor: pointer; text-align: left; }
+.sf-acc-ic { width: 18px; height: 18px; color: var(--muted); transition: transform .3s; flex-shrink: 0; }
+.sf-acc-item.open .sf-acc-ic { transform: rotate(180deg); }
+.sf-acc-c { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease; }
+.sf-acc-item.open .sf-acc-c { max-height: 460px; padding: 0 2px 18px; }
+.sf-acc-c p { color: var(--muted); font-size: 0.92rem; line-height: 1.65; margin-bottom: 6px; }
+
+.sf-line-var { font-size: 0.72rem; color: var(--accent); background: var(--soft); border: 1px solid var(--line); padding: 1px 7px; border-radius: 50px; margin-left: 4px; }

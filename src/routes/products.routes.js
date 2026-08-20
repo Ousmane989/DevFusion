@@ -31,6 +31,13 @@ function sanitizeImage(v) {
   if (/^https?:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s)) return s;
   return '';
 }
+// Normalise une liste de variantes (chaine "Noir, Or" ou tableau) -> "Noir,Or".
+function cleanVariants(v) {
+  const arr = Array.isArray(v) ? v : String(v || '').split(',');
+  return arr.map((s) => String(s).trim().slice(0, 30)).filter(Boolean).slice(0, 12).join(',');
+}
+function clampRating(v) { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(5, Math.round(n * 10) / 10)) : 0; }
+function clampInt(v) { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? n : 0; }
 
 // POST /api/products  — ajouter un produit
 router.post('/', requireAuth, (req, res) => {
@@ -40,8 +47,8 @@ router.post('/', requireAuth, (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image, subtitle, compare_at_mru, rating, reviews_count, variants)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       req.user.id,
@@ -51,7 +58,12 @@ router.post('/', requireAuth, (req, res) => {
       Math.round(Number(b.stock)),
       CATEGORIES.includes(b.category) ? b.category : 'Autre',
       b.active === false ? 0 : 1,
-      sanitizeImage(b.image)
+      sanitizeImage(b.image),
+      String(b.subtitle || '').trim().slice(0, 160),
+      clampInt(b.compareAt),
+      clampRating(b.rating),
+      clampInt(b.reviewsCount),
+      cleanVariants(b.variants)
     );
   const row = db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json({ ok: true, product: publicProduct(row) });
@@ -66,7 +78,7 @@ router.put('/:id', requireAuth, (req, res) => {
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
   db.prepare(
-    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ? WHERE id = ?`
+    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ?, subtitle = ?, compare_at_mru = ?, rating = ?, reviews_count = ?, variants = ? WHERE id = ?`
   ).run(
     b.name !== undefined ? String(b.name).trim() : row.name,
     b.description !== undefined ? String(b.description).trim() : row.description,
@@ -75,6 +87,11 @@ router.put('/:id', requireAuth, (req, res) => {
     b.category !== undefined && CATEGORIES.includes(b.category) ? b.category : row.category,
     b.active !== undefined ? (b.active ? 1 : 0) : row.active,
     b.image !== undefined ? sanitizeImage(b.image) : row.image,
+    b.subtitle !== undefined ? String(b.subtitle).trim().slice(0, 160) : row.subtitle,
+    b.compareAt !== undefined ? clampInt(b.compareAt) : row.compare_at_mru,
+    b.rating !== undefined ? clampRating(b.rating) : row.rating,
+    b.reviewsCount !== undefined ? clampInt(b.reviewsCount) : row.reviews_count,
+    b.variants !== undefined ? cleanVariants(b.variants) : row.variants,
     row.id
   );
   const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(row.id);
