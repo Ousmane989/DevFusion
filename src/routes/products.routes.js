@@ -18,8 +18,8 @@ function validate(b) {
 }
 
 // GET /api/products  — liste des produits de la boutique
-router.get('/', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT * FROM products WHERE user_id = ? ORDER BY id DESC').all(req.user.id);
+router.get('/', requireAuth, async (req, res) => {
+  const rows = await db.prepare('SELECT * FROM products WHERE user_id = ? ORDER BY id DESC').all(req.user.id);
   res.json({ products: rows.map(publicProduct), categories: CATEGORIES });
 });
 
@@ -40,12 +40,12 @@ function clampRating(v) { const n = Number(v); return Number.isFinite(n) ? Math.
 function clampInt(v) { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? n : 0; }
 
 // POST /api/products  — ajouter un produit
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   const b = req.body || {};
   const errors = validate(b);
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
-  const info = db
+  const info = await db
     .prepare(
       `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image, subtitle, compare_at_mru, rating, reviews_count, variants)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -65,19 +65,19 @@ router.post('/', requireAuth, (req, res) => {
       clampInt(b.reviewsCount),
       cleanVariants(b.variants)
     );
-  const row = db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid);
+  const row = await db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json({ ok: true, product: publicProduct(row) });
 });
 
 // PUT /api/products/:id  — modifier un produit
-router.put('/:id', requireAuth, (req, res) => {
-  const row = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+router.put('/:id', requireAuth, async (req, res) => {
+  const row = await db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
   if (!row) return res.status(404).json({ error: 'Produit introuvable.' });
   const b = req.body || {};
   const errors = validate({ name: b.name ?? row.name, priceMru: b.priceMru ?? row.price_mru, stock: b.stock ?? row.stock });
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
-  db.prepare(
+  await db.prepare(
     `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ?, subtitle = ?, compare_at_mru = ?, rating = ?, reviews_count = ?, variants = ? WHERE id = ?`
   ).run(
     b.name !== undefined ? String(b.name).trim() : row.name,
@@ -94,13 +94,13 @@ router.put('/:id', requireAuth, (req, res) => {
     b.variants !== undefined ? cleanVariants(b.variants) : row.variants,
     row.id
   );
-  const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(row.id);
+  const updated = await db.prepare('SELECT * FROM products WHERE id = ?').get(row.id);
   res.json({ ok: true, product: publicProduct(updated) });
 });
 
 // DELETE /api/products/:id  — supprimer un produit
-router.delete('/:id', requireAuth, (req, res) => {
-  const info = db.prepare('DELETE FROM products WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+router.delete('/:id', requireAuth, async (req, res) => {
+  const info = await db.prepare('DELETE FROM products WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
   if (!info.changes) return res.status(404).json({ error: 'Produit introuvable.' });
   res.json({ ok: true });
 });

@@ -9,8 +9,8 @@ const { ORDER_STATUSES } = require('../catalog');
 
 const router = express.Router();
 
-router.get('/', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT items_json, city, status, total_mru, created_at FROM orders WHERE user_id = ?').all(req.user.id);
+router.get('/', requireAuth, async (req, res) => {
+  const rows = await db.prepare('SELECT items_json, city, status, total_mru, created_at FROM orders WHERE user_id = ?').all(req.user.id);
   const currency = req.user.currency || 'MRU';
   const isDelivered = (s) => s === 'livree';
 
