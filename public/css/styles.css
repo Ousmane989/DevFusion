@@ -45,9 +45,12 @@ body {
   animation: pageIn 0.5s var(--ease) both;
 }
 
+/* Fondu à l'ouverture — SANS transform : un transform persistant sur <body>
+   (fill-mode both) ferait de <body> le bloc conteneur des éléments position:fixed
+   et décalerait les fenêtres modales/tiroirs dès que la page défile. */
 @keyframes pageIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.1; }

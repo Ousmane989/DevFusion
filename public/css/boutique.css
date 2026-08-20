@@ -82,6 +82,12 @@ img { max-width: 100%; display: block; }
   font-family: var(--head); font-size: 1.5rem; font-weight: 700; color: var(--accent);
   background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
   box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+/* Illustration produit (sans photo) : icône de catégorie + monogramme */
+.sf-emblem2 { position: relative; z-index: 1; display: grid; place-items: center; gap: 12px; color: var(--accent); }
+.sf-emblem2 svg { width: 48px; height: 48px; opacity: .92; filter: drop-shadow(0 8px 16px rgba(0,0,0,.35)); }
+.sf-emblem2-i { font-family: var(--head); font-size: 0.95rem; font-weight: 700; letter-spacing: 2px;
+  color: color-mix(in srgb, var(--accent) 60%, var(--text)); opacity: .8; }
+.sf-pd-media .sf-emblem2 svg, .sf-img.cover .sf-emblem2 svg { width: 66px; height: 66px; }
 .sf-view { position: absolute; z-index: 2; bottom: 10px; left: 50%; transform: translate(-50%, 8px); opacity: 0;
   font-size: 0.74rem; letter-spacing: .3px; color: var(--onaccent); background: linear-gradient(120deg, var(--accent), var(--accent2));
   padding: 5px 12px; border-radius: 50px; white-space: nowrap; transition: opacity .3s, transform .3s; pointer-events: none; }
@@ -249,10 +255,12 @@ img { max-width: 100%; display: block; }
 /* ==================================================================
    Fiche produit (modale detail)
    ================================================================== */
-.sf-detail { position: fixed; inset: 0; z-index: 70; display: none; align-items: center; justify-content: center; padding: 20px; }
-.sf-detail.open { display: flex; }
-.sf-detail-ov { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); animation: sfFade .3s ease; }
-.sf-detail-box { position: relative; z-index: 1; width: 100%; max-width: 760px; max-height: 92vh; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; animation: sfPop .35s cubic-bezier(.16,1,.3,1); }
+/* Conteneur défilant en flux bloc : la fiche s'affiche près du haut et
+   défile de haut en bas — jamais coupée, quel que soit son contenu. */
+.sf-detail { position: fixed; inset: 0; z-index: 70; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.sf-detail.open { display: block; }
+.sf-detail-ov { position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(4px); animation: sfFade .3s ease; }
+.sf-detail-box { position: relative; z-index: 1; width: 100%; max-width: 760px; margin: 5vh auto; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; animation: sfPop .35s cubic-bezier(.16,1,.3,1); box-shadow: 0 40px 90px -30px rgba(0,0,0,.8); }
 @keyframes sfPop { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
 .sf-detail-x { position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 70%, transparent); color: var(--text); cursor: pointer; font-size: 1rem; }
 .sf-detail-x:hover { border-color: var(--accent); color: var(--accent); }
@@ -371,6 +379,8 @@ img { max-width: 100%; display: block; }
    FICHE PRODUIT REPENSÉE (mobile-first, style boutique pro)
    ================================================================== */
 .sf-detail-box.pd { max-width: 460px; }
+/* Dans la fiche : pas de badge d'angle ni d'indice de survol (déjà dans le prix). */
+.sf-detail .sf-promo, .sf-detail .sf-new, .sf-detail .sf-view { display: none; }
 .sf-pd { display: flex; flex-direction: column; }
 .sf-pd-media { width: 100%; }
 .sf-pd-media .sf-img { aspect-ratio: 1 / 1; height: auto; border-radius: 18px 18px 0 0; }
