@@ -82,6 +82,7 @@ function publicStore(user, row) {
     },
     logo: row.logo || '',
     banner: row.banner || '',
+    returnsPolicy: row.returns_policy || '',
     shopName: user.shop_name,
     theme: t.id,
     themeData: t,
@@ -135,7 +136,7 @@ router.put('/', requireAuth, (req, res) => {
   const banner = b.banner !== undefined ? cleanImage(b.banner) : row.banner;
 
   db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -148,6 +149,7 @@ router.put('/', requireAuth, (req, res) => {
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
     metaPixelId, fbPage, instagram, waveNumber, omNumber, logo, banner,
+    keep(b.returnsPolicy, row.returns_policy, 600),
     req.user.id
   );
   res.json({ ok: true, store: publicStore(req.user, getSettings(req.user)) });

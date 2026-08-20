@@ -35,11 +35,17 @@ function defaultShipping() {
 }
 
 function publicProduct(p) {
+  const variants = String(p.variants || '').split(',').map((s) => s.trim()).filter(Boolean);
   return {
     id: p.id,
     name: p.name,
+    subtitle: p.subtitle || '',
     description: p.description,
     price: p.price_mru, // montant dans la devise de la boutique
+    compareAt: p.compare_at_mru || 0, // prix barre (promo), 0 = aucun
+    rating: p.rating || 0, // note sur 5 (0 = masquee)
+    reviewsCount: p.reviews_count || 0,
+    variants, // liste d'options (ex. couleurs)
     stock: p.stock,
     category: p.category,
     image: p.image || '',

@@ -34,14 +34,24 @@
     const t = new Date(String(p.createdAt).replace(' ', 'T') + 'Z').getTime();
     return Date.now() - t < 14 * 86400000;
   }
+  const hasPromo = (p) => p.compareAt && p.compareAt > p.price;
+  const discountPct = (p) => Math.round((1 - p.price / p.compareAt) * 100);
   function visual(p, extra) {
     const badge = isNew(p) ? '<span class="sf-new">Nouveau</span>' : '';
+    const promo = hasPromo(p) ? `<span class="sf-promo">-${discountPct(p)}%</span>` : '';
     const media = p.image
       ? `<img class="sf-photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />`
       : `<span class="sf-emblem">${esc(initial(p.name))}</span>`;
-    return `<div class="sf-img ${extra || ''}">${badge}${media}<span class="sf-view">Voir le produit →</span></div>`;
+    return `<div class="sf-img ${extra || ''}">${badge}${promo}${media}<span class="sf-view">Voir le produit →</span></div>`;
   }
-  function price(p) { return `<div class="sf-price"><span class="sf-mru">${sMain(p.price)}</span><span class="sf-fcfa">${sAlt(p.price)}</span></div>`; }
+  function price(p) {
+    const old = hasPromo(p) ? `<span class="sf-old">${sMain(p.compareAt)}</span>` : '';
+    return `<div class="sf-price"><div class="sf-price-row"><span class="sf-mru">${sMain(p.price)}</span>${old}</div><span class="sf-fcfa">${sAlt(p.price)}</span></div>`;
+  }
+  function stars(r) {
+    const pct = Math.max(0, Math.min(100, (Number(r) / 5) * 100));
+    return `<span class="sf-stars"><span class="sf-stars-bg">★★★★★</span><span class="sf-stars-fg" style="width:${pct}%">★★★★★</span></span>`;
+  }
   function addBtn(p, label) { return `<button class="sf-add" data-add="${p.id}">${label || 'Ajouter au panier'}</button>`; }
 
   function footer(d) {
@@ -146,47 +156,78 @@
   const cartCount = () => cart.reduce((n, i) => n + i.qty, 0);
   const cartSubtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
   function updateBadges() { const n = cartCount(); root.querySelectorAll('.sf-cart-count, .sf-fab-count').forEach((e) => (e.textContent = n)); const fab = root.querySelector('.sf-fab'); if (fab) fab.classList.toggle('has', n > 0); }
-  function addToCart(id, qty) {
+  function addToCart(id, qty, variant) {
     qty = Math.max(1, qty || 1);
     const p = byId[id]; if (!p) return;
-    const line = cart.find((i) => i.id === p.id);
-    if (line) line.qty += qty; else { cart.push({ id: p.id, name: p.name, price: p.price, qty }); track('add_cart'); }
+    variant = variant || '';
+    const line = cart.find((i) => i.id === p.id && (i.variant || '') === variant);
+    if (line) line.qty += qty; else { cart.push({ id: p.id, name: p.name, price: p.price, qty, variant }); track('add_cart'); }
     pixel('AddToCart', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price * qty, currency: pixCurrency() });
-    updateBadges(); toast('« ' + p.name + ' » ajouté au panier'); renderCart();
+    updateBadges(); toast('« ' + p.name + (variant ? ' (' + variant + ')' : '') + ' » ajouté au panier'); renderCart();
   }
 
   // -------- Fiche produit (detail + commande) --------
   let detailQty = 1;
+  let detailVariant = '';
+  function accItem(title, content, open) {
+    return `<div class="sf-acc-item${open ? ' open' : ''}"><button type="button" class="sf-acc-h">${esc(title)}<svg class="sf-acc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button><div class="sf-acc-c">${content}</div></div>`;
+  }
+  function shippingText(d) {
+    const sh = (d && d.shipping) || { zones: [], freeOver: 0 };
+    const lines = [];
+    (sh.zones || []).forEach((z) => lines.push(`${esc(z.zone)} — ${z.fee ? sMain(z.fee) : 'Gratuite'}`));
+    if (sh.freeOver) lines.push(`Livraison offerte dès ${sMain(sh.freeOver)} d'achat.`);
+    lines.push('Paiement à la livraison, en espèces à la réception.');
+    return lines.map((l) => `<p>${l}</p>`).join('');
+  }
+  function returnsText(d) {
+    return `<p>${esc((d && d.returnsPolicy) || 'Retours acceptés sous 7 jours pour tout article non utilisé, dans son emballage d\'origine. Contactez-nous pour organiser le retour.')}</p>`;
+  }
   function openDetail(id) {
     const p = byId[id]; if (!p) return;
     detailQty = 1;
+    detailVariant = (p.variants && p.variants[0]) || '';
     const modal = root.querySelector('.sf-detail'); if (!modal) return;
-    const stock = p.stock > 0
-      ? `<span class="sf-instock">● En stock${p.stock <= 5 ? ' — plus que ' + p.stock : ''}</span>`
-      : '<span class="sf-oos">● Rupture de stock</span>';
-    modal.querySelector('.sf-detail-body').innerHTML = `
-      <div class="sf-detail-grid">
-        <div class="sf-detail-visual">${visual(p, 'cover')}</div>
-        <div class="sf-detail-info">
-          <span class="sf-cat">${esc(p.category)}</span>
-          <h3>${esc(p.name)}</h3>
-          <div class="sf-detail-price">${sMain(p.price)} <span class="sf-detail-alt">${sAlt(p.price)}</span></div>
-          <p class="sf-detail-desc${p.description ? '' : ' sf-muted'}">${esc(p.description || 'Aucune description pour ce produit.')}</p>
-          <div class="sf-detail-stock">${stock}</div>
-          <div class="sf-detail-qty"><span>Quantité</span><div class="sf-qty"><button data-dq="-">−</button><span class="sf-dqv">1</span><button data-dq="+">+</button></div></div>
-          <div class="sf-detail-actions">
-            <button class="sf-btn ghost" data-detail-add="${p.id}">Ajouter au panier</button>
-            <button class="sf-btn" data-detail-order="${p.id}">Commander maintenant</button>
-          </div>
-          <p class="sf-detail-note">💵 Paiement à la livraison</p>
+    const box = modal.querySelector('.sf-detail-box'); if (box) box.classList.add('pd');
+    const old = hasPromo(p) ? `<span class="sf-pd-old">${sMain(p.compareAt)}</span>` : '';
+    const promo = hasPromo(p) ? `<span class="sf-pd-save">-${discountPct(p)}%</span>` : '';
+    const rating = p.rating > 0 ? `<div class="sf-pd-rating">${stars(p.rating)}<span class="sf-pd-reviews">(${p.reviewsCount} avis)</span></div>` : '';
+    const variants = (p.variants && p.variants.length)
+      ? `<div class="sf-pd-field"><span class="sf-pd-label">Variante</span><div class="sf-var-row">${p.variants.map((v, i) => `<button type="button" class="sf-var${i === 0 ? ' on' : ''}" data-variant="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`
+      : '';
+    const stock = p.stock > 0 ? `<div class="sf-pd-stock ok">${p.stock} en stock</div>` : '<div class="sf-pd-stock oos">Rupture de stock</div>';
+    modal.querySelector('.sf-detail-body').innerHTML = `<div class="sf-pd">
+      <div class="sf-pd-media">${visual(p, 'cover')}</div>
+      <div class="sf-pd-info">
+        <span class="sf-cat">${esc(p.category)}</span>
+        <h3 class="sf-pd-name">${esc(p.name)}</h3>
+        ${rating}
+        <div class="sf-pd-price"><span class="sf-pd-now">${sMain(p.price)}</span>${old}${promo}</div>
+        <div class="sf-pd-alt">${sAlt(p.price)}</div>
+        ${p.subtitle ? `<p class="sf-pd-sub">${esc(p.subtitle)}</p>` : ''}
+        ${variants}
+        <div class="sf-pd-buy">
+          <div class="sf-qty2"><button type="button" data-dq="-">−</button><span class="sf-dqv">1</span><button type="button" data-dq="+">+</button></div>
+          <button type="button" class="sf-btn sf-pd-add" data-pd-add="${p.id}" ${p.stock > 0 ? '' : 'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Ajouter au panier</button>
         </div>
-      </div>`;
+        ${stock}
+        <div class="sf-acc">
+          ${accItem('Description', p.description ? `<p>${esc(p.description)}</p>` : '<p class="sf-muted">Aucune description pour ce produit.</p>', true)}
+          ${accItem('Livraison', shippingText(data))}
+          ${accItem('Retours', returnsText(data))}
+        </div>
+      </div></div>`;
     modal.querySelectorAll('[data-dq]').forEach((b) => b.addEventListener('click', () => {
       detailQty = Math.max(1, detailQty + (b.dataset.dq === '+' ? 1 : -1));
       modal.querySelector('.sf-dqv').textContent = detailQty;
     }));
-    modal.querySelector('[data-detail-add]').addEventListener('click', () => { addToCart(p.id, detailQty); closeDetail(); });
-    modal.querySelector('[data-detail-order]').addEventListener('click', () => { addToCart(p.id, detailQty); closeDetail(); openCart(); });
+    modal.querySelectorAll('.sf-var').forEach((b) => b.addEventListener('click', () => {
+      modal.querySelectorAll('.sf-var').forEach((x) => x.classList.toggle('on', x === b));
+      detailVariant = b.dataset.variant;
+    }));
+    modal.querySelectorAll('.sf-acc-h').forEach((h) => h.addEventListener('click', () => h.closest('.sf-acc-item').classList.toggle('open')));
+    const addBtn2 = modal.querySelector('[data-pd-add]');
+    if (addBtn2) addBtn2.addEventListener('click', () => { addToCart(p.id, detailQty, detailVariant); closeDetail(); openCart(); });
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     pixel('ViewContent', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price, currency: pixCurrency() });
@@ -241,7 +282,7 @@
     const body = type === 'visit' ? { source: source || 'direct' } : { type };
     fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
   }
-  function setQty(id, delta) { const line = cart.find((i) => i.id === id); if (!line) return; line.qty += delta; if (line.qty <= 0) cart = cart.filter((i) => i.id !== id); updateBadges(); renderCart(); }
+  function setQty(idx, delta) { const line = cart[idx]; if (!line) return; line.qty += delta; if (line.qty <= 0) cart.splice(idx, 1); updateBadges(); renderCart(); }
 
   function shippingFee(city) {
     const sh = (data && data.shipping) || { zones: [], freeOver: 0 };
@@ -269,7 +310,7 @@
     const ship = shippingFee(city);
     const total = sub + (city ? ship.fee : 0);
     panel.innerHTML = `
-      <div class="sf-lines">${cart.map((i) => `<div class="sf-line"><div class="sf-line-i">${esc(initial(i.name))}</div><div class="sf-line-b"><div class="sf-line-n">${esc(i.name)}</div><div class="sf-line-p">${sMain(i.price)}</div></div><div class="sf-qty"><button data-q="-" data-id="${i.id}">−</button><span>${i.qty}</span><button data-q="+" data-id="${i.id}">+</button></div></div>`).join('')}</div>
+      <div class="sf-lines">${cart.map((i, idx) => `<div class="sf-line"><div class="sf-line-i">${esc(initial(i.name))}</div><div class="sf-line-b"><div class="sf-line-n">${esc(i.name)}${i.variant ? ` <span class="sf-line-var">${esc(i.variant)}</span>` : ''}</div><div class="sf-line-p">${sMain(i.price)}</div></div><div class="sf-qty"><button data-q="-" data-idx="${idx}">−</button><span>${i.qty}</span><button data-q="+" data-idx="${idx}">+</button></div></div>`).join('')}</div>
       <form class="sf-checkout" id="sf-checkout">
         <h4>Vos coordonnées</h4>
         <input id="sf-name" placeholder="Nom complet" required />
@@ -283,7 +324,7 @@
         <p class="sf-msg" id="sf-msg"></p>
       </form>`;
     setFields(prev);
-    panel.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => setQty(Number(b.dataset.id), b.dataset.q === '+' ? 1 : -1)));
+    panel.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => setQty(Number(b.dataset.idx), b.dataset.q === '+' ? 1 : -1)));
     const sel = panel.querySelector('#sf-city'); if (sel) sel.addEventListener('change', renderCart);
     panel.querySelector('#sf-checkout').addEventListener('submit', submitOrder);
   }
@@ -295,7 +336,7 @@
     const phone = root.querySelector('#sf-phone').value.trim();
     const city = root.querySelector('#sf-city').value;
     if (name.length < 2 || phone.length < 6 || !city) { if (msg) { msg.textContent = 'Renseignez votre nom, téléphone et ville.'; msg.className = 'sf-msg err'; } return; }
-    const payload = { name, phone, city, address: root.querySelector('#sf-address').value.trim(), note: root.querySelector('#sf-note').value.trim(), items: cart.map((i) => ({ id: i.id, qty: i.qty })) };
+    const payload = { name, phone, city, address: root.querySelector('#sf-address').value.trim(), note: root.querySelector('#sf-note').value.trim(), items: cart.map((i) => ({ id: i.id, qty: i.qty, variant: i.variant || '' })) };
     const btn = root.querySelector('.sf-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
     const r = await placeOrder(payload);
     if (btn) { btn.disabled = false; btn.textContent = 'Confirmer la commande'; }
