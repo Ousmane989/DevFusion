@@ -4,15 +4,19 @@ const { COOKIE_NAME, verifySession } = require('./auth');
 const { getUserById } = require('./account');
 
 /** Attache req.user si un cookie de session valide est present. */
-function loadUser(req, _res, next) {
-  const token = req.cookies?.[COOKIE_NAME];
-  if (token) {
-    const payload = verifySession(token);
-    if (payload?.uid) {
-      req.user = getUserById(payload.uid) || null;
+async function loadUser(req, _res, next) {
+  try {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (token) {
+      const payload = verifySession(token);
+      if (payload?.uid) {
+        req.user = (await getUserById(payload.uid)) || null;
+      }
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 }
 
 /** Exige une session valide pour les routes d'API. */

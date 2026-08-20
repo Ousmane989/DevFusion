@@ -7,7 +7,7 @@
 const crypto = require('crypto');
 const db = require('./db');
 
-function listWebhooks(userId) {
+async function listWebhooks(userId) {
   return db.prepare('SELECT * FROM webhooks WHERE user_id = ? ORDER BY id DESC').all(userId);
 }
 
@@ -29,10 +29,11 @@ async function deliver(hook, event, payload) {
   }
 }
 
-// Diffuse un evenement a tous les webhooks actifs abonnes (non bloquant).
-function fireWebhooks(userId, event, payload) {
+// Diffuse un evenement a tous les webhooks actifs abonnes (livraison HTTP
+// non bloquante). On lit les webhooks puis on lance les envois sans les attendre.
+async function fireWebhooks(userId, event, payload) {
   let hooks;
-  try { hooks = db.prepare('SELECT * FROM webhooks WHERE user_id = ? AND active = 1').all(userId); }
+  try { hooks = await db.prepare('SELECT * FROM webhooks WHERE user_id = ? AND active = 1').all(userId); }
   catch { return; }
   for (const h of hooks) {
     const events = String(h.events || '').split(',').map((s) => s.trim()).filter(Boolean);

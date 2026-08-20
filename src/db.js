@@ -1,190 +1,176 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-const Database = require('better-sqlite3');
-
-// Le dossier `data/` contient la base SQLite. Il est cree au besoin.
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const db = new Database(path.join(dataDir, 'karat.sqlite'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
 // ------------------------------------------------------------------
-// Schema
+// Couche base de données — interface ASYNCHRONE unifiée.
+//   • Si DATABASE_URL est défini  -> PostgreSQL (Supabase, pour Vercel).
+//   • Sinon                       -> SQLite local (développement/tests).
+// Les deux exposent la même API : db.prepare(sql).get/all/run(...args)
+// (toutes asynchrones) et db.exec(sql). Le SQL des routes reste identique
+// (placeholders `?`, `datetime('now')`), le pilote Postgres le traduit.
 // ------------------------------------------------------------------
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-    name                 TEXT    NOT NULL,
-    email                TEXT    NOT NULL UNIQUE,
-    phone                TEXT    NOT NULL,
-    shop_name            TEXT    NOT NULL,
-    password_hash        TEXT    NOT NULL,
-    plan                 TEXT    NOT NULL DEFAULT 'pro',
-    -- statut du compte : pending | trial | active | locked
-    status               TEXT    NOT NULL DEFAULT 'pending',
-    email_verified       INTEGER NOT NULL DEFAULT 0,
-    trial_ends_at        TEXT,
-    subscription_ends_at TEXT,
-    created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
-  );
 
-  CREATE TABLE IF NOT EXISTS verification_codes (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id     INTEGER NOT NULL,
-    code_hash   TEXT    NOT NULL,
-    purpose     TEXT    NOT NULL,          -- 'email' | 'reset'
-    expires_at  TEXT    NOT NULL,
-    attempts    INTEGER NOT NULL DEFAULT 0,
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
+const usePg = !!process.env.DATABASE_URL;
 
-  CREATE INDEX IF NOT EXISTS idx_codes_user ON verification_codes(user_id, purpose);
-
-  CREATE TABLE IF NOT EXISTS products (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id     INTEGER NOT NULL,
-    name        TEXT    NOT NULL,
-    description TEXT    NOT NULL DEFAULT '',
-    price_mru   INTEGER NOT NULL DEFAULT 0,
-    stock       INTEGER NOT NULL DEFAULT 0,
-    category    TEXT    NOT NULL DEFAULT 'Autre',
-    active      INTEGER NOT NULL DEFAULT 1,
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id);
-
-  -- Commandes passees par les clients (paiement a la livraison).
-  CREATE TABLE IF NOT EXISTS orders (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id        INTEGER NOT NULL,          -- le commercant proprietaire
-    ref            TEXT    NOT NULL,
-    customer_name  TEXT    NOT NULL,
-    customer_phone TEXT    NOT NULL DEFAULT '',
-    city           TEXT    NOT NULL DEFAULT '',
-    address        TEXT    NOT NULL DEFAULT '',
-    note           TEXT    NOT NULL DEFAULT '',
-    items_json     TEXT    NOT NULL DEFAULT '[]',
-    subtotal_mru   INTEGER NOT NULL DEFAULT 0,
-    shipping_mru   INTEGER NOT NULL DEFAULT 0,
-    total_mru      INTEGER NOT NULL DEFAULT 0,
-    payment        TEXT    NOT NULL DEFAULT 'cod',   -- cod = paiement a la livraison
-    status         TEXT    NOT NULL DEFAULT 'nouvelle',
-    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
-
-  -- Une ligne de reglages de boutique par utilisateur (theme, livraison, contact...).
-  CREATE TABLE IF NOT EXISTS store_settings (
-    user_id       INTEGER PRIMARY KEY,
-    theme         TEXT NOT NULL DEFAULT 'or-noir',
-    tagline       TEXT NOT NULL DEFAULT '',
-    domain        TEXT NOT NULL DEFAULT '',
-    description   TEXT NOT NULL DEFAULT '',
-    phone         TEXT NOT NULL DEFAULT '',
-    whatsapp      TEXT NOT NULL DEFAULT '',
-    email         TEXT NOT NULL DEFAULT '',
-    address       TEXT NOT NULL DEFAULT '',
-    shipping_json TEXT NOT NULL DEFAULT '',
-    updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  -- Evenements de la vitrine (analytics reels : visites, ajouts au panier).
-  CREATE TABLE IF NOT EXISTS store_events (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER NOT NULL,
-    type       TEXT    NOT NULL,          -- 'visit' | 'add_cart'
-    source     TEXT    NOT NULL DEFAULT 'direct',
-    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_events_user ON store_events(user_id, type);
-`);
-
-// Migrations douces pour les bases existantes (colonnes de contact).
-for (const col of ['phone', 'whatsapp', 'email', 'address']) {
-  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
-}
-// Pays + devise du commercant (MR -> MRU, SN -> FCFA).
-try { db.exec("ALTER TABLE users ADD COLUMN country TEXT NOT NULL DEFAULT 'MR'"); } catch (_) { /* deja presente */ }
-try { db.exec("ALTER TABLE users ADD COLUMN currency TEXT NOT NULL DEFAULT 'MRU'"); } catch (_) { /* deja presente */ }
-// Contenu editable de la vitrine (au-dela du theme) + slug personnalise.
-for (const col of ['hero_title', 'about', 'slug']) {
-  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
-}
-// Photo du produit (URL ou data URL).
-try { db.exec("ALTER TABLE products ADD COLUMN image TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
-// Fiche produit enrichie : accroche courte, prix barre (promo), note, avis, variantes.
-try { db.exec("ALTER TABLE products ADD COLUMN subtitle TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
-try { db.exec("ALTER TABLE products ADD COLUMN compare_at_mru INTEGER NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
-try { db.exec("ALTER TABLE products ADD COLUMN rating REAL NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
-try { db.exec("ALTER TABLE products ADD COLUMN reviews_count INTEGER NOT NULL DEFAULT 0"); } catch (_) { /* deja presente */ }
-try { db.exec("ALTER TABLE products ADD COLUMN variants TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
-// Politique de retours affichee sur la fiche produit.
-try { db.exec("ALTER TABLE store_settings ADD COLUMN returns_policy TEXT NOT NULL DEFAULT ''"); } catch (_) { /* deja presente */ }
-// Marketing : Pixel Meta (Facebook/Instagram) + liens sociaux pour les campagnes.
-for (const col of ['meta_pixel_id', 'fb_page', 'instagram']) {
-  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
-}
-// Paiement mobile (Wave / Orange Money) affiche sur la boutique.
-for (const col of ['wave_number', 'om_number']) {
-  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
-}
-// Personnalisation visuelle : logo et image de banniere (URL ou data URL).
-for (const col of ['logo', 'banner']) {
-  try { db.exec(`ALTER TABLE store_settings ADD COLUMN ${col} TEXT NOT NULL DEFAULT ''`); } catch (_) { /* deja presente */ }
+// Traduit le SQL « SQLite » vers Postgres : datetime('now') -> karat_now(),
+// date('now') -> karat_today(), et placeholders ? -> $1, $2, …
+function toPgText(text) {
+  let t = String(text)
+    .replace(/datetime\('now'\)/gi, 'karat_now()')
+    .replace(/date\('now'\)/gi, 'karat_today()');
+  let i = 0;
+  t = t.replace(/\?/g, () => '$' + (++i));
+  return t;
 }
 
-// ------------------------------------------------------------------
-// Comptabilite : depenses saisies par le commercant.
-// ------------------------------------------------------------------
-db.exec(`
-  CREATE TABLE IF NOT EXISTS expenses (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER NOT NULL,
-    label      TEXT    NOT NULL DEFAULT '',
-    category   TEXT    NOT NULL DEFAULT 'Autre',
-    amount_mru INTEGER NOT NULL DEFAULT 0,
-    spent_on   TEXT    NOT NULL DEFAULT (date('now')),
-    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);
+let db;
 
-  -- Cles API (acces programmatique) : on ne stocke que le hash.
-  CREATE TABLE IF NOT EXISTS api_keys (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id      INTEGER NOT NULL,
-    label        TEXT    NOT NULL DEFAULT '',
-    prefix       TEXT    NOT NULL,
-    key_hash     TEXT    NOT NULL,
-    last_used_at TEXT,
-    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_apikeys_user ON api_keys(user_id);
+if (usePg) {
+  const postgres = require('postgres');
+  const sql = postgres(process.env.DATABASE_URL, {
+    ssl: 'require',
+    prepare: false, // compatible avec le pooler « transaction » de Supabase
+    max: Number(process.env.PG_POOL_MAX || 3),
+    idle_timeout: 20,
+    connect_timeout: 15,
+  });
 
-  -- Webhooks : URL notifiees lors des evenements de commande.
-  CREATE TABLE IF NOT EXISTS webhooks (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER NOT NULL,
-    url        TEXT    NOT NULL,
-    events     TEXT    NOT NULL DEFAULT 'order.created,order.updated',
-    secret     TEXT    NOT NULL DEFAULT '',
-    active     INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id);
-`);
+  db = {
+    prepare(text) {
+      const pg = toPgText(text);
+      const isInsert = /^\s*insert\s/i.test(pg);
+      return {
+        async get(...args) { const r = await sql.unsafe(pg, args); return r[0]; },
+        async all(...args) { return Array.from(await sql.unsafe(pg, args)); },
+        async run(...args) {
+          const q = isInsert && !/returning/i.test(pg) ? pg + ' RETURNING id' : pg;
+          const r = await sql.unsafe(q, args);
+          return { changes: r.count != null ? r.count : r.length, lastInsertRowid: r[0] ? r[0].id : undefined };
+        },
+      };
+    },
+    async exec(text) { await sql.unsafe(String(text)); },
+    _driver: 'postgres',
+    _sql: sql,
+  };
+} else {
+  const path = require('path');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  const dataDir = path.join(__dirname, '..', 'data');
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const sdb = new Database(path.join(dataDir, 'karat.sqlite'));
+  sdb.pragma('journal_mode = WAL');
+  sdb.pragma('foreign_keys = ON');
+  initSqliteSchema(sdb);
+
+  db = {
+    prepare(text) {
+      const st = sdb.prepare(text);
+      return {
+        async get(...args) { return st.get(...args); },
+        async all(...args) { return st.all(...args); },
+        async run(...args) { return st.run(...args); },
+      };
+    },
+    async exec(text) { sdb.exec(text); },
+    _driver: 'sqlite',
+    _sqlite: sdb,
+  };
+}
+
+function initSqliteSchema(sdb) {
+  sdb.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL,
+      shop_name TEXT NOT NULL, password_hash TEXT NOT NULL,
+      plan TEXT NOT NULL DEFAULT 'pro', status TEXT NOT NULL DEFAULT 'pending',
+      email_verified INTEGER NOT NULL DEFAULT 0,
+      trial_ends_at TEXT, subscription_ends_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      country TEXT NOT NULL DEFAULT 'MR', currency TEXT NOT NULL DEFAULT 'MRU'
+    );
+    CREATE TABLE IF NOT EXISTS verification_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL, code_hash TEXT NOT NULL, purpose TEXT NOT NULL,
+      expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_codes_user ON verification_codes(user_id, purpose);
+    CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+      price_mru INTEGER NOT NULL DEFAULT 0, stock INTEGER NOT NULL DEFAULT 0,
+      category TEXT NOT NULL DEFAULT 'Autre', active INTEGER NOT NULL DEFAULT 1,
+      image TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '',
+      compare_at_mru INTEGER NOT NULL DEFAULT 0, rating REAL NOT NULL DEFAULT 0,
+      reviews_count INTEGER NOT NULL DEFAULT 0, variants TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id);
+    CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      ref TEXT NOT NULL, customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL DEFAULT '', city TEXT NOT NULL DEFAULT '',
+      address TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '',
+      items_json TEXT NOT NULL DEFAULT '[]',
+      subtotal_mru INTEGER NOT NULL DEFAULT 0, shipping_mru INTEGER NOT NULL DEFAULT 0,
+      total_mru INTEGER NOT NULL DEFAULT 0, payment TEXT NOT NULL DEFAULT 'cod',
+      status TEXT NOT NULL DEFAULT 'nouvelle',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+    CREATE TABLE IF NOT EXISTS store_settings (
+      user_id INTEGER PRIMARY KEY, theme TEXT NOT NULL DEFAULT 'or-noir',
+      tagline TEXT NOT NULL DEFAULT '', domain TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '',
+      whatsapp TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+      address TEXT NOT NULL DEFAULT '', shipping_json TEXT NOT NULL DEFAULT '',
+      hero_title TEXT NOT NULL DEFAULT '', about TEXT NOT NULL DEFAULT '',
+      slug TEXT NOT NULL DEFAULT '', meta_pixel_id TEXT NOT NULL DEFAULT '',
+      fb_page TEXT NOT NULL DEFAULT '', instagram TEXT NOT NULL DEFAULT '',
+      wave_number TEXT NOT NULL DEFAULT '', om_number TEXT NOT NULL DEFAULT '',
+      logo TEXT NOT NULL DEFAULT '', banner TEXT NOT NULL DEFAULT '',
+      returns_policy TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS store_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      type TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'direct',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_events_user ON store_events(user_id, type);
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      label TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'Autre',
+      amount_mru INTEGER NOT NULL DEFAULT 0,
+      spent_on TEXT NOT NULL DEFAULT (date('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      label TEXT NOT NULL DEFAULT '', prefix TEXT NOT NULL, key_hash TEXT NOT NULL,
+      last_used_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_apikeys_user ON api_keys(user_id);
+    CREATE TABLE IF NOT EXISTS webhooks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      url TEXT NOT NULL, events TEXT NOT NULL DEFAULT 'order.created,order.updated',
+      secret TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id);
+  `);
+}
 
 module.exports = db;
