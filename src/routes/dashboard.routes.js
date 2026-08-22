@@ -122,6 +122,9 @@ async function realStats(user) {
   const todayOrders = orders.filter((o) => dayKey(o.d) === todayKey);
   const today = {
     orders: todayOrders.length,
+    // Ventes du jour = valeur de toutes les commandes reçues aujourd'hui
+    // (hors annulées). C'est le chiffre que le commerçant veut voir en premier.
+    sales: todayOrders.filter((o) => o.status !== 'annulee').reduce((s, o) => s + o.total, 0),
     revenue: todayOrders.filter(isDelivered).reduce((s, o) => s + o.total, 0),
     pending: todayOrders.filter((o) => !isDelivered(o) && o.status !== 'annulee').length,
   };

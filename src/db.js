@@ -146,6 +146,7 @@ function initSqliteSchema(sdb) {
       wave_number TEXT NOT NULL DEFAULT '', om_number TEXT NOT NULL DEFAULT '',
       logo TEXT NOT NULL DEFAULT '', banner TEXT NOT NULL DEFAULT '',
       returns_policy TEXT NOT NULL DEFAULT '',
+      meta_domain_verification TEXT NOT NULL DEFAULT '',
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );

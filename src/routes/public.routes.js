@@ -4,7 +4,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
-const { themeById, defaultShipping, publicProduct, slugify } = require('../catalog');
+const { themeById, defaultShipping, publicProduct, slugify, isoCurrency } = require('../catalog');
 const { createOrder } = require('../ordersStore');
 const { config } = require('../config');
 const { findStore } = require('../storefront');
@@ -97,7 +97,8 @@ router.get('/store/:slug/catalog.csv', async (req, res) => {
   if (!user) return res.status(404).type('text/plain').send('Boutique introuvable.');
   const settings = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   const slug = effectiveSlug(user, settings);
-  const currency = user.currency || 'MRU';
+  // Meta exige un code ISO 4217 dans le prix (FCFA -> XOF, MRU reste MRU).
+  const currency = isoCurrency(user.currency || 'MRU');
   const base = baseUrl(req);
   const storeLink = base + '/boutique/' + slug;
 

@@ -45,6 +45,12 @@ async function renderStorefrontHtml(slug, base) {
   const prod = await db.prepare("SELECT image FROM products WHERE user_id = ? AND active = 1 AND image LIKE 'http%' ORDER BY id DESC LIMIT 1").get(user.id);
   const image = httpOnly(settings && settings.banner) || httpOnly(settings && settings.logo) || (prod ? prod.image : '');
 
+  // Vérification de domaine Meta (Business Manager) : indispensable pour
+  // diffuser des publicités et attribuer les conversions vers ce domaine.
+  // Le Pixel, lui, reste injecté côté client (js/boutique.js) pour ne pas
+  // déclencher deux fois l'événement PageView.
+  const domainToken = (settings && settings.meta_domain_verification) || '';
+
   const tags = [
     '<meta property="og:type" content="website" />',
     `<meta property="og:site_name" content="${esc(name)}" />`,
@@ -57,7 +63,13 @@ async function renderStorefrontHtml(slug, base) {
     `<meta name="twitter:description" content="${esc(desc)}" />`,
     image ? `<meta name="twitter:image" content="${esc(image)}" />` : '',
     `<meta name="description" content="${esc(desc)}" />`,
+    domainToken ? `<meta name="facebook-domain-verification" content="${esc(domainToken)}" />` : '',
   ].filter(Boolean).join('\n  ');
+
+  let pixelScript = '';
+  if (/^\d{8,20}$/.test(pixelId)) {
+    pixelScript = `\n  <script>\n  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');\n  fbq('init','${esc(pixelId)}');fbq('track','PageView');\n  </script>\n  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${esc(pixelId)}&ev=PageView&noscript=1"/></noscript>`;
+  }
 
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(name)} — Boutique</title>`);
   html = html.replace('</head>', '  ' + tags + '\n</head>');

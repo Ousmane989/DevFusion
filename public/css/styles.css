@@ -109,6 +109,15 @@ img { max-width: 100%; display: block; }
 .btn-primary:hover::after { animation: shine 0.9s var(--ease); }
 @keyframes shine { to { left: 130%; } }
 
+/* Confirmation « enregistré » : le bouton passe au vert avec une coche. */
+.btn.btn-saved, .btn-primary.btn-saved {
+  background: linear-gradient(135deg, #1e9e5a, #34c77b) !important;
+  color: #fff !important; box-shadow: 0 8px 26px rgba(30, 158, 90, .4) !important;
+  animation: savedPop .35s var(--ease);
+}
+.btn.btn-saved::after { display: none; }
+@keyframes savedPop { 0% { transform: scale(.96); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+
 .btn-ghost { background: transparent; border-color: var(--line); color: var(--text); }
 .btn-ghost:hover { border-color: var(--gold); color: var(--gold-light); transform: translateY(-2px); }
 
@@ -666,7 +675,11 @@ img { max-width: 100%; display: block; }
 .orders .muted { color: var(--text-mute); }
 
 /* Vignette produit dans le tableau */
-.prod-cell { display: flex; align-items: center; gap: 12px; }
+.prod-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.prod-cell-txt { min-width: 0; }
+.prod-cell-txt strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Sous-titre court sur une seule ligne (jamais la description complète) */
+.prod-sub { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
 .prod-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
   border: 1px solid var(--line); background: rgba(255,255,255,.03); }
 .prod-thumb.emblem { display: inline-flex; align-items: center; justify-content: center;
