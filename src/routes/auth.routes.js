@@ -83,24 +83,18 @@ router.post('/signup', authLimiter, async (req, res) => {
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
   const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
+  // Inscription directe : le compte est actif immediatement (pas de code de
+  // verification par e-mail) et l'utilisateur est connecte dans la foulee.
   const info = await db
     .prepare(
-      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`
+      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency, subscription_ends_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'active', 1, ?, ?, ?)`
     )
-    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency);
+    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency, isoIn(3650));
 
-  const userId = info.lastInsertRowid;
-  const code = await issueCode(userId, 'email');
-  const result = await sendCode({ to: email, name: String(b.name).trim(), code, purpose: 'email' });
-
-  res.status(201).json({
-    ok: true,
-    email,
-    message: 'Compte cree. Un code de verification vous a ete envoye par e-mail.',
-    // En dev sans SMTP, on renvoie le code pour faciliter les tests.
-    devCode: devCodeFor(result),
-  });
+  const user = await getUserById(info.lastInsertRowid);
+  setSessionCookie(res, signSession(user));
+  res.status(201).json({ ok: true, user: publicUser(user), message: 'Compte créé.' });
 });
 
 // ------------------------------------------------------------------
@@ -168,8 +162,12 @@ router.post('/login', authLimiter, async (req, res) => {
   if (!user || !(await verifyPassword(String(password || ''), user.password_hash))) {
     return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
   }
-  if (!user.email_verified) {
-    return res.status(403).json({ error: 'E-mail non verifie.', needsVerification: true, email: user.email });
+  // La vérification par e-mail a été supprimée : plus aucun blocage à la
+  // connexion. On régularise au passage les anciens comptes non vérifiés.
+  if (!user.email_verified || user.status !== 'active') {
+    await db.prepare(
+      "UPDATE users SET email_verified = 1, status = 'active' WHERE id = ?"
+    ).run(user.id);
   }
 
   setSessionCookie(res, signSession(user));

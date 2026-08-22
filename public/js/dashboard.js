@@ -133,8 +133,10 @@
     const bar = q('#trial-bar'); if (bar) bar.style.display = 'none';
 
     if (st.today) {
-      q('#kpi-today').textContent = st.today.orders;
-      q('#kpi-today-sub').textContent = mMain(st.today.revenue) + ' encaissés · ' + st.today.pending + ' à traiter';
+      q('#kpi-today').textContent = money(st.today.sales != null ? st.today.sales : 0);
+      const nCmd = st.today.orders;
+      q('#kpi-today-sub').textContent =
+        nCmd + ' commande' + (nCmd > 1 ? 's' : '') + ' · ' + st.today.pending + ' à traiter';
     }
     setOrdersBadge(st.pending || 0);
     if (!notifiedPending && st.pending > 0) {
@@ -467,6 +469,7 @@
     if (q('#mkt-pixel')) q('#mkt-pixel').value = mk.metaPixelId || '';
     if (q('#mkt-fb')) q('#mkt-fb').value = mk.fbPage || '';
     if (q('#mkt-ig')) q('#mkt-ig').value = mk.instagram || '';
+    if (q('#mkt-domain')) q('#mkt-domain').value = mk.metaDomainVerification || '';
     const cat = window.__KARAT_SPA__ ? '' : (location.origin + '/api/public/store/' + (st.slug || '') + '/catalog.csv');
     if (q('#mkt-catalog')) q('#mkt-catalog').value = cat || (mk.catalogUrl || '');
     const cl = q('#mkt-catalog-link'); if (cl) { const href = q('#mkt-catalog').value; cl.href = href; if (window.__KARAT_SPA__) { cl.href = '#'; } }
@@ -483,6 +486,7 @@
       metaPixelId: (q('#mkt-pixel') && q('#mkt-pixel').value.trim()) || '',
       fbPage: (q('#mkt-fb') && q('#mkt-fb').value.trim()) || '',
       instagram: (q('#mkt-ig') && q('#mkt-ig').value.trim()) || '',
+      metaDomainVerification: (q('#mkt-domain') && q('#mkt-domain').value.trim()) || '',
     };
     const r = await api('/api/store', 'PUT', payload);
     if (r.ok) { fillMarketing(r.data.store); msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); }

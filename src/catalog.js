@@ -76,6 +76,9 @@ const COUNTRIES = {
 // Taux indicatif : 1 MRU ≈ 6 FCFA.
 const MRU_TO_FCFA = 6;
 function currencyOf(country) { return (COUNTRIES[country] || COUNTRIES.MR).currency; }
+// Code ISO 4217 attendu par Meta (catalogue, publicités) : « FCFA » n'est pas
+// un code ISO, il faut renvoyer « XOF » (franc CFA BCEAO). « MRU » est déjà ISO.
+function isoCurrency(currency) { return currency === 'FCFA' ? 'XOF' : (currency || 'MRU'); }
 // Renvoie la conversion approximative vers l'autre devise.
 function altAmount(amount, currency) {
   if (currency === 'FCFA') return { value: Math.round(amount / MRU_TO_FCFA), currency: 'MRU' };
@@ -88,4 +91,4 @@ function slugify(s) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 }
 
-module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta, COUNTRIES, currencyOf, altAmount, MRU_TO_FCFA };
+module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta, COUNTRIES, currencyOf, isoCurrency, altAmount, MRU_TO_FCFA };

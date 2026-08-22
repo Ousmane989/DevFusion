@@ -51,6 +51,14 @@ function cleanUrl(v) {
   if (/^https?:\/\//i.test(s)) return s;
   return 'https://' + s.replace(/^\/+/, '');
 }
+// Jeton de vérification de domaine Meta : chaîne alphanumérique fournie par
+// le Business Manager (on retire tout balisage <meta ...> collé par erreur).
+function cleanDomainToken(v) {
+  let s = String(v || '').trim();
+  const m = s.match(/content=["']([^"']+)["']/i);
+  if (m) s = m[1];
+  return s.replace(/[^A-Za-z0-9]/g, '').slice(0, 100);
+}
 // Normalise un identifiant Instagram (sans @, sans URL).
 function cleanHandle(v) {
   return String(v || '').trim().replace(/^@+/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?#].*$/, '').slice(0, 40);
@@ -74,6 +82,7 @@ function publicStore(user, row) {
       metaPixelId: row.meta_pixel_id || '',
       fbPage: row.fb_page || '',
       instagram: row.instagram || '',
+      metaDomainVerification: row.meta_domain_verification || '',
       catalogUrl: `${config.publicBaseUrl || ''}/api/public/store/${slug}/catalog.csv`,
     },
     payment: {
@@ -130,13 +139,15 @@ router.put('/', requireAuth, async (req, res) => {
   const metaPixelId = b.metaPixelId !== undefined ? cleanPixelId(b.metaPixelId) : row.meta_pixel_id;
   const fbPage = b.fbPage !== undefined ? cleanUrl(b.fbPage) : row.fb_page;
   const instagram = b.instagram !== undefined ? cleanHandle(b.instagram) : row.instagram;
+  const metaDomainVerification = b.metaDomainVerification !== undefined
+    ? cleanDomainToken(b.metaDomainVerification) : row.meta_domain_verification;
   const waveNumber = b.wave !== undefined ? String(b.wave).trim().slice(0, 40) : row.wave_number;
   const omNumber = b.om !== undefined ? String(b.om).trim().slice(0, 40) : row.om_number;
   const logo = b.logo !== undefined ? cleanImage(b.logo) : row.logo;
   const banner = b.banner !== undefined ? cleanImage(b.banner) : row.banner;
 
   await db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, meta_domain_verification = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -148,7 +159,7 @@ router.put('/', requireAuth, async (req, res) => {
     keep(b.whatsapp, row.whatsapp, 40),
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
-    metaPixelId, fbPage, instagram, waveNumber, omNumber, logo, banner,
+    metaPixelId, fbPage, instagram, metaDomainVerification, waveNumber, omNumber, logo, banner,
     keep(b.returnsPolicy, row.returns_policy, 600),
     req.user.id
   );
