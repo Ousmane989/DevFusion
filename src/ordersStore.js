@@ -3,6 +3,24 @@
 const db = require('./db');
 const { statusMeta } = require('./catalog');
 const { fireWebhooks } = require('./webhooks');
+const push = require('./push');
+
+// Prévient le commerçant sur ses appareils qu'une commande vient d'arriver.
+async function notifyNewOrder(userId, order) {
+  try {
+    const u = await db.prepare('SELECT currency FROM users WHERE id = ?').get(userId);
+    const cur = (u && u.currency) || 'MRU';
+    const amount = Number(order.amount || 0).toLocaleString('fr-FR') + ' ' + cur;
+    await push.sendToUser(userId, {
+      title: '🔔 Nouvelle commande !',
+      body: `${order.ref} · ${amount}\n${order.customer}${order.city ? ' — ' + order.city : ''}`,
+      ref: order.ref,
+      amount,
+      url: '/tableau-de-bord',
+      tag: 'order-' + order.id,
+    });
+  } catch (_) { /* jamais bloquant */ }
+}
 
 function publicOrder(row) {
   let items = [];
@@ -59,6 +77,7 @@ async function createOrder({ userId, customer, phone, city, address, note, items
   const row = await db.prepare('SELECT * FROM orders WHERE id = ?').get(info.lastInsertRowid);
   const order = publicOrder(row);
   await fireWebhooks(userId, 'order.created', order);
+  await notifyNewOrder(userId, order);
   return order;
 }
 
