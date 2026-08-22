@@ -94,6 +94,21 @@
   }
   function setOrdersBadge(n) { const el = q('#badge-orders'); if (!el) return; el.textContent = n || ''; el.classList.toggle('alert', n > 0); }
 
+  // Effet de confirmation « enregistré » : le bouton passe au vert avec une
+  // coche pendant ~2 s, puis reprend son libellé initial. Un toast renforce le
+  // retour visuel pour l'utilisateur.
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18" style="vertical-align:-4px;margin-right:6px"><path d="M20 6 9 17l-5-5"/></svg>';
+  function flashSaved(btn, label) {
+    if (btn) {
+      if (!btn._label) btn._label = btn.innerHTML;
+      btn.classList.add('btn-saved');
+      btn.innerHTML = CHECK_SVG + (label || 'Enregistré !');
+      clearTimeout(btn._savedTo);
+      btn._savedTo = setTimeout(() => { btn.classList.remove('btn-saved'); btn.innerHTML = btn._label; }, 2000);
+    }
+    dashToast('✓ ' + (label || 'Modifications enregistrées'));
+  }
+
   function switchSection(name) {
     qa('.dash-section').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + name));
     qa('.side-link').forEach((l) => l.classList.toggle('active', l.dataset.section === name));
@@ -195,7 +210,7 @@
     if (!products.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     body.innerHTML = products.map((p) => `<tr>
-      <td class="cell-prod"><div class="prod-cell">${thumb(p)}<div><strong>${esc(p.name)}</strong>${p.description ? `<div class="muted small">${esc(p.description)}</div>` : ''}</div></div></td>
+      <td class="cell-prod"><div class="prod-cell">${thumb(p)}<div class="prod-cell-txt"><strong>${esc(p.name)}</strong>${p.subtitle ? `<div class="muted small prod-sub">${esc(p.subtitle)}</div>` : ''}</div></div></td>
       <td class="muted">${esc(p.category)}</td>
       <td class="mono num">${mMain(p.price)}<div class="muted small">${mAlt(p.price)}</div></td>
       <td class="mono num">${p.stock}</td>
@@ -341,6 +356,7 @@
     shipping.freeOver = Number(q('#ship-free').value) || 0;
     const r = await api('/api/store/shipping', 'PUT', shipping);
     msg(q('#ship-msg'), r.ok ? 'success' : 'error', r.ok ? 'Livraison enregistrée.' : 'Erreur lors de l\'enregistrement.');
+    if (r.ok) flashSaved(q('#ship-save'), 'Livraison enregistrée !');
   }
 
   // ================================================================
@@ -413,6 +429,7 @@
       if (q('#store-slug')) q('#store-slug').value = store.slug || '';
       updateVisitLink(store.slug); updateStoreLink(store);
       msg(q('#store-msg'), 'success', 'Boutique mise à jour. Thème « ' + (themes.find((t) => t.id === selectedTheme) || {}).name + ' » appliqué.');
+      flashSaved(q('#store-save'), 'Boutique enregistrée !');
     } else if (r.data && r.data.errors && r.data.errors.slug) {
       if (sf) sf.classList.add('invalid');
       msg(q('#store-msg'), 'error', 'Cette adresse de boutique est déjà prise. Choisissez-en une autre.');
@@ -489,7 +506,7 @@
       metaDomainVerification: (q('#mkt-domain') && q('#mkt-domain').value.trim()) || '',
     };
     const r = await api('/api/store', 'PUT', payload);
-    if (r.ok) { fillMarketing(r.data.store); msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); }
+    if (r.ok) { fillMarketing(r.data.store); msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); flashSaved(q('#mkt-save'), 'Marketing enregistré !'); }
     else msg(q('#mkt-msg'), 'error', 'Erreur lors de l\'enregistrement.');
   }
 
@@ -545,6 +562,7 @@
   async function savePayment() {
     const r = await api('/api/store', 'PUT', { wave: fval('#pay-wave'), om: fval('#pay-om') });
     msg(q('#pay-msg'), r.ok ? 'success' : 'error', r.ok ? 'Moyens de paiement enregistrés.' : 'Erreur lors de l\'enregistrement.');
+    if (r.ok) flashSaved(q('#pay-save'), 'Paiement enregistré !');
   }
 
   // ================================================================
