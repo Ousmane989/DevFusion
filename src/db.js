@@ -42,9 +42,19 @@ if (usePg) {
         async get(...args) { const r = await sql.unsafe(pg, args); return r[0]; },
         async all(...args) { return Array.from(await sql.unsafe(pg, args)); },
         async run(...args) {
-          const q = isInsert && !/returning/i.test(pg) ? pg + ' RETURNING id' : pg;
-          const r = await sql.unsafe(q, args);
-          return { changes: r.count != null ? r.count : r.length, lastInsertRowid: r[0] ? r[0].id : undefined };
+          try {
+            const q = isInsert && !/returning/i.test(pg) ? pg + ' RETURNING id' : pg;
+            const r = await sql.unsafe(q, args);
+            return { changes: r.count != null ? r.count : r.length, lastInsertRowid: r[0] ? r[0].id : undefined };
+          } catch (e) {
+            // Certaines tables n'ont pas de colonne « id » (ex. store_settings,
+            // clé primaire user_id) : on réessaie sans le RETURNING id ajouté.
+            if (isInsert && /column "id" does not exist/i.test(String(e && e.message))) {
+              const r = await sql.unsafe(pg, args);
+              return { changes: r.count != null ? r.count : r.length, lastInsertRowid: undefined };
+            }
+            throw e;
+          }
         },
       };
     },

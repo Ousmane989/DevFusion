@@ -1,0 +1,18 @@
+# Configuration Netlify — Karat (application Express en fonction serverless)
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  # Node File Trace : conserve l'arborescence des fichiers (lecture de
+  # public/boutique.html pour l'Open Graph, etc.).
+  node_bundler = "nft"
+  included_files = ["public/**", "src/**"]
+
+# Les fichiers statiques (css, js, html) sont servis par le CDN ; tout le
+# reste (API, pages rendues côté serveur, vitrine) va vers la fonction.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/api"
+  status = 200
