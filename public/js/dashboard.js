@@ -109,6 +109,156 @@
     dashToast('✓ ' + (label || 'Modifications enregistrées'));
   }
 
+  // ================================================================
+  // Notifications de commande : son « paiement » + push (téléphone)
+  // ================================================================
+  let audioCtx = null;
+  // Joue un carillon ascendant façon « encaissement » (G5 → C6 → E6).
+  // Fonctionne sur tous les appareils via l'API Web Audio (aucun fichier).
+  function playOrderSound() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = audioCtx || new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const t0 = audioCtx.currentTime;
+      [{ f: 784, t: 0 }, { f: 1047, t: 0.11 }, { f: 1319, t: 0.22 }].forEach((n) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'triangle'; o.frequency.value = n.f;
+        o.connect(g); g.connect(audioCtx.destination);
+        const s = t0 + n.t;
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.4, s + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, s + 0.45);
+        o.start(s); o.stop(s + 0.5);
+      });
+      if (navigator.vibrate) { try { navigator.vibrate([120, 60, 120]); } catch (_) { /* ignore */ } }
+    } catch (_) { /* silencieux */ }
+  }
+
+  function urlB64ToUint8(base64) {
+    const pad = '='.repeat((4 - (base64.length % 4)) % 4);
+    const raw = atob((base64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  let swReg = null;
+  let notifStarted = false;
+
+  async function initNotifications() {
+    if (notifStarted || window.__KARAT_SPA__) return;
+    notifStarted = true;
+    const card = q('#notif-card');
+    if (!card) return;
+    const supported = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+    if (!supported) {
+      // Souvent un iPhone non « installé » : on explique comment faire.
+      card.style.display = 'flex';
+      const ti = q('#notif-title'), su = q('#notif-sub'), en = q('#notif-enable');
+      if (ti) ti.textContent = 'Activer les alertes sur ce téléphone';
+      if (su) su.textContent = "Sur iPhone : ouvrez ce site dans Safari, appuyez sur « Partager » puis « Sur l'écran d'accueil ». Rouvrez Karat depuis l'icône, puis activez les notifications.";
+      if (en) en.style.display = 'none';
+      return;
+    }
+    try { swReg = await navigator.serviceWorker.register('/sw.js'); } catch (_) { return; }
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'karat-order') {
+        playOrderSound();
+        dashToast('🔔 Nouvelle commande !');
+        refreshOverviewSoon();
+      }
+    });
+    refreshNotifCard();
+  }
+
+  async function refreshNotifCard() {
+    const card = q('#notif-card'); if (!card) return;
+    const ti = q('#notif-title'), su = q('#notif-sub'), en = q('#notif-enable'), te = q('#notif-test');
+    const perm = (window.Notification && Notification.permission) || 'default';
+    let sub = null;
+    try { sub = swReg ? await swReg.pushManager.getSubscription() : null; } catch (_) { sub = null; }
+    card.style.display = 'flex';
+    if (perm === 'granted' && sub) {
+      card.classList.add('is-on');
+      if (ti) ti.textContent = 'Notifications activées ✓';
+      if (su) su.textContent = "Une alerte sonore s'affichera à chaque commande, même l'application fermée.";
+      if (en) en.style.display = 'none';
+      if (te) te.style.display = '';
+    } else if (perm === 'denied') {
+      card.classList.remove('is-on');
+      if (ti) ti.textContent = 'Notifications bloquées';
+      if (su) su.textContent = 'Autorisez les notifications dans les réglages de votre navigateur pour recevoir vos commandes.';
+      if (en) en.style.display = 'none';
+      if (te) te.style.display = 'none';
+    } else {
+      card.classList.remove('is-on');
+      if (ti) ti.textContent = 'Recevez vos commandes en direct';
+      if (su) su.textContent = "Activez les notifications : une alerte sonore s'affichera sur votre téléphone à chaque nouvelle commande, même l'application fermée.";
+      if (en) en.style.display = '';
+      if (te) te.style.display = 'none';
+    }
+  }
+
+  async function enablePush() {
+    playOrderSound(); // le geste utilisateur débloque l'audio + aperçu du son
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { refreshNotifCard(); return; }
+      if (!swReg) swReg = await navigator.serviceWorker.register('/sw.js');
+      const r = await api('/api/push/key', 'GET');
+      if (!r.ok || !r.data || !r.data.publicKey) { dashToast('Notifications indisponibles pour le moment.'); return; }
+      const sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(r.data.publicKey),
+      });
+      const s = await api('/api/push/subscribe', 'POST', { subscription: sub.toJSON ? sub.toJSON() : sub });
+      if (s.ok) { dashToast('✓ Notifications activées !'); flashSaved(q('#notif-enable'), 'Activées !'); }
+      refreshNotifCard();
+    } catch (_) {
+      dashToast("Impossible d'activer les notifications.");
+    }
+  }
+
+  async function testPush() {
+    const r = await api('/api/push/test', 'POST', {});
+    dashToast(r.ok ? 'Notification de test envoyée 🔔' : 'Envoi impossible.');
+  }
+
+  // Sonde périodique : joue le son en temps réel quand le tableau de bord est
+  // ouvert (complément du push, utile même sans autorisation de notification).
+  let lastOrderId = null, pollTimer = null;
+  async function pollOrders() {
+    const r = await api('/api/orders/ping', 'GET');
+    if (!r.ok || !r.data) return;
+    const id = Number(r.data.lastId) || 0;
+    if (lastOrderId === null) { lastOrderId = id; }
+    else if (id > lastOrderId) {
+      lastOrderId = id;
+      playOrderSound();
+      dashToast('🔔 Nouvelle commande reçue !');
+      refreshOverviewSoon();
+    }
+    setOrdersBadge(r.data.pending || 0);
+  }
+  function startOrderPolling() {
+    if (pollTimer || window.__KARAT_SPA__) return;
+    pollOrders();
+    pollTimer = setInterval(() => { if (document.visibilityState === 'visible') pollOrders(); }, 25000);
+  }
+
+  // Rafraîchit la vue d'ensemble (KPI « ventes du jour », badge) après une
+  // nouvelle commande, sans recharger toute la page.
+  let refreshTimer = null;
+  function refreshOverviewSoon() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(async () => {
+      const r = await api('/api/dashboard', 'GET');
+      if (r.ok && r.data) { overviewStats = r.data.stats; renderOverview(currentUser, overviewStats); }
+    }, 1200);
+  }
+
   function switchSection(name) {
     qa('.dash-section').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + name));
     qa('.side-link').forEach((l) => l.classList.toggle('active', l.dataset.section === name));
@@ -726,6 +876,9 @@
     q('#account-delete') && q('#account-delete').addEventListener('click', deleteAccount);
 
     qa('#logout, #logout-side, #logout-settings').forEach((b) => b.addEventListener('click', doLogout));
+
+    q('#notif-enable') && q('#notif-enable').addEventListener('click', enablePush);
+    q('#notif-test') && q('#notif-test').addEventListener('click', testPush);
   }
 
   async function init() {
@@ -734,6 +887,8 @@
     currentUser = r.data.user; overviewStats = r.data.stats;
     renderOverview(currentUser, overviewStats);
     if (!booted) { wireChrome(); booted = true; }
+    initNotifications();
+    startOrderPolling();
   }
 
   window.KaratDashboard = { init };

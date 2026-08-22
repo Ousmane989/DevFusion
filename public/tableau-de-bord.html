@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tableau de bord — Karat</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,12 22,28 10,28 5,12' fill='%23D4AF37'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Karat" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
@@ -102,6 +108,20 @@
             <div><h1>Bonjour, <span class="gold-text" id="hello-name">…</span> 👋</h1><p id="dash-sub">Voici les performances de votre boutique sur les 30 derniers jours.</p></div>
             <span class="period-note">Comparé à la période précédente</span>
           </div>
+
+          <!-- Activation des notifications de commande (push + son) -->
+          <div class="notif-card" id="notif-card" style="display:none">
+            <div class="notif-ic">🔔</div>
+            <div class="notif-txt">
+              <strong id="notif-title">Recevez vos commandes en direct</strong>
+              <span id="notif-sub">Activez les notifications : une alerte sonore s'affichera sur votre téléphone à chaque nouvelle commande, même l'application fermée.</span>
+            </div>
+            <div class="notif-actions">
+              <button type="button" class="btn btn-primary" id="notif-enable">Activer les notifications</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="notif-test" style="display:none">Tester</button>
+            </div>
+          </div>
+
           <div class="kpi-grid">
             <div class="kpi"><div class="kpi-top"><span class="k-label">Chiffre d'affaires</span><span id="kpi-rev-delta"></span></div><div class="k-val gold-text"><span id="kpi-rev">0</span> <span class="k-unit k-cur">MRU</span></div><div class="k-sub" id="kpi-rev-fcfa">≈ 0 FCFA</div><div class="k-spark" id="kpi-rev-spark"></div></div>
             <div class="kpi"><div class="kpi-top"><span class="k-label">Commandes</span><span id="kpi-orders-delta"></span></div><div class="k-val" id="kpi-orders">0</div><div class="k-sub k-period">Sur 30 jours</div><div class="k-spark" id="kpi-orders-spark"></div></div>

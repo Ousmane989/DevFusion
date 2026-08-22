@@ -10,6 +10,13 @@
   node_bundler = "nft"
   included_files = ["public/**", "src/**"]
 
+# Le service worker ne doit pas être mis en cache longtemps (mises à jour).
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
 # Les fichiers statiques (css, js, html) sont servis par le CDN ; tout le
 # reste (API, pages rendues côté serveur, vitrine) va vers la fonction.
 [[redirects]]

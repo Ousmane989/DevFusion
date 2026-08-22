@@ -16,6 +16,17 @@ router.get('/', requireAuth, async (req, res) => {
   res.json({ orders, summary: summarize(orders), statuses: ORDER_STATUSES });
 });
 
+// GET /api/orders/ping — sonde légère pour détecter les nouvelles commandes
+// (id de la dernière commande + nombre à traiter), utilisée par le tableau de
+// bord pour jouer un son en temps réel quand une commande arrive.
+router.get('/ping', requireAuth, async (req, res) => {
+  const last = await db.prepare('SELECT MAX(id) AS id FROM orders WHERE user_id = ?').get(req.user.id);
+  const pend = await db.prepare(
+    "SELECT COUNT(*) AS c FROM orders WHERE user_id = ? AND status IN ('nouvelle','confirmee','expediee')"
+  ).get(req.user.id);
+  res.json({ lastId: Number(last && last.id) || 0, pending: Number(pend && pend.c) || 0 });
+});
+
 // PUT /api/orders/:id/status  { status }  — met a jour le statut
 router.put('/:id/status', requireAuth, async (req, res) => {
   const status = String(req.body?.status || '');

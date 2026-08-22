@@ -20,7 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.15",
     "postgres": "^3.4.9",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "web-push": "^3.6.7"
   },
   "optionalDependencies": {
     "better-sqlite3": "^11.3.0"

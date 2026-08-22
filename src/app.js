@@ -19,6 +19,7 @@ const publicRoutes = require('./routes/public.routes');
 const accountRoutes = require('./routes/account.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const financeRoutes = require('./routes/finance.routes');
+const pushRoutes = require('./routes/push.routes');
 const { router: developerRoutes, apiV1: apiV1Routes } = require('./routes/developer.routes');
 const { renderStorefrontHtml } = require('./storefront');
 
@@ -93,6 +94,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api/dev', developerRoutes);
 app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
@@ -112,6 +114,19 @@ app.get('/paiement', (req, res, next) => {
 
 app.get('/boutique/:slug', (req, res) => {
   sendStorefront(req, res, req.params.slug);
+});
+
+// Service worker : servi à la racine (portée « / ») et jamais mis en cache
+// longtemps, pour que les mises à jour soient prises en compte rapidement.
+app.get('/sw.js', (_req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.set('Service-Worker-Allowed', '/');
+  res.type('application/javascript');
+  res.sendFile(path.join(PUBLIC_DIR, 'sw.js'));
+});
+app.get('/manifest.webmanifest', (_req, res) => {
+  res.type('application/manifest+json');
+  res.sendFile(path.join(PUBLIC_DIR, 'manifest.webmanifest'));
 });
 
 app.use(

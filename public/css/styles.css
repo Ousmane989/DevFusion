@@ -544,6 +544,22 @@ img { max-width: 100%; display: block; }
 .tel-link:hover { text-decoration: underline; }
 .dash-toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 24px); background: var(--bg-card); border: 1px solid var(--gold); color: var(--text); padding: 13px 22px; border-radius: 50px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: all .4s var(--ease); z-index: 90; box-shadow: 0 16px 44px rgba(0,0,0,.55); }
 .dash-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Carte d'activation des notifications de commande */
+.notif-card { display: flex; align-items: center; gap: 16px; margin: 0 0 22px;
+  padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(212,175,55,.35);
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(212,175,55,.03)); }
+.notif-card.is-on { border-color: rgba(52,199,123,.4); background: linear-gradient(135deg, rgba(52,199,123,.12), rgba(52,199,123,.03)); }
+.notif-ic { font-size: 1.7rem; line-height: 1; flex-shrink: 0; }
+.notif-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.notif-txt strong { color: var(--text); }
+.notif-txt span { color: var(--text-mute); font-size: 0.88rem; }
+.notif-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+@media (max-width: 620px) {
+  .notif-card { flex-direction: column; align-items: flex-start; text-align: left; }
+  .notif-actions { width: 100%; }
+  .notif-actions .btn-primary { flex: 1; }
+}
 .side-foot { margin-top: auto; padding-top: 20px; }
 .side-plan { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 3px; }
 .side-plan-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-mute); }
