@@ -17,6 +17,12 @@
     Cache-Control = "no-cache"
     Service-Worker-Allowed = "/"
 
+# Type MIME correct pour le manifeste PWA (installation sur l'écran d'accueil).
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
 # Les fichiers statiques (css, js, html) sont servis par le CDN ; tout le
 # reste (API, pages rendues côté serveur, vitrine) va vers la fonction.
 [[redirects]]
