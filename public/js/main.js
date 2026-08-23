@@ -6,13 +6,33 @@
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ---- En-tete : ombre/flou au scroll -----------------------------
+  // ---- En-tete : ombre/flou au scroll + barre de progression ------
   const header = document.querySelector('.site-header');
+  const prog = document.getElementById('scroll-progress');
   const onScroll = () => {
     if (header) header.classList.toggle('scrolled', window.scrollY > 20);
+    if (prog) {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      prog.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    }
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  // ---- Léger effet 3D (parallaxe) sur l'aperçu du tableau de bord --
+  const tilt = document.querySelector('[data-tilt]');
+  const fine = window.matchMedia('(pointer: fine)').matches;
+  if (tilt && !reduce && fine) {
+    const zone = tilt.closest('.hero-visual') || tilt;
+    zone.addEventListener('mousemove', (e) => {
+      const r = zone.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      tilt.style.transform = `perspective(1100px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`;
+    });
+    zone.addEventListener('mouseleave', () => { tilt.style.transform = ''; });
+  }
 
   // ---- Apparition au scroll (fondu + glissement) ------------------
   const revealEls = document.querySelectorAll('.reveal');

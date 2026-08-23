@@ -170,9 +170,95 @@ img { max-width: 100%; display: block; }
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .hero-note { margin-top: 20px; font-size: 0.85rem; color: var(--text-mute); }
 .hero-mock {
-  margin: 70px auto 0; max-width: 900px; border: 1px solid var(--line); border-radius: 20px;
+  margin: 0 auto; max-width: 900px; border: 1px solid var(--line); border-radius: 20px;
   background: linear-gradient(180deg, var(--bg-soft), var(--bg)); padding: 14px;
   box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.9);
+  transition: transform .25s var(--ease); will-change: transform;
+}
+
+/* ---------- Héro : visuel animé + décorations flottantes ---------- */
+.hero-visual { position: relative; margin: 70px auto 0; max-width: 900px; }
+/* Barre de progression de lecture (en haut de page) */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  background: var(--gold-grad); z-index: 200; box-shadow: 0 0 12px rgba(212,175,55,.6);
+  transition: width .1s linear;
+}
+/* Reflet doré animé sur le mot en or du titre */
+.hero h1 .gold-text {
+  background: linear-gradient(100deg, #d4af37 0%, #fff3cf 25%, #f5d77e 50%, #fff3cf 60%, #d4af37 80%);
+  background-size: 220% auto; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: goldShine 4.5s linear infinite;
+}
+@keyframes goldShine { to { background-position: 220% center; } }
+/* Halo qui respire */
+.hero-glow { animation: haloPulse 7s ease-in-out infinite; }
+@keyframes haloPulse { 0%,100% { opacity: .75; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.08); } }
+
+/* Barres du mini-graphique qui montent au chargement */
+.hero-mock svg g rect { transform-box: fill-box; transform-origin: bottom; animation: growBar 1s var(--ease) both; }
+.hero-mock svg g rect:nth-child(1){animation-delay:.35s}.hero-mock svg g rect:nth-child(2){animation-delay:.43s}
+.hero-mock svg g rect:nth-child(3){animation-delay:.51s}.hero-mock svg g rect:nth-child(4){animation-delay:.59s}
+.hero-mock svg g rect:nth-child(5){animation-delay:.67s}.hero-mock svg g rect:nth-child(6){animation-delay:.75s}
+.hero-mock svg g rect:nth-child(7){animation-delay:.83s}.hero-mock svg g rect:nth-child(8){animation-delay:.91s}
+@keyframes growBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Cartes flottantes (notification de commande, vente encaissée) */
+.float-card {
+  position: absolute; z-index: 3; display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 16px; border-radius: 14px; background: rgba(20,20,20,.92);
+  border: 1px solid rgba(212,175,55,.4); box-shadow: 0 18px 40px -12px rgba(0,0,0,.8);
+  backdrop-filter: blur(6px); font-size: .82rem; color: var(--text);
+  animation: floatY 5s ease-in-out infinite;
+}
+.float-card b { color: var(--gold-light); font-size: .95rem; }
+.float-card span { color: var(--text-mute); font-size: .74rem; }
+.fc-order { top: 8%; left: -34px; animation-delay: .2s; }
+.fc-sale { bottom: 12%; right: -30px; animation-delay: 1.4s; }
+.fc-visits { top: 40%; right: -46px; animation-delay: .8s; }
+@keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+/* Jetons de devise qui flottent */
+.float-coin {
+  position: absolute; z-index: 2; width: 62px; height: 62px; border-radius: 50%;
+  display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: .92rem;
+  color: #3a2d05; background: radial-gradient(circle at 32% 28%, #ffe9a8, #d4af37 60%, #b8901f);
+  box-shadow: 0 12px 30px -8px rgba(212,175,55,.6), inset 0 2px 6px rgba(255,255,255,.5);
+  border: 1px solid #f5d77e; animation: floatSpin 6s ease-in-out infinite;
+}
+.coin-1 { top: -26px; right: 12%; animation-delay: .1s; }
+.coin-2 { bottom: -24px; left: 10%; width: 52px; height: 52px; font-size: .8rem; animation-delay: 1s; }
+@keyframes floatSpin { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-16px) rotate(6deg); } }
+
+/* Étincelles */
+.hero-sparkles { position: absolute; inset: -30px; z-index: 1; pointer-events: none; }
+.spark { position: absolute; width: 10px; height: 10px; background: var(--gold-light); border-radius: 50%;
+  box-shadow: 0 0 10px 2px rgba(245,215,126,.8); opacity: 0; animation: twinkle 3.4s ease-in-out infinite; }
+.spark:nth-child(1){top:12%;left:6%;animation-delay:0s}.spark:nth-child(2){top:70%;left:2%;animation-delay:.7s}
+.spark:nth-child(3){top:24%;right:4%;animation-delay:1.3s}.spark:nth-child(4){bottom:8%;right:16%;animation-delay:2s}
+.spark:nth-child(5){bottom:18%;left:22%;animation-delay:2.6s;width:7px;height:7px}
+@keyframes twinkle { 0%,100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+
+/* ---------- Bandeau paiements (défilement continu) --------------- */
+.pay-strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg-soft); padding: 26px 0; overflow: hidden; }
+.pay-strip .eyebrow { text-align: center; margin-bottom: 18px; }
+.marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.marquee-track { display: flex; gap: 18px; width: max-content; animation: marquee 26s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.pay-chip { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 50px;
+  border: 1px solid var(--line); background: var(--bg-card); white-space: nowrap; font-weight: 500; color: var(--text-dim); }
+.pay-chip .pc-coin { width: 22px; height: 22px; border-radius: 50%; background: var(--gold-grad); flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(212,175,55,.4); }
+
+/* Léger effet de survol « brillance » sur les icônes de fonctionnalités */
+.feature-card:hover .feature-ic { animation: iconPop .5s var(--ease); }
+@keyframes iconPop { 0%{transform:scale(1)}40%{transform:scale(1.18) rotate(-6deg)}100%{transform:scale(1)} }
+
+@media (max-width: 760px) {
+  .float-card, .float-coin { display: none; }
+  .hero-visual { margin-top: 46px; }
 }
 
 /* ---------- Etapes (comment ca marche) --------------------------- */

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
+  <div class="scroll-progress" id="scroll-progress"></div>
   <!-- ============================ EN-TÊTE ============================ -->
   <header class="site-header">
     <div class="container nav">
@@ -71,8 +72,15 @@
         </div>
         <p class="hero-note reveal d3">Gratuit · Sans engagement · Sans carte bancaire</p>
 
-        <!-- Aperçu maquette -->
-        <div class="hero-mock reveal d4">
+        <!-- Aperçu maquette + décorations animées -->
+        <div class="hero-visual reveal d4">
+          <div class="hero-sparkles" aria-hidden="true"><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></div>
+          <div class="float-card fc-order" aria-hidden="true">🔔 Nouvelle commande <b>#KRT-10648</b><span>8 900 FCFA · Dakar</span></div>
+          <div class="float-card fc-sale" aria-hidden="true">💰 Vente encaissée <b>+12 400 MRU</b><span>Aujourd'hui</span></div>
+          <div class="float-card fc-visits" aria-hidden="true">📈 Visiteurs <b>+38%</b><span>Cette semaine</span></div>
+          <div class="float-coin coin-1" aria-hidden="true">MRU</div>
+          <div class="float-coin coin-2" aria-hidden="true">FCFA</div>
+          <div class="hero-mock" data-tilt>
           <svg viewBox="0 0 900 470" role="img" aria-label="Aperçu du tableau de bord Karat">
             <rect width="900" height="470" rx="12" fill="#0f0f0f"/>
             <rect x="0" y="0" width="900" height="52" fill="#141414"/>
@@ -107,7 +115,8 @@
             <defs><linearGradient id="g2" x1="0" y1="1" x2="0" y2="0">
               <stop offset="0" stop-color="#D4AF37"/><stop offset="1" stop-color="#F5D77E"/></linearGradient></defs>
           </svg>
-        </div>
+          </div><!-- /.hero-mock -->
+        </div><!-- /.hero-visual -->
       </div>
     </section>
 
@@ -201,6 +210,28 @@
           <div class="stat reveal d1"><div class="num gold-text" data-count="1200" data-suffix="+">0</div><div class="label">Boutiques créées</div></div>
           <div class="stat reveal d2"><div class="num gold-text" data-count="86000" data-suffix="+">0</div><div class="label">Ventes réalisées</div></div>
           <div class="stat reveal d3"><div class="num gold-text" data-count="2">0</div><div class="label">Pays couverts</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BANDEAU PAIEMENTS ==================== -->
+    <section class="pay-strip" aria-label="Moyens de paiement acceptés">
+      <div class="container"><p class="eyebrow">Paiements mobiles locaux acceptés</p></div>
+      <div class="marquee">
+        <div class="marquee-track">
+          <span class="pay-chip"><span class="pc-coin"></span>Bankily</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Wave</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Orange Money</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Masrvi</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Sedad</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Paiement à la livraison</span>
+          <!-- duplication pour un défilement continu sans couture -->
+          <span class="pay-chip"><span class="pc-coin"></span>Bankily</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Wave</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Orange Money</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Masrvi</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Sedad</span>
+          <span class="pay-chip"><span class="pc-coin"></span>Paiement à la livraison</span>
         </div>
       </div>
     </section>
