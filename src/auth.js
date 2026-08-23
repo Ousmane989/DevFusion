@@ -5,7 +5,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'karat-dev-secret-change-me';
-const TOKEN_TTL = '30d';
+// Session longue durée : le commerçant reste connecté sur son appareil et ne
+// se déconnecte qu'en cliquant sur « Déconnexion ». 400 jours est le maximum
+// autorisé par les navigateurs (Chrome) pour la durée de vie d'un cookie.
+const TOKEN_TTL = '400d';
+const COOKIE_MAX_AGE = 400 * 24 * 60 * 60 * 1000;
 const COOKIE_NAME = 'karat_session';
 
 // ------------------------------------------------------------------
@@ -48,7 +52,7 @@ function setSessionCookie(res, token) {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: COOKIE_MAX_AGE,
   });
 }
 function clearSessionCookie(res) {

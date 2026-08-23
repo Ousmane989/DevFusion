@@ -101,6 +101,14 @@ app.use('/api/public', publicCors, publicRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Route API introuvable.' }));
 
+// Déjà connecté : on ne réaffiche pas l'accueil ni les pages de connexion /
+// inscription — on va directement au tableau de bord (session persistante sur
+// l'appareil ; seule la « Déconnexion » met fin à la session).
+app.get(['/', '/connexion', '/inscription'], (req, res, next) => {
+  if (req.user && req.user.status !== 'locked') return res.redirect('/tableau-de-bord');
+  next();
+});
+
 app.get('/tableau-de-bord', (req, res, next) => {
   if (!req.user) return res.redirect('/connexion?suite=/tableau-de-bord');
   if (req.user.status === 'locked') return res.redirect('/paiement');
