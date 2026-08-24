@@ -634,13 +634,25 @@
     mktStore = st;
     const mk = st.marketing || {};
     if (q('#mkt-pixel')) q('#mkt-pixel').value = mk.metaPixelId || '';
+    if (q('#mkt-pixel-active')) q('#mkt-pixel-active').checked = mk.metaPixelActive !== false;
     if (q('#mkt-fb')) q('#mkt-fb').value = mk.fbPage || '';
     if (q('#mkt-ig')) q('#mkt-ig').value = mk.instagram || '';
     if (q('#mkt-domain')) q('#mkt-domain').value = mk.metaDomainVerification || '';
     const cat = window.__KARAT_SPA__ ? '' : (location.origin + '/api/public/store/' + (st.slug || '') + '/catalog.csv');
     if (q('#mkt-catalog')) q('#mkt-catalog').value = cat || (mk.catalogUrl || '');
     const cl = q('#mkt-catalog-link'); if (cl) { const href = q('#mkt-catalog').value; cl.href = href; if (window.__KARAT_SPA__) { cl.href = '#'; } }
+    updatePixelStatus();
     updateUtm();
+  }
+  // Badge « Actif / Désactivé » : actif seulement si un identifiant valide est
+  // renseigné ET l'interrupteur activé (chiffres, 8 à 20 caractères).
+  function updatePixelStatus() {
+    const badge = q('#pixel-status'); if (!badge) return;
+    const id = ((q('#mkt-pixel') && q('#mkt-pixel').value) || '').replace(/\D/g, '');
+    const on = q('#mkt-pixel-active') ? q('#mkt-pixel-active').checked : true;
+    const active = on && id.length >= 8;
+    badge.textContent = active ? 'Actif' : 'Désactivé';
+    badge.className = 'pill ' + (active ? 'good' : 'muted-pill');
   }
   async function loadMarketing() {
     const r = await api('/api/store', 'GET');
@@ -651,6 +663,7 @@
   async function saveMarketing() {
     const payload = {
       metaPixelId: (q('#mkt-pixel') && q('#mkt-pixel').value.trim()) || '',
+      metaPixelActive: q('#mkt-pixel-active') ? q('#mkt-pixel-active').checked : true,
       fbPage: (q('#mkt-fb') && q('#mkt-fb').value.trim()) || '',
       instagram: (q('#mkt-ig') && q('#mkt-ig').value.trim()) || '',
       metaDomainVerification: (q('#mkt-domain') && q('#mkt-domain').value.trim()) || '',
@@ -862,6 +875,12 @@
     q('#banner-clear') && q('#banner-clear').addEventListener('click', () => { storeBanner = ''; renderBrand(); const fi = q('#banner-file'); if (fi) fi.value = ''; });
 
     q('#mkt-save') && q('#mkt-save').addEventListener('click', saveMarketing);
+    q('#mkt-pixel') && q('#mkt-pixel').addEventListener('input', updatePixelStatus);
+    q('#mkt-pixel-active') && q('#mkt-pixel-active').addEventListener('change', updatePixelStatus);
+    q('#mkt-pixel-create') && q('#mkt-pixel-create').addEventListener('click', () => {
+      window.open('https://business.facebook.com/events_manager2/list/pixel/', '_blank', 'noopener');
+      dashToast('Créez votre Pixel sur Meta, puis copiez son identifiant ici et enregistrez.');
+    });
     q('#utm-platform') && q('#utm-platform').addEventListener('change', updateUtm);
     q('#utm-campaign') && q('#utm-campaign').addEventListener('input', updateUtm);
     qa('[data-copy]').forEach((b) => b.addEventListener('click', () => copyFrom(b.dataset.copy)));

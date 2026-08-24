@@ -308,7 +308,23 @@
               <div class="panel-head"><h3>Pixel Meta &amp; réseaux</h3></div>
               <div class="form-msg" id="mkt-msg"></div>
               <p class="mkt-lead">Le <strong>Pixel Meta</strong> mesure les visites, ajouts au panier et achats de votre boutique pour optimiser vos publicités Facebook et Instagram et recibler les visiteurs.</p>
-              <div class="field"><label for="mkt-pixel">Identifiant du Pixel Meta</label><input id="mkt-pixel" type="text" inputmode="numeric" placeholder="Ex. 1234567890123456" /><div class="hint">Depuis le Gestionnaire d'événements Meta → Sources de données → votre Pixel.</div></div>
+
+              <div class="pixel-head">
+                <span class="pf-label">Statut du Pixel</span>
+                <span class="pill muted-pill" id="pixel-status">Désactivé</span>
+              </div>
+              <div class="field">
+                <label for="mkt-pixel">Identifiant du Pixel Meta</label>
+                <div class="pixel-row">
+                  <input id="mkt-pixel" type="text" inputmode="numeric" placeholder="Ex. 1234567890123456" />
+                  <button type="button" class="btn btn-outline-gold btn-sm" id="mkt-pixel-create">＋ Créer un Pixel</button>
+                </div>
+                <div class="hint">Pas encore de Pixel ? Cliquez sur « Créer un Pixel » : le Gestionnaire d'événements Meta s'ouvre, créez votre Pixel, puis copiez son identifiant ici.</div>
+              </div>
+              <label class="switch-row">
+                <span class="switch"><input type="checkbox" id="mkt-pixel-active" /><span class="switch-track"></span></span>
+                <span class="switch-label">Activer le Pixel sur ma boutique</span>
+              </label>
               <div class="pf-grid">
                 <div class="field"><label for="mkt-fb">Page Facebook</label><input id="mkt-fb" type="text" placeholder="facebook.com/ma-boutique" /></div>
                 <div class="field"><label for="mkt-ig">Compte Instagram</label><input id="mkt-ig" type="text" placeholder="@ma_boutique" /></div>

@@ -74,7 +74,10 @@ router.get('/store/:slug', async (req, res) => {
       instagram: instagram ? 'https://instagram.com/' + instagram : '',
     },
     // Pixel Meta pour le suivi des campagnes Facebook / Instagram.
-    marketing: { metaPixelId: (settings && settings.meta_pixel_id) || '' },
+    // On ne le transmet (et donc ne le déclenche) que s'il est actif.
+    marketing: {
+      metaPixelId: (settings && Number(settings.meta_pixel_active) && settings.meta_pixel_id) || '',
+    },
     // Paiement mobile facultatif (en plus du paiement a la livraison).
     payment: { wave: (settings && settings.wave_number) || '', om: (settings && settings.om_number) || '' },
     // Personnalisation visuelle.

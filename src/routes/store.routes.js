@@ -80,6 +80,7 @@ function publicStore(user, row) {
   return {
     marketing: {
       metaPixelId: row.meta_pixel_id || '',
+      metaPixelActive: !!Number(row.meta_pixel_active),
       fbPage: row.fb_page || '',
       instagram: row.instagram || '',
       metaDomainVerification: row.meta_domain_verification || '',
@@ -145,9 +146,12 @@ router.put('/', requireAuth, async (req, res) => {
   const omNumber = b.om !== undefined ? String(b.om).trim().slice(0, 40) : row.om_number;
   const logo = b.logo !== undefined ? cleanImage(b.logo) : row.logo;
   const banner = b.banner !== undefined ? cleanImage(b.banner) : row.banner;
+  // Pixel actif / désactivé : par défaut actif dès qu'un identifiant existe.
+  const metaPixelActive = b.metaPixelActive !== undefined
+    ? (b.metaPixelActive ? 1 : 0) : Number(row.meta_pixel_active);
 
   await db.prepare(
-    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, meta_domain_verification = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
+    `UPDATE store_settings SET theme = ?, tagline = ?, hero_title = ?, about = ?, slug = ?, description = ?, phone = ?, whatsapp = ?, email = ?, address = ?, meta_pixel_id = ?, fb_page = ?, instagram = ?, meta_domain_verification = ?, meta_pixel_active = ?, wave_number = ?, om_number = ?, logo = ?, banner = ?, returns_policy = ?, updated_at = datetime('now') WHERE user_id = ?`
   ).run(
     theme,
     keep(b.tagline, row.tagline, 140),
@@ -159,7 +163,7 @@ router.put('/', requireAuth, async (req, res) => {
     keep(b.whatsapp, row.whatsapp, 40),
     keep(b.email, row.email, 120),
     keep(b.address, row.address, 160),
-    metaPixelId, fbPage, instagram, metaDomainVerification, waveNumber, omNumber, logo, banner,
+    metaPixelId, fbPage, instagram, metaDomainVerification, metaPixelActive, waveNumber, omNumber, logo, banner,
     keep(b.returnsPolicy, row.returns_policy, 600),
     req.user.id
   );
