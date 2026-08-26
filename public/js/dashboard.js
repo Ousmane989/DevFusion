@@ -309,6 +309,8 @@
       const nCmd = st.today.orders;
       q('#kpi-today-sub').textContent =
         nCmd + ' commande' + (nCmd > 1 ? 's' : '') + ' · ' + st.today.pending + ' à traiter';
+      if (q('#kpi-today-orders')) q('#kpi-today-orders').textContent = nCmd;
+      if (q('#kpi-today-orders-sub')) q('#kpi-today-orders-sub').textContent = st.today.pending + ' à traiter';
     }
     setOrdersBadge(st.pending || 0);
     if (!notifiedPending && st.pending > 0) {
