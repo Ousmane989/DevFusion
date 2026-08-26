@@ -457,13 +457,15 @@
     const opts = orderStatuses.map((s) => `<option value="${s.key}" ${s.key === o.status ? 'selected' : ''}>${esc(s.label)}</option>`).join('');
     return `<span class="stsel tone-${o.tone}"><select data-order="${o.id}">${opts}</select></span>`;
   }
+  let ordersData = [];
   async function loadOrders() {
     const r = await api('/api/orders', 'GET');
     if (!r.ok) return;
     const { orders, summary, statuses } = r.data;
+    ordersData = orders || [];
     orderStatuses = statuses || [];
     applySummary(summary);
-    q('#orders-full-body').innerHTML = orders.map((o) => `<tr data-row="${o.id}">
+    q('#orders-full-body').innerHTML = orders.map((o) => `<tr data-row="${o.id}" class="order-row" title="Voir le détail de la commande">
       <td class="mono">${esc(o.ref)}</td>
       <td>${esc(o.customer)}${o.phone ? `<div class="small"><a class="tel-link" href="tel:${esc(o.phone)}">📞 ${esc(o.phone)}</a></div>` : ''}</td>
       <td class="muted">${esc(o.city)}</td>
@@ -471,8 +473,67 @@
       <td><span class="cod">À la livraison</span></td>
       <td>${statusSelect(o)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
     q('#orders-full-body').querySelectorAll('select[data-order]').forEach((sel) => sel.addEventListener('change', () => changeStatus(sel)));
+    // Clic sur la ligne = détail complet (sauf sur le statut ou le lien tél).
+    q('#orders-full-body').querySelectorAll('tr[data-row]').forEach((tr) => tr.addEventListener('click', (e) => {
+      if (e.target.closest('select, a, .stsel')) return;
+      openOrderModal(tr.dataset.row);
+    }));
     loaded.orders = true;
   }
+
+  // ---- Détail d'une commande (client + articles) ----
+  function openOrderModal(id) {
+    const o = ordersData.find((x) => String(x.id) === String(id));
+    if (!o) return;
+    const wa = (o.phone || '').replace(/[^0-9]/g, '');
+    const items = (o.items || []).map((it) => `<div class="od-item">
+      <div class="od-item-main"><span class="od-item-name">${esc(it.name)}${it.variant ? ` <span class="od-variant">${esc(it.variant)}</span>` : ''}</span><span class="od-item-qty">× ${it.qty || 1}</span></div>
+      <span class="od-item-price">${mMain((it.price || 0) * (it.qty || 1))}</span>
+    </div>`).join('') || '<p class="muted small">Aucun article.</p>';
+    const line = (label, val) => `<div class="od-row"><span>${label}</span><span>${val}</span></div>`;
+    q('#order-detail').innerHTML = `
+      <div class="od-head">
+        <div><span class="od-ref">${esc(o.ref)}</span><div class="od-date">${esc(o.date)} · Paiement à la livraison</div></div>
+        <span class="pill ${esc(o.tone)} od-status">${esc(o.statusLabel || o.status)}</span>
+      </div>
+      <div class="od-sec">
+        <h4>Client</h4>
+        <div class="od-rows">
+          ${line('Nom', esc(o.customer))}
+          ${o.phone ? line('Téléphone', `<a class="link-gold" href="tel:${esc(o.phone)}">${esc(o.phone)}</a>`) : ''}
+          ${line('Ville', esc(o.city) || '—')}
+          ${o.address ? line('Adresse', esc(o.address)) : ''}
+          ${o.note ? line('Note', esc(o.note)) : ''}
+        </div>
+        ${o.phone ? `<div class="od-contact">
+          <a class="btn btn-ghost btn-sm" href="tel:${esc(o.phone)}">📞 Appeler</a>
+          <a class="btn btn-ghost btn-sm" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">💬 WhatsApp</a>
+        </div>` : ''}
+      </div>
+      <div class="od-sec">
+        <h4>Articles (${o.itemsCount || (o.items || []).length})</h4>
+        <div class="od-items">${items}</div>
+      </div>
+      <div class="od-sec od-totals">
+        ${line('Sous-total', mMain(o.subtotal))}
+        ${line('Livraison', o.shipping ? mMain(o.shipping) : 'Offerte')}
+        <div class="od-row od-total"><span>Total</span><span>${mMain(o.amount)}</span></div>
+      </div>
+      <div class="od-sec">
+        <h4>Statut de la commande</h4>
+        ${statusSelect(o)}
+      </div>`;
+    const modal = q('#order-modal');
+    const sel = q('#order-detail select[data-order]');
+    if (sel) sel.addEventListener('change', async () => {
+      await changeStatus(sel);
+      const meta = orderStatuses.find((s) => s.key === sel.value);
+      const pill = q('.od-status'); if (pill && meta) { pill.textContent = meta.label; pill.className = 'pill ' + meta.tone + ' od-status'; }
+      loadOrders(); // rafraîchit la liste et les données en arrière-plan
+    });
+    modal.classList.add('open'); document.body.style.overflow = 'hidden';
+  }
+  function closeOrderModal() { const m = q('#order-modal'); if (m) { m.classList.remove('open'); document.body.style.overflow = ''; } }
   async function changeStatus(sel) {
     const id = sel.dataset.order, status = sel.value;
     const r = await api('/api/orders/' + id + '/status', 'PUT', { status });
@@ -1061,6 +1122,9 @@
 
     q('#notif-enable') && q('#notif-enable').addEventListener('click', enablePush);
     q('#notif-test') && q('#notif-test').addEventListener('click', testPush);
+
+    qa('#order-modal [data-order-close]').forEach((b) => b.addEventListener('click', closeOrderModal));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOrderModal(); });
   }
 
   async function init() {
