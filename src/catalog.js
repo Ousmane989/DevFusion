@@ -22,16 +22,28 @@ function themeById(id) {
 }
 
 // Zones et frais de livraison par defaut (MRU).
-function defaultShipping() {
-  return {
-    freeOver: 0, // livraison offerte au-dela de ce montant (0 = desactive)
-    zones: [
+// Zones de livraison par defaut, adaptees au pays du commerçant : un vendeur
+// senegalais ne propose que des villes du Senegal, et inversement.
+function defaultShipping(country) {
+  if (country === 'SN') {
+    return { freeOver: 0, zones: [
+      { zone: 'Dakar', fee: 1000 },
+      { zone: 'Autres villes Sénégal', fee: 2000 },
+    ] };
+  }
+  if (country === 'MR') {
+    return { freeOver: 0, zones: [
       { zone: 'Nouakchott', fee: 100 },
       { zone: 'Intérieur Mauritanie', fee: 350 },
-      { zone: 'Dakar', fee: 1500 },
-      { zone: 'Autres villes Sénégal', fee: 2500 },
-    ],
-  };
+    ] };
+  }
+  // Pays inconnu : on garde une liste generique (retrocompatibilite).
+  return { freeOver: 0, zones: [
+    { zone: 'Nouakchott', fee: 100 },
+    { zone: 'Intérieur Mauritanie', fee: 350 },
+    { zone: 'Dakar', fee: 1500 },
+    { zone: 'Autres villes Sénégal', fee: 2500 },
+  ] };
 }
 
 function publicProduct(p) {
