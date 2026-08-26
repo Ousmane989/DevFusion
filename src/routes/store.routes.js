@@ -32,7 +32,7 @@ async function getSettings(user) {
     await db.prepare('INSERT INTO store_settings (user_id, tagline, shipping_json) VALUES (?, ?, ?)').run(
       user.id,
       'Des produits de qualité, livrés près de chez vous.',
-      JSON.stringify(defaultShipping())
+      JSON.stringify(defaultShipping(user.country))
     );
     row = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   }
