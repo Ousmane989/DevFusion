@@ -1044,11 +1044,13 @@
   // ================================================================
   // Multi-boutiques : sélecteur + création
   // ================================================================
+  let shopsData = [];
   async function loadShops() {
     if (window.__KARAT_SPA__) return;
     const r = await api('/api/shops', 'GET');
     if (!r.ok || !r.data) return;
-    renderShopMenu(r.data.shops || [], r.data.activeShopId);
+    shopsData = r.data.shops || [];
+    renderShopMenu(shopsData, r.data.activeShopId);
   }
   function renderShopMenu(shops, activeId) {
     const list = q('#shop-menu-list'); if (!list) return;
@@ -1076,13 +1078,22 @@
     const r = await api('/api/shops/switch', 'POST', { shopId: id });
     if (r.ok) { dashToast('Boutique changée'); window.location.reload(); }
   }
-  function openShopModal() { const m = q('#shop-modal'); if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; toggleShopMenu(false); } }
+  function openShopModal() {
+    const m = q('#shop-modal'); if (!m) return;
+    // Remplit la liste « copier les produits depuis » avec les boutiques du compte.
+    const sel = q('#shop-copy-from');
+    if (sel) sel.innerHTML = '<option value="">Aucune — boutique vide</option>' +
+      shopsData.map((sh) => `<option value="${sh.id}">${esc(sh.name)}</option>`).join('');
+    if (q('#shop-name-input')) q('#shop-name-input').value = '';
+    clearMsg(q('#shop-msg'));
+    m.classList.add('open'); document.body.style.overflow = 'hidden'; toggleShopMenu(false);
+  }
   function closeShopModal() { const m = q('#shop-modal'); if (m) { m.classList.remove('open'); document.body.style.overflow = ''; } }
   async function createShop() {
     const name = fval('#shop-name-input');
     if (name.length < 2) { msg(q('#shop-msg'), 'error', 'Nom de la boutique requis.'); return; }
-    const r = await api('/api/shops', 'POST', { name, country: fval('#shop-country-input') });
-    if (r.ok) { closeShopModal(); dashToast('✓ Boutique créée'); window.location.reload(); }
+    const r = await api('/api/shops', 'POST', { name, country: fval('#shop-country-input'), copyFromShopId: fval('#shop-copy-from') });
+    if (r.ok) { closeShopModal(); dashToast(r.data && r.data.copied ? '✓ Boutique créée · ' + r.data.copied + ' produit(s) copié(s)' : '✓ Boutique créée'); window.location.reload(); }
     else { msg(q('#shop-msg'), 'error', (r.data && r.data.errors && r.data.errors.name) || 'Création impossible.'); }
   }
 
