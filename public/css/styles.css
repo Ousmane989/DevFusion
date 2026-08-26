@@ -938,6 +938,65 @@ code { font-family: ui-monospace, monospace; }
 .switch input:checked + .switch-track { background: linear-gradient(135deg, #1e9e5a, #34c77b); border-color: transparent; }
 .switch input:checked + .switch-track::before { transform: translateX(20px); background: #fff; }
 .switch input:focus-visible + .switch-track { box-shadow: 0 0 0 3px rgba(212,175,55,.4); }
+.switch-note { color: var(--text-mute); font-style: normal; font-size: .8rem; }
+
+/* ---------- Marketing : onglets, KPI pub, sections ---------------- */
+.mkt-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+.mkt-tab { padding: 8px 16px; border-radius: 50px; border: 1px solid var(--line); background: var(--bg-card);
+  color: var(--text-dim); font-family: var(--sans); font-size: .88rem; cursor: pointer; transition: all .25s var(--ease); }
+.mkt-tab:hover { color: var(--text); border-color: rgba(212,175,55,.4); }
+.mkt-tab.active { background: var(--gold-grad); color: #1a1400; border-color: transparent; font-weight: 600; }
+
+.ad-kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 22px; }
+.ad-kpi-grid .kpi { padding: 20px 18px; }
+.ad-kpi-grid .k-ic { width: 18px; height: 18px; color: var(--text-mute); }
+.ad-kpi-grid .k-val { font-size: 1.5rem; }
+@media (max-width: 1080px) { .ad-kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .ad-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Ligne dépliable (Pixels) */
+.mkt-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card);
+  cursor: pointer; text-align: left; color: inherit; font-family: var(--sans); transition: border-color .3s; }
+.mkt-row:hover { border-color: rgba(212,175,55,.4); }
+.mkt-row-txt h3 { font-size: 1.15rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mkt-row-txt p { color: var(--text-mute); font-size: .88rem; margin-top: 3px; }
+.mkt-row-chev { color: var(--text-mute); flex-shrink: 0; transition: transform .3s var(--ease); }
+.mkt-row[aria-expanded="true"] .mkt-row-chev { transform: rotate(90deg); }
+.mkt-collapse { max-height: 0; overflow: hidden; transition: max-height .4s var(--ease); }
+.mkt-collapse-inner { padding: 22px 4px 6px; }
+
+/* En-têtes de sous-sections + mini-formulaires */
+.mkt-sec-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 30px 0 14px; }
+.mkt-sec-head h3 { font-size: 1.3rem; }
+.mkt-sec-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.mini-form { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-soft); padding: 20px; margin-bottom: 16px; }
+.entry-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+@media (max-width: 720px) { .entry-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Cartes comptes publicitaires */
+.acc-list { display: grid; gap: 12px; }
+.acc-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card); padding: 18px 20px; }
+.acc-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.acc-card h4 { font-size: 1.1rem; }
+.acc-card .acc-meta { color: var(--text-mute); font-size: .82rem; margin-top: 2px; }
+.acc-rows { margin: 14px 0 4px; display: grid; gap: 6px; }
+.acc-rows .acc-row { display: flex; justify-content: space-between; font-size: .88rem; color: var(--text-dim); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.acc-rows .acc-row span:last-child { color: var(--text); }
+.acc-sync { width: 100%; margin-top: 12px; }
+
+/* Liste des campagnes */
+.camp-list { display: grid; gap: 12px; }
+.camp-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card); padding: 16px 20px; }
+.camp-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.camp-card h4 { font-size: 1.08rem; display: flex; align-items: center; gap: 8px; }
+.camp-plat { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-mute); border: 1px solid var(--line); padding: 2px 8px; border-radius: 50px; }
+.camp-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+.camp-stats .cs { }
+.camp-stats .cs-label { font-size: .72rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .4px; }
+.camp-stats .cs-val { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; margin-top: 2px; }
+.camp-empty { border: 1px dashed var(--line); border-radius: var(--radius); background: var(--bg-card); padding: 30px; text-align: center; color: var(--text-mute); }
+@media (max-width: 560px) { .camp-stats { grid-template-columns: repeat(2, 1fr); } }
 
 /* ==================================================================
    Menu mobile
