@@ -45,14 +45,25 @@
     <div class="dash-shell">
       <!-- Menu latéral -->
       <aside class="dash-side" id="dash-side">
-        <!-- Carte boutique -->
-        <div class="side-shop">
-          <div class="side-shop-ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/></svg>
-          </div>
-          <div class="side-shop-txt">
-            <div class="side-shop-name" id="side-shop-name">Ma boutique</div>
-            <div class="side-shop-sub">Boutique en ligne</div>
+        <!-- Sélecteur de boutique -->
+        <div class="side-shop-wrap">
+          <button type="button" class="side-shop" id="shop-switch-btn" aria-expanded="false">
+            <div class="side-shop-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/></svg>
+            </div>
+            <div class="side-shop-txt">
+              <div class="side-shop-name" id="side-shop-name">Ma boutique</div>
+              <div class="side-shop-sub" id="side-shop-sub">Boutique en ligne</div>
+            </div>
+            <svg class="side-shop-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="shop-menu" id="shop-menu" hidden>
+            <div class="shop-menu-label">Mes boutiques</div>
+            <div class="shop-menu-list" id="shop-menu-list"></div>
+            <button type="button" class="shop-menu-add" id="shop-add-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Créer une boutique
+            </button>
           </div>
         </div>
 
@@ -574,6 +585,26 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
         <div class="order-detail" id="order-detail"></div>
+      </div>
+    </div>
+
+    <!-- Modale création d'une boutique -->
+    <div class="modal" id="shop-modal" role="dialog" aria-modal="true">
+      <div class="modal-overlay" data-shop-close></div>
+      <div class="modal-box order-box">
+        <button class="modal-close" aria-label="Fermer" data-shop-close>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="order-detail">
+          <h3 style="font-family:var(--serif);font-size:1.5rem;margin-bottom:6px">Nouvelle boutique</h3>
+          <p class="muted small" style="margin-bottom:18px">Chaque boutique a ses propres produits, commandes, statistiques et livraison.</p>
+          <div class="form-msg" id="shop-msg"></div>
+          <div class="field"><label for="shop-name-input">Nom de la boutique</label><input id="shop-name-input" type="text" placeholder="Ex. Ma seconde boutique" /></div>
+          <div class="field"><label for="shop-country-input">Pays</label>
+            <select id="shop-country-input"><option value="SN">🇸🇳 Sénégal (FCFA)</option><option value="MR">🇲🇷 Mauritanie (MRU)</option></select>
+          </div>
+          <div class="pf-actions"><button type="button" class="btn btn-primary" id="shop-create-save">Créer la boutique</button><button type="button" class="btn btn-ghost" data-shop-close>Annuler</button></div>
+        </div>
       </div>
     </div>
   </div>

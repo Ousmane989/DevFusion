@@ -99,7 +99,8 @@ function initSqliteSchema(sdb) {
       email_verified INTEGER NOT NULL DEFAULT 0,
       trial_ends_at TEXT, subscription_ends_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      country TEXT NOT NULL DEFAULT 'MR', currency TEXT NOT NULL DEFAULT 'MRU'
+      country TEXT NOT NULL DEFAULT 'MR', currency TEXT NOT NULL DEFAULT 'MRU',
+      owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS verification_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

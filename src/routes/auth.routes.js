@@ -186,7 +186,9 @@ router.post('/logout', (_req, res) => {
 // GET /api/auth/me
 // ------------------------------------------------------------------
 router.get('/me', requireAuth, (req, res) => {
-  res.json({ user: publicUser(req.user) });
+  const u = publicUser(req.user);
+  if (req.account) { u.email = req.account.email; u.name = req.account.name; }
+  res.json({ user: u });
 });
 
 // ------------------------------------------------------------------
