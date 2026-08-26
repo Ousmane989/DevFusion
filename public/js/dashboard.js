@@ -11,7 +11,9 @@
   const money = (n) => Number(Math.round(n)).toLocaleString('fr-FR');
   let CUR = 'MRU';
   const mMain = (n) => money(n) + ' ' + CUR;
-  const mAlt = (n) => { const r = 6; const a = CUR === 'FCFA' ? { v: Math.round(n / r), c: 'MRU' } : { v: Math.round(n * r), c: 'FCFA' }; return '≈ ' + money(a.v) + ' ' + a.c; };
+  // Boutique mono-devise : on n'affiche QUE la devise du pays du commerçant
+  // (choisi à l'inscription). Plus de conversion « ≈ autre devise ».
+  const mAlt = () => '';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const slugify = (s) => String(s || 'ma-boutique').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 
@@ -53,7 +55,7 @@
     container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="area-chart" preserveAspectRatio="none" role="img" aria-label="Chiffre d'affaires"><defs><linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F5D77E" stop-opacity=".38"/><stop offset="1" stop-color="#D4AF37" stop-opacity="0"/></linearGradient></defs>${grid}<line x1="${padL}" y1="${avgY.toFixed(1)}" x2="${W - padR}" y2="${avgY.toFixed(1)}" class="avg-line"/><text x="${W - padR}" y="${(avgY - 5).toFixed(1)}" class="avg-label" text-anchor="end">Moyenne ${money(avg)}</text><path d="${area}" fill="url(#area-grad)"/><path d="${line}" fill="none" stroke="#F5D77E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${xl}<g class="hover-layer" style="opacity:0"><line class="crosshair" y1="${padT}" y2="${H - padB}"/><circle class="hover-dot" r="4.5"/></g></svg><div class="chart-tip" style="opacity:0"></div>`;
     if (!reduce) { const path = container.querySelector('path[stroke]'); const len = path.getTotalLength(); path.style.strokeDasharray = len; path.style.strokeDashoffset = len; path.getBoundingClientRect(); path.style.transition = 'stroke-dashoffset 1.1s ease'; path.style.strokeDashoffset = '0'; }
     const svg = container.querySelector('svg'), layer = container.querySelector('.hover-layer'), cross = container.querySelector('.crosshair'), dot = container.querySelector('.hover-dot'), tip = container.querySelector('.chart-tip');
-    function move(ev) { const rect = svg.getBoundingClientRect(); const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) / rect.width; const i = Math.max(0, Math.min(n - 1, Math.round(px * (n - 1)))); const cx = x(i), cy = y(series[i].value); layer.style.opacity = 1; cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); tip.style.opacity = 1; tip.innerHTML = `<span class="t-label">${series[i].label}</span><span class="t-val">${money(series[i].value)} MRU</span>`; tip.style.left = (cx / W) * 100 + '%'; tip.style.top = (cy / H) * 100 + '%'; }
+    function move(ev) { const rect = svg.getBoundingClientRect(); const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) / rect.width; const i = Math.max(0, Math.min(n - 1, Math.round(px * (n - 1)))); const cx = x(i), cy = y(series[i].value); layer.style.opacity = 1; cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); tip.style.opacity = 1; tip.innerHTML = `<span class="t-label">${series[i].label}</span><span class="t-val">${money(series[i].value)} ${CUR}</span>`; tip.style.left = (cx / W) * 100 + '%'; tip.style.top = (cy / H) * 100 + '%'; }
     function leave() { layer.style.opacity = 0; tip.style.opacity = 0; }
     svg.addEventListener('mousemove', move); svg.addEventListener('mouseleave', leave); svg.addEventListener('touchmove', move, { passive: true }); svg.addEventListener('touchend', leave);
   }
@@ -289,6 +291,11 @@
     if (q('#side-plan')) q('#side-plan').textContent = 'Libre';
     CUR = user.currency || 'MRU';
     qa('.k-cur').forEach((e) => (e.textContent = CUR));
+    // Libellés adaptés à la devise du pays (mono-devise).
+    if (q('#pf-price-label')) q('#pf-price-label').textContent = 'Prix (' + CUR + ')';
+    if (q('#exp-amount-label')) q('#exp-amount-label').textContent = 'Montant (' + CUR + ')';
+    if (q('#ship-free-label')) q('#ship-free-label').textContent = 'Livraison offerte à partir de (' + CUR + ') — 0 pour désactiver';
+    ['#pf-fcfa', '#kpi-rev-fcfa', '#kpi-basket-fcfa', '#an-basket-alt'].forEach((s) => { const e = q(s); if (e) e.textContent = ''; });
 
     qa('#visit-shop, #store-visit-btn').forEach((vs) => {
       if (window.__KARAT_SPA__) { vs.href = '#/boutique'; vs.removeAttribute('target'); }
@@ -363,7 +370,7 @@
     body.innerHTML = products.map((p) => `<tr>
       <td class="cell-prod"><div class="prod-cell">${thumb(p)}<div class="prod-cell-txt"><strong>${esc(p.name)}</strong>${p.subtitle ? `<div class="muted small prod-sub">${esc(p.subtitle)}</div>` : ''}</div></div></td>
       <td class="muted">${esc(p.category)}</td>
-      <td class="mono num">${mMain(p.price)}<div class="muted small">${mAlt(p.price)}</div></td>
+      <td class="mono num">${mMain(p.price)}</td>
       <td class="mono num">${p.stock}</td>
       <td>${statusPill(p.active)}</td>
       <td class="num row-actions">

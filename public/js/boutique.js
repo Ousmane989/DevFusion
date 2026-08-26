@@ -12,7 +12,8 @@
   const root = document.getElementById('store');
   let SCUR = 'MRU';
   const sMain = (n) => money(n) + ' ' + SCUR;
-  const sAlt = (n) => { const r = 6; const a = SCUR === 'FCFA' ? { v: Math.round(n / r), c: 'MRU' } : { v: Math.round(n * r), c: 'FCFA' }; return '≈ ' + money(a.v) + ' ' + a.c; };
+  // Vitrine mono-devise : uniquement la devise de la boutique (pas de conversion).
+  const sAlt = () => '';
 
   function hexToRgb(hex) { const h = hex.replace('#', ''); const v = h.length === 3 ? h.split('').map((c) => c + c).join('') : h; return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)]; }
   function rgba(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
@@ -218,7 +219,6 @@
         <h3 class="sf-pd-name">${esc(p.name)}</h3>
         ${rating}
         <div class="sf-pd-price"><span class="sf-pd-now">${sMain(p.price)}</span>${old}${promo}</div>
-        <div class="sf-pd-alt">${sAlt(p.price)}</div>
         ${p.subtitle ? `<p class="sf-pd-sub">${esc(p.subtitle)}</p>` : ''}
         ${variants}
         <div class="sf-pd-buy">
@@ -330,7 +330,7 @@
         <h4>Vos coordonnées</h4>
         <input id="sf-name" placeholder="Nom complet" required />
         <input id="sf-phone" placeholder="Téléphone" required />
-        <select id="sf-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}" ${z.zone === city ? 'selected' : ''}>${esc(z.zone)} — ${money(z.fee)} MRU</option>`).join('')}</select>
+        <select id="sf-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}" ${z.zone === city ? 'selected' : ''}>${esc(z.zone)} — ${money(z.fee)} ${SCUR}</option>`).join('')}</select>
         <input id="sf-address" placeholder="Adresse / quartier (facultatif)" />
         <textarea id="sf-note" rows="2" placeholder="Note pour le livreur (facultatif)"></textarea>
         <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez ${sMain(total)} en espèces à la réception.</span></div></div>
