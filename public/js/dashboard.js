@@ -181,14 +181,13 @@
     const perm = (window.Notification && Notification.permission) || 'default';
     let sub = null;
     try { sub = swReg ? await swReg.pushManager.getSubscription() : null; } catch (_) { sub = null; }
-    card.style.display = 'flex';
+    // Déjà activées : on masque complètement le bandeau (pas de message permanent).
     if (perm === 'granted' && sub) {
-      card.classList.add('is-on');
-      if (ti) ti.textContent = 'Notifications activées ✓';
-      if (su) su.textContent = "Une alerte sonore s'affichera à chaque commande, même l'application fermée.";
-      if (en) en.style.display = 'none';
-      if (te) te.style.display = '';
-    } else if (perm === 'denied') {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'flex';
+    if (perm === 'denied') {
       card.classList.remove('is-on');
       if (ti) ti.textContent = 'Notifications bloquées';
       if (su) su.textContent = 'Autorisez les notifications dans les réglages de votre navigateur pour recevoir vos commandes.';
