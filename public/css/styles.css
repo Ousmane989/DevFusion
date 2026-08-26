@@ -698,6 +698,35 @@ img { max-width: 100%; display: block; }
 .stsel.tone-info { color: #8fc7e6; background: rgba(59,158,219,.14); }
 .stsel.tone-critical { color: #f0a29c; background: rgba(229,103,95,.12); }
 .cod { font-size: 0.76rem; color: var(--text-mute); white-space: nowrap; }
+
+/* Ligne de commande cliquable */
+.order-row { cursor: pointer; transition: background .2s; }
+.order-row:hover { background: rgba(212,175,55,.06); }
+
+/* Modale détail de commande */
+.order-box { max-width: 560px; }
+.order-detail { padding: 26px 28px 30px; }
+.od-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.od-ref { font-family: var(--serif); font-size: 1.5rem; font-weight: 700; color: var(--text); }
+.od-date { color: var(--text-mute); font-size: .82rem; margin-top: 2px; }
+.od-status { flex-shrink: 0; }
+.od-sec { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.od-sec:last-child { border-bottom: none; padding-bottom: 0; }
+.od-sec h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .6px; color: var(--text-mute); margin-bottom: 12px; }
+.od-rows { display: grid; gap: 8px; }
+.od-row { display: flex; justify-content: space-between; gap: 14px; font-size: .92rem; color: var(--text-dim); }
+.od-row span:last-child { color: var(--text); text-align: right; }
+.od-contact { display: flex; gap: 8px; margin-top: 14px; }
+.od-items { display: grid; gap: 10px; }
+.od-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.od-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.od-item-name { color: var(--text); font-size: .94rem; }
+.od-variant { color: var(--gold-light); font-size: .8rem; border: 1px solid rgba(212,175,55,.3); border-radius: 50px; padding: 1px 8px; margin-left: 4px; }
+.od-item-qty { color: var(--text-mute); font-size: .8rem; }
+.od-item-price { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.od-totals .od-row { padding: 3px 0; }
+.od-total { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; color: var(--text); padding-top: 10px !important; margin-top: 6px; border-top: 1px solid var(--line); }
+.od-total span:last-child { color: var(--gold-light); }
 .empty-state { text-align: center; padding: 50px 20px; }
 .empty-state p { color: var(--text); }
 .empty-state .muted { color: var(--text-mute); font-size: 0.9rem; margin-top: 6px; }

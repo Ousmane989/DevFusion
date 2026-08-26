@@ -565,6 +565,17 @@
         </section>
       </main>
     </div>
+
+    <!-- Modale détail d'une commande -->
+    <div class="modal" id="order-modal" role="dialog" aria-modal="true">
+      <div class="modal-overlay" data-order-close></div>
+      <div class="modal-box order-box">
+        <button class="modal-close" aria-label="Fermer" data-order-close>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="order-detail" id="order-detail"></div>
+      </div>
+    </div>
   </div>
 
   <script src="/js/api.js"></script>
