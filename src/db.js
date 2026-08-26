@@ -193,6 +193,33 @@ function initSqliteSchema(sdb) {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id);
+    CREATE TABLE IF NOT EXISTS ad_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      name TEXT NOT NULL DEFAULT '', platform TEXT NOT NULL DEFAULT 'meta',
+      account_ref TEXT NOT NULL DEFAULT '', currency TEXT NOT NULL DEFAULT '',
+      last_sync_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_adacc_user ON ad_accounts(user_id);
+    CREATE TABLE IF NOT EXISTS ad_campaigns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      name TEXT NOT NULL DEFAULT '', platform TEXT NOT NULL DEFAULT 'meta',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_adcamp_user ON ad_campaigns(user_id);
+    CREATE TABLE IF NOT EXISTS ad_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+      campaign_id INTEGER NOT NULL, day TEXT NOT NULL,
+      spend INTEGER NOT NULL DEFAULT 0, impressions INTEGER NOT NULL DEFAULT 0,
+      clicks INTEGER NOT NULL DEFAULT 0, orders INTEGER NOT NULL DEFAULT 0,
+      revenue INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (campaign_id, day),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (campaign_id) REFERENCES ad_campaigns(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_adentry_user ON ad_entries(user_id, day);
   `);
 }
 

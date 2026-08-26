@@ -656,11 +656,13 @@
   }
   async function loadMarketing() {
     const r = await api('/api/store', 'GET');
-    if (!r.ok) return;
-    fillMarketing(r.data.store);
+    if (r.ok) fillMarketing(r.data.store);
+    await loadAdMarketing();
     loaded.marketing = true;
   }
-  async function saveMarketing() {
+  // options.silent : sauvegarde discrète (interrupteur du Pixel), sans bouton.
+  async function saveMarketing(options) {
+    const opt = options || {};
     const payload = {
       metaPixelId: (q('#mkt-pixel') && q('#mkt-pixel').value.trim()) || '',
       metaPixelActive: q('#mkt-pixel-active') ? q('#mkt-pixel-active').checked : true,
@@ -669,8 +671,127 @@
       metaDomainVerification: (q('#mkt-domain') && q('#mkt-domain').value.trim()) || '',
     };
     const r = await api('/api/store', 'PUT', payload);
-    if (r.ok) { fillMarketing(r.data.store); msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); flashSaved(q('#mkt-save'), 'Marketing enregistré !'); }
-    else msg(q('#mkt-msg'), 'error', 'Erreur lors de l\'enregistrement.');
+    if (r.ok) {
+      fillMarketing(r.data.store);
+      if (opt.silent) { dashToast('✓ ' + (opt.label || 'Enregistré')); }
+      else { msg(q('#mkt-msg'), 'success', 'Paramètres marketing enregistrés.'); flashSaved(q('#mkt-save'), 'Enregistré !'); }
+    } else { msg(q('#mkt-msg'), 'error', 'Erreur lors de l\'enregistrement.'); }
+  }
+
+  // ---------------- Suivi publicitaire (KPI, comptes, campagnes) --------------
+  let mktPeriod = '30j';
+  let mktCampaigns = [];
+  const PERIOD_LABELS = { today: "Aujourd'hui", '7j': '7 jours', '30j': '30 jours', '12m': '12 mois', year: 'Année en cours' };
+  const ratio = (n) => (n == null ? '—' : (Number(n).toFixed(2) + '×'));
+  const cur = (n) => (n == null ? '—' : mMain(n));
+
+  async function loadAdMarketing() {
+    const r = await api('/api/marketing?period=' + encodeURIComponent(mktPeriod), 'GET');
+    if (!r.ok) return;
+    renderAdMarketing(r.data);
+  }
+  function renderAdMarketing(d) {
+    const k = d.kpis || {};
+    if (q('#mkt-period-label')) q('#mkt-period-label').textContent = PERIOD_LABELS[d.period] || '30 jours';
+    if (q('#kpi-spend')) q('#kpi-spend').textContent = money(k.spend || 0);
+    if (q('#kpi-spend-sub')) q('#kpi-spend-sub').textContent = (k.campaigns || 0) + ' campagne' + ((k.campaigns || 0) > 1 ? 's' : '');
+    if (q('#kpi-roas')) q('#kpi-roas').textContent = ratio(k.roas);
+    if (q('#kpi-cpa')) q('#kpi-cpa').textContent = cur(k.cpa);
+    if (q('#kpi-cpm')) q('#kpi-cpm').textContent = cur(k.cpm);
+    if (q('#kpi-cpm-sub')) q('#kpi-cpm-sub').textContent = money(k.impressions || 0) + ' impression' + ((k.impressions || 0) > 1 ? 's' : '');
+    if (q('#kpi-ctr')) q('#kpi-ctr').textContent = k.ctr == null ? '—' : (k.ctr + ' %');
+    if (q('#kpi-ctr-sub')) q('#kpi-ctr-sub').textContent = money(k.clicks || 0) + ' clic' + ((k.clicks || 0) > 1 ? 's' : '');
+    if (q('#kpi-cpc')) q('#kpi-cpc').textContent = cur(k.cpc);
+    renderAccounts(d.accounts || []);
+    renderCampaigns(d.campaigns || [], k);
+  }
+  function renderAccounts(accounts) {
+    const el = q('#acc-list'); if (!el) return;
+    if (!accounts.length) { el.innerHTML = '<div class="camp-empty">Aucun compte publicitaire. Cliquez sur « Connecter un compte » pour en ajouter un.</div>'; return; }
+    const PLAT = { meta: 'Meta (Facebook / Instagram)', tiktok: 'TikTok', google: 'Google', autre: 'Autre' };
+    el.innerHTML = accounts.map((a) => `<div class="acc-card">
+      <div class="acc-card-top">
+        <div><h4>${esc(a.name)}</h4><div class="acc-meta">${esc(PLAT[a.platform] || a.platform)}${a.accountRef ? ' · ' + esc(a.accountRef) : ''}</div></div>
+        <button class="icon-btn danger" data-acc-del="${a.id}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+      <div class="acc-rows">
+        <div class="acc-row"><span>Devise du compte</span><span>${a.currency ? esc(a.currency) : '—'}</span></div>
+        <div class="acc-row"><span>Dernier import</span><span>${a.lastSyncAt ? esc(fmtDate(a.lastSyncAt)) : 'jamais'}</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm acc-sync" data-acc-sync="${a.id}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg>Synchroniser</button>
+    </div>`).join('');
+    el.querySelectorAll('[data-acc-del]').forEach((b) => b.addEventListener('click', () => deleteAccount(b.dataset.accDel)));
+    el.querySelectorAll('[data-acc-sync]').forEach((b) => b.addEventListener('click', () => syncAccount(b.dataset.accSync)));
+  }
+  function renderCampaigns(campaigns, k) {
+    mktCampaigns = campaigns;
+    const sum = q('#camp-summary');
+    if (sum) sum.textContent = 'Dépense totale ' + mMain(k.spend || 0) + ' · CA net ' + mMain(k.revenue || 0) + ' · ROAS ' + ratio(k.roas);
+    const el = q('#camp-list'); if (!el) return;
+    if (!campaigns.length) { el.innerHTML = '<div class="camp-empty">Aucune campagne suivie sur la période.<br/>Créez une ligne au même nom que votre publicité pour suivre sa rentabilité.</div>'; return; }
+    const PLAT = { meta: 'Meta', tiktok: 'TikTok', google: 'Google', autre: 'Autre' };
+    el.innerHTML = campaigns.map((c) => `<div class="camp-card">
+      <div class="camp-card-top">
+        <h4>${esc(c.name)} <span class="camp-plat">${esc(PLAT[c.platform] || c.platform)}</span></h4>
+        <button class="icon-btn danger" data-camp-del="${c.id}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+      <div class="camp-stats">
+        <div class="cs"><div class="cs-label">Dépense</div><div class="cs-val">${money(c.spend)}</div></div>
+        <div class="cs"><div class="cs-label">CA net</div><div class="cs-val">${money(c.revenue)}</div></div>
+        <div class="cs"><div class="cs-label">ROAS</div><div class="cs-val gold-text">${ratio(c.roas)}</div></div>
+        <div class="cs"><div class="cs-label">Commandes</div><div class="cs-val">${c.orders || 0}</div></div>
+      </div>
+    </div>`).join('');
+    el.querySelectorAll('[data-camp-del]').forEach((b) => b.addEventListener('click', () => deleteCampaign(b.dataset.campDel)));
+  }
+  function fmtDate(s) { const d = new Date(String(s).replace(' ', 'T') + (String(s).includes('Z') ? '' : 'Z')); return isNaN(d) ? '—' : d.toLocaleDateString('fr-FR'); }
+
+  function setMktPeriod(p) {
+    mktPeriod = p;
+    qa('#mkt-tabs .mkt-tab').forEach((t) => t.classList.toggle('active', t.dataset.mperiod === p));
+    loadAdMarketing();
+  }
+  function toggle(sel, show) { const el = q(sel); if (el) el.hidden = show === undefined ? !el.hidden : !show; }
+
+  async function saveAccount() {
+    const name = fval('#acc-name'); if (!name) { dashToast('Nom du compte requis.'); return; }
+    const r = await api('/api/marketing/account', 'POST', { name, platform: fval('#acc-platform'), accountRef: fval('#acc-ref'), currency: fval('#acc-currency') });
+    if (r.ok) { ['#acc-name', '#acc-ref', '#acc-currency'].forEach((s) => { if (q(s)) q(s).value = ''; }); toggle('#acc-form', false); dashToast('✓ Compte ajouté'); loadAdMarketing(); }
+  }
+  async function deleteAccount(id) {
+    if (!window.confirm('Supprimer ce compte publicitaire ?')) return;
+    const r = await api('/api/marketing/account/' + id, 'DELETE'); if (r.ok) loadAdMarketing();
+  }
+  async function syncAccount(id) {
+    const r = await api('/api/marketing/account/' + id + '/sync', 'POST', {});
+    if (r.ok) { dashToast('✓ Synchronisé'); loadAdMarketing(); }
+  }
+  async function saveCampaign() {
+    const name = fval('#camp-name'); if (!name) { dashToast('Nom de la campagne requis.'); return; }
+    const r = await api('/api/marketing/campaign', 'POST', { name, platform: fval('#camp-platform') });
+    if (r.ok) { if (q('#camp-name')) q('#camp-name').value = ''; toggle('#camp-form', false); dashToast('✓ Campagne créée'); loadAdMarketing(); }
+  }
+  async function deleteCampaign(id) {
+    if (!window.confirm('Supprimer cette campagne et ses saisies ?')) return;
+    const r = await api('/api/marketing/campaign/' + id, 'DELETE'); if (r.ok) loadAdMarketing();
+  }
+  function openEntryForm() {
+    if (!mktCampaigns.length) { dashToast('Créez d\'abord une campagne.'); toggle('#camp-form', true); return; }
+    const sel = q('#entry-campaign');
+    if (sel) sel.innerHTML = mktCampaigns.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    if (q('#entry-day') && !q('#entry-day').value) q('#entry-day').value = new Date().toISOString().slice(0, 10);
+    toggle('#entry-form', true);
+  }
+  async function saveEntry() {
+    const campaignId = q('#entry-campaign') && q('#entry-campaign').value;
+    if (!campaignId) { dashToast('Choisissez une campagne.'); return; }
+    const body = {
+      campaignId: Number(campaignId), day: fval('#entry-day'),
+      spend: fval('#entry-spend'), revenue: fval('#entry-revenue'), orders: fval('#entry-orders'),
+      impressions: fval('#entry-impr'), clicks: fval('#entry-clicks'),
+    };
+    const r = await api('/api/marketing/entry', 'POST', body);
+    if (r.ok) { ['#entry-spend', '#entry-revenue', '#entry-orders', '#entry-impr', '#entry-clicks'].forEach((s) => { if (q(s)) q(s).value = ''; }); toggle('#entry-form', false); dashToast('✓ Journée enregistrée'); loadAdMarketing(); }
   }
 
   // ================================================================
@@ -874,14 +995,37 @@
     q('#banner-file') && q('#banner-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; resizeImage(f, (data) => { storeBanner = data; renderBrand(); }, 1400); });
     q('#banner-clear') && q('#banner-clear').addEventListener('click', () => { storeBanner = ''; renderBrand(); const fi = q('#banner-file'); if (fi) fi.value = ''; });
 
-    q('#mkt-save') && q('#mkt-save').addEventListener('click', saveMarketing);
+    q('#mkt-save') && q('#mkt-save').addEventListener('click', () => saveMarketing());
     q('#mkt-pixel') && q('#mkt-pixel').addEventListener('input', updatePixelStatus);
-    q('#mkt-pixel-active') && q('#mkt-pixel-active').addEventListener('change', updatePixelStatus);
+    // Interrupteur du Pixel : enregistrement AUTOMATIQUE (survit au rafraîchissement).
+    q('#mkt-pixel-active') && q('#mkt-pixel-active').addEventListener('change', () => {
+      updatePixelStatus();
+      const on = q('#mkt-pixel-active').checked;
+      saveMarketing({ silent: true, label: 'Pixel ' + (on ? 'activé' : 'désactivé') });
+    });
     q('#mkt-pixel-create') && q('#mkt-pixel-create').addEventListener('click', () => {
       window.open('https://business.facebook.com/events_manager2/list/pixel/', '_blank', 'noopener');
       dashToast('Créez votre Pixel sur Meta, puis copiez son identifiant ici et enregistrez.');
     });
     q('#utm-platform') && q('#utm-platform').addEventListener('change', updateUtm);
+
+    // Période, ligne Pixels dépliable, comptes & campagnes
+    qa('#mkt-tabs .mkt-tab').forEach((t) => t.addEventListener('click', () => setMktPeriod(t.dataset.mperiod)));
+    const prow = q('#pixels-row'), ppanel = q('#pixels-panel');
+    if (prow && ppanel) prow.addEventListener('click', () => {
+      const open = ppanel.classList.toggle('open');
+      prow.setAttribute('aria-expanded', open ? 'true' : 'false');
+      ppanel.style.maxHeight = open ? ppanel.scrollHeight + 'px' : null;
+    });
+    q('#acc-add-btn') && q('#acc-add-btn').addEventListener('click', () => toggle('#acc-form', true));
+    q('#acc-cancel') && q('#acc-cancel').addEventListener('click', () => toggle('#acc-form', false));
+    q('#acc-save') && q('#acc-save').addEventListener('click', saveAccount);
+    q('#camp-add-btn') && q('#camp-add-btn').addEventListener('click', () => toggle('#camp-form', true));
+    q('#camp-cancel') && q('#camp-cancel').addEventListener('click', () => toggle('#camp-form', false));
+    q('#camp-save') && q('#camp-save').addEventListener('click', saveCampaign);
+    q('#entry-add-btn') && q('#entry-add-btn').addEventListener('click', openEntryForm);
+    q('#entry-cancel') && q('#entry-cancel').addEventListener('click', () => toggle('#entry-form', false));
+    q('#entry-save') && q('#entry-save').addEventListener('click', saveEntry);
     q('#utm-campaign') && q('#utm-campaign').addEventListener('input', updateUtm);
     qa('[data-copy]').forEach((b) => b.addEventListener('click', () => copyFrom(b.dataset.copy)));
 

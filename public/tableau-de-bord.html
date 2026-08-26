@@ -300,19 +300,40 @@
           </div>
         </section>
 
-        <!-- ================= MARKETING (Facebook / Instagram) ================= -->
+        <!-- ================= MARKETING (publicité & acquisition) ================= -->
         <section class="dash-section" id="sec-marketing">
-          <div class="dash-title"><div><h1>Marketing</h1><p>Faites la publicité de votre boutique sur Facebook et Instagram, et mesurez vos résultats.</p></div></div>
-          <div class="store-cols">
-            <div class="panel">
-              <div class="panel-head"><h3>Pixel Meta &amp; réseaux</h3></div>
-              <div class="form-msg" id="mkt-msg"></div>
-              <p class="mkt-lead">Le <strong>Pixel Meta</strong> mesure les visites, ajouts au panier et achats de votre boutique pour optimiser vos publicités Facebook et Instagram et recibler les visiteurs.</p>
+          <div class="dash-title"><div><h1>Marketing</h1><p>Publicité et acquisition · <span id="mkt-period-label">30 jours</span></p></div></div>
 
-              <div class="pixel-head">
-                <span class="pf-label">Statut du Pixel</span>
-                <span class="pill muted-pill" id="pixel-status">Désactivé</span>
-              </div>
+          <!-- Onglets de période -->
+          <div class="mkt-tabs" id="mkt-tabs">
+            <button class="mkt-tab" data-mperiod="today">Aujourd'hui</button>
+            <button class="mkt-tab" data-mperiod="7j">7 jours</button>
+            <button class="mkt-tab active" data-mperiod="30j">30 jours</button>
+            <button class="mkt-tab" data-mperiod="12m">12 mois</button>
+            <button class="mkt-tab" data-mperiod="year">Année en cours</button>
+          </div>
+
+          <!-- Indicateurs publicitaires -->
+          <div class="ad-kpi-grid">
+            <div class="kpi"><div class="kpi-top"><span class="k-label">Dépense publicitaire</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M18 8l-5 5-3-3-4 4"/></svg></div><div class="k-val"><span id="kpi-spend">0</span> <span class="k-cur">MRU</span></div><div class="k-sub" id="kpi-spend-sub">0 campagne</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">ROAS</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 17 17 7M9 7h8v8"/></svg></div><div class="k-val gold-text"><span id="kpi-roas">—</span></div><div class="k-sub">CA net / dépense</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">CPA</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div><div class="k-val"><span id="kpi-cpa">—</span></div><div class="k-sub">Coût par commande</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">CPM</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="k-val"><span id="kpi-cpm">—</span></div><div class="k-sub" id="kpi-cpm-sub">0 impression</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">CTR</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="k-val"><span id="kpi-ctr">—</span></div><div class="k-sub" id="kpi-ctr-sub">0 clic</div></div>
+            <div class="kpi"><div class="kpi-top"><span class="k-label">CPC</span><svg class="k-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3l7 7-3 1 2 4-2 1-2-4-3 2z"/></svg></div><div class="k-val"><span id="kpi-cpc">—</span></div><div class="k-sub">Coût par clic</div></div>
+          </div>
+
+          <!-- Ligne Pixels (dépliable) -->
+          <button type="button" class="mkt-row" id="pixels-row" aria-expanded="false">
+            <div class="mkt-row-txt">
+              <h3>Pixels et suivi des conversions <span class="pill muted-pill" id="pixel-status">Désactivé</span></h3>
+              <p>Reliez Facebook, Instagram et TikTok à votre boutique.</p>
+            </div>
+            <svg class="mkt-row-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <div class="mkt-collapse" id="pixels-panel">
+            <div class="mkt-collapse-inner">
+              <div class="form-msg" id="mkt-msg"></div>
               <div class="field">
                 <label for="mkt-pixel">Identifiant du Pixel Meta</label>
                 <div class="pixel-row">
@@ -323,44 +344,77 @@
               </div>
               <label class="switch-row">
                 <span class="switch"><input type="checkbox" id="mkt-pixel-active" /><span class="switch-track"></span></span>
-                <span class="switch-label">Activer le Pixel sur ma boutique</span>
+                <span class="switch-label">Activer le Pixel sur ma boutique <em class="switch-note">(enregistré automatiquement)</em></span>
               </label>
               <div class="pf-grid">
                 <div class="field"><label for="mkt-fb">Page Facebook</label><input id="mkt-fb" type="text" placeholder="facebook.com/ma-boutique" /></div>
                 <div class="field"><label for="mkt-ig">Compte Instagram</label><input id="mkt-ig" type="text" placeholder="@ma_boutique" /></div>
               </div>
-              <div class="field"><label for="mkt-domain">Vérification de domaine Meta</label><input id="mkt-domain" type="text" placeholder="Ex. abcd1234efgh5678…" /><div class="hint">Business Manager → Paramètres de l'entreprise → Sécurité de la marque → Domaines. Ajoutez votre domaine, choisissez « Balise meta » et collez ici le code (contenu de <code>content="…"</code>). Il sera ajouté automatiquement à votre vitrine.</div></div>
-              <div class="pf-actions"><button type="button" class="btn btn-primary" id="mkt-save">Enregistrer</button></div>
-
-              <div class="pf-label" style="margin-top:26px">Catalogue produits (Facebook / Instagram Shopping)</div>
-              <p class="mkt-lead">Importez ce flux dans le <strong>Gestionnaire de ventes Meta</strong> pour créer une boutique Instagram/Facebook et des <strong>publicités dynamiques</strong>. Il se met à jour automatiquement avec vos produits.</p>
+              <div class="field"><label for="mkt-domain">Vérification de domaine Meta</label><input id="mkt-domain" type="text" placeholder="Ex. abcd1234efgh5678…" /><div class="hint">Business Manager → Sécurité de la marque → Domaines → « Balise meta » : collez ici le code (contenu de <code>content="…"</code>).</div></div>
+              <div class="pf-label" style="margin-top:22px">Catalogue produits (Facebook / Instagram Shopping)</div>
               <div class="copy-row"><input id="mkt-catalog" type="text" readonly /><button type="button" class="btn btn-ghost btn-sm" data-copy="#mkt-catalog">Copier</button></div>
               <div class="hint"><a id="mkt-catalog-link" class="link-gold" target="_blank" rel="noopener">Aperçu du flux CSV →</a></div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-head"><h3>Générateur de liens de campagne</h3></div>
-              <p class="mkt-lead">Créez un lien traqué pour chaque publicité : les visites et ventes apparaîtront par source dans votre tableau de bord.</p>
-              <div class="field"><label for="utm-platform">Plateforme</label>
-                <select id="utm-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="ads">Autre publicité</option></select>
+              <div class="pf-label" style="margin-top:22px">Générateur de lien de campagne (UTM)</div>
+              <div class="pf-grid">
+                <div class="field"><label for="utm-platform">Plateforme</label><select id="utm-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="ads">Autre publicité</option></select></div>
+                <div class="field"><label for="utm-campaign">Nom de la campagne</label><input id="utm-campaign" type="text" placeholder="Ex. soldes-ramadan" /></div>
               </div>
-              <div class="field"><label for="utm-campaign">Nom de la campagne</label><input id="utm-campaign" type="text" placeholder="Ex. soldes-ramadan" /></div>
-              <div class="pf-label" style="margin-top:6px">Votre lien de campagne</div>
               <div class="copy-row"><input id="utm-link" type="text" readonly /><button type="button" class="btn btn-ghost btn-sm" data-copy="#utm-link">Copier</button></div>
               <div class="mkt-share" id="utm-share"></div>
-
-              <div class="mkt-guide">
-                <h4>Comment lancer une campagne</h4>
-                <ol>
-                  <li>Créez un compte <strong>Meta Business Suite</strong> (business.facebook.com) et reliez votre page Facebook + Instagram.</li>
-                  <li>Créez un <strong>Pixel</strong> et collez son identifiant ci-contre.</li>
-                  <li><strong>Vérifiez votre domaine</strong> : collez le code de vérification ci-contre (obligatoire pour optimiser les conversions).</li>
-                  <li>Importez le <strong>catalogue produits</strong> dans le Gestionnaire de ventes.</li>
-                  <li>Ouvrez le <strong>Gestionnaire de publicités</strong> (adsmanager.facebook.com) et lancez une campagne « Ventes » en utilisant votre <strong>lien de campagne</strong> comme destination et votre Pixel pour l'optimisation.</li>
-                </ol>
-              </div>
+              <div class="pf-actions"><button type="button" class="btn btn-primary" id="mkt-save">Enregistrer</button></div>
             </div>
           </div>
+
+          <!-- Comptes publicitaires -->
+          <div class="mkt-sec-head">
+            <h3>Comptes publicitaires</h3>
+            <button type="button" class="btn btn-ghost btn-sm" id="acc-add-btn">＋ Connecter un compte</button>
+          </div>
+          <div class="mini-form" id="acc-form" hidden>
+            <div class="pf-grid">
+              <div class="field"><label for="acc-name">Nom du compte</label><input id="acc-name" type="text" placeholder="Ex. Ma boutique BF" /></div>
+              <div class="field"><label for="acc-platform">Plateforme</label><select id="acc-platform"><option value="meta">Meta (Facebook / Instagram)</option><option value="tiktok">TikTok</option><option value="google">Google</option><option value="autre">Autre</option></select></div>
+            </div>
+            <div class="pf-grid">
+              <div class="field"><label for="acc-ref">Identifiant du compte</label><input id="acc-ref" type="text" placeholder="Ex. act_123456789" /></div>
+              <div class="field"><label for="acc-currency">Devise du compte</label><input id="acc-currency" type="text" placeholder="Ex. XOF / USD" /></div>
+            </div>
+            <div class="pf-actions"><button type="button" class="btn btn-primary btn-sm" id="acc-save">Enregistrer</button><button type="button" class="btn btn-ghost btn-sm" id="acc-cancel">Annuler</button></div>
+          </div>
+          <div id="acc-list" class="acc-list"></div>
+
+          <!-- Campagnes -->
+          <div class="mkt-sec-head">
+            <div><h3>Campagnes</h3><p class="muted small" id="camp-summary">Aucune campagne suivie.</p></div>
+            <div class="mkt-sec-actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="camp-add-btn">＋ Suivre une campagne</button>
+              <button type="button" class="btn btn-primary btn-sm" id="entry-add-btn">＋ Saisir une journée</button>
+            </div>
+          </div>
+          <div class="mini-form" id="camp-form" hidden>
+            <div class="pf-grid">
+              <div class="field"><label for="camp-name">Nom de la campagne</label><input id="camp-name" type="text" placeholder="Même nom que dans le Gestionnaire de publicités" /></div>
+              <div class="field"><label for="camp-platform">Plateforme</label><select id="camp-platform"><option value="meta">Meta</option><option value="tiktok">TikTok</option><option value="google">Google</option><option value="autre">Autre</option></select></div>
+            </div>
+            <div class="pf-actions"><button type="button" class="btn btn-primary btn-sm" id="camp-save">Créer</button><button type="button" class="btn btn-ghost btn-sm" id="camp-cancel">Annuler</button></div>
+          </div>
+          <div class="mini-form" id="entry-form" hidden>
+            <p class="mkt-lead" style="margin-top:0">Notez la dépense et les résultats d'une journée pour une campagne. Une saisie par jour et par campagne (elle remplace la précédente).</p>
+            <div class="pf-grid">
+              <div class="field"><label for="entry-campaign">Campagne</label><select id="entry-campaign"></select></div>
+              <div class="field"><label for="entry-day">Jour</label><input id="entry-day" type="date" /></div>
+            </div>
+            <div class="entry-grid">
+              <div class="field"><label for="entry-spend">Dépense</label><input id="entry-spend" type="number" min="0" placeholder="0" /></div>
+              <div class="field"><label for="entry-revenue">CA net</label><input id="entry-revenue" type="number" min="0" placeholder="0" /></div>
+              <div class="field"><label for="entry-orders">Commandes</label><input id="entry-orders" type="number" min="0" placeholder="0" /></div>
+              <div class="field"><label for="entry-impr">Impressions</label><input id="entry-impr" type="number" min="0" placeholder="0" /></div>
+              <div class="field"><label for="entry-clicks">Clics</label><input id="entry-clicks" type="number" min="0" placeholder="0" /></div>
+            </div>
+            <div class="pf-actions"><button type="button" class="btn btn-primary btn-sm" id="entry-save">Enregistrer la journée</button><button type="button" class="btn btn-ghost btn-sm" id="entry-cancel">Annuler</button></div>
+          </div>
+          <div id="camp-list" class="camp-list"></div>
+          <p class="hint" style="margin-top:14px">Vos publicités se lancent dans le <strong>Gestionnaire de publicités</strong> (adsmanager.facebook.com). Ici, vous créez une ligne portant le même nom pour y noter la dépense et la comparer à vos ventes.</p>
         </section>
 
         <!-- ================= ANALYSES ================= -->
