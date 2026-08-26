@@ -415,6 +415,19 @@ img { max-width: 100%; display: block; }
 .sf-pd-add svg { width: 19px; height: 19px; }
 .sf-pd-add[disabled] { opacity: .5; cursor: not-allowed; }
 .sf-pd-stock { font-size: 0.86rem; }
+
+/* Formulaire de commande directe sur la fiche produit */
+.sf-pd-order { display: grid; gap: 11px; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+.sf-pd-order input, .sf-pd-order select, .sf-pd-order textarea { width: 100%; padding: 12px 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-family: var(--body); font-size: 0.95rem; }
+.sf-pd-order input:focus, .sf-pd-order select:focus, .sf-pd-order textarea:focus { outline: none; border-color: var(--accent); }
+.sf-pd-order select option { color: #14110c; background: #f4f1ea; }
+.sf-pd-order textarea { resize: vertical; }
+.sf-pd-qtyrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sf-pd-confirm { width: 100%; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; font-size: 0.9rem; padding: 15px 18px; border-radius: 12px; }
+.sf-pd-confirm[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* Plus de panier : commande directe depuis la fiche produit */
+.sf-cart, .sf-fab { display: none !important; }
 .sf-pd-stock.ok { color: var(--muted); }
 .sf-pd-stock.oos { color: #e5675f; }
 

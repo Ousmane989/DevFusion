@@ -59,9 +59,30 @@ router.post('/', requireAuth, async (req, res) => {
   );
 
   const shop = await getUserById(info.lastInsertRowid);
+
+  // Copie facultative des produits d'une autre boutique du compte.
+  let copied = 0;
+  const from = Number(b.copyFromShopId);
+  if (from) {
+    const src = await getUserById(from);
+    if (belongsToAccount(src, req.account.id)) {
+      const products = await db.prepare(
+        `SELECT name, description, price_mru, stock, category, active, image, subtitle, compare_at_mru, rating, reviews_count, variants
+         FROM products WHERE user_id = ?`
+      ).all(from);
+      for (const p of products) {
+        await db.prepare(
+          `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image, subtitle, compare_at_mru, rating, reviews_count, variants)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).run(shop.id, p.name, p.description, p.price_mru, p.stock, p.category, p.active, p.image, p.subtitle, p.compare_at_mru, p.rating, p.reviews_count, p.variants);
+      }
+      copied = products.length;
+    }
+  }
+
   // On bascule directement sur la nouvelle boutique.
   setSessionCookie(res, signSession(shop));
-  res.status(201).json({ ok: true, shopId: shop.id, user: publicUser(shop) });
+  res.status(201).json({ ok: true, shopId: shop.id, copied, user: publicUser(shop) });
 });
 
 // POST /api/shops/switch  { shopId } — bascule sur une autre boutique du compte

@@ -140,7 +140,7 @@
         <span class="sf-cat">${esc(p.category)}</span>
         <h3>${esc(p.name)}</h3>
         ${price(p)}
-        <div class="sf-card2-actions"><button type="button" class="sf-add" data-add="${p.id}">Ajouter au panier</button><button type="button" class="sf-see" data-detail-open="${p.id}">Voir</button></div>
+        <div class="sf-card2-actions"><button type="button" class="sf-add" data-detail-open="${p.id}">Commander</button></div>
       </div></article>`;
   }
   function productsSection(d) {
@@ -212,6 +212,7 @@
       ? `<div class="sf-pd-field"><span class="sf-pd-label">Variante</span><div class="sf-var-row">${p.variants.map((v, i) => `<button type="button" class="sf-var${i === 0 ? ' on' : ''}" data-variant="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`
       : '';
     const stock = p.stock > 0 ? `<div class="sf-pd-stock ok">${p.stock} en stock</div>` : '<div class="sf-pd-stock oos">Rupture de stock</div>';
+    const zones = (data.shipping && data.shipping.zones) || [];
     modal.querySelector('.sf-detail-body').innerHTML = `<div class="sf-pd">
       <div class="sf-pd-media">${visual(p, 'cover')}</div>
       <div class="sf-pd-info">
@@ -220,29 +221,87 @@
         ${rating}
         <div class="sf-pd-price"><span class="sf-pd-now">${sMain(p.price)}</span>${old}${promo}</div>
         ${p.subtitle ? `<p class="sf-pd-sub">${esc(p.subtitle)}</p>` : ''}
-        ${variants}
-        <div class="sf-pd-buy">
-          <div class="sf-qty2"><button type="button" data-dq="-">−</button><span class="sf-dqv">1</span><button type="button" data-dq="+">+</button></div>
-          <button type="button" class="sf-btn sf-pd-add" data-pd-add="${p.id}" ${p.stock > 0 ? '' : 'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Ajouter au panier</button>
-        </div>
         ${stock}
+        ${variants}
+        <form class="sf-pd-order" id="sf-pd-order">
+          <div class="sf-pd-qtyrow">
+            <span class="sf-pd-label">Quantité</span>
+            <div class="sf-qty2"><button type="button" data-dq="-">−</button><span class="sf-dqv">1</span><button type="button" data-dq="+">+</button></div>
+          </div>
+          <span class="sf-pd-label">Vos coordonnées</span>
+          <input id="pd-name" placeholder="Nom complet" autocomplete="name" required />
+          <input id="pd-phone" placeholder="Téléphone" autocomplete="tel" inputmode="tel" required />
+          <select id="pd-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}">${esc(z.zone)} — ${z.fee ? money(z.fee) + ' ' + SCUR : 'gratuit'}</option>`).join('')}</select>
+          <input id="pd-address" placeholder="Adresse / quartier (facultatif)" />
+          <textarea id="pd-note" rows="2" placeholder="Note pour le livreur (facultatif)"></textarea>
+          <div class="sf-totals" id="pd-totals"></div>
+          <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez en espèces à la réception.</span></div></div>
+          <button type="submit" class="sf-btn sf-pd-confirm" ${p.stock > 0 ? '' : 'disabled'}>${p.stock > 0 ? 'Commander maintenant' : 'Rupture de stock'}</button>
+          <p class="sf-msg" id="pd-msg"></p>
+        </form>
         <div class="sf-acc">
           ${accItem('Description', p.description ? `<p>${esc(p.description)}</p>` : '<p class="sf-muted">Aucune description pour ce produit.</p>', true)}
           ${accItem('Livraison', shippingText(data))}
           ${accItem('Retours', returnsText(data))}
         </div>
       </div></div>`;
+
+    // Totaux en direct (sous-total = prix × quantité, + livraison selon la ville).
+    function pdShip(city) {
+      const sh = (data && data.shipping) || { zones: [], freeOver: 0 };
+      const z = (sh.zones || []).find((x) => x.zone.toLowerCase() === String(city || '').toLowerCase());
+      let fee = z ? z.fee : 0;
+      if (sh.freeOver && p.price * detailQty >= sh.freeOver) fee = 0;
+      return { fee, known: !!z };
+    }
+    function refreshPdTotals() {
+      const city = (modal.querySelector('#pd-city') || {}).value || '';
+      const sub = p.price * detailQty;
+      const s = pdShip(city);
+      const total = sub + (city ? s.fee : 0);
+      const el = modal.querySelector('#pd-totals');
+      if (el) el.innerHTML = `<div><span>Sous-total</span><span>${sMain(sub)}</span></div><div><span>Livraison</span><span>${city ? (s.fee ? sMain(s.fee) : 'Offerte') : '—'}</span></div><div class="sf-grand"><span>Total</span><span>${sMain(total)}</span></div>`;
+    }
+
     modal.querySelectorAll('[data-dq]').forEach((b) => b.addEventListener('click', () => {
       detailQty = Math.max(1, detailQty + (b.dataset.dq === '+' ? 1 : -1));
       modal.querySelector('.sf-dqv').textContent = detailQty;
+      refreshPdTotals();
     }));
     modal.querySelectorAll('.sf-var').forEach((b) => b.addEventListener('click', () => {
       modal.querySelectorAll('.sf-var').forEach((x) => x.classList.toggle('on', x === b));
       detailVariant = b.dataset.variant;
     }));
+    const citySel = modal.querySelector('#pd-city'); if (citySel) citySel.addEventListener('change', refreshPdTotals);
     modal.querySelectorAll('.sf-acc-h').forEach((h) => h.addEventListener('click', () => h.closest('.sf-acc-item').classList.toggle('open')));
-    const addBtn2 = modal.querySelector('[data-pd-add]');
-    if (addBtn2) addBtn2.addEventListener('click', () => { addToCart(p.id, detailQty, detailVariant); closeDetail(); openCart(); });
+    refreshPdTotals();
+
+    const orderForm = modal.querySelector('#sf-pd-order');
+    if (orderForm) orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = modal.querySelector('#pd-msg');
+      const name = modal.querySelector('#pd-name').value.trim();
+      const phone = modal.querySelector('#pd-phone').value.trim();
+      const city = modal.querySelector('#pd-city').value;
+      if (name.length < 2 || phone.length < 6 || !city) {
+        if (msgEl) { msgEl.textContent = 'Renseignez votre nom, votre téléphone et votre ville.'; msgEl.className = 'sf-msg err'; }
+        return;
+      }
+      const payload = { name, phone, city, address: modal.querySelector('#pd-address').value.trim(), note: modal.querySelector('#pd-note').value.trim(), items: [{ id: p.id, qty: detailQty, variant: detailVariant || '' }] };
+      const btn = modal.querySelector('.sf-pd-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+      pixel('InitiateCheckout', { value: p.price * detailQty, currency: pixCurrency(), num_items: detailQty, content_ids: ['KRT-' + p.id] });
+      const r = await placeOrder(payload);
+      if (btn) { btn.disabled = false; btn.textContent = 'Commander maintenant'; }
+      if (!r.ok) {
+        if (msgEl) { msgEl.textContent = (r.data && (r.data.error || (r.data.errors && Object.values(r.data.errors)[0]))) || 'Commande impossible.'; msgEl.className = 'sf-msg err'; }
+        return;
+      }
+      const d = r.data;
+      pixel('Purchase', { value: d.total, currency: pixCurrency(), num_items: detailQty, content_type: 'product', content_ids: ['KRT-' + p.id] });
+      modal.querySelector('.sf-detail-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${sMain(d.total)}${d.shipping ? `<br/><span class="sf-muted">(dont ${sMain(d.shipping)} de livraison)</span>` : ''}</p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
+      const cl = modal.querySelector('[data-close]'); if (cl) cl.addEventListener('click', closeDetail);
+    });
+
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     pixel('ViewContent', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price, currency: pixCurrency() });
