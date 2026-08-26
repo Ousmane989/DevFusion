@@ -1042,6 +1042,51 @@
   }
 
   // ================================================================
+  // Multi-boutiques : sélecteur + création
+  // ================================================================
+  async function loadShops() {
+    if (window.__KARAT_SPA__) return;
+    const r = await api('/api/shops', 'GET');
+    if (!r.ok || !r.data) return;
+    renderShopMenu(r.data.shops || [], r.data.activeShopId);
+  }
+  function renderShopMenu(shops, activeId) {
+    const list = q('#shop-menu-list'); if (!list) return;
+    const check = '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
+    list.innerHTML = shops.map((sh) => `<button class="shop-item ${sh.active ? 'active' : ''}" data-shop="${sh.id}">
+      <span class="shop-item-name">${esc(sh.name)}</span>
+      <span class="shop-item-cur">${esc(sh.currency)}</span>
+      ${sh.active ? check : ''}
+    </button>`).join('');
+    list.querySelectorAll('[data-shop]').forEach((b) => b.addEventListener('click', () => {
+      const id = Number(b.dataset.shop);
+      if (id === activeId) { toggleShopMenu(false); return; }
+      switchShop(id);
+    }));
+    // Sous-titre = nombre de boutiques
+    if (q('#side-shop-sub')) q('#side-shop-sub').textContent = shops.length > 1 ? shops.length + ' boutiques' : 'Boutique en ligne';
+  }
+  function toggleShopMenu(show) {
+    const menu = q('#shop-menu'), btn = q('#shop-switch-btn'); if (!menu || !btn) return;
+    const open = show === undefined ? menu.hidden : show;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  async function switchShop(id) {
+    const r = await api('/api/shops/switch', 'POST', { shopId: id });
+    if (r.ok) { dashToast('Boutique changée'); window.location.reload(); }
+  }
+  function openShopModal() { const m = q('#shop-modal'); if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; toggleShopMenu(false); } }
+  function closeShopModal() { const m = q('#shop-modal'); if (m) { m.classList.remove('open'); document.body.style.overflow = ''; } }
+  async function createShop() {
+    const name = fval('#shop-name-input');
+    if (name.length < 2) { msg(q('#shop-msg'), 'error', 'Nom de la boutique requis.'); return; }
+    const r = await api('/api/shops', 'POST', { name, country: fval('#shop-country-input') });
+    if (r.ok) { closeShopModal(); dashToast('✓ Boutique créée'); window.location.reload(); }
+    else { msg(q('#shop-msg'), 'error', (r.data && r.data.errors && r.data.errors.name) || 'Création impossible.'); }
+  }
+
+  // ================================================================
   // Init
   // ================================================================
   function wireChrome() {
@@ -1124,7 +1169,14 @@
     q('#notif-test') && q('#notif-test').addEventListener('click', testPush);
 
     qa('#order-modal [data-order-close]').forEach((b) => b.addEventListener('click', closeOrderModal));
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOrderModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeOrderModal(); closeShopModal(); } });
+
+    // Sélecteur de boutique
+    q('#shop-switch-btn') && q('#shop-switch-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleShopMenu(); });
+    q('#shop-add-btn') && q('#shop-add-btn').addEventListener('click', openShopModal);
+    q('#shop-create-save') && q('#shop-create-save').addEventListener('click', createShop);
+    qa('#shop-modal [data-shop-close]').forEach((b) => b.addEventListener('click', closeShopModal));
+    document.addEventListener('click', (e) => { if (!e.target.closest('.side-shop-wrap')) toggleShopMenu(false); });
   }
 
   async function init() {
@@ -1135,6 +1187,7 @@
     if (!booted) { wireChrome(); booted = true; }
     initNotifications();
     startOrderPolling();
+    loadShops();
   }
 
   window.KaratDashboard = { init };

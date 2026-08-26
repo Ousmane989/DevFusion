@@ -8,11 +8,14 @@ const push = require('./push');
 // Prévient le commerçant sur ses appareils qu'une commande vient d'arriver.
 async function notifyNewOrder(userId, order) {
   try {
-    const u = await db.prepare('SELECT currency FROM users WHERE id = ?').get(userId);
+    const u = await db.prepare('SELECT currency, shop_name, owner_id FROM users WHERE id = ?').get(userId);
     const cur = (u && u.currency) || 'MRU';
     const amount = Number(order.amount || 0).toLocaleString('fr-FR') + ' ' + cur;
-    await push.sendToUser(userId, {
-      title: '🔔 Nouvelle commande !',
+    // Les notifications sont au niveau du COMPTE : on cible le propriétaire.
+    const accountId = (u && u.owner_id) || userId;
+    const shopTag = u && u.shop_name ? ' · ' + u.shop_name : '';
+    await push.sendToUser(accountId, {
+      title: '🔔 Nouvelle commande !' + shopTag,
       body: `${order.ref} · ${amount}\n${order.customer}${order.city ? ' — ' + order.city : ''}`,
       ref: order.ref,
       amount,
