@@ -284,6 +284,7 @@
     q('#avatar').textContent = initials;
     q('#user-name').textContent = user.name;
     q('#shop-name').textContent = user.shopName;
+    if (q('#side-shop-name')) q('#side-shop-name').textContent = user.shopName;
     q('#hello-name').textContent = (user.name || '').split(' ')[0];
     if (q('#side-plan')) q('#side-plan').textContent = 'Libre';
     CUR = user.currency || 'MRU';
@@ -978,6 +979,18 @@
   // ================================================================
   function wireChrome() {
     qa('.side-link').forEach((l) => l.addEventListener('click', () => switchSection(l.dataset.section)));
+    // Sous-élément « Pixels » : ouvre Marketing puis déplie le panneau Pixels.
+    q('#side-pixels') && q('#side-pixels').addEventListener('click', () => {
+      switchSection('marketing');
+      setTimeout(() => {
+        const prow = q('#pixels-row'), ppanel = q('#pixels-panel');
+        if (prow && ppanel && !ppanel.classList.contains('open')) {
+          ppanel.classList.add('open'); prow.setAttribute('aria-expanded', 'true');
+          ppanel.style.maxHeight = ppanel.scrollHeight + 'px';
+        }
+        if (ppanel) ppanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 140);
+    });
     const stog = q('#side-toggle'); if (stog) stog.addEventListener('click', () => q('#dash-side').classList.toggle('open'));
     qa('.period-btn').forEach((btn) => btn.addEventListener('click', () => { qa('.period-btn').forEach((b) => b.classList.remove('active')); btn.classList.add('active'); applyPeriod(btn.dataset.period); }));
 

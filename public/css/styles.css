@@ -616,12 +616,30 @@ img { max-width: 100%; display: block; }
    ================================================================== */
 .dash-shell { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: 244px 1fr; gap: 0; align-items: start; }
 .dash-side { position: sticky; top: 66px; align-self: start; padding: 24px 16px; border-right: 1px solid var(--line); min-height: calc(100vh - 66px); display: flex; flex-direction: column; }
-.side-nav { display: grid; gap: 4px; }
-.side-link { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; color: var(--text-dim); font-family: var(--sans); font-size: 0.94rem; padding: 11px 14px; border-radius: 11px; cursor: pointer; transition: all .25s; }
+.side-nav { display: grid; gap: 3px; }
+.side-link { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; color: var(--text-dim); font-family: var(--sans); font-size: 0.94rem; padding: 11px 14px; border-radius: 11px; cursor: pointer; transition: all .22s; }
 .side-link svg { width: 19px; height: 19px; flex: none; }
 .side-link:hover { background: var(--bg-card); color: var(--text); }
-.side-link.active { background: rgba(212,175,55,.1); color: var(--gold-light); }
+.side-link.active { background: rgba(212,175,55,.12); color: var(--gold-light); font-weight: 500; }
 .side-link.active svg { color: var(--gold); }
+/* Barre d'accent à gauche de l'élément actif (comme la référence) */
+.side-link.active::before { content: ''; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; border-radius: 3px; background: var(--gold-grad); }
+
+/* Carte boutique en haut du menu */
+.side-shop { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-card); }
+.side-shop-ic { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 10px; background: rgba(212,175,55,.12); color: var(--gold); }
+.side-shop-ic svg { width: 20px; height: 20px; }
+.side-shop-txt { min-width: 0; }
+.side-shop-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-shop-sub { font-size: .74rem; color: var(--text-mute); }
+
+/* Libellé de section (BOUTIQUE EN LIGNE, COMPTE…) */
+.side-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; color: var(--text-mute); padding: 10px 14px 5px; margin-top: 8px; }
+
+/* Sous-élément (Pixels sous Marketing) */
+.side-sub { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; color: var(--text-mute); font-family: var(--sans); font-size: .88rem; padding: 8px 14px 8px 30px; border-radius: 11px; cursor: pointer; transition: all .22s; }
+.side-sub:hover { background: var(--bg-card); color: var(--text); }
+.side-sub-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex: none; }
 .side-badge { margin-left: auto; font-size: 0.72rem; color: var(--text-mute); background: var(--bg-soft); padding: 1px 8px; border-radius: 50px; min-width: 8px; text-align: center; }
 .side-link.active .side-badge { color: var(--gold-light); background: rgba(212,175,55,.15); }
 .side-badge.alert { color: #1a1400; background: var(--gold-grad); font-weight: 700; animation: badgePulse 1.8s ease-in-out infinite; }

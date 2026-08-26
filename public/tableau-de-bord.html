@@ -45,26 +45,29 @@
     <div class="dash-shell">
       <!-- Menu latéral -->
       <aside class="dash-side" id="dash-side">
+        <!-- Carte boutique -->
+        <div class="side-shop">
+          <div class="side-shop-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/></svg>
+          </div>
+          <div class="side-shop-txt">
+            <div class="side-shop-name" id="side-shop-name">Ma boutique</div>
+            <div class="side-shop-sub">Boutique en ligne</div>
+          </div>
+        </div>
+
         <nav class="side-nav">
           <button class="side-link active" data-section="overview">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
             <span>Vue d'ensemble</span>
           </button>
-          <button class="side-link" data-section="products">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7 12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
-            <span>Produits</span><span class="side-badge" id="badge-products"></span>
-          </button>
           <button class="side-link" data-section="orders">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
             <span>Commandes</span><span class="side-badge" id="badge-orders"></span>
           </button>
-          <button class="side-link" data-section="shipping">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8zM5.5 19a2 2 0 1 0 0 .01M18.5 19a2 2 0 1 0 0 .01"/></svg>
-            <span>Livraison</span>
-          </button>
-          <button class="side-link" data-section="store">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/><path d="M9 21v-6h6v6"/></svg>
-            <span>Ma boutique</span>
+          <button class="side-link" data-section="products">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7 12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
+            <span>Produits</span><span class="side-badge" id="badge-products"></span>
           </button>
           <button class="side-link" data-section="analytics">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 4-6"/></svg>
@@ -74,10 +77,25 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
             <span>Marketing</span>
           </button>
+          <button class="side-sub" id="side-pixels">
+            <span class="side-sub-dot"></span><span>Pixels</span>
+          </button>
+
+          <div class="side-label">Boutique en ligne</div>
+          <button class="side-link" data-section="store">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18"/><path d="M9 21v-6h6v6"/></svg>
+            <span>Ma boutique</span>
+          </button>
+          <button class="side-link" data-section="shipping">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8zM5.5 19a2 2 0 1 0 0 .01M18.5 19a2 2 0 1 0 0 .01"/></svg>
+            <span>Livraison</span>
+          </button>
           <button class="side-link" data-section="payment">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
             <span>Paiement</span>
           </button>
+
+          <div class="side-label">Compte</div>
           <button class="side-link" data-section="finance">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>Comptabilité</span>
@@ -92,7 +110,6 @@
           </button>
         </nav>
         <div class="side-foot">
-          <div class="side-plan"><span class="side-plan-label">Accès</span><span class="side-plan-name gold-text" id="side-plan">Libre</span></div>
           <button class="side-logout" id="logout-side">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
             <span>Se déconnecter</span>
