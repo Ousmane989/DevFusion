@@ -535,6 +535,7 @@ img { max-width: 100%; display: block; }
 .dash-top-inner { max-width: 1320px; margin: 0 auto; padding: 13px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .dash-brand-row { display: flex; align-items: center; gap: 12px; }
 .side-toggle { display: none; background: none; border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 7px; cursor: pointer; }
+.dash-scrim { display: none; }
 .dash-user { display: flex; align-items: center; gap: 12px; }
 .dash-visit { display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem; color: var(--text-dim); border: 1px solid var(--line); padding: 8px 14px; border-radius: 50px; transition: all .3s; }
 .dash-visit:hover { border-color: var(--gold); color: var(--gold-light); }
@@ -835,7 +836,10 @@ img { max-width: 100%; display: block; }
   .dash-shell { grid-template-columns: 1fr; }
   .side-toggle { display: inline-flex; }
   .dash-side { position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; width: 260px; background: var(--bg); transform: translateX(-100%); transition: transform .35s var(--ease); border-right: 1px solid var(--line); min-height: 100vh; }
-  .dash-side.open { transform: translateX(0); box-shadow: 30px 0 60px rgba(0,0,0,.5); }
+  .dash-side.open { transform: translateX(0); box-shadow: 30px 0 60px rgba(0,0,0,.5); overflow-y: auto; }
+  /* Voile sombre derrière le menu ouvert (fermeture au toucher). */
+  .dash-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
+  .dash-scrim.open { opacity: 1; pointer-events: auto; }
   .dash-content { padding: 26px 18px 70px; }
   .store-cols { grid-template-columns: 1fr; }
   .store-preview-panel { position: static; }
@@ -1095,12 +1099,21 @@ code { font-family: ui-monospace, monospace; }
 /* ==================================================================
    Menu mobile
    ================================================================== */
-.mobile-menu { position: fixed; inset: 0; z-index: 200; background: rgba(13,13,13,.97); backdrop-filter: blur(10px);
-  display: flex; flex-direction: column; padding: 90px 30px 40px; transform: translateX(100%); transition: transform 0.4s var(--ease); }
+.mobile-menu { position: fixed; inset: 0; z-index: 200; background: linear-gradient(165deg, #15130f 0%, #0a0a0b 62%);
+  display: flex; flex-direction: column; padding: 26px 26px 36px; transform: translateX(100%); transition: transform 0.4s var(--ease); overflow-y: auto; }
 .mobile-menu.open { transform: translateX(0); }
-.mobile-menu a { font-family: var(--serif); font-size: 1.6rem; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--text); }
-.mobile-menu .m-cta { margin-top: 26px; display: grid; gap: 12px; }
-.mobile-close { position: absolute; top: 26px; right: 24px; background: none; border: none; color: var(--text); cursor: pointer; }
+/* En-tête du menu : logo + fermeture */
+.mm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 34px; }
+.mm-head .brand { font-size: 1.4rem; }
+.mm-head .brand .mark { width: 30px; height: 30px; }
+/* Liens de navigation (uniquement les liens directs, pas les boutons) */
+.mobile-menu > a { font-family: var(--serif); font-size: 1.55rem; padding: 15px 4px; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); display: flex; align-items: center; justify-content: space-between; transition: color .2s var(--ease), padding-left .2s var(--ease); }
+.mobile-menu > a::after { content: '›'; font-family: var(--sans); color: var(--gold); opacity: .5; font-size: 1.4rem; }
+.mobile-menu > a:active, .mobile-menu > a:hover { color: var(--gold-light); padding-left: 12px; }
+.mobile-menu .m-cta { margin-top: auto; padding-top: 30px; display: grid; gap: 12px; }
+.mobile-close { background: none; border: 1px solid var(--line); border-radius: 50%; width: 42px; height: 42px; display: grid; place-items: center; color: var(--text); cursor: pointer; transition: border-color .2s; }
+.mobile-close:hover { border-color: var(--gold); color: var(--gold-light); }
 
 /* ==================================================================
    Modale d'apercu de modele
