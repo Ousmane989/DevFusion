@@ -154,6 +154,16 @@ img { max-width: 100%; display: block; }
 /* Éclat au survol du logo d'en-tête. */
 .brand:hover .mark { animation: markPop .6s var(--ease); }
 @keyframes markPop { 40% { transform: scale(1.14) rotate(-5deg); } 100% { transform: none; } }
+/* Facettes qui scintillent en vague continue : la gemme « vit ». */
+.mark-facets polygon { opacity: 0; mix-blend-mode: screen; animation: facetShimmer 2.6s ease-in-out infinite; }
+.mark-facets polygon:nth-child(1) { animation-delay: 0s; }
+.mark-facets polygon:nth-child(2) { animation-delay: .16s; }
+.mark-facets polygon:nth-child(3) { animation-delay: .32s; }
+.mark-facets polygon:nth-child(4) { animation-delay: .5s; }
+.mark-facets polygon:nth-child(5) { animation-delay: .66s; }
+.mark-facets polygon:nth-child(6) { animation-delay: .82s; }
+.mark-facets polygon:nth-child(7) { animation-delay: .98s; }
+@keyframes facetShimmer { 0%, 55%, 100% { opacity: 0; } 14% { opacity: .55; } }
 .nav-links { display: flex; gap: 30px; list-style: none; }
 .nav-links a { color: var(--text-dim); font-size: 0.92rem; letter-spacing: 0.4px; position: relative; transition: color 0.3s; }
 .nav-links a::after { content: ''; position: absolute; left: 0; bottom: -5px; width: 0; height: 1px; background: var(--gold-grad); transition: width 0.35s var(--ease); }
