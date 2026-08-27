@@ -264,6 +264,7 @@
     qa('.dash-section').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + name));
     qa('.side-link').forEach((l) => l.classList.toggle('active', l.dataset.section === name));
     const side = q('#dash-side'); if (side) side.classList.remove('open');
+    const scrim = q('#dash-scrim'); if (scrim) scrim.classList.remove('open');
     window.scrollTo(0, 0);
     if (name === 'products' && !loaded.products) loadProducts();
     if (name === 'orders') loadOrders(); // toujours rafraichir (nouvelles commandes clients)
@@ -1118,7 +1119,10 @@
         if (ppanel) ppanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 140);
     });
-    const stog = q('#side-toggle'); if (stog) stog.addEventListener('click', () => q('#dash-side').classList.toggle('open'));
+    const stog = q('#side-toggle');
+    const setSide = (open) => { const s = q('#dash-side'), sc = q('#dash-scrim'); if (s) s.classList.toggle('open', open); if (sc) sc.classList.toggle('open', open); };
+    if (stog) stog.addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));
+    const scrim = q('#dash-scrim'); if (scrim) scrim.addEventListener('click', () => setSide(false));
     qa('.period-btn').forEach((btn) => btn.addEventListener('click', () => { qa('.period-btn').forEach((b) => b.classList.remove('active')); btn.classList.add('active'); applyPeriod(btn.dataset.period); }));
 
     q('#add-product-btn') && q('#add-product-btn').addEventListener('click', () => openProductForm(null));
