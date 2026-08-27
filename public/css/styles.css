@@ -140,13 +140,20 @@ img { max-width: 100%; display: block; }
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.6rem; font-weight: 700; letter-spacing: 1px; }
 .brand .mark { width: 32px; height: 32px; }
-/* Logo « gemme » : reflet de lumière qui balaye la pierre en continu. */
+/* Logo « gemme » : reflet de lumière qui balaye la pierre, suivi d'un éclat. */
 .mark { overflow: visible; }
-.mark-sheen { transform: translateX(-30px); animation: markSheen 5s ease-in-out infinite; }
-@keyframes markSheen { 0%, 18% { transform: translateX(-30px); } 46%, 100% { transform: translateX(100px); } }
-/* Petit éclat au survol du logo d'en-tête. */
+.mark-sheen { transform: translateX(-34px); animation: markSheen 3.8s ease-in-out infinite; }
+@keyframes markSheen { 0%, 12% { transform: translateX(-34px); } 42%, 100% { transform: translateX(104px); } }
+/* Étincelle (petite étoile) qui scintille après le passage du reflet. */
+.mark-glint { transform-box: fill-box; transform-origin: center; opacity: 0; animation: markGlint 3.8s ease-in-out infinite; }
+@keyframes markGlint {
+  0%, 45% { opacity: 0; transform: scale(.2) rotate(0deg); }
+  58% { opacity: 1; transform: scale(1) rotate(35deg); }
+  74%, 100% { opacity: 0; transform: scale(.2) rotate(70deg); }
+}
+/* Éclat au survol du logo d'en-tête. */
 .brand:hover .mark { animation: markPop .6s var(--ease); }
-@keyframes markPop { 40% { transform: scale(1.12) rotate(-4deg); } 100% { transform: none; } }
+@keyframes markPop { 40% { transform: scale(1.14) rotate(-5deg); } 100% { transform: none; } }
 .nav-links { display: flex; gap: 30px; list-style: none; }
 .nav-links a { color: var(--text-dim); font-size: 0.92rem; letter-spacing: 0.4px; position: relative; transition: color 0.3s; }
 .nav-links a::after { content: ''; position: absolute; left: 0; bottom: -5px; width: 0; height: 1px; background: var(--gold-grad); transition: width 0.35s var(--ease); }
