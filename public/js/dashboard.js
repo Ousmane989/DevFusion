@@ -94,7 +94,10 @@
     t.textContent = text; t.classList.add('show');
     clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 4000);
   }
-  function setOrdersBadge(n) { const el = q('#badge-orders'); if (!el) return; el.textContent = n || ''; el.classList.toggle('alert', n > 0); }
+  function setOrdersBadge(n) {
+    const el = q('#badge-orders'); if (el) { el.textContent = n || ''; el.classList.toggle('alert', n > 0); }
+    const tb = q('#tab-badge-orders'); if (tb) { tb.textContent = n > 99 ? '99+' : (n || ''); tb.classList.toggle('on', n > 0); }
+  }
 
   // Effet de confirmation « enregistré » : le bouton passe au vert avec une
   // coche pendant ~2 s, puis reprend son libellé initial. Un toast renforce le
@@ -263,6 +266,7 @@
   function switchSection(name) {
     qa('.dash-section').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + name));
     qa('.side-link').forEach((l) => l.classList.toggle('active', l.dataset.section === name));
+    qa('.dash-tab[data-section]').forEach((t) => t.classList.toggle('active', t.dataset.section === name));
     const side = q('#dash-side'); if (side) side.classList.remove('open');
     const scrim = q('#dash-scrim'); if (scrim) scrim.classList.remove('open');
     window.scrollTo(0, 0);
@@ -1123,6 +1127,9 @@
     const setSide = (open) => { const s = q('#dash-side'), sc = q('#dash-scrim'); if (s) s.classList.toggle('open', open); if (sc) sc.classList.toggle('open', open); };
     if (stog) stog.addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));
     const scrim = q('#dash-scrim'); if (scrim) scrim.addEventListener('click', () => setSide(false));
+    // Barre d'onglets du bas (téléphone) : navigation rapide type appli.
+    qa('.dash-tab[data-section]').forEach((t) => t.addEventListener('click', () => switchSection(t.dataset.section)));
+    q('#tab-more') && q('#tab-more').addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));
     qa('.period-btn').forEach((btn) => btn.addEventListener('click', () => { qa('.period-btn').forEach((b) => b.classList.remove('active')); btn.classList.add('active'); applyPeriod(btn.dataset.period); }));
 
     q('#add-product-btn') && q('#add-product-btn').addEventListener('click', () => openProductForm(null));
