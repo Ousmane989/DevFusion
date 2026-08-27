@@ -43,6 +43,31 @@
     </div>
 
     <div class="dash-scrim" id="dash-scrim"></div>
+
+    <!-- Barre de navigation en bas (téléphone) -->
+    <nav class="dash-tabbar" id="dash-tabbar" aria-label="Navigation rapide">
+      <button class="dash-tab active" data-section="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Accueil</span>
+      </button>
+      <button class="dash-tab" data-section="orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Commandes</span><span class="tab-badge" id="tab-badge-orders"></span>
+      </button>
+      <button class="dash-tab" data-section="products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7 12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
+        <span>Produits</span>
+      </button>
+      <button class="dash-tab" data-section="marketing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
+        <span>Marketing</span>
+      </button>
+      <button class="dash-tab" id="tab-more">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <span>Menu</span>
+      </button>
+    </nav>
+
     <div class="dash-shell">
       <!-- Menu latéral -->
       <aside class="dash-side" id="dash-side">

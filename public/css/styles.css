@@ -536,6 +536,7 @@ img { max-width: 100%; display: block; }
 .dash-brand-row { display: flex; align-items: center; gap: 12px; }
 .side-toggle { display: none; background: none; border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 7px; cursor: pointer; }
 .dash-scrim { display: none; }
+.dash-tabbar { display: none; }
 .dash-user { display: flex; align-items: center; gap: 12px; }
 .dash-visit { display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem; color: var(--text-dim); border: 1px solid var(--line); padding: 8px 14px; border-radius: 50px; transition: all .3s; }
 .dash-visit:hover { border-color: var(--gold); color: var(--gold-light); }
@@ -840,7 +841,24 @@ img { max-width: 100%; display: block; }
   /* Voile sombre derrière le menu ouvert (fermeture au toucher). */
   .dash-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
   .dash-scrim.open { opacity: 1; pointer-events: auto; }
-  .dash-content { padding: 26px 18px 70px; }
+  .dash-content { padding: 26px 18px 96px; }
+  /* Barre d'onglets fixe en bas (navigation type appli). */
+  .dash-tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: linear-gradient(180deg, rgba(20,18,14,.96), rgba(10,10,11,.99)); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line); justify-content: space-around; align-items: stretch;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 24px rgba(0,0,0,.35); }
+  .dash-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; color: var(--text-mute); font-family: var(--sans); font-size: .66rem; font-weight: 500;
+    letter-spacing: .2px; cursor: pointer; padding: 6px 2px 4px; position: relative; transition: color .2s; -webkit-tap-highlight-color: transparent; }
+  .dash-tab svg { width: 23px; height: 23px; transition: transform .2s, color .2s; }
+  .dash-tab.active { color: var(--gold-light, #f5d77e); }
+  .dash-tab.active svg { color: var(--gold, #d4af37); transform: translateY(-1px); }
+  .dash-tab:active svg { transform: scale(.9); }
+  .tab-badge { position: absolute; top: 0; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px;
+    display: none; align-items: center; justify-content: center; border-radius: 50px;
+    background: var(--gold-grad, linear-gradient(120deg,#d4af37,#f8e6a5)); color: #1a1400;
+    font-size: .58rem; font-weight: 700; line-height: 1; }
+  .tab-badge.on { display: flex; }
   .store-cols { grid-template-columns: 1fr; }
   .store-preview-panel { position: static; }
   .dash-visit span, .dash-visit { font-size: 0.8rem; }
