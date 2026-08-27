@@ -81,39 +81,61 @@
           <div class="float-coin coin-1" aria-hidden="true">MRU</div>
           <div class="float-coin coin-2" aria-hidden="true">FCFA</div>
           <div class="hero-mock" data-tilt>
-          <svg viewBox="0 0 900 470" role="img" aria-label="Aperçu du tableau de bord Karat">
+          <svg viewBox="0 0 900 470" role="img" aria-label="Aperçu du tableau de bord Karat" font-family="Jost, sans-serif">
+            <defs><linearGradient id="g2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#D4AF37"/><stop offset="1" stop-color="#F5D77E"/></linearGradient></defs>
             <rect width="900" height="470" rx="12" fill="#0f0f0f"/>
+            <!-- barre supérieure -->
             <rect x="0" y="0" width="900" height="52" fill="#141414"/>
             <circle cx="26" cy="26" r="5" fill="#3a3a3a"/><circle cx="46" cy="26" r="5" fill="#3a3a3a"/><circle cx="66" cy="26" r="5" fill="#3a3a3a"/>
-            <rect x="360" y="18" width="180" height="16" rx="8" fill="#222"/>
+            <text x="450" y="31" text-anchor="middle" font-size="14" fill="#837e72">Tableau de bord · Novenza</text>
+            <!-- menu latéral -->
             <rect x="24" y="80" width="210" height="360" rx="10" fill="#151515"/>
-            <rect x="44" y="108" width="120" height="12" rx="6" fill="#2a2a2a"/>
-            <rect x="44" y="140" width="150" height="10" rx="5" fill="#D4AF37" opacity=".8"/>
-            <rect x="44" y="168" width="130" height="10" rx="5" fill="#242424"/>
-            <rect x="44" y="196" width="140" height="10" rx="5" fill="#242424"/>
-            <rect x="44" y="224" width="120" height="10" rx="5" fill="#242424"/>
+            <text x="44" y="118" font-family="Cormorant Garamond, serif" font-size="23" font-weight="700" fill="#F5D77E">Karat</text>
+            <rect x="40" y="140" width="178" height="30" rx="8" fill="#D4AF37" opacity=".14"/>
+            <text x="58" y="160" font-size="13" fill="#F5D77E">Vue d’ensemble</text>
+            <text x="58" y="196" font-size="13" fill="#8f897d">Commandes</text>
+            <text x="58" y="228" font-size="13" fill="#8f897d">Produits</text>
+            <text x="58" y="260" font-size="13" fill="#8f897d">Analyses</text>
+            <text x="58" y="292" font-size="13" fill="#8f897d">Marketing</text>
+            <text x="58" y="324" font-size="13" fill="#8f897d">Livraison</text>
+            <!-- KPI 1 : chiffre d'affaires -->
             <rect x="262" y="80" width="196" height="96" rx="10" fill="#151515"/>
+            <text x="282" y="108" font-size="11" letter-spacing="1" fill="#837e72">CHIFFRE D’AFFAIRES</text>
+            <text x="282" y="144" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#F5D77E">1 240 000</text>
+            <text x="282" y="164" font-size="12" fill="#837e72">FCFA</text>
+            <text x="438" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 18%</text>
+            <!-- KPI 2 : commandes -->
             <rect x="474" y="80" width="196" height="96" rx="10" fill="#151515"/>
+            <text x="494" y="108" font-size="11" letter-spacing="1" fill="#837e72">COMMANDES</text>
+            <text x="494" y="146" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#f4f1ea">86</text>
+            <text x="650" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 12%</text>
+            <text x="494" y="164" font-size="12" fill="#837e72">Sur 30 jours</text>
+            <!-- KPI 3 : visiteurs -->
             <rect x="686" y="80" width="190" height="96" rx="10" fill="#151515"/>
-            <rect x="282" y="104" width="60" height="10" rx="5" fill="#2a2a2a"/>
-            <rect x="282" y="128" width="110" height="20" rx="6" fill="url(#g2)"/>
-            <rect x="494" y="104" width="60" height="10" rx="5" fill="#2a2a2a"/>
-            <rect x="494" y="128" width="90" height="20" rx="6" fill="#333"/>
-            <rect x="706" y="104" width="60" height="10" rx="5" fill="#2a2a2a"/>
-            <rect x="706" y="128" width="100" height="20" rx="6" fill="#333"/>
+            <text x="706" y="108" font-size="11" letter-spacing="1" fill="#837e72">VISITEURS</text>
+            <text x="706" y="146" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#f4f1ea">1 204</text>
+            <text x="856" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 38%</text>
+            <text x="706" y="164" font-size="12" fill="#837e72">Sur 30 jours</text>
+            <!-- graphique -->
             <rect x="262" y="196" width="614" height="244" rx="10" fill="#151515"/>
+            <text x="284" y="228" font-size="14" fill="#f4f1ea">Évolution du chiffre d’affaires</text>
+            <text x="858" y="228" text-anchor="end" font-size="12" fill="#F5D77E">7 mois · FCFA</text>
+            <line x1="284" y1="300" x2="854" y2="300" stroke="#242424" stroke-width="1"/>
+            <line x1="284" y1="360" x2="854" y2="360" stroke="#242424" stroke-width="1"/>
+            <line x1="284" y1="420" x2="854" y2="420" stroke="#2a2a2a" stroke-width="1"/>
             <g fill="url(#g2)">
-              <rect x="300" y="360" width="46" height="60" rx="5"/>
-              <rect x="366" y="320" width="46" height="100" rx="5"/>
-              <rect x="432" y="290" width="46" height="130" rx="5"/>
-              <rect x="498" y="250" width="46" height="170" rx="5"/>
-              <rect x="564" y="300" width="46" height="120" rx="5"/>
-              <rect x="630" y="230" width="46" height="190" rx="5"/>
-              <rect x="696" y="210" width="46" height="210" rx="5"/>
-              <rect x="762" y="270" width="46" height="150" rx="5"/>
+              <rect x="300" y="360" width="42" height="60" rx="5"/>
+              <rect x="380" y="330" width="42" height="90" rx="5"/>
+              <rect x="460" y="296" width="42" height="124" rx="5"/>
+              <rect x="540" y="258" width="42" height="162" rx="5"/>
+              <rect x="620" y="300" width="42" height="120" rx="5"/>
+              <rect x="700" y="238" width="42" height="182" rx="5"/>
+              <rect x="780" y="214" width="42" height="206" rx="5"/>
             </g>
-            <defs><linearGradient id="g2" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0" stop-color="#D4AF37"/><stop offset="1" stop-color="#F5D77E"/></linearGradient></defs>
+            <g font-size="11" fill="#837e72" text-anchor="middle">
+              <text x="321" y="434">Fév</text><text x="401" y="434">Mar</text><text x="481" y="434">Avr</text>
+              <text x="561" y="434">Mai</text><text x="641" y="434">Juin</text><text x="721" y="434">Juil</text><text x="801" y="434">Aoû</text>
+            </g>
           </svg>
           </div><!-- /.hero-mock -->
         </div><!-- /.hero-visual -->
