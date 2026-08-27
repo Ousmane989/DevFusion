@@ -83,6 +83,42 @@ async function realStats(user) {
     };
   }
 
+  // ---- KPIs entre deux prédicats (aujourd'hui vs hier, etc.) ----
+  function kpisBetween(inCur, inPrev, sparkArr) {
+    const oCur = orders.filter(inCur), oPrev = orders.filter(inPrev);
+    const revCur = oCur.filter(isDelivered).reduce((s, o) => s + o.total, 0);
+    const revPrev = oPrev.filter(isDelivered).reduce((s, o) => s + o.total, 0);
+    const cmdCur = oCur.length, cmdPrev = oPrev.length;
+    const delCur = oCur.filter(isDelivered).length, delPrev = oPrev.filter(isDelivered).length;
+    const visCur = visits.filter(inCur).length, visPrev = visits.filter(inPrev).length;
+    const conv = visCur ? (cmdCur / visCur) * 100 : 0, convPrev = visPrev ? (cmdPrev / visPrev) * 100 : 0;
+    const basket = delCur ? revCur / delCur : 0, basketPrev = delPrev ? revPrev / delPrev : 0;
+    return {
+      revenue: { value: revCur, delta: delta(revCur, revPrev), spark: sparkArr.rev },
+      orders: { value: cmdCur, delta: delta(cmdCur, cmdPrev), spark: sparkArr.ord },
+      visitors: { value: visCur, delta: delta(visCur, visPrev), spark: sparkArr.vis },
+      conversion: { value: Number(conv.toFixed(1)), delta: delta(conv, convPrev), spark: sparkArr.ord },
+      basket: { value: Math.round(basket), delta: delta(basket, basketPrev) },
+    };
+  }
+
+  // ---- Aujourd'hui : buckets horaires + KPIs (jour calendaire vs hier) ----
+  const todayStr = dayKey(now);
+  const yStr = dayKey(new Date(now.getTime() - 86400000));
+  const inToday = (x) => dayKey(x.d) === todayStr;
+  const inYesterday = (x) => dayKey(x.d) === yStr;
+  const hourly = [];
+  for (let h = 0; h <= now.getUTCHours(); h++) hourly.push({ h, label: String(h).padStart(2, '0') + 'h' });
+  const revByHour = {}, ordByHour = {}, visByHour = {};
+  orders.filter((o) => inToday(o) && isDelivered(o)).forEach((o) => { const h = o.d.getUTCHours(); revByHour[h] = (revByHour[h] || 0) + o.total; });
+  orders.filter(inToday).forEach((o) => { const h = o.d.getUTCHours(); ordByHour[h] = (ordByHour[h] || 0) + 1; });
+  visits.filter(inToday).forEach((v) => { const h = v.d.getUTCHours(); visByHour[h] = (visByHour[h] || 0) + 1; });
+  const sparksToday = {
+    rev: hourly.map((b) => revByHour[b.h] || 0),
+    ord: hourly.map((b) => ordByHour[b.h] || 0),
+    vis: hourly.map((b) => visByHour[b.h] || 0),
+  };
+
   const d7 = dailyBuckets(7), d30 = dailyBuckets(30), m12 = monthlyBuckets(12);
   const spark14 = dailyBuckets(14);
   const sparksDaily = {
@@ -94,6 +130,7 @@ async function realStats(user) {
   const sparks12 = { rev: m12.map((b) => revByMonth[b.key] || 0), ord: m12.map((b) => revByMonth[b.key] || 0), vis: m12.map((b) => revByMonth[b.key] || 0) };
 
   const periods = {
+    'today': { rangeLabel: 'aujourd\'hui', subLabel: "Aujourd'hui", today: true, kpis: kpisBetween(inToday, inYesterday, sparksToday), series: hourly.map((b) => ({ label: b.label, value: revByHour[b.h] || 0 })) },
     '7j': { rangeLabel: '7 derniers jours', subLabel: 'Sur 7 jours', kpis: windowKpis(7, sparks7), series: d7.map((b) => ({ label: b.label, value: revByDay[b.key] || 0 })) },
     '30j': { rangeLabel: '30 derniers jours', subLabel: 'Sur 30 jours', kpis: windowKpis(30, sparksDaily), series: d30.map((b) => ({ label: b.label, value: revByDay[b.key] || 0 })) },
     '12m': { rangeLabel: '12 derniers mois', subLabel: 'Sur 12 mois', kpis: windowKpis(365, sparks12), series: m12.map((b) => ({ label: b.label, value: revByMonth[b.key] || 0 })) },

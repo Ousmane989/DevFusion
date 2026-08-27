@@ -324,7 +324,9 @@
 
   function applyPeriod(key) {
     const st = overviewStats; const P = st.periods[key], k = P.kpis;
-    q('#dash-sub').textContent = 'Voici les performances de votre boutique sur les ' + P.rangeLabel + '.';
+    q('#dash-sub').textContent = P.today
+      ? 'Voici les performances de votre boutique aujourd\'hui.'
+      : 'Voici les performances de votre boutique sur les ' + P.rangeLabel + '.';
     qa('.k-period').forEach((e) => (e.textContent = P.subLabel));
     countTo(q('#kpi-rev'), k.revenue.value); q('#kpi-rev-fcfa').textContent = mAlt(k.revenue.value); q('#kpi-rev-delta').innerHTML = deltaChip(k.revenue.delta); q('#kpi-rev-spark').innerHTML = sparkline(k.revenue.spark);
     countTo(q('#kpi-orders'), k.orders.value); q('#kpi-orders-delta').innerHTML = deltaChip(k.orders.delta); q('#kpi-orders-spark').innerHTML = sparkline(k.orders.spark);
