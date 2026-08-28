@@ -1210,6 +1210,7 @@
     if (!r.ok) { if (r.status === 401 && !window.__KARAT_SPA__) window.location.href = '/connexion?suite=/tableau-de-bord'; return; }
     currentUser = r.data.user; overviewStats = r.data.stats;
     renderOverview(currentUser, overviewStats);
+    const adminLink = q('#admin-link'); if (adminLink) adminLink.hidden = !currentUser.isAdmin;
     if (!booted) { wireChrome(); booted = true; }
     initNotifications();
     startOrderPolling();

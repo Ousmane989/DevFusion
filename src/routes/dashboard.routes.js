@@ -4,6 +4,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { publicUser } = require('../account');
+const { isAdminEmail } = require('../config');
 
 const router = express.Router();
 
@@ -175,7 +176,9 @@ async function realStats(user) {
 
 // GET /api/dashboard
 router.get('/', requireAuth, async (req, res) => {
-  res.json({ user: publicUser(req.user), stats: await realStats(req.user) });
+  const user = publicUser(req.user);
+  user.isAdmin = isAdminEmail((req.account && req.account.email) || req.user.email);
+  res.json({ user, stats: await realStats(req.user) });
 });
 
 module.exports = router;

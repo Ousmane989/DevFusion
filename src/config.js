@@ -55,7 +55,18 @@ const config = {
   // construire les liens absolus (flux catalogue Meta, Open Graph). A defaut,
   // on utilise l'URL fournie par Render, sinon l'hote de la requete.
   publicBaseUrl: (process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, ''),
+  // Adresses e-mail des administrateurs du SaaS (accès à l'espace admin).
+  // Liste séparée par des virgules dans ADMIN_EMAILS ; le propriétaire par défaut.
+  adminEmails: (process.env.ADMIN_EMAILS || 'ousmane2003n@gmail.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
 };
+
+// Vrai si l'adresse fournie appartient à un administrateur du SaaS.
+function isAdminEmail(email) {
+  return Boolean(email) && config.adminEmails.includes(String(email).toLowerCase());
+}
 
 // Verifie la configuration ; renvoie la liste des avertissements/erreurs.
 function validate() {
@@ -78,4 +89,4 @@ function validate() {
   return { warnings, errors };
 }
 
-module.exports = { config, validate };
+module.exports = { config, validate, isAdminEmail };

@@ -6,7 +6,7 @@ const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { config } = require('./config');
+const { config, isAdminEmail } = require('./config');
 const { securityHeaders, publicCors } = require('./http');
 const { loadUser } = require('./middleware');
 const authRoutes = require('./routes/auth.routes');
@@ -22,6 +22,7 @@ const financeRoutes = require('./routes/finance.routes');
 const pushRoutes = require('./routes/push.routes');
 const marketingRoutes = require('./routes/marketing.routes');
 const shopsRoutes = require('./routes/shops.routes');
+const adminRoutes = require('./routes/admin.routes');
 const { router: developerRoutes, apiV1: apiV1Routes } = require('./routes/developer.routes');
 const { renderStorefrontHtml } = require('./storefront');
 
@@ -99,6 +100,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/marketing', marketingRoutes);
 app.use('/api/shops', shopsRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/dev', developerRoutes);
 app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
@@ -121,6 +123,14 @@ app.get('/tableau-de-bord', (req, res, next) => {
 
 app.get('/paiement', (req, res, next) => {
   if (!req.user) return res.redirect('/connexion?suite=/paiement');
+  next();
+});
+
+// Espace administrateur : réservé aux e-mails listés dans ADMIN_EMAILS.
+app.get('/admin', (req, res, next) => {
+  if (!req.user) return res.redirect('/connexion?suite=/admin');
+  const email = (req.account && req.account.email) || req.user.email;
+  if (!isAdminEmail(email)) return res.redirect('/tableau-de-bord');
   next();
 });
 
