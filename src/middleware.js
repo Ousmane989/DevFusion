@@ -2,6 +2,7 @@
 
 const { COOKIE_NAME, verifySession } = require('./auth');
 const { getUserById } = require('./account');
+const { isAdminEmail } = require('./config');
 
 /**
  * Attache req.user (la BOUTIQUE active) et req.account (le compte de connexion).
@@ -35,4 +36,12 @@ function requireAuth(req, res, next) {
   next();
 }
 
-module.exports = { loadUser, requireAuth };
+/** Exige un compte administrateur du SaaS (par e-mail de connexion). */
+function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Non authentifie.' });
+  const email = (req.account && req.account.email) || req.user.email;
+  if (!isAdminEmail(email)) return res.status(403).json({ error: 'Accès réservé à l\'administrateur.' });
+  next();
+}
+
+module.exports = { loadUser, requireAuth, requireAdmin };

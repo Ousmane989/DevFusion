@@ -17,7 +17,7 @@ const { PLANS, TRIAL_DAYS, isoIn, getUserByEmail, getUserById, publicUser } = re
 const { COUNTRIES, currencyOf } = require('../catalog');
 const { sendCode, hasSmtp } = require('../mailer');
 const { requireAuth } = require('../middleware');
-const { config } = require('../config');
+const { config, isAdminEmail } = require('../config');
 
 const router = express.Router();
 
@@ -188,6 +188,7 @@ router.post('/logout', (_req, res) => {
 router.get('/me', requireAuth, (req, res) => {
   const u = publicUser(req.user);
   if (req.account) { u.email = req.account.email; u.name = req.account.name; }
+  u.isAdmin = isAdminEmail(u.email);
   res.json({ user: u });
 });
 
