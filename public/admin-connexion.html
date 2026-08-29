@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion administrateur — Karat</title>
+  <link rel="icon" href="/favicon.svg" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    .adminlogin { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: radial-gradient(1200px 600px at 50% -10%, rgba(212,175,55,.08), transparent 60%), var(--bg); }
+    .al-card { width: 100%; max-width: 400px; background: var(--bg-card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 34px 30px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+    .al-lock { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; background: var(--gold-grad); color: #1a1400; }
+    .al-lock svg { width: 26px; height: 26px; }
+    .al-brand { text-align: center; font-family: var(--serif); font-size: 1.5rem; font-weight: 600;
+      background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .al-tag { text-align: center; font-size: .68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mute); margin-bottom: 22px; }
+    .al-card h1 { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; text-align: center; margin-bottom: 4px; }
+    .al-card .sub { text-align: center; color: var(--text-mute); font-size: .88rem; margin-bottom: 22px; }
+    .al-field { margin-bottom: 14px; }
+    .al-field label { display: block; font-size: .8rem; color: var(--text-dim); margin-bottom: 6px; }
+    .al-field input { width: 100%; background: var(--bg-soft); border: 1px solid var(--line); color: var(--text);
+      font-family: var(--sans); font-size: .95rem; padding: 12px 14px; border-radius: var(--radius-sm); }
+    .al-field input:focus { outline: none; border-color: var(--gold); }
+    .al-btn { width: 100%; margin-top: 6px; }
+    .al-msg { min-height: 20px; font-size: .86rem; margin-bottom: 6px; text-align: center; }
+    .al-msg.err { color: var(--danger); }
+    .al-msg.info { color: var(--gold-light); }
+    .al-foot { text-align: center; margin-top: 18px; }
+    .al-foot a { color: var(--text-mute); font-size: .82rem; text-decoration: none; }
+    .al-foot a:hover { color: var(--gold-light); }
+  </style>
+</head>
+<body>
+  <div class="adminlogin">
+    <div class="al-card">
+      <div class="al-lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </div>
+      <div class="al-brand">Karat</div>
+      <div class="al-tag">Espace administrateur</div>
+      <h1>Connexion sécurisée</h1>
+      <p class="sub">Accès réservé à l'administration du service.</p>
+
+      <div class="al-msg" id="al-msg"></div>
+      <form id="al-form" novalidate>
+        <div class="al-field">
+          <label for="al-email">E-mail administrateur</label>
+          <input id="al-email" type="email" autocomplete="username" placeholder="admin@exemple.com" />
+        </div>
+        <div class="al-field">
+          <label for="al-pass">Mot de passe</label>
+          <input id="al-pass" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg al-btn" id="al-btn">Se connecter</button>
+      </form>
+      <div class="al-foot"><a href="/">← Retour au site</a></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('al-form');
+      const msg = document.getElementById('al-msg');
+      const btn = document.getElementById('al-btn');
+      function show(type, text) { msg.className = 'al-msg ' + type; msg.textContent = text; }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        show('', '');
+        const email = document.getElementById('al-email').value.trim();
+        const password = document.getElementById('al-pass').value;
+        if (!email || !password) { show('err', 'Renseignez votre e-mail et votre mot de passe.'); return; }
+        btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Connexion…';
+        const { ok, status, data } = await Karat.api('/api/admin/login', { email, password });
+        btn.disabled = false; btn.textContent = 'Se connecter';
+        if (!ok) {
+          show('err', status === 403 ? 'Ce compte n\'est pas administrateur.' : (data.error || 'Connexion impossible.'));
+          return;
+        }
+        show('info', 'Connexion réussie. Redirection…');
+        setTimeout(() => { window.location.href = '/admin'; }, 500);
+      });
+    })();
+  </script>
+</body>
+</html>

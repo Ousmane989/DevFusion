@@ -41,7 +41,8 @@ function trialDaysLeft(user) {
 }
 
 // Lien WhatsApp pré-rempli vers l'administrateur pour activer l'abonnement.
-function whatsappUrl(user, methodId) {
+// `number` permet de surcharger le numéro (réglage admin) ; sinon config.
+function whatsappUrl(user, methodId, number) {
   const price = formatPrice(user.country);
   const m = METHODS[methodId];
   const lines = [
@@ -50,7 +51,7 @@ function whatsappUrl(user, methodId) {
     'E-mail : ' + (user.email || ''),
   ];
   if (m) lines.push('Paiement : ' + m.name);
-  return 'https://wa.me/' + config.adminWhatsapp + '?text=' + encodeURIComponent(lines.join('\n'));
+  return 'https://wa.me/' + (number || config.adminWhatsapp) + '?text=' + encodeURIComponent(lines.join('\n'));
 }
 
 module.exports = { PRICING, METHODS, priceFor, methodsFor, formatPrice, trialDaysLeft, whatsappUrl };

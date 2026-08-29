@@ -8,11 +8,54 @@
 // ------------------------------------------------------------------
 const express = require('express');
 const db = require('../db');
-const { PLANS, isoIn, getUserById } = require('../account');
+const { PLANS, isoIn, getUserById, getUserByEmail } = require('../account');
 const { requireAuth, requireAdmin } = require('../middleware');
+const { verifyPassword, signSession, setSessionCookie } = require('../auth');
+const { config, isAdminUser } = require('../config');
 
 const router = express.Router();
+
+// ------------------------------------------------------------------
+// POST /api/admin/login — connexion DÉDIÉE à l'espace administrateur.
+// Réussit uniquement pour un compte administrateur (sinon 403), même si
+// les identifiants client sont valides. Définie AVANT le garde-fou admin.
+// ------------------------------------------------------------------
+router.post('/login', async (req, res) => {
+  const email = String(req.body?.email || '');
+  const password = String(req.body?.password || '');
+  const user = await getUserByEmail(email);
+  if (!user || !(await verifyPassword(password, user.password_hash))) {
+    return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
+  }
+  if (!isAdminUser(user)) {
+    return res.status(403).json({ error: 'Ce compte n\'est pas administrateur.' });
+  }
+  setSessionCookie(res, signSession(user));
+  res.json({ ok: true, email: user.email });
+});
+
+// À partir d'ici : accès réservé aux administrateurs authentifiés.
 router.use(requireAuth, requireAdmin);
+
+// GET /api/admin/settings — réglages de l'espace admin.
+router.get('/settings', async (_req, res, next) => {
+  try {
+    const row = await db.prepare("SELECT value FROM app_config WHERE key = 'admin_whatsapp'").get();
+    res.json({ ok: true, whatsapp: (row && row.value) || config.adminWhatsapp });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/admin/settings { whatsapp } — modifie le numéro WhatsApp d'activation.
+router.put('/settings', async (req, res, next) => {
+  try {
+    const num = String(req.body?.whatsapp || '').replace(/[^0-9]/g, '');
+    if (num.length < 8) return res.status(400).json({ errors: { whatsapp: 'Numéro WhatsApp invalide (format international).' } });
+    await db.prepare(
+      "INSERT INTO app_config (key, value) VALUES ('admin_whatsapp', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    ).run(num);
+    res.json({ ok: true, whatsapp: num });
+  } catch (err) { next(err); }
+});
 
 // État d'abonnement lisible pour un compte (« à jour » ou non).
 function billingState(u) {
