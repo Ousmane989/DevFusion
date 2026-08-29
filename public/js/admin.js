@@ -107,6 +107,9 @@
           <button class="btn-adm ghost" data-act="trial" data-days="3">Remettre en essai (3 j)</button>
           <button class="btn-adm danger" data-act="lock">Bloquer maintenant</button>
         </div>
+        <div class="adm-act-row">
+          <button class="btn-adm danger" data-act="delete" style="flex:1 0 100%">🗑 Supprimer définitivement le compte</button>
+        </div>
       </div>`;
     q('#adm-modal').classList.add('open');
     q('#adm-x').addEventListener('click', closeDetail);
@@ -116,6 +119,7 @@
 
   async function doAction(id, act, days) {
     const m = q('#adm-act-msg');
+    if (act === 'delete') return deleteAccount(id);
     if (act === 'lock' && !window.confirm('Bloquer ce compte maintenant ? Le commerçant ne pourra plus accéder à son tableau de bord.')) return;
     if (m) { m.textContent = 'Traitement…'; m.className = 'adm-act-msg'; }
     const r = await api(`/api/admin/users/${id}/${act}`, days ? { days } : {});
@@ -127,6 +131,18 @@
       m2.className = 'adm-act-msg ok';
       m2.textContent = act === 'lock' ? 'Compte bloqué.' : act === 'trial' ? `Essai remis à ${days} jour(s).` : `Abonnement activé pour ${days} jours.`;
     }
+  }
+
+  async function deleteAccount(id) {
+    const u = ALL.find((x) => x.id === id);
+    const label = u ? `${u.name} — ${u.shopName}` : 'ce compte';
+    if (!window.confirm(`Supprimer DÉFINITIVEMENT ${label} ?\n\nToutes ses boutiques, produits et commandes seront effacés. Cette action est irréversible.`)) return;
+    const m = q('#adm-act-msg');
+    if (m) { m.textContent = 'Suppression…'; m.className = 'adm-act-msg'; }
+    const r = await api(`/api/admin/users/${id}`, null, 'DELETE');
+    if (!r.ok) { if (m) { m.textContent = (r.data && r.data.error) || 'Suppression impossible.'; m.className = 'adm-act-msg err'; } return; }
+    closeDetail();
+    await load();
   }
 
   async function load() {

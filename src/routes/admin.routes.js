@@ -189,4 +189,17 @@ router.post('/users/:id/lock', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// DELETE /api/admin/users/:id — supprime définitivement un compte et toutes
+// ses boutiques/produits/commandes (cascade). Un compte administrateur ne
+// peut pas être supprimé depuis ici (garde-fou anti-verrouillage).
+router.delete('/users/:id', async (req, res, next) => {
+  try {
+    const u = await loadAccount(Number(req.params.id));
+    if (!u) return res.status(404).json({ error: 'Compte introuvable.' });
+    if (isAdminUser(u)) return res.status(403).json({ error: 'Un compte administrateur ne peut pas être supprimé ici.' });
+    await db.prepare('DELETE FROM users WHERE id = ?').run(u.id); // cascade
+    res.json({ ok: true, deleted: u.id });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
