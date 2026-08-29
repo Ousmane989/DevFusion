@@ -97,7 +97,9 @@ router.get('/users', async (_req, res, next) => {
     }
 
     const accounts = users
-      .filter((u) => !u.owner_id)
+      // Comptes clients uniquement : on exclut les comptes administrateurs
+      // (ce ne sont pas des boutiques) et les boutiques filles.
+      .filter((u) => !u.owner_id && !isAdminUser(u))
       .map((u) => {
         const kids = children.get(Number(u.id)) || [];
         const shopIds = [u.id, ...kids.map((k) => k.id)];
@@ -132,7 +134,9 @@ router.get('/users', async (_req, res, next) => {
 
     const summary = {
       accounts: accounts.length,
-      shops: users.length,
+      // Total des boutiques clientes (comptes clients + leurs boutiques filles),
+      // hors comptes administrateurs.
+      shops: accounts.reduce((s, a) => s + a.shopsCount, 0),
       upToDate: accounts.filter((a) => a.upToDate).length,
       overdue: accounts.filter((a) => !a.upToDate).length,
       byCountry: accounts.reduce((m, a) => ((m[a.country] = (m[a.country] || 0) + 1), m), {}),
