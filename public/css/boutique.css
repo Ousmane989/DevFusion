@@ -378,13 +378,22 @@ img { max-width: 100%; display: block; }
 /* ==================================================================
    FICHE PRODUIT REPENSÉE (mobile-first, style boutique pro)
    ================================================================== */
-.sf-detail-box.pd { max-width: 460px; }
+.sf-detail-box.pd { max-width: 500px; }
 /* Dans la fiche : pas de badge d'angle ni d'indice de survol (déjà dans le prix). */
 .sf-detail .sf-promo, .sf-detail .sf-new, .sf-detail .sf-view { display: none; }
 .sf-pd { display: flex; flex-direction: column; }
-.sf-pd-media { width: 100%; }
+.sf-pd-media { width: 100%; position: relative; }
 .sf-pd-media .sf-img { aspect-ratio: 1 / 1; height: auto; border-radius: 18px 18px 0 0; }
 .sf-pd-info { padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Page produit sur grand écran : image à gauche, infos + commande à droite. */
+@media (min-width: 760px) {
+  .sf-detail-box.pd { max-width: 960px; }
+  .sf-pd { display: grid; grid-template-columns: 1.02fr 0.98fr; align-items: stretch; }
+  .sf-pd-media { height: 100%; }
+  .sf-pd-media .sf-img { height: 100%; min-height: 540px; aspect-ratio: auto; border-radius: 18px 0 0 18px; }
+  .sf-pd-info { padding: 34px 34px 30px; }
+}
 .sf-pd-info .sf-cat { color: var(--accent); font-weight: 600; }
 .sf-pd-name { font-size: 1.9rem; line-height: 1.1; }
 .sf-pd-rating { display: flex; align-items: center; gap: 8px; margin-top: -4px; }
@@ -428,8 +437,17 @@ img { max-width: 100%; display: block; }
 
 /* Plus de panier : commande directe depuis la fiche produit */
 .sf-cart, .sf-fab { display: none !important; }
-.sf-pd-stock.ok { color: var(--muted); }
+.sf-pd-stock { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
+.sf-pd-stock::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent); }
+.sf-pd-stock.ok { color: #46b475; }
 .sf-pd-stock.oos { color: #e5675f; }
+
+/* Bandeau de réassurance sous le bouton de commande */
+.sf-pd-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.sf-trust-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+  padding: 12px 6px; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; }
+.sf-trust-item svg { width: 22px; height: 22px; color: var(--accent); }
+.sf-trust-item span { font-size: 0.74rem; color: var(--muted); line-height: 1.2; }
 
 /* Accordéons (Description / Livraison / Retours) */
 .sf-acc { margin-top: 8px; border-top: 1px solid var(--line); }
