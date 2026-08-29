@@ -308,6 +308,7 @@
     });
 
     modal.classList.add('open');
+    modal.scrollTop = 0; // ouvrir en haut : nom, prix et commande visibles d'emblée
     document.body.style.overflow = 'hidden';
     pixel('ViewContent', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price, currency: pixCurrency() });
   }
