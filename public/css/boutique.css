@@ -383,16 +383,18 @@ img { max-width: 100%; display: block; }
 .sf-detail .sf-promo, .sf-detail .sf-new, .sf-detail .sf-view { display: none; }
 .sf-pd { display: flex; flex-direction: column; }
 .sf-pd-media { width: 100%; position: relative; }
-.sf-pd-media .sf-img { aspect-ratio: 1 / 1; height: auto; border-radius: 18px 18px 0 0; }
+/* Image réduite sur mobile pour voir directement le nom, le prix et la commande. */
+.sf-pd-media .sf-img { aspect-ratio: 4 / 3; max-height: 280px; height: auto; border-radius: 18px 18px 0 0; }
 .sf-pd-info { padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 12px; }
 
 /* Page produit sur grand écran : image à gauche, infos + commande à droite. */
 @media (min-width: 760px) {
-  .sf-detail-box.pd { max-width: 960px; }
-  .sf-pd { display: grid; grid-template-columns: 1.02fr 0.98fr; align-items: stretch; }
-  .sf-pd-media { height: 100%; }
-  .sf-pd-media .sf-img { height: 100%; min-height: 540px; aspect-ratio: auto; border-radius: 18px 0 0 18px; }
-  .sf-pd-info { padding: 34px 34px 30px; }
+  .sf-detail-box.pd { max-width: 900px; }
+  .sf-pd { display: grid; grid-template-columns: 0.92fr 1.08fr; align-items: start; }
+  /* Image compacte et fixée en haut pendant qu'on lit / commande à droite. */
+  .sf-pd-media { position: sticky; top: 0; align-self: start; }
+  .sf-pd-media .sf-img { aspect-ratio: 1 / 1; max-height: 62vh; height: auto; min-height: 0; border-radius: 18px 0 0 18px; }
+  .sf-pd-info { padding: 30px 32px 28px; }
 }
 .sf-pd-info .sf-cat { color: var(--accent); font-weight: 600; }
 .sf-pd-name { font-size: 1.9rem; line-height: 1.1; }
