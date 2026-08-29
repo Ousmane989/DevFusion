@@ -47,10 +47,11 @@
 
   function renderRows(list) {
     const tb = q('#adm-rows');
-    if (!list.length) { tb.innerHTML = '<tr><td colspan="8" class="adm-empty">Aucun inscrit ne correspond.</td></tr>'; return; }
+    if (!list.length) { tb.innerHTML = '<tr><td colspan="9" class="adm-empty">Aucun inscrit ne correspond.</td></tr>'; return; }
     tb.innerHTML = list.map((u) => `
       <tr data-id="${u.id}">
-        <td><div class="adm-name">${esc(u.name)}</div><div class="adm-shop">${esc(u.shopName)}</div></td>
+        <td><div class="adm-name">${esc(u.name)}</div></td>
+        <td><span class="adm-shopname">${esc(u.shopName || '—')}</span></td>
         <td class="adm-mono">${esc(u.phone || '—')}</td>
         <td>${esc(u.email)}</td>
         <td class="flag">${FLAG[u.country] || esc(u.country)}</td>
@@ -148,7 +149,7 @@
   async function load() {
     const r = await api('/api/admin/users');
     if (!r.ok) {
-      q('#adm-rows').innerHTML = `<tr><td colspan="8" class="adm-empty">${r.status === 403 ? 'Accès réservé à l\'administrateur.' : 'Erreur de chargement.'}</td></tr>`;
+      q('#adm-rows').innerHTML = `<tr><td colspan="9" class="adm-empty">${r.status === 403 ? 'Accès réservé à l\'administrateur.' : 'Erreur de chargement.'}</td></tr>`;
       return;
     }
     ALL = r.data.users || [];
