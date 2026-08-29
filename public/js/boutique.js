@@ -239,6 +239,11 @@
           <button type="submit" class="sf-btn sf-pd-confirm" ${p.stock > 0 ? '' : 'disabled'}>${p.stock > 0 ? 'Commander maintenant' : 'Rupture de stock'}</button>
           <p class="sf-msg" id="pd-msg"></p>
         </form>
+        <div class="sf-pd-trust">
+          <div class="sf-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="4" width="15" height="12" rx="1.5"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Livraison rapide</span></div>
+          <div class="sf-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span>Payez à la livraison</span></div>
+          <div class="sf-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/></svg><span>Retours sous 7 j</span></div>
+        </div>
         <div class="sf-acc">
           ${accItem('Description', p.description ? `<p>${esc(p.description)}</p>` : '<p class="sf-muted">Aucune description pour ce produit.</p>', true)}
           ${accItem('Livraison', shippingText(data))}
