@@ -129,11 +129,15 @@ app.get('/paiement', (req, res, next) => {
   next();
 });
 
-// Espace administrateur : réservé aux comptes administrateurs.
+// Espace administrateur : connexion dédiée et sécurisée, séparée du client.
 app.get('/admin', (req, res, next) => {
-  if (!req.user) return res.redirect('/connexion?suite=/admin');
-  if (!isAdminUser(req.account || req.user)) return res.redirect('/tableau-de-bord');
+  if (!req.user || !isAdminUser(req.account || req.user)) return res.redirect('/admin/connexion');
   next();
+});
+// Page de connexion admin : si déjà admin connecté, on va directement à l'espace.
+app.get('/admin/connexion', (req, res, next) => {
+  if (req.user && isAdminUser(req.account || req.user)) return res.redirect('/admin');
+  res.sendFile(path.join(PUBLIC_DIR, 'admin-connexion.html'));
 });
 
 app.get('/boutique/:slug', (req, res) => {

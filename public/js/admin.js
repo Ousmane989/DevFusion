@@ -1,4 +1,4 @@
-/* Karat — espace administrateur : liste des inscrits + coordonnées + abonnement. */
+/* Karat — espace administrateur : inscrits, réactivation, paramètres. */
 (function () {
   'use strict';
 
@@ -6,6 +6,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (n) => Number(n || 0).toLocaleString('fr-FR');
   const q = (s) => document.querySelector(s);
+  const qa = (s) => Array.from(document.querySelectorAll(s));
 
   const FLAG = { SN: '🇸🇳 Sénégal', MR: '🇲🇷 Mauritanie' };
   let ALL = [];
@@ -19,25 +20,34 @@
 
   function badge(u) {
     if (u.billingState === 'trial') return `<span class="badge trial">${esc(u.billingLabel)}</span>`;
-    return u.upToDate
-      ? `<span class="badge ok">${esc(u.billingLabel)}</span>`
-      : `<span class="badge no">${esc(u.billingLabel)}</span>`;
+    return u.upToDate ? `<span class="badge ok">${esc(u.billingLabel)}</span>` : `<span class="badge no">${esc(u.billingLabel)}</span>`;
   }
 
+  // ---------- Menu ----------
+  function switchSection(name) {
+    qa('.adm-sec').forEach((s) => s.classList.toggle('active', s.id === 'asec-' + name));
+    qa('.adm-link').forEach((l) => l.classList.toggle('active', l.dataset.asec === name));
+    setSide(false);
+    window.scrollTo(0, 0);
+  }
+  function setSide(open) {
+    const s = q('#adm-side'), sc = q('#adm-scrim');
+    if (s) s.classList.toggle('open', open);
+    if (sc) sc.classList.toggle('open', open);
+  }
+
+  // ---------- Inscrits ----------
   function renderCards(sum) {
     q('#adm-cards').innerHTML = `
-      <div class="adm-card"><div class="lab">Comptes inscrits</div><div class="val">${money(sum.accounts)}</div></div>
-      <div class="adm-card"><div class="lab">Boutiques</div><div class="val">${money(sum.shops)}</div></div>
-      <div class="adm-card"><div class="lab">À jour</div><div class="val gold">${money(sum.upToDate)}</div></div>
-      <div class="adm-card"><div class="lab">Pas à jour</div><div class="val ${sum.overdue ? 'warn' : ''}">${money(sum.overdue)}</div></div>`;
+      <div class="adm-card"><div class="clab">Comptes inscrits</div><div class="cval">${money(sum.accounts)}</div></div>
+      <div class="adm-card"><div class="clab">Boutiques</div><div class="cval">${money(sum.shops)}</div></div>
+      <div class="adm-card"><div class="clab">À jour</div><div class="cval gold">${money(sum.upToDate)}</div></div>
+      <div class="adm-card"><div class="clab">Pas à jour</div><div class="cval ${sum.overdue ? 'warn' : ''}">${money(sum.overdue)}</div></div>`;
   }
 
   function renderRows(list) {
     const tb = q('#adm-rows');
-    if (!list.length) {
-      tb.innerHTML = '<tr><td colspan="8" class="adm-empty">Aucun inscrit ne correspond.</td></tr>';
-      return;
-    }
+    if (!list.length) { tb.innerHTML = '<tr><td colspan="8" class="adm-empty">Aucun inscrit ne correspond.</td></tr>'; return; }
     tb.innerHTML = list.map((u) => `
       <tr data-id="${u.id}">
         <td><div class="adm-name">${esc(u.name)}</div><div class="adm-shop">${esc(u.shopName)}</div></td>
@@ -49,9 +59,7 @@
         <td>${fmtDate(u.createdAt)}</td>
         <td>${badge(u)}</td>
       </tr>`).join('');
-    tb.querySelectorAll('tr[data-id]').forEach((tr) => {
-      tr.addEventListener('click', () => openDetail(Number(tr.dataset.id)));
-    });
+    tb.querySelectorAll('tr[data-id]').forEach((tr) => tr.addEventListener('click', () => openDetail(Number(tr.dataset.id))));
   }
 
   function applyFilters() {
@@ -62,10 +70,7 @@
     if (country) list = list.filter((u) => u.country === country);
     if (bill === 'ok') list = list.filter((u) => u.upToDate);
     if (bill === 'no') list = list.filter((u) => !u.upToDate);
-    if (term) {
-      list = list.filter((u) =>
-        [u.name, u.shopName, u.email, u.phone].some((v) => String(v || '').toLowerCase().includes(term)));
-    }
+    if (term) list = list.filter((u) => [u.name, u.shopName, u.email, u.phone].some((v) => String(v || '').toLowerCase().includes(term)));
     renderRows(list);
   }
 
@@ -73,8 +78,7 @@
     const u = ALL.find((x) => x.id === id);
     if (!u) return;
     const shops = u.shops && u.shops.length
-      ? `<div class="adm-shoplist">${u.shops.map((s) => `<span>${esc(s.shopName)}</span>`).join('')}</div>`
-      : '<span class="v">—</span>';
+      ? `<div class="adm-shoplist">${u.shops.map((s) => `<span>${esc(s.shopName)}</span>`).join('')}</div>` : '—';
     q('#adm-box').innerHTML = `
       <button class="adm-close" id="adm-x" aria-label="Fermer">×</button>
       <h3>${esc(u.name)}</h3>
@@ -106,10 +110,9 @@
       </div>`;
     q('#adm-modal').classList.add('open');
     q('#adm-x').addEventListener('click', closeDetail);
-    q('#adm-box').querySelectorAll('.btn-adm').forEach((b) => {
-      b.addEventListener('click', () => doAction(u.id, b.dataset.act, Number(b.dataset.days) || 0));
-    });
+    q('#adm-box').querySelectorAll('.btn-adm').forEach((b) => b.addEventListener('click', () => doAction(u.id, b.dataset.act, Number(b.dataset.days) || 0)));
   }
+  function closeDetail() { q('#adm-modal').classList.remove('open'); }
 
   async function doAction(id, act, days) {
     const m = q('#adm-act-msg');
@@ -117,18 +120,14 @@
     if (m) { m.textContent = 'Traitement…'; m.className = 'adm-act-msg'; }
     const r = await api(`/api/admin/users/${id}/${act}`, days ? { days } : {});
     if (!r.ok) { if (m) { m.textContent = (r.data && r.data.error) || 'Erreur.'; m.className = 'adm-act-msg err'; } return; }
-    await load();           // rafraîchit le tableau + les cartes
-    openDetail(id);         // rouvre la fiche à jour
-    const msg2 = q('#adm-act-msg');
-    if (msg2) {
-      msg2.className = 'adm-act-msg ok';
-      msg2.textContent = act === 'lock' ? 'Compte bloqué.'
-        : act === 'trial' ? `Essai remis à ${days} jour(s).`
-        : `Abonnement activé pour ${days} jours.`;
+    await load();
+    openDetail(id);
+    const m2 = q('#adm-act-msg');
+    if (m2) {
+      m2.className = 'adm-act-msg ok';
+      m2.textContent = act === 'lock' ? 'Compte bloqué.' : act === 'trial' ? `Essai remis à ${days} jour(s).` : `Abonnement activé pour ${days} jours.`;
     }
   }
-
-  function closeDetail() { q('#adm-modal').classList.remove('open'); }
 
   async function load() {
     const r = await api('/api/admin/users');
@@ -141,17 +140,30 @@
     applyFilters();
   }
 
+  // ---------- Paramètres ----------
   function setMsg(el, ok, text) { if (el) { el.className = 'adm-act-msg ' + (ok ? 'ok' : 'err'); el.textContent = text; } }
 
-  function wireSecurity() {
+  async function loadSettings() {
+    const r = await api('/api/admin/settings');
+    if (r.ok && r.data) q('#st-wa').value = r.data.whatsapp || '';
+  }
+
+  function wireSettings() {
+    const fw = q('#form-wa');
+    if (fw) fw.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const m = q('#wa-msg'); setMsg(m, true, 'Enregistrement…');
+      const r = await api('/api/admin/settings', { whatsapp: q('#st-wa').value.trim() }, 'PUT');
+      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.whatsapp || 'Erreur.'); return; }
+      q('#st-wa').value = r.data.whatsapp; setMsg(m, true, 'Numéro WhatsApp enregistré ✓');
+    });
     const fe = q('#form-email');
     if (fe) fe.addEventListener('submit', async (e) => {
       e.preventDefault();
       const m = q('#se-msg'); setMsg(m, true, 'Traitement…');
       const r = await api('/api/account/email', { email: q('#se-email').value.trim(), password: q('#se-pass').value });
       if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.email || er.password || 'Erreur.'); return; }
-      setMsg(m, true, 'E-mail de connexion mis à jour ✓');
-      q('#se-pass').value = '';
+      setMsg(m, true, 'E-mail de connexion mis à jour ✓'); q('#se-pass').value = '';
     });
     const fp = q('#form-pass');
     if (fp) fp.addEventListener('submit', async (e) => {
@@ -159,19 +171,28 @@
       const m = q('#sp-msg'); setMsg(m, true, 'Traitement…');
       const r = await api('/api/account/password', { current: q('#sp-current').value, next: q('#sp-next').value });
       if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.current ? 'Mot de passe actuel incorrect.' : (er.next || 'Erreur.')); return; }
-      setMsg(m, true, 'Mot de passe mis à jour ✓');
-      q('#sp-current').value = ''; q('#sp-next').value = '';
+      setMsg(m, true, 'Mot de passe mis à jour ✓'); q('#sp-current').value = ''; q('#sp-next').value = '';
     });
   }
 
+  async function logout() {
+    await api('/api/auth/logout', {});
+    window.location.href = '/admin/connexion';
+  }
+
   function init() {
-    wireSecurity();
+    qa('.adm-link').forEach((l) => l.addEventListener('click', () => switchSection(l.dataset.asec)));
+    q('#adm-burger') && q('#adm-burger').addEventListener('click', () => setSide(!q('#adm-side').classList.contains('open')));
+    q('#adm-scrim') && q('#adm-scrim').addEventListener('click', () => setSide(false));
+    q('#adm-logout') && q('#adm-logout').addEventListener('click', logout);
     q('#adm-search').addEventListener('input', applyFilters);
     q('#adm-country').addEventListener('change', applyFilters);
     q('#adm-billing').addEventListener('change', applyFilters);
     q('#adm-modal').addEventListener('click', (e) => { if (e.target.id === 'adm-modal') closeDetail(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+    wireSettings();
     load();
+    loadSettings();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
