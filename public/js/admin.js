@@ -141,7 +141,31 @@
     applyFilters();
   }
 
+  function setMsg(el, ok, text) { if (el) { el.className = 'adm-act-msg ' + (ok ? 'ok' : 'err'); el.textContent = text; } }
+
+  function wireSecurity() {
+    const fe = q('#form-email');
+    if (fe) fe.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const m = q('#se-msg'); setMsg(m, true, 'Traitement…');
+      const r = await api('/api/account/email', { email: q('#se-email').value.trim(), password: q('#se-pass').value });
+      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.email || er.password || 'Erreur.'); return; }
+      setMsg(m, true, 'E-mail de connexion mis à jour ✓');
+      q('#se-pass').value = '';
+    });
+    const fp = q('#form-pass');
+    if (fp) fp.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const m = q('#sp-msg'); setMsg(m, true, 'Traitement…');
+      const r = await api('/api/account/password', { current: q('#sp-current').value, next: q('#sp-next').value });
+      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.current ? 'Mot de passe actuel incorrect.' : (er.next || 'Erreur.')); return; }
+      setMsg(m, true, 'Mot de passe mis à jour ✓');
+      q('#sp-current').value = ''; q('#sp-next').value = '';
+    });
+  }
+
   function init() {
+    wireSecurity();
     q('#adm-search').addEventListener('input', applyFilters);
     q('#adm-country').addEventListener('change', applyFilters);
     q('#adm-billing').addEventListener('change', applyFilters);

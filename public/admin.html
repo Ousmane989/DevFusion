@@ -97,6 +97,17 @@
     .adm-act-msg.ok { color: var(--success); }
     .adm-act-msg.err { color: var(--danger); }
 
+    .adm-security { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
+    .adm-sec-title { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; }
+    .adm-sec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 18px; }
+    .adm-sec-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+    .adm-sec-card h3 { font-family: var(--sans); font-size: 1rem; font-weight: 600; color: var(--gold-light); margin-bottom: 14px; }
+    .adm-sec-card label { display: block; font-size: .8rem; color: var(--text-mute); margin-bottom: 12px; }
+    .adm-sec-card input { width: 100%; margin-top: 5px; background: var(--bg-soft); border: 1px solid var(--line); color: var(--text);
+      font-family: var(--sans); font-size: .92rem; padding: 10px 12px; border-radius: var(--radius-sm); }
+    .adm-sec-card input:focus { outline: none; border-color: var(--gold); }
+    .adm-sec-card .btn-adm { width: 100%; margin-top: 6px; }
+
     @media (max-width: 560px) {
       .adm-wrap { padding: 22px 14px 80px; }
       .adm-h1 { font-size: 1.7rem; }
@@ -165,6 +176,36 @@
           </table>
         </div>
       </div>
+
+      <!-- Sécurité du compte administrateur -->
+      <section class="adm-security">
+        <h2 class="adm-sec-title">Sécurité du compte administrateur</h2>
+        <p class="adm-sub">Modifiez l'e-mail de connexion et le mot de passe de cet espace.</p>
+        <div class="adm-sec-grid">
+          <form class="adm-sec-card" id="form-email">
+            <h3>E-mail de connexion</h3>
+            <label>Nouvel e-mail
+              <input type="email" id="se-email" placeholder="karat-boutique@gmail.com" autocomplete="username" />
+            </label>
+            <label>Mot de passe actuel
+              <input type="password" id="se-pass" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+            <div class="adm-act-msg" id="se-msg"></div>
+            <button type="submit" class="btn-adm gold">Changer l'e-mail</button>
+          </form>
+          <form class="adm-sec-card" id="form-pass">
+            <h3>Mot de passe</h3>
+            <label>Mot de passe actuel
+              <input type="password" id="sp-current" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+            <label>Nouveau mot de passe (8 caractères min.)
+              <input type="password" id="sp-next" placeholder="••••••••" autocomplete="new-password" />
+            </label>
+            <div class="adm-act-msg" id="sp-msg"></div>
+            <button type="submit" class="btn-adm gold">Changer le mot de passe</button>
+          </form>
+        </div>
+      </section>
     </main>
 
     <!-- Fiche détaillée -->

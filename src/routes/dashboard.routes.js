@@ -4,7 +4,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { publicUser } = require('../account');
-const { isAdminEmail } = require('../config');
+const { isAdminUser } = require('../config');
 
 const router = express.Router();
 
@@ -182,7 +182,7 @@ router.get('/', requireAuth, async (req, res) => {
   user.status = acct.status;
   user.trialEndsAt = acct.trial_ends_at;
   user.subscriptionEndsAt = acct.subscription_ends_at;
-  user.isAdmin = isAdminEmail(acct.email);
+  user.isAdmin = isAdminUser(acct);
   res.json({ user, stats: await realStats(req.user) });
 });
 

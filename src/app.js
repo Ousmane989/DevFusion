@@ -6,7 +6,7 @@ const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { config, isAdminEmail } = require('./config');
+const { config, isAdminUser } = require('./config');
 const { securityHeaders, publicCors } = require('./http');
 const { loadUser } = require('./middleware');
 const authRoutes = require('./routes/auth.routes');
@@ -78,7 +78,7 @@ app.get('/api', (_req, res) => {
       products: ['GET /api/products', 'POST /api/products', 'PUT /api/products/:id', 'DELETE /api/products/:id'],
       store: ['GET /api/store', 'PUT /api/store', 'PUT /api/store/shipping'],
       orders: ['GET /api/orders', 'PUT /api/orders/:id/status'],
-      account: ['GET /api/account', 'PUT /api/account', 'POST /api/account/password', 'DELETE /api/account'],
+      account: ['GET /api/account', 'PUT /api/account', 'POST /api/account/password', 'POST /api/account/email', 'DELETE /api/account'],
       analytics: ['GET /api/analytics'],
       finance: ['GET /api/finance', 'POST /api/finance/expense', 'DELETE /api/finance/expense/:id', 'GET /api/finance/export.csv'],
       developer: ['GET /api/dev', 'POST /api/dev/key', 'DELETE /api/dev/key/:id', 'POST /api/dev/webhook', 'DELETE /api/dev/webhook/:id', 'POST /api/dev/webhook/:id/test'],
@@ -129,11 +129,10 @@ app.get('/paiement', (req, res, next) => {
   next();
 });
 
-// Espace administrateur : réservé aux e-mails listés dans ADMIN_EMAILS.
+// Espace administrateur : réservé aux comptes administrateurs.
 app.get('/admin', (req, res, next) => {
   if (!req.user) return res.redirect('/connexion?suite=/admin');
-  const email = (req.account && req.account.email) || req.user.email;
-  if (!isAdminEmail(email)) return res.redirect('/tableau-de-bord');
+  if (!isAdminUser(req.account || req.user)) return res.redirect('/tableau-de-bord');
   next();
 });
 
