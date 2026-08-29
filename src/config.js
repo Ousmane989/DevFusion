@@ -66,9 +66,18 @@ const config = {
   adminWhatsapp: (process.env.ADMIN_WHATSAPP || '221787489776').replace(/[^0-9]/g, ''),
 };
 
-// Vrai si l'adresse fournie appartient à un administrateur du SaaS.
+// Vrai si l'adresse fournie appartient à un administrateur du SaaS (liste
+// d'amorçage ADMIN_EMAILS). Sert de garde-fou même sans indicateur en base.
 function isAdminEmail(email) {
   return Boolean(email) && config.adminEmails.includes(String(email).toLowerCase());
+}
+
+// Vrai si l'utilisateur est administrateur : indicateur is_admin en base OU
+// e-mail présent dans la liste d'amorçage. L'indicateur en base permet de
+// changer librement l'e-mail de connexion sans perdre les droits.
+function isAdminUser(user) {
+  if (!user) return false;
+  return Boolean(user.is_admin) || isAdminEmail(user.email);
 }
 
 // Verifie la configuration ; renvoie la liste des avertissements/erreurs.
@@ -92,4 +101,4 @@ function validate() {
   return { warnings, errors };
 }
 
-module.exports = { config, validate, isAdminEmail };
+module.exports = { config, validate, isAdminEmail, isAdminUser };

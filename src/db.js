@@ -100,7 +100,8 @@ function initSqliteSchema(sdb) {
       trial_ends_at TEXT, subscription_ends_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       country TEXT NOT NULL DEFAULT 'MR', currency TEXT NOT NULL DEFAULT 'MRU',
-      owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+      owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      is_admin INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS verification_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

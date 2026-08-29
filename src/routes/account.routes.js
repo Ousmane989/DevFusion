@@ -5,7 +5,9 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { hashPassword, verifyPassword, clearSessionCookie } = require('../auth');
-const { getUserById, publicUser } = require('../account');
+const { getUserById, getUserByEmail, publicUser } = require('../account');
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const router = express.Router();
 
@@ -57,6 +59,26 @@ router.post('/password', requireAuth, async (req, res) => {
   // Toutes les boutiques du compte partagent le mot de passe du compte.
   await db.prepare('UPDATE users SET password_hash = ? WHERE id = ? OR owner_id = ?').run(hash, req.account.id, req.account.id);
   res.json({ ok: true });
+});
+
+// POST /api/account/email — change l'e-mail de connexion (niveau compte).
+// Exige le mot de passe actuel (protège l'identifiant de connexion).
+router.post('/email', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  const email = String(b.email || '').toLowerCase().trim();
+  const password = String(b.password || '');
+  const full = await db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.account.id);
+  if (!full || !(await verifyPassword(password, full.password_hash))) {
+    return res.status(400).json({ errors: { password: 'Mot de passe incorrect.' } });
+  }
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ errors: { email: 'E-mail invalide.' } });
+  const existing = await getUserByEmail(email);
+  if (existing && existing.id !== req.account.id) {
+    return res.status(409).json({ errors: { email: 'Cet e-mail est déjà utilisé.' } });
+  }
+  // L'e-mail de connexion est porté par la boutique principale (le compte).
+  await db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, req.account.id);
+  res.json({ ok: true, email });
 });
 
 // DELETE /api/account — supprime le COMPTE entier (toutes les boutiques)
