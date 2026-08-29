@@ -1,51 +1,31 @@
 'use strict';
 
 const express = require('express');
-const db = require('../db');
-const { PLANS, isoIn, getUserById, publicUser } = require('../account');
+const { getUserById, publicUser } = require('../account');
 const { requireAuth } = require('../middleware');
+const { priceFor, methodsFor, formatPrice, trialDaysLeft, whatsappUrl } = require('../subscription');
+const { config } = require('../config');
 
 const router = express.Router();
 
-const METHODS = ['bankily', 'wave', 'orange-money'];
-
-// ------------------------------------------------------------------
-// POST /api/billing/pay  { method, plan? }
-// Simule un paiement mobile local (Bankily / Wave / Orange Money).
-// En production, cet endpoint declencherait le prestataire de paiement
-// puis confirmerait via webhook. Ici, on active directement l'abonnement.
-// ------------------------------------------------------------------
-router.post('/pay', requireAuth, async (req, res) => {
-  const method = String(req.body?.method || '').toLowerCase();
-  if (!METHODS.includes(method)) {
-    return res.status(400).json({ error: 'Moyen de paiement non pris en charge.' });
-  }
-
-  // Permet de changer de formule au moment du paiement.
-  const plan = req.body?.plan && PLANS[req.body.plan] ? req.body.plan : req.user.plan;
-  const subEnd = isoIn(30);
-
-  await db.prepare(
-    `UPDATE users SET plan = ?, status = 'active', subscription_ends_at = ? WHERE id = ?`
-  ).run(plan, subEnd, req.user.id);
-
-  res.json({
-    ok: true,
-    message: 'Paiement confirme. Votre abonnement est actif pour 30 jours.',
-    user: publicUser(await getUserById(req.user.id)),
-  });
-});
-
 // ------------------------------------------------------------------
 // GET /api/billing/status
+// Renvoie l'état de l'abonnement, le prix selon le pays, les moyens de
+// paiement et le lien WhatsApp d'activation manuelle.
 // ------------------------------------------------------------------
-router.get('/status', requireAuth, (req, res) => {
-  const u = req.user;
-  let daysLeft = null;
-  if (u.status === 'trial' && u.trial_ends_at) {
-    daysLeft = Math.max(0, Math.ceil((new Date(u.trial_ends_at).getTime() - Date.now()) / 86_400_000));
-  }
-  res.json({ status: u.status, trialDaysLeft: daysLeft, user: publicUser(u) });
+router.get('/status', requireAuth, async (req, res) => {
+  const u = await getUserById((req.account && req.account.id) || req.user.id);
+  const country = u.country || 'MR';
+  const price = priceFor(country);
+  res.json({
+    status: u.status,
+    trialDaysLeft: trialDaysLeft(u),
+    subscriptionEndsAt: u.subscription_ends_at,
+    price: { amount: price.amount, currency: price.currency, label: formatPrice(country) },
+    methods: methodsFor(country),
+    whatsapp: { number: config.adminWhatsapp, url: whatsappUrl(u) },
+    user: publicUser(u),
+  });
 });
 
 module.exports = router;

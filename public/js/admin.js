@@ -91,9 +91,41 @@
       <div class="adm-row"><span class="k">Inscrit le</span><span class="v">${fmtDate(u.createdAt)}</span></div>
       <div class="adm-row"><span class="k">Produits</span><span class="v">${money(u.products)}</span></div>
       <div class="adm-row"><span class="k">Commandes</span><span class="v">${money(u.orders)}</span></div>
-      <div class="adm-row"><span class="k">Boutiques (${u.shopsCount})</span><span class="v">${shops}</span></div>`;
+      <div class="adm-row"><span class="k">Boutiques (${u.shopsCount})</span><span class="v">${shops}</span></div>
+      <div class="adm-actions">
+        <div class="adm-act-msg" id="adm-act-msg"></div>
+        <div class="adm-act-row">
+          <button class="btn-adm gold" data-act="activate" data-days="30">Activer 30 jours</button>
+          <button class="btn-adm gold" data-act="activate" data-days="90">Activer 90 jours</button>
+          <button class="btn-adm gold" data-act="activate" data-days="365">Activer 1 an</button>
+        </div>
+        <div class="adm-act-row">
+          <button class="btn-adm ghost" data-act="trial" data-days="3">Remettre en essai (3 j)</button>
+          <button class="btn-adm danger" data-act="lock">Bloquer maintenant</button>
+        </div>
+      </div>`;
     q('#adm-modal').classList.add('open');
     q('#adm-x').addEventListener('click', closeDetail);
+    q('#adm-box').querySelectorAll('.btn-adm').forEach((b) => {
+      b.addEventListener('click', () => doAction(u.id, b.dataset.act, Number(b.dataset.days) || 0));
+    });
+  }
+
+  async function doAction(id, act, days) {
+    const m = q('#adm-act-msg');
+    if (act === 'lock' && !window.confirm('Bloquer ce compte maintenant ? Le commerçant ne pourra plus accéder à son tableau de bord.')) return;
+    if (m) { m.textContent = 'Traitement…'; m.className = 'adm-act-msg'; }
+    const r = await api(`/api/admin/users/${id}/${act}`, days ? { days } : {});
+    if (!r.ok) { if (m) { m.textContent = (r.data && r.data.error) || 'Erreur.'; m.className = 'adm-act-msg err'; } return; }
+    await load();           // rafraîchit le tableau + les cartes
+    openDetail(id);         // rouvre la fiche à jour
+    const msg2 = q('#adm-act-msg');
+    if (msg2) {
+      msg2.className = 'adm-act-msg ok';
+      msg2.textContent = act === 'lock' ? 'Compte bloqué.'
+        : act === 'trial' ? `Essai remis à ${days} jour(s).`
+        : `Abonnement activé pour ${days} jours.`;
+    }
   }
 
   function closeDetail() { q('#adm-modal').classList.remove('open'); }

@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------
 const express = require('express');
 const db = require('../db');
-const { PLANS } = require('../account');
+const { PLANS, isoIn, getUserById } = require('../account');
 const { requireAuth, requireAdmin } = require('../middleware');
 
 const router = express.Router();
@@ -99,6 +99,51 @@ router.get('/users', async (_req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// Applique une action d'abonnement à un compte principal (owner_id NULL).
+async function loadAccount(id) {
+  const u = await getUserById(id);
+  if (!u || u.owner_id) return null; // seulement les comptes de connexion
+  return u;
+}
+
+// POST /api/admin/users/:id/activate { days } — réactive l'abonnement.
+router.post('/users/:id/activate', async (req, res, next) => {
+  try {
+    const u = await loadAccount(Number(req.params.id));
+    if (!u) return res.status(404).json({ error: 'Compte introuvable.' });
+    const days = Math.min(3650, Math.max(1, Number(req.body?.days) || 30));
+    await db.prepare(
+      "UPDATE users SET status = 'active', subscription_ends_at = ? WHERE id = ?"
+    ).run(isoIn(days), u.id);
+    const fresh = await getUserById(u.id);
+    res.json({ ok: true, days, status: fresh.status, subscriptionEndsAt: fresh.subscription_ends_at });
+  } catch (err) { next(err); }
+});
+
+// POST /api/admin/users/:id/trial { days } — (re)met le compte en essai.
+router.post('/users/:id/trial', async (req, res, next) => {
+  try {
+    const u = await loadAccount(Number(req.params.id));
+    if (!u) return res.status(404).json({ error: 'Compte introuvable.' });
+    const days = Math.min(365, Math.max(1, Number(req.body?.days) || 3));
+    await db.prepare(
+      "UPDATE users SET status = 'trial', trial_ends_at = ? WHERE id = ?"
+    ).run(isoIn(days), u.id);
+    const fresh = await getUserById(u.id);
+    res.json({ ok: true, days, status: fresh.status, trialEndsAt: fresh.trial_ends_at });
+  } catch (err) { next(err); }
+});
+
+// POST /api/admin/users/:id/lock — verrouille immédiatement le compte.
+router.post('/users/:id/lock', async (req, res, next) => {
+  try {
+    const u = await loadAccount(Number(req.params.id));
+    if (!u) return res.status(404).json({ error: 'Compte introuvable.' });
+    await db.prepare("UPDATE users SET status = 'locked' WHERE id = ?").run(u.id);
+    res.json({ ok: true, status: 'locked' });
+  } catch (err) { next(err); }
 });
 
 module.exports = router;
