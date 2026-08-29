@@ -57,7 +57,7 @@ const config = {
   publicBaseUrl: (process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, ''),
   // Adresses e-mail des administrateurs du SaaS (accès à l'espace admin).
   // Liste séparée par des virgules dans ADMIN_EMAILS ; le propriétaire par défaut.
-  adminEmails: (process.env.ADMIN_EMAILS || 'ousmane2003n@gmail.com')
+  adminEmails: (process.env.ADMIN_EMAILS || 'karat-boutique@gmail.com')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
