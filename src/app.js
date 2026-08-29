@@ -73,7 +73,7 @@ app.get('/api', (_req, res) => {
     version: pkg.version,
     endpoints: {
       auth: ['POST /api/auth/signup', 'POST /api/auth/verify-email', 'POST /api/auth/resend-code', 'POST /api/auth/login', 'POST /api/auth/logout', 'GET /api/auth/me', 'POST /api/auth/forgot', 'POST /api/auth/reset'],
-      billing: ['GET /api/billing/status', 'POST /api/billing/pay'],
+      billing: ['GET /api/billing/status'],
       dashboard: ['GET /api/dashboard'],
       products: ['GET /api/products', 'POST /api/products', 'PUT /api/products/:id', 'DELETE /api/products/:id'],
       store: ['GET /api/store', 'PUT /api/store', 'PUT /api/store/shipping'],
@@ -111,13 +111,16 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Route API introuva
 // inscription — on va directement au tableau de bord (session persistante sur
 // l'appareil ; seule la « Déconnexion » met fin à la session).
 app.get(['/', '/connexion', '/inscription'], (req, res, next) => {
-  if (req.user && req.user.status !== 'locked') return res.redirect('/tableau-de-bord');
+  // Le statut d'abonnement est porté par le COMPTE (boutique principale).
+  const acct = req.account || req.user;
+  if (req.user && acct && acct.status !== 'locked') return res.redirect('/tableau-de-bord');
   next();
 });
 
 app.get('/tableau-de-bord', (req, res, next) => {
   if (!req.user) return res.redirect('/connexion?suite=/tableau-de-bord');
-  if (req.user.status === 'locked') return res.redirect('/paiement');
+  const acct = req.account || req.user;
+  if (acct.status === 'locked') return res.redirect('/paiement');
   next();
 });
 

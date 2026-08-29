@@ -177,7 +177,12 @@ async function realStats(user) {
 // GET /api/dashboard
 router.get('/', requireAuth, async (req, res) => {
   const user = publicUser(req.user);
-  user.isAdmin = isAdminEmail((req.account && req.account.email) || req.user.email);
+  const acct = req.account || req.user;
+  // Le statut d'abonnement (essai/actif/verrouillé) est porté par le compte.
+  user.status = acct.status;
+  user.trialEndsAt = acct.trial_ends_at;
+  user.subscriptionEndsAt = acct.subscription_ends_at;
+  user.isAdmin = isAdminEmail(acct.email);
   res.json({ user, stats: await realStats(req.user) });
 });
 

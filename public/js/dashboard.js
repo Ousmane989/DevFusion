@@ -306,8 +306,19 @@
       else vs.href = '/boutique/' + slugify(user.shopName);
     });
 
-    // Tarifs desactives (usage libre) : pas de bandeau d'essai/abonnement.
-    const bar = q('#trial-bar'); if (bar) bar.style.display = 'none';
+    // Bandeau d'essai / abonnement.
+    const bar = q('#trial-bar'); const txt = q('#trial-text');
+    if (bar && txt) {
+      if (user.status === 'trial' && user.trialEndsAt) {
+        const d = Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / 86400000));
+        txt.textContent = d > 0
+          ? '✨ Essai gratuit : il vous reste ' + d + ' jour' + (d > 1 ? 's' : '') + '. Activez votre abonnement pour continuer sans interruption.'
+          : '✨ Votre essai gratuit se termine aujourd\'hui. Activez votre abonnement dès maintenant.';
+        bar.style.display = 'block';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
 
     if (st.today) {
       q('#kpi-today').textContent = money(st.today.sales != null ? st.today.sales : 0);

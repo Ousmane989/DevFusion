@@ -83,14 +83,15 @@ router.post('/signup', authLimiter, async (req, res) => {
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
   const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
-  // Inscription directe : le compte est actif immediatement (pas de code de
-  // verification par e-mail) et l'utilisateur est connecte dans la foulee.
+  // Inscription directe (pas de code par e-mail) avec essai gratuit de
+  // TRIAL_DAYS jours. L'utilisateur est connecté dans la foulée ; à la fin
+  // de l'essai, le compte se verrouille jusqu'à activation manuelle.
   const info = await db
     .prepare(
-      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency, subscription_ends_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'active', 1, ?, ?, ?)`
+      `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency, trial_ends_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, ?)`
     )
-    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency, isoIn(3650));
+    .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency, isoIn(TRIAL_DAYS));
 
   const user = await getUserById(info.lastInsertRowid);
   setSessionCookie(res, signSession(user));
@@ -127,12 +128,9 @@ router.post('/verify-email', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Code incorrect.' });
   }
 
-  // Tarifs desactives (usage libre) : le compte est directement actif,
-  // sans essai ni verrouillage. La date lointaine evite tout blocage.
-  const subEnd = isoIn(3650);
-  await db.prepare(
-    `UPDATE users SET email_verified = 1, status = 'active', subscription_ends_at = ? WHERE id = ?`
-  ).run(subEnd, user.id);
+  // Marque simplement l'e-mail comme vérifié (le statut essai/actif reste géré
+  // par l'abonnement ; pas d'activation gratuite ici).
+  await db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(user.id);
   await db.prepare('DELETE FROM verification_codes WHERE user_id = ? AND purpose = ?').run(user.id, 'email');
 
   const fresh = await getUserById(user.id);
@@ -163,11 +161,11 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
   }
   // La vérification par e-mail a été supprimée : plus aucun blocage à la
-  // connexion. On régularise au passage les anciens comptes non vérifiés.
-  if (!user.email_verified || user.status !== 'active') {
-    await db.prepare(
-      "UPDATE users SET email_verified = 1, status = 'active' WHERE id = ?"
-    ).run(user.id);
+  // connexion. On régularise seulement l'ancien indicateur « e-mail vérifié ».
+  // Le statut (essai / actif / verrouillé) n'est PAS forcé ici : un essai
+  // expiré doit rester verrouillé jusqu'à l'activation manuelle.
+  if (!user.email_verified) {
+    await db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(user.id);
   }
 
   setSessionCookie(res, signSession(user));

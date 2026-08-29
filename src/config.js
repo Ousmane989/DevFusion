@@ -61,6 +61,9 @@ const config = {
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
+  // Numéro WhatsApp de l'administrateur (format international sans « + »).
+  // Sert au lien d'activation manuelle de l'abonnement.
+  adminWhatsapp: (process.env.ADMIN_WHATSAPP || '221787489776').replace(/[^0-9]/g, ''),
 };
 
 // Vrai si l'adresse fournie appartient à un administrateur du SaaS.
