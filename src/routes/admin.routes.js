@@ -206,4 +206,22 @@ router.delete('/users/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// PUT /api/admin/products/:id/images { images:[...] } — définit la galerie
+// (1 à 3 images) d'un produit. Réservé à l'administrateur.
+router.put('/products/:id/images', async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const row = await db.prepare('SELECT id FROM products WHERE id = ?').get(id);
+    if (!row) return res.status(404).json({ error: 'Produit introuvable.' });
+    const raw = Array.isArray(req.body && req.body.images) ? req.body.images : [];
+    const imgs = raw
+      .map((s) => String(s || '').trim())
+      .filter((s) => s && s.length <= 720000 && (/^https?:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s)))
+      .slice(0, 3);
+    await db.prepare('UPDATE products SET image = ?, images = ? WHERE id = ?')
+      .run(imgs[0] || '', JSON.stringify(imgs), id);
+    res.json({ ok: true, count: imgs.length });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
