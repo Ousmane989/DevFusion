@@ -199,7 +199,20 @@
   function returnsText(d) {
     return `<p>${esc((d && d.returnsPolicy) || 'Retours acceptés sous 7 jours pour tout article non utilisé, dans son emballage d\'origine. Contactez-nous pour organiser le retour.')}</p>`;
   }
-  function openDetail(id) {
+  // URL de la « page produit » (partageable, ex. pour une publicité).
+  function productUrl(id) { const u = new URL(location.href); u.searchParams.set('produit', id); return u.toString(); }
+  function pushProductUrl(id) { try { if (Number(new URLSearchParams(location.search).get('produit')) !== id) history.pushState({ produit: id }, '', productUrl(id)); } catch (_) {} }
+  function restoreShopUrl() { try { const u = new URL(location.href); u.searchParams.delete('produit'); history.pushState({}, '', u.pathname + (u.search || '') + u.hash); } catch (_) {} }
+
+  async function shareProduct(p) {
+    const url = productUrl(p.id);
+    if (navigator.share) { try { await navigator.share({ title: p.name, text: p.name, url }); return; } catch (_) {} }
+    const btn = document.getElementById('pd-share');
+    try { await navigator.clipboard.writeText(url); if (btn) { const t = btn.innerHTML; btn.classList.add('done'); btn.textContent = 'Lien copié ✓'; setTimeout(() => { btn.innerHTML = t; btn.classList.remove('done'); }, 1800); } }
+    catch (_) { window.prompt('Copiez le lien du produit :', url); }
+  }
+
+  function openDetail(id, skipUrl) {
     const p = byId[id]; if (!p) return;
     detailQty = 1;
     detailVariant = (p.variants && p.variants[0]) || '';
@@ -228,6 +241,7 @@
         <h3 class="sf-pd-name">${esc(p.name)}</h3>
         ${rating}
         <div class="sf-pd-price"><span class="sf-pd-now">${sMain(p.price)}</span>${old}${promo}</div>
+        <button type="button" class="sf-share" id="pd-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg> Partager ce produit</button>
         ${p.subtitle ? `<p class="sf-pd-sub">${esc(p.subtitle)}</p>` : ''}
         ${stock}
         ${variants}
@@ -318,15 +332,32 @@
       const d = r.data;
       pixel('Purchase', { value: d.total, currency: pixCurrency(), num_items: detailQty, content_type: 'product', content_ids: ['KRT-' + p.id] });
       modal.querySelector('.sf-detail-body').innerHTML = `<div class="sf-done"><div class="sf-check">✓</div><h4>Commande confirmée !</h4><p class="sf-ref">Référence ${esc(d.ref)}</p><p>Total à payer <strong>à la livraison</strong> : ${sMain(d.total)}${d.shipping ? `<br/><span class="sf-muted">(dont ${sMain(d.shipping)} de livraison)</span>` : ''}</p><p class="sf-muted">Le commerçant vous contactera pour organiser la livraison.</p><button class="sf-btn ghost" data-close>Continuer mes achats</button></div>`;
-      const cl = modal.querySelector('[data-close]'); if (cl) cl.addEventListener('click', closeDetail);
+      const cl = modal.querySelector('[data-close]'); if (cl) cl.addEventListener('click', () => closeDetail());
     });
+
+    const shareBtn = modal.querySelector('#pd-share');
+    if (shareBtn) shareBtn.addEventListener('click', () => shareProduct(p));
 
     modal.classList.add('open');
     modal.scrollTop = 0; // ouvrir en haut : nom, prix et commande visibles d'emblée
     document.body.style.overflow = 'hidden';
+    // La « page produit » a sa propre adresse (partageable) + titre d'onglet.
+    if (!skipUrl && !window.__KARAT_SPA__) { pushProductUrl(p.id); document.title = p.name + ' — ' + (data.shopName || 'Boutique'); }
     pixel('ViewContent', { content_ids: ['KRT-' + p.id], content_name: p.name, content_type: 'product', value: p.price, currency: pixCurrency() });
   }
-  function closeDetail() { const m = root.querySelector('.sf-detail'); if (m) m.classList.remove('open'); document.body.style.overflow = ''; }
+  function closeDetail(skipUrl) {
+    const m = root.querySelector('.sf-detail'); if (m) m.classList.remove('open');
+    document.body.style.overflow = '';
+    if (!skipUrl && !window.__KARAT_SPA__) { restoreShopUrl(); if (data && data.shopName) document.title = data.shopName + ' — Boutique Karat'; }
+  }
+  // Bouton « retour » du navigateur : ouvre/ferme la page produit selon l'URL.
+  window.addEventListener('popstate', () => {
+    if (window.__KARAT_SPA__) return;
+    const pid = Number(new URLSearchParams(location.search).get('produit'));
+    const openEl = root.querySelector('.sf-detail.open');
+    if (pid && byId[pid]) openDetail(pid, true);
+    else if (openEl) closeDetail(true);
+  });
 
   // Analytics réels : visite (avec source) et ajout au panier.
   // Détecte la source d'une visite, en priorité depuis les paramètres de
@@ -470,8 +501,8 @@
     det.className = 'sf-detail';
     det.innerHTML = `<div class="sf-detail-ov"></div><div class="sf-detail-box"><button class="sf-detail-x" aria-label="Fermer">✕</button><div class="sf-detail-body"></div></div>`;
     root.appendChild(det);
-    det.querySelector('.sf-detail-ov').addEventListener('click', closeDetail);
-    det.querySelector('.sf-detail-x').addEventListener('click', closeDetail);
+    det.querySelector('.sf-detail-ov').addEventListener('click', () => closeDetail());
+    det.querySelector('.sf-detail-x').addEventListener('click', () => closeDetail());
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); closeCart(); } });
 
     root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
@@ -519,7 +550,7 @@
     track('visit', detectSource());
     // Lien profond depuis le catalogue Meta / une publicité (?produit=ID).
     const pid = Number(new URLSearchParams(location.search).get('produit'));
-    if (pid && byId[pid]) setTimeout(() => openDetail(pid), 350);
+    if (pid && byId[pid]) setTimeout(() => openDetail(pid, true), 350);
   }
 
   async function load() {
