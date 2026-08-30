@@ -445,6 +445,14 @@ img { max-width: 100%; display: block; }
 .sf-pd-qtyrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sf-pd-confirm { width: 100%; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; font-size: 0.9rem; padding: 15px 18px; border-radius: 12px; }
 .sf-pd-confirm[disabled] { opacity: .5; cursor: not-allowed; }
+/* Battement continu pour attirer l'attention et inciter à commander. */
+.sf-pd-confirm:not([disabled]) { animation: sfBtnPulse 1.5s ease-in-out infinite; will-change: transform; }
+.sf-pd-confirm:not([disabled]):hover { animation-play-state: paused; }
+@keyframes sfBtnPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 30%, transparent); }
+  50% { transform: scale(1.04); box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 55%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .sf-pd-confirm { animation: none !important; } }
 
 /* Plus de panier : commande directe depuis la fiche produit */
 .sf-cart, .sf-fab { display: none !important; }
