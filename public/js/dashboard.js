@@ -356,7 +356,7 @@
   // Produits
   // ================================================================
   let categories = [];
-  let pfImage = ''; // photo du produit en cours d'edition (data URL)
+  let pfImages = []; // galerie du produit en cours d'édition (1 à 3 data URLs)
   function statusPill(active) { return active ? '<span class="pill good">En ligne</span>' : '<span class="pill muted-pill">Brouillon</span>'; }
   function thumb(p) { return p.image ? `<img class="prod-thumb" src="${esc(p.image)}" alt="" />` : `<span class="prod-thumb emblem">${esc((p.name[0] || '?').toUpperCase())}</span>`; }
 
@@ -376,9 +376,22 @@
     };
     reader.readAsDataURL(file);
   }
-  function renderPfImage() {
-    const el = q('#pf-image-preview'); if (!el) return;
-    el.innerHTML = pfImage ? `<img src="${esc(pfImage)}" alt="" />` : '<span>Aucune image</span>';
+  function renderPfImages() {
+    const el = q('#pf-gallery'); if (!el) return;
+    if (!pfImages.length) {
+      el.innerHTML = '<div class="pf-gal-empty">Aucune photo</div>';
+    } else {
+      el.innerHTML = pfImages.map((src, i) => `
+        <div class="pf-gal-item${i === 0 ? ' main' : ''}">
+          <img src="${esc(src)}" alt="" />
+          ${i === 0 ? '<span class="pf-gal-badge">Principale</span>' : ''}
+          <button type="button" class="pf-gal-x" data-rm="${i}" title="Retirer">×</button>
+        </div>`).join('');
+      el.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
+        pfImages.splice(Number(b.dataset.rm), 1); renderPfImages();
+      }));
+    }
+    const add = q('#pf-image-add'); if (add) add.style.display = pfImages.length >= 3 ? 'none' : '';
   }
 
   function renderProducts(products) {
@@ -431,8 +444,8 @@
     if (q('#pf-price-label')) q('#pf-price-label').textContent = 'Prix (' + CUR + ')';
     if (q('#pf-compare-label')) q('#pf-compare-label').textContent = 'Prix barré / promo (' + CUR + ')';
     q('#pf-fcfa').textContent = mAlt(prod ? prod.price : 0);
-    pfImage = prod ? (prod.image || '') : '';
-    renderPfImage();
+    pfImages = prod ? ((prod.images && prod.images.length) ? prod.images.slice(0, 3) : (prod.image ? [prod.image] : [])) : [];
+    renderPfImages();
     const fileInput = q('#pf-image-file'); if (fileInput) fileInput.value = '';
     form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
   }
@@ -446,7 +459,7 @@
     const payload = {
       name: q('#pf-name').value.trim(), category: q('#pf-category').value,
       priceMru: Number(q('#pf-price').value), stock: Number(q('#pf-stock').value),
-      description: q('#pf-desc').value.trim(), image: pfImage, active: q('#pf-active').checked,
+      description: q('#pf-desc').value.trim(), images: pfImages, active: q('#pf-active').checked,
       subtitle: q('#pf-subtitle') ? q('#pf-subtitle').value.trim() : '',
       compareAt: q('#pf-compare') ? Number(q('#pf-compare').value) || 0 : 0,
       variants: q('#pf-variants') ? q('#pf-variants').value : '',
@@ -1147,8 +1160,11 @@
     q('#pf-cancel') && q('#pf-cancel').addEventListener('click', closeProductForm);
     q('#prod-form') && q('#prod-form').addEventListener('submit', submitProduct);
     q('#pf-price') && q('#pf-price').addEventListener('input', () => { q('#pf-fcfa').textContent = mAlt(Number(q('#pf-price').value) || 0); });
-    q('#pf-image-file') && q('#pf-image-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; resizeImage(f, (data) => { pfImage = data; renderPfImage(); }); });
-    q('#pf-image-clear') && q('#pf-image-clear').addEventListener('click', () => { pfImage = ''; renderPfImage(); const fi = q('#pf-image-file'); if (fi) fi.value = ''; });
+    q('#pf-image-file') && q('#pf-image-file').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      files.forEach((f) => { if (pfImages.length >= 3) return; resizeImage(f, (data) => { if (pfImages.length < 3) { pfImages.push(data); renderPfImages(); } }); });
+      e.target.value = '';
+    });
     q('#ship-add') && q('#ship-add').addEventListener('click', () => { shipping.zones.push({ zone: '', fee: 0 }); renderZones(); });
     q('#ship-save') && q('#ship-save').addEventListener('click', saveShipping);
     q('#store-save') && q('#store-save').addEventListener('click', saveStore);

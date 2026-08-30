@@ -116,7 +116,7 @@ function initSqliteSchema(sdb) {
       name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
       price_mru INTEGER NOT NULL DEFAULT 0, stock INTEGER NOT NULL DEFAULT 0,
       category TEXT NOT NULL DEFAULT 'Autre', active INTEGER NOT NULL DEFAULT 1,
-      image TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '',
+      image TEXT NOT NULL DEFAULT '', images TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '',
       compare_at_mru INTEGER NOT NULL DEFAULT 0, rating REAL NOT NULL DEFAULT 0,
       reviews_count INTEGER NOT NULL DEFAULT 0, variants TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
