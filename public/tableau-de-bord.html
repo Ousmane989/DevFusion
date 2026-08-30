@@ -264,15 +264,9 @@
             <div class="kpi"><span class="k-label">Livrées</span><div class="k-val" id="ord-delivered">0</div></div>
             <div class="kpi"><span class="k-label">CA encaissé (livrées)</span><div class="k-val gold-text"><span id="ord-rev">0</span> <span class="k-unit k-cur">MRU</span></div></div>
           </div>
-          <div class="panel">
-            <div class="panel-head"><h3>Toutes les commandes</h3></div>
-            <div class="table-wrap">
-              <table class="orders">
-                <thead><tr><th>Référence</th><th>Client</th><th>Ville</th><th>Produits</th><th class="num">Montant</th><th>Paiement</th><th>Statut</th><th>Date</th></tr></thead>
-                <tbody id="orders-full-body"></tbody>
-              </table>
-            </div>
-          </div>
+          <div class="panel-head" style="margin-bottom:14px"><h3>Toutes les commandes</h3></div>
+          <div class="order-cards" id="orders-full-body"></div>
+          <div class="orders-empty muted" id="orders-empty" style="display:none">Aucune commande pour le moment.</div>
         </section>
 
         <!-- ================= LIVRAISON ================= -->

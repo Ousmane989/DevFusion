@@ -749,6 +749,29 @@ img { max-width: 100%; display: block; }
 .stsel.tone-critical { color: #f0a29c; background: rgba(229,103,95,.12); }
 .cod { font-size: 0.76rem; color: var(--text-mute); white-space: nowrap; }
 
+/* --- Commandes en cartes (style appli) --- */
+.order-cards { display: grid; gap: 14px; }
+.orders-empty { text-align: center; padding: 40px 20px; }
+.ord-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 16px; cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.ord-card:hover { border-color: color-mix(in srgb, var(--gold) 40%, var(--line)); transform: translateY(-2px); box-shadow: 0 12px 30px -18px rgba(0,0,0,.6); }
+.ord-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.ord-idblock { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ord-name { font-family: var(--sans); font-size: 1.12rem; font-weight: 600; color: var(--text); }
+.ord-ref { font-size: 0.8rem; color: var(--text-mute); }
+.ord-amount { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+.ord-phone { display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; font-size: 0.9rem; color: var(--gold-light); text-decoration: none; }
+.ord-phone svg { width: 16px; height: 16px; flex: none; }
+.ord-phone:hover { text-decoration: underline; }
+.ord-place { margin-top: 9px; font-size: 0.9rem; color: var(--text-dim); }
+.ord-items { margin-top: 6px; font-size: 0.9rem; color: var(--text-mute); }
+.ord-foot { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+.ord-foot .stsel { flex: 1; padding: 10px 14px 10px 16px; border-radius: 14px; position: relative; }
+.ord-foot .stsel select { flex: 1; width: 100%; font-size: 0.95rem; font-weight: 600; padding: 4px 2px; }
+.ord-foot .stsel::after { content: '⇅'; margin-left: auto; opacity: .55; font-size: 0.9rem; }
+.ord-del { flex: none; width: 46px; height: 46px; border-radius: 13px; border: 1px solid var(--line); background: transparent; color: var(--text-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.ord-del svg { width: 20px; height: 20px; }
+.ord-del:hover { border-color: var(--danger); color: var(--danger); background: rgba(229,103,95,.08); }
+
 /* Ligne de commande cliquable */
 .order-row { cursor: pointer; transition: background .2s; }
 .order-row:hover { background: rgba(212,175,55,.06); }

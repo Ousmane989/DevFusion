@@ -41,4 +41,12 @@ router.put('/:id/status', requireAuth, async (req, res) => {
   res.json({ ok: true, summary: summarize(orders) });
 });
 
+// DELETE /api/orders/:id — supprime une commande de la boutique active.
+router.delete('/:id', requireAuth, async (req, res) => {
+  const info = await db.prepare('DELETE FROM orders WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  if (!info.changes) return res.status(404).json({ error: 'Commande introuvable.' });
+  const orders = await listOrders(req.user.id);
+  res.json({ ok: true, summary: summarize(orders) });
+});
+
 module.exports = router;
