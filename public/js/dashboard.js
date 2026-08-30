@@ -498,20 +498,39 @@
     ordersData = orders || [];
     orderStatuses = statuses || [];
     applySummary(summary);
-    q('#orders-full-body').innerHTML = orders.map((o) => `<tr data-row="${o.id}" class="order-row" title="Voir le détail de la commande">
-      <td class="mono">${esc(o.ref)}</td>
-      <td>${esc(o.customer)}${o.phone ? `<div class="small"><a class="tel-link" href="tel:${esc(o.phone)}">📞 ${esc(o.phone)}</a></div>` : ''}</td>
-      <td class="muted">${esc(o.city)}</td>
-      <td class="cell-prod">${esc(o.productsLabel)}</td><td class="mono num">${mMain(o.amount)}</td>
-      <td><span class="cod">À la livraison</span></td>
-      <td>${statusSelect(o)}</td><td class="muted">${esc(o.date)}</td></tr>`).join('');
+    const FLAG = { SN: '🇸🇳', MR: '🇲🇷' };
+    const flag = FLAG[currentUser && currentUser.country] || '🛍️';
+    const phoneSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.6a16 16 0 0 0 6 6l1.2-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg>';
+    const trashSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>';
+    const empty = q('#orders-empty'); if (empty) empty.style.display = orders.length ? 'none' : 'block';
+    q('#orders-full-body').innerHTML = orders.map((o) => `
+      <article class="ord-card" data-row="${o.id}" title="Voir le détail de la commande">
+        <div class="ord-top">
+          <div class="ord-idblock"><span class="ord-name">${esc(o.customer)}</span><span class="ord-ref">${esc(o.ref)} · ${esc(o.date)}</span></div>
+          <span class="ord-amount">${mMain(o.amount)}</span>
+        </div>
+        ${o.phone ? `<a class="ord-phone tel-link" href="tel:${esc(o.phone)}">${phoneSvg}<span>${esc(o.phone)}</span></a>` : ''}
+        <div class="ord-place">${flag} ${esc(o.city || 'Ville non précisée')} · Paiement à la livraison</div>
+        ${o.productsLabel ? `<div class="ord-items">${esc(o.productsLabel)}</div>` : ''}
+        <div class="ord-foot">
+          ${statusSelect(o)}
+          <button class="ord-del" data-del="${o.id}" title="Supprimer la commande" aria-label="Supprimer">${trashSvg}</button>
+        </div>
+      </article>`).join('');
     q('#orders-full-body').querySelectorAll('select[data-order]').forEach((sel) => sel.addEventListener('change', () => changeStatus(sel)));
-    // Clic sur la ligne = détail complet (sauf sur le statut ou le lien tél).
-    q('#orders-full-body').querySelectorAll('tr[data-row]').forEach((tr) => tr.addEventListener('click', (e) => {
-      if (e.target.closest('select, a, .stsel')) return;
-      openOrderModal(tr.dataset.row);
+    q('#orders-full-body').querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); deleteOrder(b.dataset.del); }));
+    // Clic sur la carte = détail complet (sauf sur le statut, le tél ou la corbeille).
+    q('#orders-full-body').querySelectorAll('.ord-card[data-row]').forEach((c) => c.addEventListener('click', (e) => {
+      if (e.target.closest('select, a, .stsel, .ord-del')) return;
+      openOrderModal(c.dataset.row);
     }));
     loaded.orders = true;
+  }
+
+  async function deleteOrder(id) {
+    if (!window.confirm('Supprimer définitivement cette commande ?')) return;
+    const r = await api('/api/orders/' + id, 'DELETE');
+    if (r.ok) loadOrders();
   }
 
   // ---- Détail d'une commande (client + articles) ----
