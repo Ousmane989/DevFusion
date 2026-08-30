@@ -46,8 +46,21 @@ function defaultShipping(country) {
   ] };
 }
 
+// Galerie d'images d'un produit : renvoie un tableau (1 à 3 images).
+// Compatibilité : si la colonne `images` (JSON) est vide, on retombe sur `image`.
+function productImages(p) {
+  let arr = [];
+  try {
+    const parsed = JSON.parse(p.images || '[]');
+    if (Array.isArray(parsed)) arr = parsed.filter((s) => typeof s === 'string' && s);
+  } catch (_) { arr = []; }
+  if (!arr.length && p.image) arr = [p.image];
+  return arr.slice(0, 3);
+}
+
 function publicProduct(p) {
   const variants = String(p.variants || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const images = productImages(p);
   return {
     id: p.id,
     name: p.name,
@@ -60,7 +73,8 @@ function publicProduct(p) {
     variants, // liste d'options (ex. couleurs)
     stock: p.stock,
     category: p.category,
-    image: p.image || '',
+    image: images[0] || p.image || '',
+    images, // galerie (1 à 3 images)
     active: Boolean(p.active),
     createdAt: p.created_at,
   };
@@ -103,4 +117,4 @@ function slugify(s) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ma-boutique';
 }
 
-module.exports = { THEMES, themeById, defaultShipping, publicProduct, CATEGORIES, slugify, ORDER_STATUSES, statusMeta, COUNTRIES, currencyOf, isoCurrency, altAmount, MRU_TO_FCFA };
+module.exports = { THEMES, themeById, defaultShipping, publicProduct, productImages, CATEGORIES, slugify, ORDER_STATUSES, statusMeta, COUNTRIES, currencyOf, isoCurrency, altAmount, MRU_TO_FCFA };

@@ -3,7 +3,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
-const { publicProduct, CATEGORIES } = require('../catalog');
+const { publicProduct, productImages, CATEGORIES } = require('../catalog');
 
 const router = express.Router();
 
@@ -31,6 +31,12 @@ function sanitizeImage(v) {
   if (/^https?:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s)) return s;
   return '';
 }
+// Galerie : nettoie un tableau d'images (1 à 3), chacune validée. Renvoie un
+// tableau prêt à stocker en JSON.
+function sanitizeImages(v) {
+  const arr = Array.isArray(v) ? v : (v ? [v] : []);
+  return arr.map(sanitizeImage).filter(Boolean).slice(0, 3);
+}
 // Normalise une liste de variantes (chaine "Noir, Or" ou tableau) -> "Noir,Or".
 function cleanVariants(v) {
   const arr = Array.isArray(v) ? v : String(v || '').split(',');
@@ -45,10 +51,12 @@ router.post('/', requireAuth, async (req, res) => {
   const errors = validate(b);
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
+  // Galerie : liste d'images (1 à 3). Rétro-compat : accepte aussi `image` seul.
+  const imgs = sanitizeImages(b.images !== undefined ? b.images : b.image);
   const info = await db
     .prepare(
-      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image, subtitle, compare_at_mru, rating, reviews_count, variants)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (user_id, name, description, price_mru, stock, category, active, image, images, subtitle, compare_at_mru, rating, reviews_count, variants)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       req.user.id,
@@ -58,7 +66,8 @@ router.post('/', requireAuth, async (req, res) => {
       Math.round(Number(b.stock)),
       CATEGORIES.includes(b.category) ? b.category : 'Autre',
       b.active === false ? 0 : 1,
-      sanitizeImage(b.image),
+      imgs[0] || '',
+      JSON.stringify(imgs),
       String(b.subtitle || '').trim().slice(0, 160),
       clampInt(b.compareAt),
       clampRating(b.rating),
@@ -77,8 +86,15 @@ router.put('/:id', requireAuth, async (req, res) => {
   const errors = validate({ name: b.name ?? row.name, priceMru: b.priceMru ?? row.price_mru, stock: b.stock ?? row.stock });
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
+  // Galerie : si `images` fourni on l'utilise ; sinon si `image` fourni on le
+  // reprend ; sinon on garde l'existant. La colonne `image` reflète la 1ʳᵉ image.
+  let imgs;
+  if (b.images !== undefined) imgs = sanitizeImages(b.images);
+  else if (b.image !== undefined) imgs = sanitizeImages(b.image);
+  else imgs = productImages(row);
+
   await db.prepare(
-    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ?, subtitle = ?, compare_at_mru = ?, rating = ?, reviews_count = ?, variants = ? WHERE id = ?`
+    `UPDATE products SET name = ?, description = ?, price_mru = ?, stock = ?, category = ?, active = ?, image = ?, images = ?, subtitle = ?, compare_at_mru = ?, rating = ?, reviews_count = ?, variants = ? WHERE id = ?`
   ).run(
     b.name !== undefined ? String(b.name).trim() : row.name,
     b.description !== undefined ? String(b.description).trim() : row.description,
@@ -86,7 +102,8 @@ router.put('/:id', requireAuth, async (req, res) => {
     b.stock !== undefined ? Math.round(Number(b.stock)) : row.stock,
     b.category !== undefined && CATEGORIES.includes(b.category) ? b.category : row.category,
     b.active !== undefined ? (b.active ? 1 : 0) : row.active,
-    b.image !== undefined ? sanitizeImage(b.image) : row.image,
+    imgs[0] || '',
+    JSON.stringify(imgs),
     b.subtitle !== undefined ? String(b.subtitle).trim().slice(0, 160) : row.subtitle,
     b.compareAt !== undefined ? clampInt(b.compareAt) : row.compare_at_mru,
     b.rating !== undefined ? clampRating(b.rating) : row.rating,

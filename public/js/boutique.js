@@ -213,8 +213,16 @@
       : '';
     const stock = p.stock > 0 ? `<div class="sf-pd-stock ok">${p.stock} en stock</div>` : '<div class="sf-pd-stock oos">Rupture de stock</div>';
     const zones = (data.shipping && data.shipping.zones) || [];
+    // Galerie : 1 à 3 images. Image principale + miniatures cliquables.
+    const gallery = (p.images && p.images.length) ? p.images : (p.image ? [p.image] : []);
+    const mainMedia = gallery.length
+      ? `<div class="sf-img cover">${hasPromo(p) ? `<span class="sf-promo">-${discountPct(p)}%</span>` : ''}<img class="sf-photo" id="pd-main-img" src="${esc(gallery[0])}" alt="${esc(p.name)}" /></div>`
+      : visual(p, 'cover');
+    const thumbs = gallery.length > 1
+      ? `<div class="sf-pd-thumbs">${gallery.map((s, i) => `<button type="button" class="sf-thumb${i === 0 ? ' on' : ''}" data-thumb="${i}"><img src="${esc(s)}" alt="" loading="lazy" /></button>`).join('')}</div>`
+      : '';
     modal.querySelector('.sf-detail-body').innerHTML = `<div class="sf-pd">
-      <div class="sf-pd-media">${visual(p, 'cover')}</div>
+      <div class="sf-pd-media">${mainMedia}${thumbs}</div>
       <div class="sf-pd-info">
         <span class="sf-cat">${esc(p.category)}</span>
         <h3 class="sf-pd-name">${esc(p.name)}</h3>
@@ -276,6 +284,12 @@
     modal.querySelectorAll('.sf-var').forEach((b) => b.addEventListener('click', () => {
       modal.querySelectorAll('.sf-var').forEach((x) => x.classList.toggle('on', x === b));
       detailVariant = b.dataset.variant;
+    }));
+    // Galerie : cliquer une miniature change l'image principale.
+    modal.querySelectorAll('[data-thumb]').forEach((t) => t.addEventListener('click', () => {
+      const src = gallery[Number(t.dataset.thumb)];
+      const main = modal.querySelector('#pd-main-img'); if (main && src) main.src = src;
+      modal.querySelectorAll('[data-thumb]').forEach((x) => x.classList.toggle('on', x === t));
     }));
     const citySel = modal.querySelector('#pd-city'); if (citySel) citySel.addEventListener('change', refreshPdTotals);
     modal.querySelectorAll('.sf-acc-h').forEach((h) => h.addEventListener('click', () => h.closest('.sf-acc-item').classList.toggle('open')));

@@ -226,16 +226,13 @@
                 <div class="field"><label for="pf-reviews">Nombre d'avis</label><input id="pf-reviews" type="number" min="0" placeholder="0" /></div>
               </div>
               <div class="field">
-                <label>Photo du produit</label>
-                <div class="pf-image">
-                  <div class="pf-image-preview" id="pf-image-preview"><span>Aucune image</span></div>
-                  <div class="pf-image-actions">
-                    <label class="btn btn-ghost btn-sm" for="pf-image-file">Choisir une image</label>
-                    <input type="file" id="pf-image-file" accept="image/*" hidden />
-                    <button type="button" class="btn btn-ghost btn-sm" id="pf-image-clear">Retirer</button>
-                  </div>
+                <label>Photos du produit <span class="muted small">(jusqu'à 3)</span></label>
+                <div class="pf-gallery" id="pf-gallery"></div>
+                <div class="pf-image-actions">
+                  <label class="btn btn-ghost btn-sm" for="pf-image-file" id="pf-image-add">Ajouter une photo</label>
+                  <input type="file" id="pf-image-file" accept="image/*" multiple hidden />
                 </div>
-                <div class="hint">JPG ou PNG — redimensionnée automatiquement.</div>
+                <div class="hint">JPG ou PNG — redimensionnées automatiquement. La 1ʳᵉ photo est l'image principale.</div>
               </div>
               <label class="pf-check"><input type="checkbox" id="pf-active" checked /> <span>Produit visible dans la boutique</span></label>
               <div class="pf-actions">
