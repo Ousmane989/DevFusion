@@ -277,6 +277,7 @@
     if (name === 'marketing' && !loaded.marketing) loadMarketing();
     if (name === 'analytics') loadAnalytics();       // toujours rafraichir
     if (name === 'payment') loadPayment();            // encaissements a jour
+    if (name === 'formation' && !loaded.formation) loadFormation();
     if (name === 'finance' && !loaded.finance) loadFinance();
     if (name === 'developer' && !loaded.developer) loadDeveloper();
     if (name === 'settings' && !loaded.settings) loadSettings();
@@ -1094,6 +1095,97 @@
   }
 
   // ================================================================
+  // Formation Karat — académie vidéo (introduction + 5 chapitres).
+  // Les titres/descriptions sont fixes ici ; seules les URLs des vidéos
+  // viennent du serveur (définies par l'administrateur). Progression
+  // mémorisée par navigateur (localStorage).
+  // ================================================================
+  const FORMATION_MODULES = [
+    { id: 'intro', tag: 'Introduction', title: 'Bienvenue sur Karat', desc: "Découvrez la plateforme Karat et comprenez ce qu'est l'e-commerce : vendre en ligne, encaisser et livrer, simplement." },
+    { id: 'ch1', tag: 'Chapitre 1', title: 'Comment ajouter un produit', desc: "Créez votre première fiche produit : photos, prix, description et stock, pour la mettre en vente en quelques minutes." },
+    { id: 'ch2', tag: 'Chapitre 2', title: 'Comment personnaliser sa boutique', desc: "Mettez vos couleurs, votre logo et votre bannière pour une boutique professionnelle à votre image." },
+    { id: 'ch3', tag: 'Chapitre 3', title: 'Créer une page Facebook et la lier à ma boutique', desc: "Créez votre page Facebook professionnelle avec Meta Business et reliez-la à votre boutique Karat." },
+    { id: 'ch4', tag: 'Chapitre 4', title: 'Configurer le Pixel et le connecter à ma boutique', desc: "Installez le Pixel Meta et connectez-le à votre boutique pour mesurer vos visiteurs et vos ventes." },
+    { id: 'ch5', tag: 'Chapitre 5', title: 'Lancer une campagne publicitaire', desc: "Créez et lancez votre première publicité sur Meta Business pour attirer des clients vers votre boutique." },
+  ];
+  let fmVideos = {};
+  let fmCurrent = 'intro';
+
+  function fmDone() { try { return JSON.parse(localStorage.getItem('karat_formation_done') || '[]'); } catch (_) { return []; } }
+  function fmSetDone(list) { try { localStorage.setItem('karat_formation_done', JSON.stringify(list)); } catch (_) {} }
+  function fmIsDone(id) { return fmDone().indexOf(id) !== -1; }
+  function fmToggleDone(id) { const l = fmDone(); const i = l.indexOf(id); if (i === -1) l.push(id); else l.splice(i, 1); fmSetDone(l); }
+  function fmModule(id) { return FORMATION_MODULES.filter((m) => m.id === id)[0] || FORMATION_MODULES[0]; }
+
+  function ytId(u) { const m = String(u).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/); return m ? m[1] : null; }
+  function vimeoId(u) { const m = String(u).match(/vimeo\.com\/(?:video\/)?(\d+)/); return m ? m[1] : null; }
+  function fmEmbed(url) {
+    url = String(url || '').trim();
+    if (!url) return '';
+    const yt = ytId(url);
+    if (yt) return '<iframe src="https://www.youtube.com/embed/' + yt + '?rel=0&modestbranding=1" title="Vidéo de formation" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>';
+    const vm = vimeoId(url);
+    if (vm) return '<iframe src="https://player.vimeo.com/video/' + vm + '" title="Vidéo de formation" allow="fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+    if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return '<video src="' + esc(url) + '" controls playsinline preload="metadata"></video>';
+    if (/^https?:\/\//i.test(url)) return '<iframe src="' + esc(url) + '" title="Vidéo de formation" allowfullscreen loading="lazy"></iframe>';
+    return '';
+  }
+
+  function updateFmProgress() {
+    const done = fmDone().filter((id) => FORMATION_MODULES.some((m) => m.id === id)).length;
+    const el = q('#academy-progress'); if (!el) return;
+    // Le nombre est figé (data-no-i18n) ; seul le mot « terminés » est traduit.
+    el.innerHTML = '<span data-no-i18n>' + done + ' / ' + FORMATION_MODULES.length + '</span> terminés';
+  }
+
+  function renderFormation() {
+    const list = q('#academy-list'); if (!list) return;
+    list.innerHTML = FORMATION_MODULES.map((m, i) => {
+      const done = fmIsDone(m.id);
+      const has = Boolean((fmVideos[m.id] || '').trim());
+      const num = done
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>'
+        : (i === 0 ? '★' : String(i));
+      return '<button class="academy-item' + (m.id === fmCurrent ? ' active' : '') + (done ? ' done' : '') + '" data-mod="' + m.id + '">'
+        + '<span class="academy-num">' + num + '</span>'
+        + '<span class="academy-item-txt"><span class="academy-item-title">' + esc(m.title) + '</span>'
+        + '<span class="academy-item-sub">' + esc(m.tag) + (has ? '' : ' · <em>Bientôt</em>') + '</span></span>'
+        + '</button>';
+    }).join('');
+    updateFmProgress();
+    if (window.KaratI18n) window.KaratI18n.apply();
+  }
+
+  function playModule(id) {
+    fmCurrent = id;
+    const m = fmModule(id);
+    const stage = q('#academy-stage');
+    const embed = fmEmbed(fmVideos[id]);
+    if (stage) {
+      stage.classList.toggle('empty', !embed);
+      stage.innerHTML = embed || '<div class="academy-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg><strong>Vidéo bientôt disponible</strong><span>Cette leçon arrive très bientôt.</span></div>';
+    }
+    if (q('#academy-now-tag')) q('#academy-now-tag').textContent = m.tag;
+    if (q('#academy-now-title')) q('#academy-now-title').textContent = m.title;
+    if (q('#academy-now-desc')) q('#academy-now-desc').textContent = m.desc;
+    const btn = q('#academy-done-btn');
+    if (btn) {
+      btn.classList.toggle('is-done', fmIsDone(id));
+      const lbl = btn.querySelector('span'); if (lbl) lbl.textContent = fmIsDone(id) ? 'Terminé ✓' : 'Marquer comme terminé';
+    }
+    qa('.academy-item').forEach((b) => b.classList.toggle('active', b.dataset.mod === id));
+    if (window.KaratI18n) window.KaratI18n.apply();
+  }
+
+  async function loadFormation() {
+    const r = await api('/api/formation', 'GET');
+    fmVideos = (r.ok && r.data && r.data.videos) || {};
+    renderFormation();
+    playModule(fmCurrent);
+    loaded.formation = true;
+  }
+
+  // ================================================================
   // Multi-boutiques : sélecteur + création
   // ================================================================
   let shopsData = [];
@@ -1170,6 +1262,11 @@
     const setSide = (open) => { const s = q('#dash-side'), sc = q('#dash-scrim'); if (s) s.classList.toggle('open', open); if (sc) sc.classList.toggle('open', open); };
     if (stog) stog.addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));
     const scrim = q('#dash-scrim'); if (scrim) scrim.addEventListener('click', () => setSide(false));
+    // Formation : choix d'une leçon + « marquer comme terminé ».
+    const alist = q('#academy-list');
+    if (alist) alist.addEventListener('click', (e) => { const b = e.target.closest('.academy-item'); if (b) playModule(b.dataset.mod); });
+    const adone = q('#academy-done-btn');
+    if (adone) adone.addEventListener('click', () => { fmToggleDone(fmCurrent); renderFormation(); playModule(fmCurrent); });
     // Barre d'onglets du bas (téléphone) : navigation rapide type appli.
     qa('.dash-tab[data-section]').forEach((t) => t.addEventListener('click', () => switchSection(t.dataset.section)));
     q('#tab-more') && q('#tab-more').addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));

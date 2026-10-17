@@ -145,6 +145,22 @@
     'Reliez Facebook, Instagram et TikTok à votre boutique.': 'Connect Facebook, Instagram and TikTok to your store.',
     'Identifiant du Pixel Meta': 'Meta Pixel ID', 'Dépense publicitaire': 'Ad spend', 'Coût par commande': 'Cost per order',
     'Coût par clic': 'Cost per click', 'CA net / dépense': 'Net revenue / spend', '30 jours': '30 days', '7 jours': '7 days', 'Année en cours': 'This year',
+    // Formation
+    'Formation': 'Training', 'Formation Karat': 'Karat Training', 'Programme': 'Program', '6 leçons': '6 lessons', 'terminés': 'completed',
+    "De l'ajout d'un produit au lancement de votre première publicité : apprenez à réussir votre boutique, pas à pas. Tout se fait avec Facebook / Meta Business.": 'From adding a product to launching your first ad: learn to grow your store, step by step. Everything is done with Facebook / Meta Business.',
+    'Vidéo bientôt disponible': 'Video coming soon', 'Cette leçon arrive très bientôt.': 'This lesson is coming very soon.', 'Bientôt': 'Soon',
+    'Marquer comme terminé': 'Mark as completed', 'Terminé ✓': 'Completed ✓',
+    'Introduction': 'Introduction', 'Chapitre 1': 'Chapter 1', 'Chapitre 2': 'Chapter 2', 'Chapitre 3': 'Chapter 3', 'Chapitre 4': 'Chapter 4', 'Chapitre 5': 'Chapter 5',
+    'Bienvenue sur Karat': 'Welcome to Karat', 'Comment ajouter un produit': 'How to add a product', 'Comment personnaliser sa boutique': 'How to customize your store',
+    'Créer une page Facebook et la lier à ma boutique': 'Create a Facebook page and link it to my store',
+    'Configurer le Pixel et le connecter à ma boutique': 'Set up the Pixel and connect it to my store',
+    'Lancer une campagne publicitaire': 'Launch an advertising campaign',
+    "Découvrez la plateforme Karat et comprenez ce qu'est l'e-commerce : vendre en ligne, encaisser et livrer, simplement.": 'Discover the Karat platform and understand what e-commerce is: selling online, getting paid and delivering, simply.',
+    'Créez votre première fiche produit : photos, prix, description et stock, pour la mettre en vente en quelques minutes.': 'Create your first product page: photos, price, description and stock, to put it on sale in minutes.',
+    'Mettez vos couleurs, votre logo et votre bannière pour une boutique professionnelle à votre image.': 'Add your colors, logo and banner for a professional store in your own image.',
+    'Créez votre page Facebook professionnelle avec Meta Business et reliez-la à votre boutique Karat.': 'Create your professional Facebook page with Meta Business and link it to your Karat store.',
+    'Installez le Pixel Meta et connectez-le à votre boutique pour mesurer vos visiteurs et vos ventes.': 'Install the Meta Pixel and connect it to your store to measure your visitors and sales.',
+    'Créez et lancez votre première publicité sur Meta Business pour attirer des clients vers votre boutique.': 'Create and launch your first ad on Meta Business to bring customers to your store.',
   };
 
   var AR = {
@@ -274,6 +290,22 @@
     'Reliez Facebook, Instagram et TikTok à votre boutique.': 'اربط فيسبوك وإنستغرام وتيك توك بمتجرك.',
     'Identifiant du Pixel Meta': 'معرّف Pixel من Meta', 'Dépense publicitaire': 'الإنفاق الإعلاني', 'Coût par commande': 'التكلفة لكل طلب',
     'Coût par clic': 'التكلفة لكل نقرة', 'CA net / dépense': 'صافي الإيراد / الإنفاق', '30 jours': '30 يومًا', '7 jours': '7 أيام', 'Année en cours': 'السنة الحالية',
+    // Formation
+    'Formation': 'التدريب', 'Formation Karat': 'تدريب Karat', 'Programme': 'البرنامج', '6 leçons': '6 دروس', 'terminés': 'مكتملة',
+    "De l'ajout d'un produit au lancement de votre première publicité : apprenez à réussir votre boutique, pas à pas. Tout se fait avec Facebook / Meta Business.": 'من إضافة منتج إلى إطلاق أول إعلان لك: تعلّم كيف تنجح بمتجرك خطوة بخطوة. كل شيء يتم عبر Facebook / Meta Business.',
+    'Vidéo bientôt disponible': 'الفيديو قريبًا', 'Cette leçon arrive très bientôt.': 'هذا الدرس قريبًا جدًا.', 'Bientôt': 'قريبًا',
+    'Marquer comme terminé': 'وضع علامة كمكتمل', 'Terminé ✓': 'مكتمل ✓',
+    'Introduction': 'مقدمة', 'Chapitre 1': 'الفصل 1', 'Chapitre 2': 'الفصل 2', 'Chapitre 3': 'الفصل 3', 'Chapitre 4': 'الفصل 4', 'Chapitre 5': 'الفصل 5',
+    'Bienvenue sur Karat': 'مرحبًا بك في Karat', 'Comment ajouter un produit': 'كيفية إضافة منتج', 'Comment personnaliser sa boutique': 'كيفية تخصيص متجرك',
+    'Créer une page Facebook et la lier à ma boutique': 'إنشاء صفحة فيسبوك وربطها بمتجري',
+    'Configurer le Pixel et le connecter à ma boutique': 'إعداد Pixel وربطه بمتجري',
+    'Lancer une campagne publicitaire': 'إطلاق حملة إعلانية',
+    "Découvrez la plateforme Karat et comprenez ce qu'est l'e-commerce : vendre en ligne, encaisser et livrer, simplement.": 'اكتشف منصة Karat وافهم ما هي التجارة الإلكترونية: البيع عبر الإنترنت، التحصيل والتوصيل، ببساطة.',
+    'Créez votre première fiche produit : photos, prix, description et stock, pour la mettre en vente en quelques minutes.': 'أنشئ أول بطاقة منتج: الصور والسعر والوصف والمخزون، لعرضه للبيع في دقائق.',
+    'Mettez vos couleurs, votre logo et votre bannière pour une boutique professionnelle à votre image.': 'أضف ألوانك وشعارك ولافتتك لمتجر احترافي يعكس هويتك.',
+    'Créez votre page Facebook professionnelle avec Meta Business et reliez-la à votre boutique Karat.': 'أنشئ صفحتك الاحترافية على فيسبوك عبر Meta Business واربطها بمتجر Karat.',
+    'Installez le Pixel Meta et connectez-le à votre boutique pour mesurer vos visiteurs et vos ventes.': 'ثبّت Meta Pixel واربطه بمتجرك لقياس زوّارك ومبيعاتك.',
+    'Créez et lancez votre première publicité sur Meta Business pour attirer des clients vers votre boutique.': 'أنشئ وأطلق أول إعلان لك على Meta Business لجذب العملاء إلى متجرك.',
   };
 
   var DICT = { en: EN, ar: AR };

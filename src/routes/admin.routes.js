@@ -13,6 +13,7 @@ const { requireAuth, requireAdmin } = require('../middleware');
 const { verifyPassword, signSession, setSessionCookie } = require('../auth');
 const { config, isAdminUser } = require('../config');
 const { sendEmail, emailConfig } = require('../mailer');
+const { MODULE_IDS: FORMATION_IDS, readFormation, writeFormation, validUrl } = require('../formation');
 
 const router = express.Router();
 
@@ -48,6 +49,7 @@ router.get('/settings', async (_req, res, next) => {
       whatsapp: (await val('admin_whatsapp')) || config.adminWhatsapp,
       waveLink: (await val('wave_link')) || '',
       email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName },
+      formation: await readFormation(),
     });
   } catch (err) { next(err); }
 });
@@ -73,8 +75,15 @@ router.put('/settings', async (req, res, next) => {
     if (b.emailApiKey !== undefined && b.emailApiKey && !/•/.test(b.emailApiKey)) await setCfg('email_api_key', String(b.emailApiKey).trim());
     if (b.emailFrom !== undefined) await setCfg('email_from', String(b.emailFrom).trim());
     if (b.emailFromName !== undefined) await setCfg('email_from_name', String(b.emailFromName).trim());
+    // Vidéos de formation (introduction + 5 chapitres).
+    let formation;
+    if (b.formation !== undefined && b.formation && typeof b.formation === 'object') {
+      const bad = FORMATION_IDS.find((id) => b.formation[id] !== undefined && !validUrl(b.formation[id]));
+      if (bad) return res.status(400).json({ errors: { formation: 'Lien vidéo invalide (doit commencer par https://).' } });
+      formation = await writeFormation(b.formation);
+    }
     const cfg = await emailConfig();
-    res.json({ ok: true, email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName } });
+    res.json({ ok: true, email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName }, formation: formation || await readFormation() });
   } catch (err) { next(err); }
 });
 
