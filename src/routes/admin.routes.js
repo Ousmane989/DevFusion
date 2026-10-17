@@ -46,6 +46,7 @@ router.get('/settings', async (_req, res, next) => {
     res.json({
       ok: true,
       whatsapp: (await val('admin_whatsapp')) || config.adminWhatsapp,
+      waveLink: (await val('wave_link')) || '',
       email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName },
     });
   } catch (err) { next(err); }
@@ -62,6 +63,11 @@ router.put('/settings', async (req, res, next) => {
       const num = String(b.whatsapp || '').replace(/[^0-9]/g, '');
       if (num.length < 8) return res.status(400).json({ errors: { whatsapp: 'Numéro WhatsApp invalide (format international).' } });
       await setCfg('admin_whatsapp', num);
+    }
+    if (b.waveLink !== undefined) {
+      const link = String(b.waveLink || '').trim();
+      if (link && !/^https?:\/\//i.test(link)) return res.status(400).json({ errors: { waveLink: 'Lien invalide (doit commencer par https://).' } });
+      await setCfg('wave_link', link);
     }
     // La clé API n'est enregistrée que si une valeur non masquée est fournie.
     if (b.emailApiKey !== undefined && b.emailApiKey && !/•/.test(b.emailApiKey)) await setCfg('email_api_key', String(b.emailApiKey).trim());
