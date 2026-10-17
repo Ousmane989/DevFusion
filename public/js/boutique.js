@@ -253,8 +253,7 @@
           <span class="sf-pd-label">Vos coordonnées</span>
           <input id="pd-name" placeholder="Nom complet" autocomplete="name" required />
           <input id="pd-phone" placeholder="Téléphone" autocomplete="tel" inputmode="tel" required />
-          <select id="pd-city" required><option value="">Ville de livraison…</option>${zones.map((z) => `<option value="${esc(z.zone)}">${esc(z.zone)} — ${z.fee ? money(z.fee) + ' ' + SCUR : 'gratuit'}</option>`).join('')}</select>
-          <input id="pd-address" placeholder="Adresse / quartier (facultatif)" />
+          <input id="pd-city" placeholder="Ville / adresse de livraison (facultatif)" autocomplete="address-level2" />
           <textarea id="pd-note" rows="2" placeholder="Note pour le livreur (facultatif)"></textarea>
           <div class="sf-totals" id="pd-totals"></div>
           <div class="sf-cod">💵 <div><strong>Paiement à la livraison</strong><span>Vous réglez en espèces à la réception.</span></div></div>
@@ -273,21 +272,11 @@
         </div>
       </div></div>`;
 
-    // Totaux en direct (sous-total = prix × quantité, + livraison selon la ville).
-    function pdShip(city) {
-      const sh = (data && data.shipping) || { zones: [], freeOver: 0 };
-      const z = (sh.zones || []).find((x) => x.zone.toLowerCase() === String(city || '').toLowerCase());
-      let fee = z ? z.fee : 0;
-      if (sh.freeOver && p.price * detailQty >= sh.freeOver) fee = 0;
-      return { fee, known: !!z };
-    }
+    // Total = prix × quantité (pas de frais de livraison sur le formulaire).
     function refreshPdTotals() {
-      const city = (modal.querySelector('#pd-city') || {}).value || '';
       const sub = p.price * detailQty;
-      const s = pdShip(city);
-      const total = sub + (city ? s.fee : 0);
       const el = modal.querySelector('#pd-totals');
-      if (el) el.innerHTML = `<div><span>Sous-total</span><span>${sMain(sub)}</span></div><div><span>Livraison</span><span>${city ? (s.fee ? sMain(s.fee) : 'Offerte') : '—'}</span></div><div class="sf-grand"><span>Total</span><span>${sMain(total)}</span></div>`;
+      if (el) el.innerHTML = `<div><span>Sous-total</span><span>${sMain(sub)}</span></div><div class="sf-grand"><span>Total à payer</span><span>${sMain(sub)}</span></div>`;
     }
 
     modal.querySelectorAll('[data-dq]').forEach((b) => b.addEventListener('click', () => {
@@ -315,12 +304,12 @@
       const msgEl = modal.querySelector('#pd-msg');
       const name = modal.querySelector('#pd-name').value.trim();
       const phone = modal.querySelector('#pd-phone').value.trim();
-      const city = modal.querySelector('#pd-city').value;
-      if (name.length < 2 || phone.length < 6 || !city) {
-        if (msgEl) { msgEl.textContent = 'Renseignez votre nom, votre téléphone et votre ville.'; msgEl.className = 'sf-msg err'; }
+      const city = (modal.querySelector('#pd-city').value || '').trim();
+      if (name.length < 2 || phone.length < 6) {
+        if (msgEl) { msgEl.textContent = 'Renseignez votre nom et votre téléphone.'; msgEl.className = 'sf-msg err'; }
         return;
       }
-      const payload = { name, phone, city, address: modal.querySelector('#pd-address').value.trim(), note: modal.querySelector('#pd-note').value.trim(), items: [{ id: p.id, qty: detailQty, variant: detailVariant || '' }] };
+      const payload = { name, phone, city, address: city, note: modal.querySelector('#pd-note').value.trim(), items: [{ id: p.id, qty: detailQty, variant: detailVariant || '' }] };
       const btn = modal.querySelector('.sf-pd-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
       pixel('InitiateCheckout', { value: p.price * detailQty, currency: pixCurrency(), num_items: detailQty, content_ids: ['KRT-' + p.id] });
       const r = await placeOrder(payload);
