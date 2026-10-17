@@ -29,6 +29,8 @@ window.LV = (function () {
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
     download: '<path d="M12 4v11M7 10l5 5 5-5M4 20h16"/>',
     logout: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
+    sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+    moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
   };
   function icon(name, cls) {
     return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
@@ -202,6 +204,14 @@ window.LV = (function () {
         '<option value="' + z.id + '"' + (String(selected) === String(z.id) ? ' selected' : '') + '>' + esc(z.name) + ' — ' + money(z.price) + '</option>').join('') + '</optgroup>').join('');
   }
 
+  // Bouton jour / nuit (le comportement est dans theme.js).
+  function themeButton() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return '<button class="theme-toggle" type="button" data-theme-toggle aria-label="Mode jour / nuit" aria-pressed="' + dark + '" title="' + (dark ? 'Passer en mode jour' : 'Passer en mode nuit') + '">' +
+      '<span class="tt-sky"><i></i><i></i><i></i></span><span class="tt-cloud"></span>' +
+      '<span class="tt-knob">' + icon('sun', 'tt-sun') + icon('moon', 'tt-moon') + '</span></button>';
+  }
+
   // ----- En-tête / pied de page publics -----
   function publicChrome() {
     const h = document.getElementById('lv-header');
@@ -218,7 +228,7 @@ window.LV = (function () {
         '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
         '<div class="nav-cta"><a href="/livreur/connexion" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Connexion</a>' +
         '<a href="/livreur/commander" class="btn btn-green btn-sm">Commander une course</a></div>' +
-        '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';
+        themeButton() + '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';
       const header = document.querySelector('.site-header');
       header.querySelector('.nav-toggle').addEventListener('click', () => header.classList.toggle('open'));
       header.querySelectorAll('.nav-links a').forEach((a) => a.addEventListener('click', () => header.classList.remove('open')));
@@ -269,6 +279,7 @@ window.LV = (function () {
       '<button data-go="' + s.id + '">' + icon(s.icon) + '<span>' + esc(s.label) + '</span><em class="count hidden" data-count="' + s.id + '"></em></button>').join('') +
       '</nav><div class="side-foot"><strong>' + esc(user.business_name || user.name) + '</strong><span class="muted">' + esc(phoneFmt(user.phone)) + '</span>' +
       '<button class="btn btn-ghost btn-sm btn-block" data-logout>' + icon('logout', 'ico') + ' Déconnexion</button></div>';
+    app.querySelector('.topbar .actions').insertAdjacentHTML('afterbegin', themeButton());
     const title = app.querySelector('.topbar h1');
     function show(id) {
       const s = sections.find((x) => x.id === id) || sections[0];
