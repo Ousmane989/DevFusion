@@ -118,8 +118,8 @@ function toCsv(rows) {
 // ================================================================
 router.get('/info', wrap(async (_req, res) => {
   const zones = await db.prepare('SELECT id, name, region, kind, price, delay FROM lv_zones WHERE active = 1 ORDER BY sort, id').all();
-  const { phone, whatsapp, email, address } = config.livreur;
-  res.json({ contact: { phone, whatsapp, email, address }, zones, services: S.SERVICES, statuses: S.STATUSES });
+  const { phone, whatsapp, email, address, lat, lng } = config.livreur;
+  res.json({ contact: { phone, whatsapp, email, address, lat, lng }, zones, services: S.SERVICES, statuses: S.STATUSES });
 }));
 
 router.post('/quote', wrap(async (req, res) => {

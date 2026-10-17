@@ -35,8 +35,58 @@ window.LV = (function () {
   }
   const WA_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
 
+  // Logo : camion stylisé + barre rouge (couleurs du drapeau).
   function brand(sub) {
-    return '<a href="/livreur" class="brand"><span class="brand-mark">' + icon('truck') + '</span><span>Karat <span class="gold">Livreur</span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
+    return '<a href="/livreur" class="brand"><span class="brand-mark">' + icon('truck') + '</span><span><span class="brand-name">Karat <b>Livreur</b></span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
+  }
+
+  // ----- Carte de la Mauritanie (SVG, projection équirectangulaire) -----
+  // Contour simplifié du pays (longitude, latitude).
+  const MR_BORDER = [[-12.17, 14.62], [-12.83, 15.3], [-13.44, 16.04], [-14.1, 16.3], [-14.58, 16.6], [-15.14, 16.59], [-15.62, 16.37], [-16.12, 16.46], [-16.46, 16.14], [-16.55, 16.67], [-16.27, 17.17], [-16.15, 18.11], [-16.26, 19.1], [-16.38, 19.59], [-16.28, 20.09], [-16.54, 20.57], [-17.06, 21.0], [-16.85, 21.33], [-12.93, 21.33], [-13.12, 22.77], [-12.87, 23.28], [-11.94, 23.37], [-11.97, 25.93], [-8.69, 25.88], [-8.68, 27.4], [-4.92, 24.97], [-6.45, 24.96], [-5.97, 20.64], [-5.49, 16.33], [-5.32, 16.2], [-5.54, 15.5], [-9.55, 15.49], [-9.7, 15.26], [-10.09, 15.33], [-10.65, 15.13], [-11.35, 15.41], [-11.67, 15.39], [-11.83, 14.8]];
+  // Coordonnées des villes desservies (clé = nom de zone sans accents).
+  const MR_CITIES = {
+    nouakchott: [-15.98, 18.09], nouadhibou: [-17.03, 20.94], rosso: [-15.81, 16.51], boutilimit: [-14.69, 17.55],
+    akjoujt: [-14.38, 19.75], aleg: [-13.91, 17.05], boghe: [-14.28, 16.59], kaedi: [-13.51, 16.15], atar: [-13.05, 20.52],
+    tidjikja: [-11.43, 18.55], kiffa: [-11.4, 16.62], selibaby: [-12.18, 15.16], aioun: [-9.61, 16.66], nema: [-7.26, 16.62],
+    zouerate: [-12.48, 22.73], chinguetti: [-12.36, 20.46], ouadane: [-11.62, 20.93], tichitt: [-9.5, 18.45], bir_moghrein: [-11.62, 25.23],
+  };
+  const norm = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]+/g, '_').replace(/^_|_$/g, '');
+  const K = 34;
+  const px = (lon, lat) => [Math.round(((lon + 17.6) * 0.94 * K) * 10) / 10, Math.round(((27.8 - lat) * K) * 10) / 10];
+
+  // zones : [{ id, name, price, delay, kind }] ; opts.only = nom de zone à mettre en avant.
+  function mapSvg(zones, opts) {
+    opts = opts || {};
+    const W = Math.ceil(13.2 * 0.94 * K) + 10;
+    const H = Math.ceil(13.6 * K);
+    const hq = px.apply(null, MR_CITIES.nouakchott);
+    const d = 'M' + MR_BORDER.map((p) => px(p[0], p[1]).join(',')).join(' L') + ' Z';
+    let grid = '';
+    for (let lon = -16; lon <= -5; lon += 2) { const a = px(lon, 27.6), b = px(lon, 14.2); grid += '<line class="grid-l" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>'; }
+    for (let lat = 16; lat <= 26; lat += 2) { const a = px(-17.6, lat), b = px(-4.4, lat); grid += '<line class="grid-l" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>'; }
+    let routes = '';
+    let cities = '';
+    (zones || []).filter((z) => z.kind !== 'commune').forEach((z) => {
+      const c = MR_CITIES[norm(z.name)];
+      if (!c) return;
+      const p = px(c[0], c[1]);
+      if (opts.only && norm(opts.only) !== norm(z.name)) return;
+      const mx = (hq[0] + p[0]) / 2 + (p[1] - hq[1]) * 0.18;
+      const my = (hq[1] + p[1]) / 2 - (p[0] - hq[0]) * 0.18;
+      routes += '<path class="route' + (opts.only ? ' on' : '') + '" data-route="' + z.id + '" d="M' + hq.join(',') + ' Q' + mx.toFixed(1) + ',' + my.toFixed(1) + ' ' + p.join(',') + '"/>';
+      const left = p[0] > W - 90;
+      cities += '<g class="city" data-zone="' + z.id + '" tabindex="0"><title>' + esc(z.name) + ' — ' + money(z.price) + ' · ' + esc(z.delay) + '</title>' +
+        '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5.5"/><text x="' + (p[0] + (left ? -10 : 10)) + '" y="' + (p[1] + 4) + '"' + (left ? ' text-anchor="end"' : '') + '>' + esc(z.name) + '</text></g>';
+    });
+    return '<svg class="mr-map" viewBox="-6 -6 ' + (W + 12) + ' ' + (H + 12) + '" role="img" aria-label="Carte de la Mauritanie : agence à Nouakchott et villes desservies">' +
+      '<defs><linearGradient id="mrLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14905b"/><stop offset="1" stop-color="#0a5a39"/></linearGradient>' +
+      '<clipPath id="mrClip"><path d="' + d + '"/></clipPath></defs>' + grid +
+      '<path class="land" d="' + d + '"/>' +
+      '<g clip-path="url(#mrClip)" opacity=".12"><path d="M0 ' + H * 0.35 + ' Q' + W * 0.5 + ' ' + H * 0.25 + ' ' + W + ' ' + H * 0.4 + '" stroke="#ffd75e" stroke-width="40" fill="none"/></g>' +
+      '<text class="ocean-lbl" x="4" y="' + Math.round(H * 0.82) + '" transform="rotate(-90 4 ' + Math.round(H * 0.82) + ')">OCÉAN ATLANTIQUE</text>' +
+      routes + cities +
+      '<g class="hq"><circle class="pulse" cx="' + hq[0] + '" cy="' + hq[1] + '" r="9"/><circle class="core" cx="' + hq[0] + '" cy="' + hq[1] + '" r="9"/>' +
+      '<text x="' + (hq[0] + 15) + '" y="' + (hq[1] + 5) + '">Nouakchott · Agence</text></g></svg>';
   }
 
   async function api(path, body, method) {
@@ -152,13 +202,18 @@ window.LV = (function () {
   function publicChrome() {
     const h = document.getElementById('lv-header');
     if (h) {
-      h.outerHTML = '<header class="site-header"><div class="container nav">' + brand() +
+      h.outerHTML = '<div class="topstrip"><div class="container">' +
+        '<span class="hide-sm">' + icon('pin', 'ico') + ' Agence à Nouakchott — livraison dans toute la Mauritanie</span>' +
+        '<a data-contact="phone" href="#">' + icon('phone', 'ico') + '<span>…</span></a>' +
+        '<div class="right"><a data-contact="email" href="#" class="hide-sm">' + icon('mail', 'ico') + '<span>…</span></a>' +
+        '<a data-contact="wa" href="#" target="_blank" rel="noopener">' + icon('chat', 'ico') + ' WhatsApp</a></div></div></div>' +
+        '<header class="site-header"><div class="container nav">' + brand() +
         '<ul class="nav-links">' +
         '<li><a href="/livreur#services">Services</a></li><li><a href="/livreur#fonctionnement">Fonctionnement</a></li>' +
-        '<li><a href="/livreur#tarifs">Tarifs</a></li><li><a href="/livreur#couverture">Couverture</a></li>' +
-        '<li><a href="/livreur/suivi">Suivi</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
-        '<div class="nav-cta"><a href="/livreur/connexion" class="btn btn-ghost btn-sm">Connexion</a>' +
-        '<a href="/livreur/inscription" class="btn btn-primary btn-sm">Devenir partenaire</a></div>' +
+        '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#tarifs">Tarifs</a></li>' +
+        '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
+        '<div class="nav-cta"><a href="/livreur/connexion" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Connexion</a>' +
+        '<a href="/livreur/commander" class="btn btn-green btn-sm">Commander une course</a></div>' +
         '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';
       const header = document.querySelector('.site-header');
       header.querySelector('.nav-toggle').addEventListener('click', () => header.classList.toggle('open'));
@@ -166,12 +221,14 @@ window.LV = (function () {
     }
     const f = document.getElementById('lv-footer');
     if (f) {
-      f.outerHTML = '<footer class="site-footer"><div class="container"><div class="footer-grid">' +
-        '<div>' + brand() + '<p class="dim" style="margin-top:14px;max-width:320px;font-size:14.5px">Livraison express, e-commerce et colis à Nouakchott et dans toutes les wilayas de Mauritanie. Paiement à la livraison, suivi en temps réel.</p></div>' +
-        '<div><h4>Services</h4><ul><li><a href="/livreur#services">Livraison express</a></li><li><a href="/livreur#services">Livraison e-commerce</a></li><li><a href="/livreur#services">Course à la demande</a></li><li><a href="/livreur#services">Colis & interurbain</a></li></ul></div>' +
-        '<div><h4>Liens utiles</h4><ul><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur/commander">Commander une course</a></li><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/inscription-coursier">Devenir livreur</a></li></ul></div>' +
-        '<div><h4>Espaces</h4><ul><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/coursier">Espace livreur</a></li><li><a href="/livreur/agence">Espace agence</a></li><li><a href="/livreur/connexion">Connexion</a></li></ul></div>' +
-        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, Mauritanie</span><span data-contact="phone-text"></span></div></div></footer>' +
+      f.outerHTML = '<div class="flag-stripe"></div><footer class="site-footer"><div class="container"><div class="footer-grid">' +
+        '<div>' + brand() + '<p style="margin-top:16px;max-width:340px;font-size:14.5px">Agence de livraison basée à Nouakchott. Express, e-commerce et colis dans toutes les wilayas de Mauritanie, avec paiement à la livraison et suivi en temps réel.</p>' +
+        '<div class="footer-pay"><span>Espèces</span><span>Bankily</span><span>Masrvi</span><span>Sedad</span></div></div>' +
+        '<div><h4>Services</h4><ul><li><a href="/livreur#services">Livraison express</a></li><li><a href="/livreur#services">Livraison e-commerce</a></li><li><a href="/livreur#services">Course à la demande</a></li><li><a href="/livreur#services">Colis & interurbain</a></li><li><a href="/livreur#tarifs">Tarifs</a></li></ul></div>' +
+        '<div><h4>Liens utiles</h4><ul><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur/commander">Commander une course</a></li><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/inscription-coursier">Devenir livreur</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
+        '<div><h4>Contact</h4><ul><li><a data-contact="phone" href="#"><span>…</span></a></li><li><a data-contact="email" href="#"><span>…</span></a></li><li><a data-contact="address"><span>…</span></a></li>' +
+        '<li style="margin-top:6px"><a href="/livreur/partenaire">Espace partenaire</a> · <a href="/livreur/coursier">Livreur</a> · <a href="/livreur/agence">Agence</a></li></ul></div>' +
+        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, République Islamique de Mauritanie</span><span>Livraison rapide · Paiement à la réception</span></div></div></footer>' +
         '<a class="wa-float" data-contact="wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">' + WA_SVG + '</a>';
     }
     fillContacts();
@@ -186,10 +243,10 @@ window.LV = (function () {
     document.querySelectorAll('[data-contact]').forEach((el) => {
       const k = el.getAttribute('data-contact');
       if (k === 'wa') el.href = 'https://wa.me/' + c.whatsapp;
-      else if (k === 'phone') { el.href = tel; const s = el.querySelector('span'); if (s) s.textContent = c.phone; }
+      else if (k === 'phone') { el.href = tel; const s = el.querySelector('span:last-of-type'); if (s) s.textContent = c.phone; }
       else if (k === 'phone-text') el.textContent = c.phone + ' · ' + c.email;
-      else if (k === 'email') { el.href = 'mailto:' + c.email; const s = el.querySelector('span'); if (s) s.textContent = c.email; }
-      else if (k === 'address') { const s = el.querySelector('span') || el; s.textContent = c.address; }
+      else if (k === 'email') { el.href = 'mailto:' + c.email; const s = el.querySelector('span:last-of-type'); if (s) s.textContent = c.email; }
+      else if (k === 'address') { const s = el.querySelector('span:last-of-type') || el; s.textContent = c.address; }
     });
   }
 
@@ -257,6 +314,6 @@ window.LV = (function () {
 
   return {
     icon, brand, api, esc, money, phoneFmt, date, badge, USER_STATUS, msg, clearMsg, toast, modal, closeModal,
-    formData, submit, info, zoneOptions, publicChrome, fillContacts, appShell, setCount, logout, WA_SVG,
+    formData, submit, info, zoneOptions, publicChrome, mapSvg, fillContacts, appShell, setCount, logout, WA_SVG,
   };
 })();

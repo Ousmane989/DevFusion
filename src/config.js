@@ -71,6 +71,9 @@ const config = {
     whatsapp: (process.env.LIVREUR_WHATSAPP || '22200000000').replace(/[^0-9]/g, ''),
     email: process.env.LIVREUR_EMAIL || 'contact@karat-livreur.mr',
     address: process.env.LIVREUR_ADDRESS || 'Tevragh Zeina, Nouakchott, Mauritanie',
+    // Position de l'agence sur le plan (Nouakchott par défaut).
+    lat: Number(process.env.LIVREUR_LAT || 18.0865),
+    lng: Number(process.env.LIVREUR_LNG || -15.9785),
     adminPhone: (process.env.LIVREUR_ADMIN_PHONE || '').replace(/[^0-9]/g, ''),
     adminPassword: process.env.LIVREUR_ADMIN_PASSWORD || '',
   },
