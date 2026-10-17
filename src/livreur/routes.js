@@ -2,7 +2,7 @@
 
 // ------------------------------------------------------------------
 // API Karat Livreur — /api/livreur
-//   public      : infos, devis, suivi, commande particulier, contact, inscriptions
+//   public      : infos, suivi de colis, contact, inscription partenaire
 //   partenaire  : commandes, stock, reversements, relevés
 //   coursier    : tournée du jour, statuts, caisse
 //   agence      : back-office complet (centre d'appel, dispatch, caisse…)
@@ -122,12 +122,6 @@ router.get('/info', wrap(async (_req, res) => {
   res.json({ contact: { phone, whatsapp, email, address, lat, lng }, zones, services: S.SERVICES, statuses: S.STATUSES });
 }));
 
-router.post('/quote', wrap(async (req, res) => {
-  const q = await S.computeFee(int(req.body.zone_id), req.body.service);
-  if (!q) return bad(res, 'Zone inconnue.');
-  res.json({ fee: q.fee, zone: q.zone.name, delay: q.zone.delay });
-}));
-
 router.get('/track/:code', trackLimiter, wrap(async (req, res) => {
   const c = str(req.params.code, 20).toUpperCase().replace(/[-\s]/g, '');
   const code = 'KL-' + (c.length === 8 && c.startsWith('KL') ? c.slice(2) : c);
@@ -151,16 +145,6 @@ router.get('/track/:code', trackLimiter, wrap(async (req, res) => {
   });
 }));
 
-router.post('/commande', formLimiter, wrap(async (req, res) => {
-  const b = req.body || {};
-  if (!str(b.sender_name) || normPhone(b.sender_phone).length < 8) return bad(res, 'Indiquez votre nom et votre téléphone.');
-  if (!str(b.pickup_address)) return bad(res, 'Indiquez l\'adresse d\'enlèvement.');
-  const o = await buildOrder({ ...b, stock_id: null }, { source: 'public' });
-  if (o.error) return bad(res, o.error);
-  const saved = await insertOrder(o, 'Client');
-  res.status(201).json({ code: saved.code, fee: saved.fee, total: S.collectedAmount(saved) });
-}));
-
 router.post('/contact', formLimiter, wrap(async (req, res) => {
   const name = str(req.body.name, 120);
   const phone = normPhone(req.body.phone);
@@ -171,7 +155,8 @@ router.post('/contact', formLimiter, wrap(async (req, res) => {
   res.status(201).json({ ok: true });
 }));
 
-async function signup(req, res, role) {
+// Inscription d'un e-commerçant partenaire (compte validé ensuite par l'agence).
+router.post('/inscription', formLimiter, wrap(async (req, res) => {
   const b = req.body || {};
   const name = str(b.name, 120);
   const phone = normPhone(b.phone);
@@ -179,17 +164,15 @@ async function signup(req, res, role) {
   if (!name) return bad(res, 'Le nom est obligatoire.');
   if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
   if (password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères.');
-  if (role === 'partenaire' && !str(b.business_name)) return bad(res, 'Le nom de votre activité est obligatoire.');
+  if (!str(b.business_name)) return bad(res, 'Le nom de votre activité est obligatoire.');
   const ex = await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone);
   if (ex) return bad(res, 'Un compte existe déjà avec ce numéro.', 409);
-  await db.prepare(`INSERT INTO lv_users (role, name, phone, email, password_hash, status, business_name, activity, city, address, vehicle, created_at)
-    VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`)
-    .run(role, name, phone, str(b.email, 160), await hashPassword(password), str(b.business_name, 120), str(b.activity, 120),
-      str(b.city, 80) || 'Nouakchott', str(b.address, 300), str(b.vehicle, 60), S.now());
+  await db.prepare(`INSERT INTO lv_users (role, name, phone, email, password_hash, status, business_name, activity, city, address, created_at)
+    VALUES ('partenaire', ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`)
+    .run(name, phone, str(b.email, 160), await hashPassword(password), str(b.business_name, 120), str(b.activity, 120),
+      str(b.city, 80) || 'Nouakchott', str(b.address, 300), S.now());
   res.status(201).json({ ok: true });
-}
-router.post('/inscription', formLimiter, wrap((req, res) => signup(req, res, 'partenaire')));
-router.post('/inscription-coursier', formLimiter, wrap((req, res) => signup(req, res, 'coursier')));
+}));
 
 const HOME = { agence: '/livreur/agence', partenaire: '/livreur/partenaire', coursier: '/livreur/coursier' };
 
