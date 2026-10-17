@@ -111,7 +111,7 @@
   function header(d) {
     return `<header class="sf-header" id="sf-top"><div class="sf-header-in">
       <a class="sf-brand-row" href="#sf-top">${logoMark(d)}<span class="sf-brand-name">${esc(d.shopName)}</span></a>
-      <nav class="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a></nav>
+      <nav class="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a><span data-lang-switch></span></nav>
       ${cartBtn()}
     </div></header>`;
   }
