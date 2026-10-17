@@ -64,6 +64,19 @@ const config = {
   // Numéro WhatsApp de l'administrateur (format international sans « + »).
   // Sert au lien d'activation manuelle de l'abonnement.
   adminWhatsapp: (process.env.ADMIN_WHATSAPP || '221787489776').replace(/[^0-9]/g, ''),
+  // Karat Livreur (agence de livraison, Mauritanie) : coordonnées affichées
+  // sur le site et compte agence d'amorçage.
+  livreur: {
+    phone: process.env.LIVREUR_PHONE || '+222 00 00 00 00',
+    whatsapp: (process.env.LIVREUR_WHATSAPP || '22200000000').replace(/[^0-9]/g, ''),
+    email: process.env.LIVREUR_EMAIL || 'contact@karat-livreur.mr',
+    address: process.env.LIVREUR_ADDRESS || 'Tevragh Zeina, Nouakchott, Mauritanie',
+    // Position de l'agence sur le plan (Nouakchott par défaut).
+    lat: Number(process.env.LIVREUR_LAT || 18.0865),
+    lng: Number(process.env.LIVREUR_LNG || -15.9785),
+    adminPhone: (process.env.LIVREUR_ADMIN_PHONE || '').replace(/[^0-9]/g, ''),
+    adminPassword: process.env.LIVREUR_ADMIN_PASSWORD || '',
+  },
 };
 
 // Vrai si l'adresse fournie appartient à un administrateur du SaaS (liste

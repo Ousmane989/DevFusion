@@ -26,6 +26,8 @@ const adminRoutes = require('./routes/admin.routes');
 const formationRoutes = require('./routes/formation.routes');
 const { router: developerRoutes, apiV1: apiV1Routes } = require('./routes/developer.routes');
 const { renderStorefrontHtml } = require('./storefront');
+const { router: livreurApi } = require('./livreur/routes');
+const livreurPages = require('./livreur/pages');
 
 const pkg = require('../package.json');
 const app = express();
@@ -106,6 +108,7 @@ app.use('/api/formation', formationRoutes);
 app.use('/api/dev', developerRoutes);
 app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
+app.use('/api/livreur', livreurApi);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Route API introuvable.' }));
 
@@ -141,6 +144,9 @@ app.get('/admin/connexion', (req, res, next) => {
   if (req.user && isAdminUser(req.account || req.user)) return res.redirect('/admin');
   res.sendFile(path.join(PUBLIC_DIR, 'admin-connexion.html'));
 });
+
+// Karat Livreur : agence de livraison (vitrine, suivi, espaces).
+app.use('/livreur', livreurPages);
 
 app.get('/boutique/:slug', (req, res) => {
   sendStorefront(req, res, req.params.slug);

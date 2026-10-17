@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devenir livreur — Karat Livreur</title>
+  <meta name="description" content="Rejoignez l'équipe de livreurs Karat Livreur à Nouakchott : tournées quotidiennes, paiement chaque semaine." />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <header class="page-hero"><div class="container"><span class="eyebrow">Recrutement</span><h1>Devenez livreur Karat</h1><p>Tournées organisées chaque jour, application simple sur votre téléphone, paiement chaque semaine. Nous vous rappelons pour un entretien.</p></div></header>
+  <main class="page-mid page-body">
+    <div class="perks">
+      <div class="card"><h3 style="font-size:17px">Revenus réguliers</h3><p>Rémunération par course, payée chaque semaine.</p></div>
+      <div class="card"><h3 style="font-size:17px">Tournées optimisées</h3><p>Courses regroupées par quartier, moins de kilomètres.</p></div>
+      <div class="card"><h3 style="font-size:17px">Horaires flexibles</h3><p>Matin, après-midi ou journée complète.</p></div>
+    </div>
+    <form class="card" id="signup-form">
+      <div class="form-msg"></div>
+      <div class="row">
+        <div class="field"><label>Nom complet</label><input name="name" required /></div>
+        <div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" required placeholder="22 22 22 22" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Véhicule</label><select name="vehicle"><option>Moto</option><option>Voiture</option><option>Tricycle</option><option>Camionnette</option><option>Vélo</option></select></div>
+        <div class="field"><label>Quartier / moughataa</label><input name="address" placeholder="Ex. Arafat" /></div>
+      </div>
+      <div class="field"><label>Ville</label><input name="city" value="Nouakchott" /></div>
+      <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="6" required autocomplete="new-password" /><small>6 caractères minimum.</small></div>
+      <button class="btn btn-primary btn-block" type="submit">Envoyer ma candidature</button>
+    </form>
+    <p class="auth-switch">Déjà livreur ? <a href="/livreur/connexion">Se connecter</a></p>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    var form = document.getElementById('signup-form');
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(form, '/inscription-coursier');
+      if (!r.ok) return;
+      form.innerHTML = '<div style="text-align:center;padding:20px 0"><h2 style="margin-bottom:10px">Candidature reçue ✓</h2><p class="dim">Merci ! L\'agence vous contacte pour un entretien. Une fois votre compte activé, connectez-vous pour voir votre tournée.</p><a class="btn btn-primary" style="margin-top:20px" href="/livreur">Retour à l\'accueil</a></div>';
+    });
+  })();
+  </script>
+</body>
+</html>
