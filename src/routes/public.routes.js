@@ -166,7 +166,7 @@ router.post('/store/:slug/order', orderLimiter, async (req, res) => {
   const errors = {};
   if (!b.name || String(b.name).trim().length < 2) errors.name = 'Nom requis.';
   if (!b.phone || String(b.phone).trim().length < 6) errors.phone = 'Téléphone requis.';
-  if (!b.city || String(b.city).trim().length < 2) errors.city = 'Ville requise.';
+  // Ville/adresse facultative : le formulaire de commande n'impose plus la livraison.
   if (!Array.isArray(b.items) || !b.items.length) errors.items = 'Panier vide.';
   if (Object.keys(errors).length) return res.status(400).json({ errors });
 
@@ -186,16 +186,13 @@ router.post('/store/:slug/order', orderLimiter, async (req, res) => {
   }
   if (!items.length) return res.status(400).json({ errors: { items: 'Aucun produit valide.' } });
 
-  // Frais de livraison selon la ville / zone.
-  const sh = await shippingFor(user.id);
-  const zone = (sh.zones || []).find((z) => z.zone.toLowerCase() === String(b.city).trim().toLowerCase());
-  let shipping = zone ? zone.fee : 0;
-  if (sh.freeOver && subtotal >= sh.freeOver) shipping = 0;
-  const total = subtotal + shipping;
+  // Pas de frais de livraison sur le formulaire de commande direct.
+  const shipping = 0;
+  const total = subtotal;
 
   const order = await createOrder({
     userId: user.id, customer: String(b.name).trim(), phone: String(b.phone).trim(),
-    city: String(b.city).trim(), address: String(b.address || '').trim(), note: String(b.note || '').trim(),
+    city: String(b.city || '').trim(), address: String(b.address || '').trim(), note: String(b.note || '').trim(),
     items, subtotal, shipping, total,
   });
 
