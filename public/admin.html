@@ -217,6 +217,25 @@
               <button type="submit" class="btn-adm gold">Enregistrer le numéro</button>
             </form>
 
+            <form class="adm-sec-card" id="form-mailer">
+              <h3>E-mail (codes de vérification)</h3>
+              <p class="desc">Envoi des codes d'inscription et de mot de passe oublié via Brevo (gratuit). Collez votre clé API Brevo et l'adresse expéditeur vérifiée.</p>
+              <label>Clé API Brevo
+                <input type="text" id="st-email-key" placeholder="xkeysib-…" autocomplete="off" />
+              </label>
+              <label>E-mail expéditeur (vérifié dans Brevo)
+                <input type="email" id="st-email-from" placeholder="contact@votredomaine.com" />
+              </label>
+              <label>Nom expéditeur
+                <input type="text" id="st-email-name" placeholder="Karat" />
+              </label>
+              <div class="adm-act-msg" id="email-msg"></div>
+              <div class="adm-act-row">
+                <button type="submit" class="btn-adm gold">Enregistrer</button>
+                <button type="button" class="btn-adm ghost" id="email-test">Envoyer un test</button>
+              </div>
+            </form>
+
             <form class="adm-sec-card" id="form-email">
               <h3>E-mail de connexion</h3>
               <p class="desc">Adresse utilisée pour vous connecter à l'espace admin.</p>

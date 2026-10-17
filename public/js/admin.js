@@ -162,7 +162,13 @@
 
   async function loadSettings() {
     const r = await api('/api/admin/settings');
-    if (r.ok && r.data) q('#st-wa').value = r.data.whatsapp || '';
+    if (r.ok && r.data) {
+      q('#st-wa').value = r.data.whatsapp || '';
+      const em = r.data.email || {};
+      if (q('#st-email-from')) q('#st-email-from').value = em.from || '';
+      if (q('#st-email-name')) q('#st-email-name').value = em.fromName || '';
+      if (q('#st-email-key')) q('#st-email-key').placeholder = em.configured ? '•••••••• (clé enregistrée)' : 'xkeysib-…';
+    }
   }
 
   function wireSettings() {
@@ -173,6 +179,25 @@
       const r = await api('/api/admin/settings', { whatsapp: q('#st-wa').value.trim() }, 'PUT');
       if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.whatsapp || 'Erreur.'); return; }
       q('#st-wa').value = r.data.whatsapp; setMsg(m, true, 'Numéro WhatsApp enregistré ✓');
+    });
+    const fm = q('#form-mailer');
+    if (fm) fm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const m = q('#email-msg'); setMsg(m, true, 'Enregistrement…');
+      const payload = { emailFrom: q('#st-email-from').value.trim(), emailFromName: q('#st-email-name').value.trim() };
+      const key = q('#st-email-key').value.trim(); if (key) payload.emailApiKey = key;
+      const r = await api('/api/admin/settings', payload, 'PUT');
+      if (!r.ok) { setMsg(m, false, 'Erreur.'); return; }
+      q('#st-email-key').value = '';
+      q('#st-email-key').placeholder = (r.data.email && r.data.email.configured) ? '•••••••• (clé enregistrée)' : 'xkeysib-…';
+      setMsg(m, true, 'Configuration e-mail enregistrée ✓');
+    });
+    const et = q('#email-test');
+    if (et) et.addEventListener('click', async () => {
+      const m = q('#email-msg'); setMsg(m, true, 'Envoi du test…');
+      const r = await api('/api/admin/email-test', {});
+      if (!r.ok) { setMsg(m, false, (r.data && r.data.error) || 'Échec de l\'envoi.'); return; }
+      setMsg(m, true, 'E-mail de test envoyé à ' + (r.data.to || 'votre adresse') + ' ✓');
     });
     const fe = q('#form-email');
     if (fe) fe.addEventListener('submit', async (e) => {

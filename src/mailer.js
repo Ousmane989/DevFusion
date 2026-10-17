@@ -1,6 +1,7 @@
 'use strict';
 
 const nodemailer = require('nodemailer');
+const db = require('./db');
 
 const hasSmtp = Boolean(process.env.SMTP_HOST);
 
@@ -16,14 +17,30 @@ if (hasSmtp) {
   });
 }
 
-const MAIL_FROM = process.env.MAIL_FROM || 'Karat <no-reply@karat.mr>';
-
 const BRAND = {
   bg: '#0D0D0D',
   gold: '#D4AF37',
   goldLight: '#F5D77E',
   text: '#F4F1EA',
 };
+
+// Lit la configuration e-mail depuis app_config (modifiable dans l'espace
+// admin), avec repli sur les variables d'environnement.
+async function emailConfig() {
+  const get = async (k, def) => {
+    try { const r = await db.prepare('SELECT value FROM app_config WHERE key = ?').get(k); return (r && r.value) || def; }
+    catch (_) { return def; }
+  };
+  return {
+    apiKey: await get('email_api_key', process.env.BREVO_API_KEY || ''),
+    fromEmail: await get('email_from', process.env.MAIL_FROM_EMAIL || 'no-reply@karat.shop'),
+    fromName: await get('email_from_name', process.env.MAIL_FROM_NAME || 'Karat'),
+  };
+}
+async function emailConfigured() {
+  const c = await emailConfig();
+  return Boolean(c.apiKey) || Boolean(transporter);
+}
 
 function codeEmailHtml(name, code, intro) {
   return `
@@ -54,10 +71,38 @@ function codeEmailHtml(name, code, intro) {
   </div>`;
 }
 
+// Envoi via l'API HTTP de Brevo (compatible serverless / Netlify).
+async function sendViaBrevo(cfg, { to, name, subject, html }) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': cfg.apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      sender: { name: cfg.fromName, email: cfg.fromEmail },
+      to: [{ email: to, name: name || to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) {
+    let detail = ''; try { detail = JSON.stringify(await res.json()); } catch (_) {}
+    throw new Error('Brevo ' + res.status + ' ' + detail);
+  }
+}
+
+/**
+ * Envoie un e-mail générique (utilisé pour le test d'envoi admin).
+ */
+async function sendEmail({ to, name, subject, html }) {
+  const cfg = await emailConfig();
+  if (cfg.apiKey) { await sendViaBrevo(cfg, { to, name, subject, html }); return { delivered: true }; }
+  if (transporter) { await transporter.sendMail({ from: `${cfg.fromName} <${cfg.fromEmail}>`, to, subject, html }); return { delivered: true }; }
+  throw new Error('Aucun service e-mail configuré.');
+}
+
 /**
  * Envoie un code (verification e-mail ou reinitialisation).
- * En mode developpement sans SMTP, le code est affiche dans la console
- * et renvoye a l'appelant pour faciliter les tests.
+ * Sans service e-mail configuré, le code est journalisé et renvoyé à
+ * l'appelant (devCode) pour permettre la saisie à l'écran en attendant.
  */
 async function sendCode({ to, name, code, purpose }) {
   const subject =
@@ -68,32 +113,22 @@ async function sendCode({ to, name, code, purpose }) {
     purpose === 'reset'
       ? 'Voici le code pour reinitialiser le mot de passe de votre compte Karat.'
       : 'Bienvenue sur Karat ! Voici le code pour verifier votre adresse e-mail et activer votre compte.';
+  const html = codeEmailHtml(name, code, intro);
 
-  if (!transporter) {
-    // Aucun serveur SMTP configure : le code est journalise cote serveur
-    // (utile en developpement). En production, configurez SMTP_* pour un
-    // veritable envoi par e-mail.
-    console.log('\n──────────────────────────────────────────────');
-    console.log(`  [KARAT] Code ${purpose} pour ${to} : ${code}`);
-    console.log('  (SMTP non configure — definissez SMTP_HOST/SMTP_USER/SMTP_PASS)');
-    console.log('──────────────────────────────────────────────\n');
+  const cfg = await emailConfig();
+  if (!cfg.apiKey && !transporter) {
+    console.log(`\n  [KARAT] Code ${purpose} pour ${to} : ${code} (aucun service e-mail configuré)\n`);
     return { delivered: false, devCode: code };
   }
-
   try {
-    await transporter.sendMail({
-      from: MAIL_FROM,
-      to,
-      subject,
-      html: codeEmailHtml(name, code, intro),
-    });
+    if (cfg.apiKey) await sendViaBrevo(cfg, { to, name, subject, html });
+    else await transporter.sendMail({ from: `${cfg.fromName} <${cfg.fromEmail}>`, to, subject, html });
     return { delivered: true };
   } catch (err) {
-    // Un echec d'envoi ne doit pas casser l'inscription : on journalise et on
-    // signale l'echec. L'utilisateur pourra redemander un code.
     console.error(`  ✖ Echec d'envoi de l'e-mail (${purpose}) a ${to} :`, err && err.message ? err.message : err);
-    return { delivered: false, error: true };
+    // Échec d'envoi : on renvoie le code pour ne pas bloquer l'utilisateur.
+    return { delivered: false, devCode: code, error: true };
   }
 }
 
-module.exports = { sendCode, hasSmtp };
+module.exports = { sendCode, sendEmail, hasSmtp, emailConfig, emailConfigured };

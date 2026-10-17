@@ -68,6 +68,11 @@
       document.getElementById('email-label').textContent = email;
 
       Karat.msg(msgEl, 'info', 'Un code de réinitialisation a été envoyé à votre adresse e-mail. Pensez à vérifier vos spams.');
+      const rdev = sessionStorage.getItem('karat_reset_devcode');
+      if (rdev && /^[0-9]{6}$/.test(rdev)) {
+        Karat.msg(msgEl, 'info', 'Envoi e-mail non encore configuré — votre code : ' + rdev);
+        const ci = document.getElementById('code'); if (ci) ci.value = rdev;
+      }
 
       document.getElementById('reset-form').addEventListener('submit', async (e) => {
         e.preventDefault();
