@@ -8,8 +8,8 @@
   <meta name="description" content="Espace réservé à l'équipe Karat Livreur : agents de l'agence et livreurs." />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/favicon.svg" />
-  <script src="/livreur/theme.js?v=20261018d"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261018d" />
+  <script src="/livreur/theme.js?v=20261018e"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261018e" />
 </head>
 <body>
   <div id="lv-header"></div>
@@ -22,11 +22,23 @@
       <button class="btn btn-green btn-block" type="submit">Accéder à l'espace agence</button>
       <p class="muted" style="font-size:13.5px;margin-top:14px;text-align:center">Mot de passe oublié ? Demandez à un responsable de l'agence de le réinitialiser.</p>
     </form>
+    <form class="card hidden" id="setup-form">
+      <h3 style="margin-bottom:6px">Première utilisation</h3>
+      <p style="margin-bottom:18px">Aucun compte agence n'existe encore. Créez le vôtre : vous pourrez ensuite ajouter votre équipe et vos livreurs depuis l'espace agence.</p>
+      <div class="form-msg"></div>
+      <div class="field"><label>Votre nom</label><input name="name" required autocomplete="name" /></div>
+      <div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" required autocomplete="username" placeholder="22 22 22 22" /></div>
+      <div class="row">
+        <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="8" required autocomplete="new-password" /><small>8 caractères minimum.</small></div>
+        <div class="field"><label>Confirmer</label><input name="password2" type="password" minlength="8" required autocomplete="new-password" /></div>
+      </div>
+      <button class="btn btn-green btn-block" type="submit">Créer le compte agence</button>
+    </form>
     <p class="auth-switch">Vous êtes un e-commerçant ? <a href="/livreur/connexion">Espace partenaire</a></p>
   </main>
   <div id="lv-footer"></div>
-  <script src="/livreur/lv.js?v=20261018d"></script>
-  <script src="/livreur/anim.js?v=20261018d"></script>
+  <script src="/livreur/lv.js?v=20261018e"></script>
+  <script src="/livreur/anim.js?v=20261018e"></script>
   <script>
   (function () {
     'use strict';
@@ -38,6 +50,19 @@
       if (!r.ok) return;
       var suite = new URLSearchParams(location.search).get('suite');
       location.href = suite && suite.indexOf('/livreur/' + r.data.user.role) === 0 ? suite : r.data.redirect;
+    });
+
+    // Aucun compte agence : on propose de créer le premier à la place de la connexion.
+    var setup = document.getElementById('setup-form');
+    LV.api('/setup').then(function (r) {
+      if (!r.ok || !r.data.needed) return;
+      form.classList.add('hidden');
+      setup.classList.remove('hidden');
+    });
+    setup.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(setup, '/setup');
+      if (r.ok) location.href = r.data.redirect;
     });
   })();
   </script>
