@@ -169,6 +169,8 @@
       if (q('#st-email-from')) q('#st-email-from').value = em.from || '';
       if (q('#st-email-name')) q('#st-email-name').value = em.fromName || '';
       if (q('#st-email-key')) q('#st-email-key').placeholder = em.configured ? '•••••••• (clé enregistrée)' : 'xkeysib-…';
+      const fm = r.data.formation || {};
+      ['intro', 'ch1', 'ch2', 'ch3', 'ch4', 'ch5'].forEach((id) => { const el = q('#fm-' + id); if (el) el.value = fm[id] || ''; });
     }
   }
 
@@ -194,6 +196,16 @@
       q('#st-email-key').value = '';
       q('#st-email-key').placeholder = (r.data.email && r.data.email.configured) ? '•••••••• (clé enregistrée)' : 'xkeysib-…';
       setMsg(m, true, 'Configuration e-mail enregistrée ✓');
+    });
+    const ff = q('#form-formation');
+    if (ff) ff.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const m = q('#fm-msg'); setMsg(m, true, 'Enregistrement…');
+      const formation = {};
+      ['intro', 'ch1', 'ch2', 'ch3', 'ch4', 'ch5'].forEach((id) => { const el = q('#fm-' + id); if (el) formation[id] = el.value.trim(); });
+      const r = await api('/api/admin/settings', { formation }, 'PUT');
+      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.formation || 'Erreur.'); return; }
+      setMsg(m, true, 'Vidéos enregistrées ✓');
     });
     const et = q('#email-test');
     if (et) et.addEventListener('click', async () => {

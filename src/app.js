@@ -23,6 +23,7 @@ const pushRoutes = require('./routes/push.routes');
 const marketingRoutes = require('./routes/marketing.routes');
 const shopsRoutes = require('./routes/shops.routes');
 const adminRoutes = require('./routes/admin.routes');
+const formationRoutes = require('./routes/formation.routes');
 const { router: developerRoutes, apiV1: apiV1Routes } = require('./routes/developer.routes');
 const { renderStorefrontHtml } = require('./storefront');
 
@@ -101,6 +102,7 @@ app.use('/api/push', pushRoutes);
 app.use('/api/marketing', marketingRoutes);
 app.use('/api/shops', shopsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/formation', formationRoutes);
 app.use('/api/dev', developerRoutes);
 app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
