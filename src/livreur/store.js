@@ -136,42 +136,11 @@ const SCHEMA = `
   );
 `;
 
-// Tarifs de départ (modifiables depuis l'espace agence).
-// Nouakchott : 9 moughataas. Intérieur : capitales des wilayas.
-const DEFAULT_ZONES = [
-  ['Tevragh Zeina', 'Nouakchott', 'commune', 100, 'Moins de 2 h'],
-  ['Ksar', 'Nouakchott', 'commune', 100, 'Moins de 2 h'],
-  ['Sebkha', 'Nouakchott', 'commune', 100, 'Moins de 2 h'],
-  ['El Mina', 'Nouakchott', 'commune', 150, 'Moins de 3 h'],
-  ['Teyarett', 'Nouakchott', 'commune', 100, 'Moins de 2 h'],
-  ['Dar Naïm', 'Nouakchott', 'commune', 150, 'Moins de 3 h'],
-  ['Toujounine', 'Nouakchott', 'commune', 150, 'Moins de 3 h'],
-  ['Arafat', 'Nouakchott', 'commune', 150, 'Moins de 3 h'],
-  ['Riyad', 'Nouakchott', 'commune', 200, 'Moins de 3 h'],
-  ['Nouadhibou', 'Dakhlet Nouadhibou', 'ville', 400, '24 à 48 h'],
-  ['Rosso', 'Trarza', 'ville', 300, '24 h'],
-  ['Boutilimit', 'Trarza', 'ville', 300, '24 h'],
-  ['Akjoujt', 'Inchiri', 'ville', 350, '24 à 48 h'],
-  ['Aleg', 'Brakna', 'ville', 350, '24 à 48 h'],
-  ['Boghé', 'Brakna', 'ville', 400, '48 h'],
-  ['Kaédi', 'Gorgol', 'ville', 400, '48 h'],
-  ['Atar', 'Adrar', 'ville', 450, '48 h'],
-  ['Tidjikja', 'Tagant', 'ville', 500, '48 à 72 h'],
-  ['Kiffa', 'Assaba', 'ville', 450, '48 h'],
-  ['Sélibaby', 'Guidimaka', 'ville', 500, '48 à 72 h'],
-  ['Aïoun', 'Hodh El Gharbi', 'ville', 550, '48 à 72 h'],
-  ['Néma', 'Hodh Ech Chargui', 'ville', 600, '72 h'],
-  ['Zouérate', 'Tiris Zemmour', 'ville', 600, '72 h'],
-];
-
-// Suppléments selon le service (ajoutés au tarif de la zone).
-const SERVICES = {
-  standard: { label: 'Livraison standard', extra: 0 },
-  express: { label: 'Express (moins de 2 h)', extra: 100 },
-  ecommerce: { label: 'Livraison e-commerce', extra: 0 },
-  course: { label: 'Course à la demande', extra: 50 },
-  colis: { label: 'Colis volumineux', extra: 150 },
-};
+// Villes, tarifs de départ et services : public/livreur/defaults.json, fichier
+// partagé avec la page d'accueil (qui s'en sert si l'API est injoignable).
+// Les tarifs restent modifiables ensuite depuis l'espace agence.
+const DEFAULTS = require('../../public/livreur/defaults.json');
+const SERVICES = DEFAULTS.services;
 
 const STATUSES = {
   nouvelle: 'Nouvelle',
@@ -192,7 +161,7 @@ async function seed() {
   const z = await db.prepare('SELECT COUNT(*) AS n FROM lv_zones').get();
   if (!Number(z && z.n)) {
     let i = 0;
-    for (const [name, region, kind, price, delay] of DEFAULT_ZONES) {
+    for (const { name, region, kind, price, delay } of DEFAULTS.zones) {
       await db.prepare('INSERT INTO lv_zones (name, region, kind, price, delay, active, sort) VALUES (?, ?, ?, ?, ?, 1, ?)')
         .run(name, region, kind, price, delay, i++);
     }

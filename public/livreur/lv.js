@@ -191,8 +191,19 @@ window.LV = (function () {
   }
 
   let infoCache;
+  // Infos publiques (contact, zones, tarifs). Si l'API ne répond pas (serveur
+  // ou base indisponible), on utilise les valeurs par défaut du site pour que
+  // la carte, les tarifs et le simulateur restent visibles.
   function info() {
-    if (!infoCache) infoCache = api('/info').then((r) => r.data);
+    if (!infoCache) {
+      infoCache = api('/info')
+        .then((r) => (r.ok && r.data && r.data.zones && r.data.zones.length ? r.data : Promise.reject()))
+        .catch(() => fetch('/livreur/defaults.json', { credentials: 'same-origin' })
+          .then((r) => r.json())
+          .then((d) => ({ contact: d.contact, services: d.services, statuses: {}, offline: true,
+            zones: d.zones.map((z, i) => Object.assign({ id: i + 1 }, z)) }))
+          .catch(() => ({ contact: null, zones: [], services: {}, statuses: {} })));
+    }
     return infoCache;
   }
 
