@@ -331,43 +331,75 @@
   function setLang(l) { try { localStorage.setItem('karat_lang', l); } catch (_) {} apply(); }
   window.KaratI18n = { setLang: setLang, apply: apply, t: function (s) { return tr(s, getLang()); } };
 
-  function switcherHtml() {
-    return LANGS.map(function (x) { return '<button type="button" data-l="' + x.id + '">' + x.label + '</button>'; }).join('');
-  }
+  // Noms des langues selon la langue d'interface active.
+  var NAMES = {
+    fr: { en: 'Anglais', fr: 'Français', ar: 'Arabe' },
+    en: { en: 'English', fr: 'French', ar: 'Arabic' },
+    ar: { en: 'الإنجليزية', fr: 'الفرنسية', ar: 'العربية' },
+  };
+  var ORDER = ['en', 'fr', 'ar'];
+  var ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.9 15l-2.6-2.57.03-.03A17.9 17.9 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17A15.9 15.9 0 0 1 9 10.88 15.9 15.9 0 0 1 6.9 7.5h-2A17.9 17.9 0 0 0 7.6 12L2.5 17.03 4 18.5l5-5 3.1 3.1.8-1.6zM17.5 10h-2L11 22h2l1.12-3h4.75L20 22h2l-4.5-12zm-1.62 5l1.62-4.33L19.12 15h-3.24z"/></svg>';
+
+  function closeAllMenus() { document.querySelectorAll('.kl-menu').forEach(function (m) { m.hidden = true; }); }
   function highlight() {
     var l = getLang();
-    document.querySelectorAll('.karat-lang button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-l') === l); });
+    document.querySelectorAll('.karat-lang').forEach(function (c) {
+      c.querySelectorAll('.kl-menu button[data-l]').forEach(function (b) {
+        var id = b.getAttribute('data-l');
+        b.textContent = (NAMES[l] || NAMES.fr)[id];
+        b.classList.toggle('current', id === l);
+        b.disabled = (id === l);
+      });
+    });
   }
-  function onClick(e) { var b = e.target.closest && e.target.closest('button[data-l]'); if (b) setLang(b.getAttribute('data-l')); }
 
   function injectStyle() {
     if (document.getElementById('karat-lang-style')) return;
     var s = document.createElement('style'); s.id = 'karat-lang-style';
-    s.textContent = '.karat-lang{display:inline-flex;gap:4px;background:rgba(20,18,14,.55);border:1px solid rgba(212,175,55,.35);border-radius:50px;padding:3px}'
-      + '.karat-lang button{min-width:32px;height:28px;border:none;background:transparent;color:inherit;opacity:.8;font:600 12px system-ui,sans-serif;border-radius:50px;cursor:pointer;padding:0 8px}'
-      + '.karat-lang button.on{background:linear-gradient(120deg,#d4af37,#f5d77e);color:#1a1400;opacity:1}'
-      + '.karat-lang.float{position:fixed;z-index:80;bottom:14px;inset-inline-start:14px;background:rgba(20,18,14,.92);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.35)}'
-      + '@media(max-width:900px){.karat-lang.float{bottom:78px}}';
+    s.textContent = '.karat-lang{position:relative;display:inline-block;line-height:0}'
+      + '.kl-btn{width:42px;height:42px;border:1px solid rgba(0,0,0,.08);background:#fff;color:#333;border-radius:12px;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1);transition:background .15s}'
+      + '.kl-btn:hover{background:#f4f4f5}.kl-btn svg{width:22px;height:22px}'
+      + '.kl-menu{position:absolute;top:calc(100% + 10px);inset-inline-end:0;min-width:190px;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;box-shadow:0 20px 44px rgba(0,0,0,.2);padding:8px;z-index:95;display:flex;flex-direction:column;text-align:start}'
+      + '.kl-menu[hidden]{display:none}'
+      + '.kl-menu button{display:block;width:100%;text-align:start;background:none;border:none;font:500 18px system-ui,-apple-system,sans-serif;color:#1a1a1a;padding:12px 18px;border-radius:12px;cursor:pointer}'
+      + '.kl-menu button:hover{background:#f4f4f5}'
+      + '.kl-menu button.current{color:#b4b4b8;cursor:default;background:none}'
+      + '.karat-lang.float{position:fixed;z-index:80;bottom:14px;inset-inline-start:14px}'
+      + '.karat-lang.float .kl-menu{top:auto;bottom:calc(100% + 10px);inset-inline-end:auto;inset-inline-start:0}'
+      + '@media(max-width:900px){.karat-lang.float{bottom:80px}}';
     document.head.appendChild(s);
   }
+
+  function buildSwitcher(container, floating) {
+    container.className = 'karat-lang' + (floating ? ' float' : '');
+    container.setAttribute('data-no-i18n', '');
+    container.innerHTML = '<button type="button" class="kl-btn" aria-label="Langue" aria-haspopup="true">' + ICON + '</button>'
+      + '<div class="kl-menu" hidden>' + ORDER.map(function (id) { return '<button type="button" data-l="' + id + '"></button>'; }).join('') + '</div>';
+    container.addEventListener('click', function (e) {
+      var lang = e.target.closest('button[data-l]');
+      if (lang && !lang.disabled) { setLang(lang.getAttribute('data-l')); closeAllMenus(); return; }
+      var btn = e.target.closest('.kl-btn');
+      if (btn) { var m = container.querySelector('.kl-menu'); var open = m.hidden; closeAllMenus(); m.hidden = !open; }
+    });
+  }
+
+  var docBound = false;
   function mountSwitchers() {
     injectStyle();
+    if (!docBound) { docBound = true; document.addEventListener('click', function (e) { if (!e.target.closest('.karat-lang')) closeAllMenus(); }); }
     var slots = document.querySelectorAll('[data-lang-switch]');
     if (slots.length) {
-      // Retirer le flottant si des emplacements de menu existent.
       var fl = document.getElementById('karat-lang-float'); if (fl) fl.remove();
       slots.forEach(function (slot) {
         if (slot.getAttribute('data-mounted')) return;
         slot.setAttribute('data-mounted', '1');
-        slot.setAttribute('data-no-i18n', '');
-        var box = document.createElement('div'); box.className = 'karat-lang'; box.innerHTML = switcherHtml();
-        box.addEventListener('click', onClick);
+        var box = document.createElement('div');
+        buildSwitcher(box, false);
         slot.appendChild(box);
       });
     } else if (!document.getElementById('karat-lang-float')) {
-      var box = document.createElement('div'); box.id = 'karat-lang-float'; box.className = 'karat-lang float';
-      box.setAttribute('data-no-i18n', ''); box.innerHTML = switcherHtml();
-      box.addEventListener('click', onClick);
+      var box = document.createElement('div'); box.id = 'karat-lang-float';
+      buildSwitcher(box, true);
       document.body.appendChild(box);
     }
   }
