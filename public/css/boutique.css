@@ -329,6 +329,13 @@ img { max-width: 100%; display: block; }
 .pro .sf-hero2.has-banner .sf-lead { color: rgba(255,255,255,.88); }
 .pro .sf-hero2-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Héro avec bannière personnalisée : image affichée en entier (aucun texte
+   superposé), puis boutons sur fond uni. Lisible et net sur mobile. */
+.pro .sf-hero2.banner-full { padding: 0; background: var(--bg); background-image: none; }
+.pro .sf-banner-img { width: 100%; max-width: 1200px; margin: 0 auto; line-height: 0; }
+.pro .sf-banner-img img { width: 100%; height: auto; display: block; }
+.pro .sf-hero2.banner-full .sf-hero2-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 18px 5vw 2px; }
+
 /* Bandeau confiance */
 .pro .sf-trust { display: flex; justify-content: center; gap: clamp(18px, 5vw, 60px); flex-wrap: wrap; padding: 17px 5vw; background: var(--soft); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
 
@@ -344,6 +351,10 @@ img { max-width: 100%; display: block; }
 
 /* Grille produits */
 .pro .sf-grid2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+/* Toutes les cartes produit ont EXACTEMENT la même taille d'image (ratio 4/5,
+   image recadrée pour remplir) — quel que soit le format de la photo source. */
+.pro .sf-card2 .sf-img { aspect-ratio: 4 / 5; height: auto; min-height: 0; width: 100%; }
+.pro .sf-card2 .sf-photo { object-fit: cover; }
 .pro .sf-card2 { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform .35s, box-shadow .35s, border-color .35s; }
 .pro .sf-card2:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: 0 26px 50px -22px rgba(0,0,0,.7); }
 .pro .sf-card2-b { padding: 14px 15px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }

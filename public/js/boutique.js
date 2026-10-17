@@ -116,14 +116,23 @@
     </div></header>`;
   }
   function hero(d) {
-    const hasBanner = !!d.banner;
-    const style = hasBanner ? ` style="background-image:linear-gradient(105deg, rgba(0,0,0,.78) 20%, rgba(0,0,0,.35)), url('${esc(d.banner)}')"` : '';
     const wa = d.contact && d.contact.whatsapp ? String(d.contact.whatsapp).replace(/[^0-9]/g, '') : '';
-    return `<section class="sf-hero2 ${hasBanner ? 'has-banner' : ''}"${style}><div class="sf-hero2-in">
+    const cta = `<div class="sf-hero2-cta"><a class="sf-btn" href="#produits">Découvrir la boutique</a>${wa ? `<a class="sf-btn ghost" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">Nous écrire</a>` : ''}</div>`;
+    // Bannière personnalisée : on l'affiche EN ENTIER, sans rien superposer
+    // (le commerçant y met déjà son nom / message), puis les boutons dessous.
+    // Évite le chevauchement illisible « titre sur bannière ».
+    if (d.banner) {
+      return `<section class="sf-hero2 banner-full">
+        <div class="sf-banner-img"><img src="${esc(d.banner)}" alt="${esc(d.shopName)}" /></div>
+        <div class="sf-hero2-bar">${cta}</div>
+      </section>`;
+    }
+    // Sans bannière : héro dégradé classique avec titre et accroche.
+    return `<section class="sf-hero2"><div class="sf-hero2-in">
       <span class="sf-eyebrow">${esc(d.shopName)}</span>
       <h1>${esc(d.tagline)}</h1>
       ${d.description ? `<p class="sf-lead">${esc(d.description)}</p>` : ''}
-      <div class="sf-hero2-cta"><a class="sf-btn" href="#produits">Découvrir la boutique</a>${wa ? `<a class="sf-btn ghost" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">Nous écrire</a>` : ''}</div>
+      ${cta}
     </div></section>`;
   }
   function trustBand() {
