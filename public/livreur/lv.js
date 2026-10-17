@@ -81,7 +81,7 @@ window.LV = (function () {
       routes += '<path class="route' + (opts.only ? ' on' : '') + '" style="--i:' + n + '" data-route="' + z.id + '" d="' + path + '"/>' +
         '<circle class="mover" r="3.6" style="--i:' + n + '"><animateMotion dur="' + (2.6 + (n % 4) * 0.6).toFixed(1) + 's" begin="' + (n * 0.3).toFixed(1) + 's" repeatCount="indefinite" path="' + path + '"/></circle>';
       const left = p[0] > W - 90;
-      cities += '<g class="city" style="--i:' + (n++) + '" data-zone="' + z.id + '" tabindex="0"><title>' + esc(z.name) + ' — ' + money(z.price) + ' · ' + esc(z.delay) + '</title>' +
+      cities += '<g class="city" style="--i:' + (n++) + '" data-zone="' + z.id + '" tabindex="0"><title>' + esc(z.name) + ' — livraison en ' + esc(z.delay) + '</title>' +
         '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5.5"/><text x="' + (p[0] + (left ? -10 : 10)) + '" y="' + (p[1] + 4) + '"' + (left ? ' text-anchor="end"' : '') + '>' + esc(z.name) + '</text></g>';
     });
     return '<svg class="mr-map" viewBox="-6 -6 ' + (W + 12) + ' ' + (H + 12) + '" role="img" aria-label="Carte de la Mauritanie : agence à Nouakchott et villes desservies">' +
@@ -191,9 +191,9 @@ window.LV = (function () {
   }
 
   let infoCache;
-  // Infos publiques (contact, zones, tarifs). Si l'API ne répond pas (serveur
-  // ou base indisponible), on utilise les valeurs par défaut du site pour que
-  // la carte, les tarifs et le simulateur restent visibles.
+  // Infos publiques (contact, zones). Si l'API ne répond pas (serveur ou base
+  // indisponible), on utilise les valeurs par défaut du site pour que la carte
+  // et la liste des villes restent visibles.
   function info() {
     if (!infoCache) {
       infoCache = api('/info')
@@ -235,10 +235,10 @@ window.LV = (function () {
         '<header class="site-header"><div class="container nav">' + brand() +
         '<ul class="nav-links">' +
         '<li><a href="/livreur#services">Services</a></li><li><a href="/livreur#fonctionnement">Fonctionnement</a></li>' +
-        '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#tarifs">Tarifs</a></li>' +
+        '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#espace">Espace partenaire</a></li>' +
         '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
         '<div class="nav-cta"><a href="/livreur/connexion" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Connexion</a>' +
-        '<a href="/livreur/commander" class="btn btn-green btn-sm">Commander une course</a></div>' +
+        '<a href="/livreur/inscription" class="btn btn-green btn-sm">Devenir partenaire</a></div>' +
         themeButton() + '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';
       const header = document.querySelector('.site-header');
       header.querySelector('.nav-toggle').addEventListener('click', () => header.classList.toggle('open'));
@@ -247,13 +247,13 @@ window.LV = (function () {
     const f = document.getElementById('lv-footer');
     if (f) {
       f.outerHTML = '<div class="flag-stripe"></div><footer class="site-footer"><div class="container"><div class="footer-grid">' +
-        '<div>' + brand() + '<p style="margin-top:16px;max-width:340px;font-size:14.5px">Agence de livraison basée à Nouakchott. Express, e-commerce et colis dans toutes les wilayas de Mauritanie, avec paiement à la livraison et suivi en temps réel.</p>' +
+        '<div>' + brand() + '<p style="margin-top:16px;max-width:340px;font-size:14.5px">L\'agence de livraison des e-commerçants, basée à Nouakchott : stockage, confirmation, livraison dans toutes les wilayas, encaissement et reversement.</p>' +
         '<div class="footer-pay"><span>Espèces</span><span>Bankily</span><span>Masrvi</span><span>Sedad</span></div></div>' +
-        '<div><h4>Services</h4><ul><li><a href="/livreur#services">Livraison express</a></li><li><a href="/livreur#services">Livraison e-commerce</a></li><li><a href="/livreur#services">Course à la demande</a></li><li><a href="/livreur#services">Colis & interurbain</a></li><li><a href="/livreur#tarifs">Tarifs</a></li></ul></div>' +
-        '<div><h4>Liens utiles</h4><ul><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur/commander">Commander une course</a></li><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/inscription-coursier">Devenir livreur</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
+        '<div><h4>Services</h4><ul><li><a href="/livreur#services">Stockage & préparation</a></li><li><a href="/livreur#services">Confirmation des commandes</a></li><li><a href="/livreur#services">Livraison partout</a></li><li><a href="/livreur#services">Encaissement & reversement</a></li></ul></div>' +
+        '<div><h4>Partenaires</h4><ul><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
         '<div><h4>Contact</h4><ul><li><a data-contact="phone" href="#"><span>…</span></a></li><li><a data-contact="email" href="#"><span>…</span></a></li><li><a data-contact="address"><span>…</span></a></li>' +
-        '<li style="margin-top:6px"><a href="/livreur/partenaire">Espace partenaire</a> · <a href="/livreur/coursier">Livreur</a> · <a href="/livreur/agence">Agence</a></li></ul></div>' +
-        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, République Islamique de Mauritanie</span><span>Livraison rapide · Paiement à la réception</span></div></div></footer>' +
+        '<li style="margin-top:6px"><a href="/livreur/connexion">Espace équipe</a></li></ul></div>' +
+        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, République Islamique de Mauritanie</span><span>Vous vendez, on livre</span></div></div></footer>' +
         '<a class="wa-float" data-contact="wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">' + WA_SVG + '</a>';
     }
     fillContacts();
