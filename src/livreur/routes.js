@@ -198,6 +198,33 @@ router.post('/login', loginLimiter, wrap(async (req, res) => {
 
 router.post('/logout', (_req, res) => { clearLvSession(res); res.json({ ok: true }); });
 
+// Première utilisation : tant qu'aucun compte agence n'existe, la page de
+// connexion agence permet de créer le premier (une seule fois).
+async function agencyExists() {
+  const r = await db.prepare("SELECT COUNT(*) AS n FROM lv_users WHERE role = 'agence'").get();
+  return Number(r && r.n) > 0;
+}
+router.get('/setup', wrap(async (_req, res) => {
+  res.json({ needed: !(await agencyExists()) });
+}));
+router.post('/setup', loginLimiter, wrap(async (req, res) => {
+  if (await agencyExists()) return bad(res, 'Le compte agence existe déjà : connectez-vous.', 409);
+  const b = req.body || {};
+  const name = str(b.name, 120);
+  const phone = normPhone(b.phone);
+  const password = String(b.password || '');
+  if (!name) return bad(res, 'Le nom est obligatoire.');
+  if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
+  if (password.length < 8) return bad(res, 'Le mot de passe doit contenir au moins 8 caractères.');
+  if (password !== String(b.password2 || '')) return bad(res, 'Les deux mots de passe ne correspondent pas.');
+  if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Ce numéro est déjà utilisé par un autre compte.', 409);
+  await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, created_at)
+    VALUES ('agence', ?, ?, ?, 'active', 'Karat Livreur', ?)`).run(name, phone, await hashPassword(password), S.now());
+  const u = await db.prepare('SELECT * FROM lv_users WHERE phone = ?').get(phone);
+  setLvSession(res, u);
+  res.status(201).json({ user: publicUser(u), redirect: HOME.agence });
+}));
+
 router.get('/me', (req, res) => {
   if (!req.lv) return bad(res, 'Non connecté.', 401);
   res.json({ user: req.lv, home: HOME[req.lv.role] });

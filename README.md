@@ -79,6 +79,11 @@ commande.
 - **Espace agence** — connexion `/livreur/agence/connexion` (agents de
   l'agence et livreurs).
 Une connexion refuse les comptes de l'autre espace.
+
+**Premier compte agence** : tant qu'aucun compte agence n'existe, la page
+`/livreur/agence/connexion` propose de le créer (une seule fois). Ensuite,
+l'agence ajoute ses agents (Équipe) et ses livreurs (Livreurs). Karat Livreur
+est indépendant des comptes du site Karat.
 Données séparées des boutiques (tables `lv_*`, créées automatiquement en SQLite
 comme en PostgreSQL) et session dédiée.
 
@@ -103,7 +108,6 @@ comme en PostgreSQL) et session dédiée.
   historique, export CSV), livreurs, partenaires, équipe, stock, caisse des
   livreurs, reversements, zones desservies & délais, messages du formulaire de
   contact.
-  Les administrateurs Karat existants ont aussi accès à l'espace agence.
 
 **Circuit de l'argent** : le livreur encaisse (prix articles + frais si payés par
 le client) → l'agence « reçoit la caisse » → le montant net devient reversable
