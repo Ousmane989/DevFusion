@@ -94,8 +94,13 @@ comme en PostgreSQL) et session dédiée.
 le client) → l'agence « reçoit la caisse » → le montant net devient reversable
 au partenaire (frais déduits s'il les paie) → « Reverser » l'enregistre.
 
+**Design** : thème clair aux couleurs du drapeau mauritanien (vert, jaune or,
+rouge), carte SVG de la Mauritanie (agence à Nouakchott, itinéraires et tarifs
+par ville), plan OpenStreetMap de l'agence, carte d'itinéraire sur la page de suivi.
+
 **Configuration** (voir `.env.example`) : `LIVREUR_PHONE`, `LIVREUR_WHATSAPP`,
-`LIVREUR_EMAIL`, `LIVREUR_ADDRESS` et le compte agence initial
+`LIVREUR_EMAIL`, `LIVREUR_ADDRESS`, la position du plan `LIVREUR_LAT` /
+`LIVREUR_LNG` et le compte agence initial
 `LIVREUR_ADMIN_PHONE` / `LIVREUR_ADMIN_PASSWORD`.
 
 **Démo (hors production uniquement)** — mot de passe `demo1234` :
