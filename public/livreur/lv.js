@@ -66,6 +66,7 @@ window.LV = (function () {
     for (let lat = 16; lat <= 26; lat += 2) { const a = px(-17.6, lat), b = px(-4.4, lat); grid += '<line class="grid-l" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>'; }
     let routes = '';
     let cities = '';
+    let n = 0;
     (zones || []).filter((z) => z.kind !== 'commune').forEach((z) => {
       const c = MR_CITIES[norm(z.name)];
       if (!c) return;
@@ -73,9 +74,12 @@ window.LV = (function () {
       if (opts.only && norm(opts.only) !== norm(z.name)) return;
       const mx = (hq[0] + p[0]) / 2 + (p[1] - hq[1]) * 0.18;
       const my = (hq[1] + p[1]) / 2 - (p[0] - hq[0]) * 0.18;
-      routes += '<path class="route' + (opts.only ? ' on' : '') + '" data-route="' + z.id + '" d="M' + hq.join(',') + ' Q' + mx.toFixed(1) + ',' + my.toFixed(1) + ' ' + p.join(',') + '"/>';
+      const path = 'M' + hq.join(',') + ' Q' + mx.toFixed(1) + ',' + my.toFixed(1) + ' ' + p.join(',');
+      // Itinéraire + petit colis qui circule dessus en boucle.
+      routes += '<path class="route' + (opts.only ? ' on' : '') + '" style="--i:' + n + '" data-route="' + z.id + '" d="' + path + '"/>' +
+        '<circle class="mover" r="3.6" style="--i:' + n + '"><animateMotion dur="' + (2.6 + (n % 4) * 0.6).toFixed(1) + 's" begin="' + (n * 0.3).toFixed(1) + 's" repeatCount="indefinite" path="' + path + '"/></circle>';
       const left = p[0] > W - 90;
-      cities += '<g class="city" data-zone="' + z.id + '" tabindex="0"><title>' + esc(z.name) + ' — ' + money(z.price) + ' · ' + esc(z.delay) + '</title>' +
+      cities += '<g class="city" style="--i:' + (n++) + '" data-zone="' + z.id + '" tabindex="0"><title>' + esc(z.name) + ' — ' + money(z.price) + ' · ' + esc(z.delay) + '</title>' +
         '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5.5"/><text x="' + (p[0] + (left ? -10 : 10)) + '" y="' + (p[1] + 4) + '"' + (left ? ' text-anchor="end"' : '') + '>' + esc(z.name) + '</text></g>';
     });
     return '<svg class="mr-map" viewBox="-6 -6 ' + (W + 12) + ' ' + (H + 12) + '" role="img" aria-label="Carte de la Mauritanie : agence à Nouakchott et villes desservies">' +
@@ -232,7 +236,7 @@ window.LV = (function () {
         '<a class="wa-float" data-contact="wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">' + WA_SVG + '</a>';
     }
     fillContacts();
-    reveal();
+    if (window.LVAnim) window.LVAnim.publicExtras();
   }
 
   async function fillContacts() {
@@ -248,15 +252,6 @@ window.LV = (function () {
       else if (k === 'email') { el.href = 'mailto:' + c.email; const s = el.querySelector('span:last-of-type'); if (s) s.textContent = c.email; }
       else if (k === 'address') { const s = el.querySelector('span:last-of-type') || el; s.textContent = c.address; }
     });
-  }
-
-  function reveal() {
-    const els = document.querySelectorAll('.reveal');
-    if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    els.forEach((e) => io.observe(e));
   }
 
   // ----- Coque des espaces (barre latérale + onglets) -----
