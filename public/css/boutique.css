@@ -318,6 +318,10 @@ img { max-width: 100%; display: block; }
 .pro .sf-nav-l { color: var(--muted); font-size: 0.92rem; position: relative; padding: 4px 0; transition: color .25s; }
 .pro .sf-nav-l::after { content: ''; position: absolute; left: 0; bottom: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
 .pro .sf-nav-l:hover { color: var(--text); } .pro .sf-nav-l:hover::after { width: 100%; }
+.pro .sf-head-right { display: flex; align-items: center; gap: 10px; }
+/* Bouton menu (téléphone) — masqué sur grand écran. */
+.sf-burger { display: none; background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 7px; cursor: pointer; align-items: center; justify-content: center; }
+.sf-burger svg { width: 22px; height: 22px; display: block; }
 
 /* Héro (avec bannière optionnelle) */
 .pro .sf-hero2 { position: relative; padding: clamp(64px, 11vw, 130px) 5vw; background-size: cover; background-position: center; background-color: var(--surface);
@@ -372,7 +376,17 @@ img { max-width: 100%; display: block; }
 @media (max-width: 1000px) { .pro .sf-grid2 { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 760px) {
   .pro .sf-grid2 { grid-template-columns: repeat(2, 1fr); }
-  .pro .sf-nav { display: none; }
+  /* Le menu devient un panneau déroulant ouvert par le bouton « hamburger ». */
+  .sf-burger { display: inline-flex; }
+  .pro .sf-nav {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 18px;
+    position: absolute; top: calc(100% + 8px); inset-inline-end: 5vw; min-width: 200px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; box-shadow: 0 22px 48px rgba(0,0,0,.5); z-index: 60;
+    opacity: 0; transform: translateY(-8px); pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  .pro .sf-nav.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .pro .sf-nav-l { font-size: 1rem; }
 }
 @media (max-width: 440px) {
   .pro .sf-grid2 { gap: 14px; }

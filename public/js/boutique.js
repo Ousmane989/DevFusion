@@ -111,8 +111,8 @@
   function header(d) {
     return `<header class="sf-header" id="sf-top"><div class="sf-header-in">
       <a class="sf-brand-row" href="#sf-top">${logoMark(d)}<span class="sf-brand-name">${esc(d.shopName)}</span></a>
-      <nav class="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a><span data-lang-switch></span></nav>
-      ${cartBtn()}
+      <nav class="sf-nav" id="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a><span data-lang-switch></span></nav>
+      <div class="sf-head-right">${cartBtn()}<button type="button" class="sf-burger" id="sf-burger" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></div>
     </div></header>`;
   }
   function hero(d) {
@@ -530,6 +530,29 @@
       const target = root.querySelector(href);
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     }));
+
+    // Menu téléphone : bouton « hamburger » qui ouvre/ferme la navigation
+    // (liens + sélecteur de langue), masquée en barre sur petit écran.
+    const burger = root.querySelector('#sf-burger');
+    const navEl = root.querySelector('#sf-nav');
+    if (burger && navEl) {
+      const closeNav = () => { navEl.classList.remove('open'); burger.setAttribute('aria-expanded', 'false'); };
+      burger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = navEl.classList.toggle('open');
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      // Fermer le menu quand on choisit un lien de navigation.
+      navEl.querySelectorAll('.sf-nav-l').forEach((a) => a.addEventListener('click', closeNav));
+      // Fermer quand on touche en dehors du menu (une seule fois pour la page).
+      if (!window.__sfNavBound) {
+        window.__sfNavBound = true;
+        document.addEventListener('click', (e) => {
+          const n = document.querySelector('#sf-nav'); const b = document.querySelector('#sf-burger');
+          if (n && b && !n.contains(e.target) && !b.contains(e.target)) { n.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }
+        });
+      }
+    }
   }
 
   function render(d) {
