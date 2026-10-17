@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace agence — Karat Livreur</title>
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Espace réservé à l'équipe Karat Livreur : agents de l'agence et livreurs." />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.svg" />
+  <script src="/livreur/theme.js?v=20261018d"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261018d" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <header class="page-hero agency-hero"><div class="container"><span class="eyebrow">Espace agence</span><h1>Accès équipe</h1><p>Réservé à l'équipe Karat Livreur : agents de l'agence (commandes, centre d'appel, caisse) et livreurs (tournée du jour).</p></div></header>
+  <main class="page-narrow page-body">
+    <form class="card" id="login-form">
+      <div class="form-msg"></div>
+      <div class="field"><label>Téléphone</label><input name="phone" type="tel" required autocomplete="username" placeholder="22 22 22 22" /></div>
+      <div class="field"><label>Mot de passe</label><input name="password" type="password" required autocomplete="current-password" /></div>
+      <button class="btn btn-green btn-block" type="submit">Accéder à l'espace agence</button>
+      <p class="muted" style="font-size:13.5px;margin-top:14px;text-align:center">Mot de passe oublié ? Demandez à un responsable de l'agence de le réinitialiser.</p>
+    </form>
+    <p class="auth-switch">Vous êtes un e-commerçant ? <a href="/livreur/connexion">Espace partenaire</a></p>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js?v=20261018d"></script>
+  <script src="/livreur/anim.js?v=20261018d"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    var form = document.getElementById('login-form');
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(form, '/login', { space: 'agence' });
+      if (!r.ok) return;
+      var suite = new URLSearchParams(location.search).get('suite');
+      location.href = suite && suite.indexOf('/livreur/' + r.data.user.role) === 0 ? suite : r.data.redirect;
+    });
+  })();
+  </script>
+</body>
+</html>

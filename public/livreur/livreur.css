@@ -413,9 +413,9 @@ section, .site-footer { overflow-x: clip; }
 .card-ico svg { width: 28px; height: 28px; }
 .card h3 { font-size: 20px; margin-bottom: 8px; }
 .card p { color: var(--text-dim); font-size: 15px; }
-.card ul.checks { list-style: none; margin-top: 16px; display: grid; gap: 8px; font-size: 14.5px; color: var(--text-dim); }
-.card ul.checks li { display: flex; gap: 9px; align-items: flex-start; }
-.card ul.checks li::before { content: '✓'; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-size: 12px; font-weight: 800; display: grid; place-items: center; margin-top: 1px; }
+.card ul.checks, ul.price-checks { list-style: none; margin-top: 16px; display: grid; gap: 8px; font-size: 14.5px; color: var(--text-dim); }
+.card ul.checks li, ul.price-checks li { display: flex; gap: 9px; align-items: flex-start; }
+.card ul.checks li::before, ul.price-checks li::before { content: '✓'; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-size: 12px; font-weight: 800; display: grid; place-items: center; margin-top: 1px; }
 
 /* Services : cartes avec bandeau de couleur */
 .service-card { position: relative; overflow: hidden; padding-top: 34px; display: flex; flex-direction: column; }
@@ -572,6 +572,16 @@ tr.clickable { cursor: pointer; }
 .cta-band h2 { font-size: clamp(24px, 3vw, 32px); margin-bottom: 8px; color: var(--ink); }
 .cta-band .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* Bandeau du tarif unique */
+.price-band { flex-direction: row; align-items: center; justify-content: space-between; gap: 40px; border-left-color: var(--accent); }
+.price-band::after { background: var(--accent-soft); }
+.price-main { max-width: 520px; }
+.price-big { font-family: var(--head); font-weight: 800; color: var(--ink); line-height: 1; margin: 6px 0 14px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.price-big > span { font-size: clamp(46px, 7vw, 76px); background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--accent-dark)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.price-big small { font-family: var(--sans); font-size: 18px; font-weight: 600; color: var(--text-dim); }
+.price-checks { margin-top: 0 !important; max-width: 440px; font-size: 15.5px !important; }
+@media (max-width: 860px) { .price-band { flex-direction: column; align-items: flex-start; } }
+
 /* ---------------- FAQ ---------------- */
 .faq { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 .faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; box-shadow: var(--shadow-sm); transition: border-color .2s; }
@@ -637,6 +647,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .perks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
 .perks .card { padding: 20px; box-shadow: var(--shadow); border: 0; }
 .perks h3 { font-size: 16px; }
+
+/* Connexion agence : bandeau distinct (vert) de la connexion partenaire. */
+.agency-hero::before { background: rgba(11,107,67,.28); }
+.agency-hero::after { background: rgba(210,16,52,.12); }
 
 /* ---------------- Suivi ---------------- */
 .timeline { list-style: none; position: relative; margin-top: 20px; }
