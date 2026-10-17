@@ -2,7 +2,7 @@
 
 // Sessions Karat Livreur : cookie dédié, distinct de la session des boutiques.
 const jwt = require('jsonwebtoken');
-const { config, isAdminUser } = require('../config');
+const { config } = require('../config');
 const { db } = require('./store');
 
 const COOKIE = 'karat_livreur';
@@ -28,7 +28,7 @@ function publicUser(u) {
   return rest;
 }
 
-/** Attache req.lv (utilisateur Karat Livreur) ; un admin Karat devient agence. */
+/** Attache req.lv (utilisateur Karat Livreur connecté). */
 async function loadLv(req, _res, next) {
   try {
     const token = req.cookies && req.cookies[COOKIE];
@@ -39,10 +39,6 @@ async function loadLv(req, _res, next) {
         const u = await db.prepare('SELECT * FROM lv_users WHERE id = ?').get(payload.lv);
         if (u && u.status === 'active') req.lv = publicUser(u);
       }
-    }
-    if (!req.lv && isAdminUser(req.account || req.user)) {
-      const a = req.account || req.user;
-      req.lv = { id: 0, role: 'agence', name: a.name || 'Administrateur', phone: a.phone || '', status: 'active', viaKarat: true };
     }
     next();
   } catch (e) {
