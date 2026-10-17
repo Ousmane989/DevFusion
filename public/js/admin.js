@@ -164,6 +164,7 @@
     const r = await api('/api/admin/settings');
     if (r.ok && r.data) {
       q('#st-wa').value = r.data.whatsapp || '';
+      if (q('#st-wave')) q('#st-wave').value = r.data.waveLink || '';
       const em = r.data.email || {};
       if (q('#st-email-from')) q('#st-email-from').value = em.from || '';
       if (q('#st-email-name')) q('#st-email-name').value = em.fromName || '';
@@ -176,9 +177,11 @@
     if (fw) fw.addEventListener('submit', async (e) => {
       e.preventDefault();
       const m = q('#wa-msg'); setMsg(m, true, 'Enregistrement…');
-      const r = await api('/api/admin/settings', { whatsapp: q('#st-wa').value.trim() }, 'PUT');
-      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.whatsapp || 'Erreur.'); return; }
-      q('#st-wa').value = r.data.whatsapp; setMsg(m, true, 'Numéro WhatsApp enregistré ✓');
+      const payload = { whatsapp: q('#st-wa').value.trim() };
+      if (q('#st-wave')) payload.waveLink = q('#st-wave').value.trim();
+      const r = await api('/api/admin/settings', payload, 'PUT');
+      if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.whatsapp || er.waveLink || 'Erreur.'); return; }
+      setMsg(m, true, 'Enregistré ✓');
     });
     const fm = q('#form-mailer');
     if (fm) fm.addEventListener('submit', async (e) => {
