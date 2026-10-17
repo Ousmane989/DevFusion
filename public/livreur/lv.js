@@ -56,7 +56,7 @@ window.LV = (function () {
   const K = 34;
   const px = (lon, lat) => [Math.round(((lon + 17.6) * 0.94 * K) * 10) / 10, Math.round(((27.8 - lat) * K) * 10) / 10];
 
-  // zones : [{ id, name, price, delay, kind }] ; opts.only = nom de zone à mettre en avant.
+  // zones : [{ id, name, delay, kind }] ; opts.only = nom de zone à mettre en avant.
   function mapSvg(zones, opts) {
     opts = opts || {};
     const W = Math.ceil(13.2 * 0.94 * K) + 10;
@@ -200,9 +200,9 @@ window.LV = (function () {
         .then((r) => (r.ok && r.data && r.data.zones && r.data.zones.length ? r.data : Promise.reject()))
         .catch(() => fetch('/livreur/defaults.json', { credentials: 'same-origin' })
           .then((r) => r.json())
-          .then((d) => ({ contact: d.contact, services: d.services, statuses: {}, offline: true,
+          .then((d) => ({ contact: d.contact, fee_per_item: d.fee_per_item, statuses: {}, offline: true,
             zones: d.zones.map((z, i) => Object.assign({ id: i + 1 }, z)) }))
-          .catch(() => ({ contact: null, zones: [], services: {}, statuses: {} })));
+          .catch(() => ({ contact: null, zones: [], fee_per_item: 0, statuses: {} })));
     }
     return infoCache;
   }
@@ -212,7 +212,7 @@ window.LV = (function () {
     zones.forEach((z) => { (groups[z.region] = groups[z.region] || []).push(z); });
     return '<option value="">Choisir la zone…</option>' + Object.keys(groups).map((g) =>
       '<optgroup label="' + esc(g) + '">' + groups[g].map((z) =>
-        '<option value="' + z.id + '"' + (String(selected) === String(z.id) ? ' selected' : '') + '>' + esc(z.name) + ' — ' + money(z.price) + '</option>').join('') + '</optgroup>').join('');
+        '<option value="' + z.id + '"' + (String(selected) === String(z.id) ? ' selected' : '') + '>' + esc(z.name) + ' — ' + esc(z.delay) + '</option>').join('') + '</optgroup>').join('');
   }
 
   // Bouton jour / nuit (le comportement est dans theme.js).
@@ -235,9 +235,9 @@ window.LV = (function () {
         '<header class="site-header"><div class="container nav">' + brand() +
         '<ul class="nav-links">' +
         '<li><a href="/livreur#services">Services</a></li><li><a href="/livreur#fonctionnement">Fonctionnement</a></li>' +
-        '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#espace">Espace partenaire</a></li>' +
+        '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#tarif">Tarif</a></li>' +
         '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
-        '<div class="nav-cta"><a href="/livreur/connexion" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Connexion</a>' +
+        '<div class="nav-cta"><a href="/livreur/partenaire" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Espace partenaire</a>' +
         '<a href="/livreur/inscription" class="btn btn-green btn-sm">Devenir partenaire</a></div>' +
         themeButton() + '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';
       const header = document.querySelector('.site-header');
@@ -252,7 +252,7 @@ window.LV = (function () {
         '<div><h4>Services</h4><ul><li><a href="/livreur#services">Stockage & préparation</a></li><li><a href="/livreur#services">Confirmation des commandes</a></li><li><a href="/livreur#services">Livraison partout</a></li><li><a href="/livreur#services">Encaissement & reversement</a></li></ul></div>' +
         '<div><h4>Partenaires</h4><ul><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
         '<div><h4>Contact</h4><ul><li><a data-contact="phone" href="#"><span>…</span></a></li><li><a data-contact="email" href="#"><span>…</span></a></li><li><a data-contact="address"><span>…</span></a></li>' +
-        '<li style="margin-top:6px"><a href="/livreur/connexion">Espace équipe</a></li></ul></div>' +
+        '<li style="margin-top:6px"><a href="/livreur/agence/connexion">' + icon('headset', 'ico') + ' Espace agence</a></li></ul></div>' +
         '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, République Islamique de Mauritanie</span><span>Vous vendez, on livre</span></div></div></footer>' +
         '<a class="wa-float" data-contact="wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">' + WA_SVG + '</a>';
     }
@@ -280,10 +280,11 @@ window.LV = (function () {
   async function appShell(role, sub, sections, onShow) {
     const me = await api('/me');
     if (!me.ok || me.data.user.role !== role) {
-      location.href = '/livreur/connexion?suite=' + encodeURIComponent(location.pathname);
+      location.href = loginPage(role) + '?suite=' + encodeURIComponent(location.pathname);
       return null;
     }
     const user = me.data.user;
+    currentRole = user.role;
     const app = document.querySelector('.app');
     const side = app.querySelector('.sidebar');
     side.innerHTML = brand(sub) + '<nav class="side-nav">' + sections.map((s) =>
@@ -324,9 +325,15 @@ window.LV = (function () {
     el.classList.toggle('hidden', !n);
   }
 
+  // Deux espaces : connexion partenaire, ou connexion agence (agents + livreurs).
+  let currentRole = null;
+  function loginPage(role) {
+    return role === 'partenaire' ? '/livreur/connexion' : '/livreur/agence/connexion';
+  }
+
   async function logout() {
     await api('/logout', {});
-    location.href = '/livreur/connexion';
+    location.href = loginPage(currentRole);
   }
 
   return {

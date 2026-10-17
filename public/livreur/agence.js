@@ -12,13 +12,14 @@
     { id: 'stock', label: 'Stock', icon: 'warehouse' },
     { id: 'caisse', label: 'Caisse', icon: 'cash' },
     { id: 'reversements', label: 'Reversements', icon: 'shield' },
-    { id: 'tarifs', label: 'Zones & tarifs', icon: 'tag' },
+    { id: 'tarifs', label: 'Zones & délais', icon: 'tag' },
     { id: 'messages', label: 'Messages', icon: 'chat' },
     { id: 'equipe', label: 'Équipe', icon: 'users' },
   ];
   const shell = await LV.appShell('agence', 'Espace agence', SECTIONS, (id) => VIEWS[id]());
   if (!shell) return;
   const info = await LV.info();
+  const perItem = Number(info.fee_per_item) || 0;
   let couriers = [];
   let partners = [];
   let callTab = 'nouvelle';
@@ -71,8 +72,9 @@
       '<div class="field"><label>Date prévue</label><input type="date" name="scheduled_for" value="' + esc(o.scheduled_for) + '" /></div></div>' +
       '<div class="field"><label>Adresse</label><input name="address" value="' + esc(o.address) + '" /></div>' +
       '<div class="fieldset-title">Montants</div>' +
-      '<div class="row-3"><div class="field"><label>Prix articles</label><input type="number" min="0" name="cod_amount" value="' + o.cod_amount + '" /></div>' +
-      '<div class="field"><label>Frais livraison</label><input type="number" min="0" name="fee" value="' + o.fee + '" /></div>' +
+      '<div class="row"><div class="field"><label>Nombre de produits</label><input type="number" min="1" name="items_count" value="' + o.items_count + '" /><small>' + money(perItem) + ' par produit</small></div>' +
+      '<div class="field"><label>Prix articles</label><input type="number" min="0" name="cod_amount" value="' + o.cod_amount + '" /></div></div>' +
+      '<div class="row"><div class="field"><label>Frais livraison</label><input type="number" min="0" name="fee" value="' + o.fee + '" /></div>' +
       '<div class="field"><label>Frais payés par</label><select name="fee_payer"><option value="destinataire"' + (o.fee_payer === 'destinataire' ? ' selected' : '') + '>Destinataire</option><option value="partenaire"' + (o.fee_payer === 'partenaire' ? ' selected' : '') + '>Expéditeur</option></select></div></div>' +
       '<div class="field"><label>Note interne</label><input name="note" value="' + esc(o.note) + '" /></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" type="submit">Enregistrer</button>' +
@@ -88,6 +90,7 @@
       r.data.events.slice().reverse().map((e, i) => '<li class="' + (i ? '' : 'last') + '"><strong>' + esc(e.label) + '</strong><span>' + date(e.created_at, true) + ' · ' + esc(e.actor) + (e.note ? ' — ' + esc(e.note) : '') + '</span></li>').join('') + '</ul>',
       { wide: true });
     const f = body.querySelector('form');
+    f.items_count.addEventListener('input', () => { f.fee.value = perItem * Math.max(1, Math.round(Number(f.items_count.value) || 1)); });
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       const d = LV.formData(f);
@@ -108,11 +111,11 @@
       '<div class="field"><label>Adresse d\'enlèvement</label><input name="pickup_address" /></div>' +
       '<div class="row"><div class="field"><label>Destinataire</label><input name="recipient_name" required /></div><div class="field"><label>Téléphone</label><input name="recipient_phone" required /></div></div>' +
       '<div class="row"><div class="field"><label>Zone</label><select name="zone_id" required>' + LV.zoneOptions(info.zones) + '</select></div>' +
-      '<div class="field"><label>Service</label><select name="service">' + Object.entries(info.services).map(([k, s]) => '<option value="' + k + '">' + esc(s.label) + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><label>Nombre de produits</label><input type="number" min="1" name="items_count" value="1" required /></div></div>' +
       '<div class="field"><label>Adresse de livraison</label><input name="address" required /></div>' +
       '<div class="field"><label>Description du colis</label><input name="description" /></div>' +
       '<div class="row-3"><div class="field"><label>Prix articles</label><input type="number" min="0" name="cod_amount" value="0" /></div>' +
-      '<div class="field"><label>Frais (vide = tarif)</label><input type="number" min="0" name="fee" /></div>' +
+      '<div class="field"><label>Frais (vide = ' + money(perItem) + ' × produits)</label><input type="number" min="0" name="fee" /></div>' +
       '<div class="field"><label>Frais payés par</label><select name="fee_payer"><option value="destinataire">Destinataire</option><option value="partenaire">Expéditeur</option></select></div></div>' +
       '<div class="field"><label>Note</label><input name="note" /></div>' +
       '<button class="btn btn-primary btn-block" type="submit">Créer la commande</button></form>', { wide: true });
@@ -320,11 +323,11 @@
     async tarifs() {
       const r = await api('/agency/zones');
       const rows = r.data.zones || [];
-      document.getElementById('a-zones').innerHTML = '<table><thead><tr><th>Zone</th><th>Région</th><th>Délai</th><th class="num">Tarif (MRU)</th><th>Active</th><th></th></tr></thead><tbody>' +
+      document.getElementById('a-zones').innerHTML = '<table><thead><tr><th>Zone</th><th>Région</th><th>Délai</th><th>Active</th><th></th></tr></thead><tbody>' +
         rows.map((z) => '<tr data-zone="' + z.id + '"><td><input name="name" value="' + esc(z.name) + '" style="min-width:140px" /></td><td><input name="region" value="' + esc(z.region) + '" style="min-width:140px" /></td>' +
-          '<td><input name="delay" value="' + esc(z.delay) + '" style="min-width:110px" /></td><td><input name="price" type="number" min="0" value="' + z.price + '" style="width:110px;text-align:right" /></td>' +
+          '<td><input name="delay" value="' + esc(z.delay) + '" style="min-width:110px" /></td>' +
           '<td><input name="active" type="checkbox"' + (z.active ? ' checked' : '') + ' style="width:auto" /></td><td><button class="btn btn-ghost btn-sm" data-save-zone="' + z.id + '">Enregistrer</button></td></tr>').join('') + '</tbody></table>' +
-        '<p class="muted" style="padding:14px 22px;font-size:13.5px">Suppléments par service : ' + Object.values(info.services).map((s) => esc(s.label) + ' +' + money(s.extra)).join(' · ') + '</p>';
+        '<p class="muted" style="padding:14px 22px;font-size:13.5px">Tarif unique : ' + money(perItem) + ' par produit, quelle que soit la zone (variable LIVREUR_FEE_PER_ITEM).</p>';
     },
 
     async messages() {
@@ -447,14 +450,14 @@
     if ((b = t.closest('[data-save-zone]'))) {
       const tr = b.closest('tr');
       const v = (n) => tr.querySelector('[name="' + n + '"]');
-      const r = await api('/agency/zones/' + b.dataset.saveZone, { name: v('name').value, region: v('region').value, delay: v('delay').value, price: v('price').value, active: v('active').checked }, 'PUT');
+      const r = await api('/agency/zones/' + b.dataset.saveZone, { name: v('name').value, region: v('region').value, delay: v('delay').value, active: v('active').checked }, 'PUT');
       return r.ok ? toast('Zone enregistrée') : toast(r.data.error, true);
     }
     if (t.closest('#a-new-zone')) {
       const body = modal('Ajouter une zone',
         '<form><div class="form-msg"></div><div class="row"><div class="field"><label>Nom</label><input name="name" required /></div><div class="field"><label>Région / wilaya</label><input name="region" required /></div></div>' +
-        '<div class="row-3"><div class="field"><label>Type</label><select name="kind"><option value="commune">Quartier Nouakchott</option><option value="ville">Ville intérieur</option></select></div>' +
-        '<div class="field"><label>Tarif (MRU)</label><input type="number" min="0" name="price" required /></div><div class="field"><label>Délai</label><input name="delay" placeholder="Ex. 24 h" /></div></div>' +
+        '<div class="row"><div class="field"><label>Type</label><select name="kind"><option value="commune">Quartier Nouakchott</option><option value="ville">Ville intérieur</option></select></div>' +
+        '<div class="field"><label>Délai</label><input name="delay" placeholder="Ex. 24 h" /></div></div>' +
         '<button class="btn btn-primary btn-block" type="submit">Ajouter</button></form>');
       const f = body.querySelector('form');
       f.addEventListener('submit', async (ev) => {

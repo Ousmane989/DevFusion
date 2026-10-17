@@ -66,7 +66,7 @@ const SCHEMA = `
     code TEXT NOT NULL UNIQUE,
     source TEXT NOT NULL DEFAULT 'partenaire',
     partner_id INTEGER,
-    service TEXT NOT NULL DEFAULT 'standard',
+    service TEXT NOT NULL DEFAULT 'ecommerce',
     sender_name TEXT NOT NULL DEFAULT '',
     sender_phone TEXT NOT NULL DEFAULT '',
     pickup_address TEXT NOT NULL DEFAULT '',
@@ -78,6 +78,7 @@ const SCHEMA = `
     description TEXT NOT NULL DEFAULT '',
     stock_id INTEGER,
     stock_qty INTEGER NOT NULL DEFAULT 0,
+    items_count INTEGER NOT NULL DEFAULT 1,
     cod_amount INTEGER NOT NULL DEFAULT 0,
     fee INTEGER NOT NULL DEFAULT 0,
     fee_payer TEXT NOT NULL DEFAULT 'destinataire',
@@ -136,11 +137,10 @@ const SCHEMA = `
   );
 `;
 
-// Villes, tarifs de départ et services : public/livreur/defaults.json, fichier
-// partagé avec la page d'accueil (qui s'en sert si l'API est injoignable).
-// Les tarifs restent modifiables ensuite depuis l'espace agence.
+// Villes desservies et délais : public/livreur/defaults.json, fichier partagé
+// avec la page d'accueil (qui s'en sert si l'API est injoignable). Les zones
+// restent modifiables ensuite depuis l'espace agence.
 const DEFAULTS = require('../../public/livreur/defaults.json');
-const SERVICES = DEFAULTS.services;
 
 const STATUSES = {
   nouvelle: 'Nouvelle',
@@ -161,9 +161,9 @@ async function seed() {
   const z = await db.prepare('SELECT COUNT(*) AS n FROM lv_zones').get();
   if (!Number(z && z.n)) {
     let i = 0;
-    for (const { name, region, kind, price, delay } of DEFAULTS.zones) {
-      await db.prepare('INSERT INTO lv_zones (name, region, kind, price, delay, active, sort) VALUES (?, ?, ?, ?, ?, 1, ?)')
-        .run(name, region, kind, price, delay, i++);
+    for (const { name, region, kind, delay } of DEFAULTS.zones) {
+      await db.prepare('INSERT INTO lv_zones (name, region, kind, delay, active, sort) VALUES (?, ?, ?, ?, 1, ?)')
+        .run(name, region, kind, delay, i++);
     }
   }
 
@@ -198,6 +198,8 @@ function ensureReady() {
   if (!ready) {
     ready = (async () => {
       await db.exec(SCHEMA);
+      // Bases créées avant le tarif par produit : ajout de la colonne.
+      try { await db.exec('ALTER TABLE lv_orders ADD COLUMN items_count INTEGER NOT NULL DEFAULT 1'); } catch (_) { /* déjà présente */ }
       await seed();
     })().catch((e) => { ready = null; throw e; });
   }
@@ -212,11 +214,13 @@ function newTrackingCode() {
   return 'KL-' + s;
 }
 
-async function computeFee(zoneId, service) {
-  const zone = zoneId ? await db.prepare('SELECT * FROM lv_zones WHERE id = ? AND active = 1').get(zoneId) : null;
-  if (!zone) return null;
-  const svc = SERVICES[service] || SERVICES.standard;
-  return { zone, fee: Number(zone.price) + svc.extra };
+function findZone(zoneId) {
+  return zoneId ? db.prepare('SELECT * FROM lv_zones WHERE id = ? AND active = 1').get(zoneId) : null;
+}
+
+// Tarif unique : un prix fixe par produit livré.
+function deliveryFee(itemsCount) {
+  return config.livreur.feePerItem * Math.max(1, itemsCount || 1);
 }
 
 // Montant que le livreur encaisse auprès du destinataire.
@@ -234,6 +238,6 @@ async function addEvent(orderId, status, note, actor) {
 }
 
 module.exports = {
-  db, now, today, ensureReady, newTrackingCode, computeFee, collectedAmount, partnerNet, addEvent,
-  SERVICES, STATUSES,
+  db, now, today, ensureReady, newTrackingCode, findZone, deliveryFee, collectedAmount, partnerNet, addEvent,
+  STATUSES,
 };

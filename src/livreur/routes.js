@@ -41,34 +41,36 @@ function decorate(o) {
   return o && { ...o, status_label: S.STATUSES[o.status] || o.status, collected: S.collectedAmount(o), net: S.partnerNet(o) };
 }
 
-// Données communes à la création d'une commande (partenaire, agence, public).
+// Données communes à la création d'une commande (partenaire, agence).
+// Frais = tarif unique × nombre de produits (l'agence peut les ajuster).
 async function buildOrder(b, { source, partnerId }) {
-  const service = S.SERVICES[b.service] ? b.service : 'standard';
   const recipient_name = str(b.recipient_name, 120);
   const recipient_phone = normPhone(b.recipient_phone);
   if (!recipient_name) return { error: 'Le nom du destinataire est obligatoire.' };
   if (recipient_phone.length < 8) return { error: 'Le téléphone du destinataire est invalide.' };
-  const quote = await S.computeFee(int(b.zone_id), service);
-  if (!quote) return { error: 'Choisissez une zone de livraison.' };
+  const zone = await S.findZone(int(b.zone_id));
+  if (!zone) return { error: 'Choisissez une zone de livraison.' };
   const address = str(b.address, 300);
   if (!address) return { error: 'L\'adresse de livraison est obligatoire.' };
-  const fee = b.fee != null && b.fee !== '' && source === 'agence' ? Math.max(0, Math.round(Number(b.fee) || 0)) : quote.fee;
+  const stockQty = int(b.stock_id) ? Math.max(1, int(b.stock_qty)) : 0;
+  const items_count = Math.min(999, int(b.items_count) || stockQty || 1);
+  const fee = b.fee != null && b.fee !== '' && source === 'agence' ? Math.max(0, Math.round(Number(b.fee) || 0)) : S.deliveryFee(items_count);
   return {
     code: S.newTrackingCode(),
     source,
     partner_id: partnerId || null,
-    service,
     sender_name: str(b.sender_name, 120),
     sender_phone: normPhone(b.sender_phone),
     pickup_address: str(b.pickup_address, 300),
     recipient_name,
     recipient_phone,
     address,
-    zone_id: quote.zone.id,
-    zone_name: quote.zone.name,
+    zone_id: zone.id,
+    zone_name: zone.name,
     description: str(b.description, 500),
     stock_id: int(b.stock_id) || null,
-    stock_qty: int(b.stock_id) ? Math.max(1, int(b.stock_qty)) : 0,
+    stock_qty: stockQty,
+    items_count,
     cod_amount: Math.max(0, Math.round(Number(b.cod_amount) || 0)),
     fee,
     fee_payer: b.fee_payer === 'partenaire' || b.fee_payer === 'expediteur' ? 'partenaire' : 'destinataire',
@@ -107,9 +109,9 @@ async function setStatus(order, status, { actor, note, received_by } = {}) {
 }
 
 function toCsv(rows) {
-  const head = ['Code', 'Date', 'Destinataire', 'Téléphone', 'Zone', 'Adresse', 'Statut', 'Montant à encaisser', 'Frais', 'Payé par', 'Net partenaire'];
+  const head = ['Code', 'Date', 'Destinataire', 'Téléphone', 'Zone', 'Adresse', 'Statut', 'Produits', 'Montant à encaisser', 'Frais', 'Payé par', 'Net partenaire'];
   const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const lines = rows.map((o) => [o.code, o.created_at, o.recipient_name, o.recipient_phone, o.zone_name, o.address, S.STATUSES[o.status], o.cod_amount, o.fee, o.fee_payer, o.status === 'livree' ? S.partnerNet(o) : 0].map(esc).join(';'));
+  const lines = rows.map((o) => [o.code, o.created_at, o.recipient_name, o.recipient_phone, o.zone_name, o.address, S.STATUSES[o.status], o.items_count, o.cod_amount, o.fee, o.fee_payer, o.status === 'livree' ? S.partnerNet(o) : 0].map(esc).join(';'));
   return '﻿' + [head.map(esc).join(';'), ...lines].join('\n');
 }
 
@@ -117,9 +119,9 @@ function toCsv(rows) {
 // PUBLIC
 // ================================================================
 router.get('/info', wrap(async (_req, res) => {
-  const zones = await db.prepare('SELECT id, name, region, kind, price, delay FROM lv_zones WHERE active = 1 ORDER BY sort, id').all();
+  const zones = await db.prepare('SELECT id, name, region, kind, delay FROM lv_zones WHERE active = 1 ORDER BY sort, id').all();
   const { phone, whatsapp, email, address, lat, lng } = config.livreur;
-  res.json({ contact: { phone, whatsapp, email, address, lat, lng }, zones, services: S.SERVICES, statuses: S.STATUSES });
+  res.json({ contact: { phone, whatsapp, email, address, lat, lng }, zones, fee_per_item: config.livreur.feePerItem, statuses: S.STATUSES });
 }));
 
 router.get('/track/:code', trackLimiter, wrap(async (req, res) => {
@@ -134,7 +136,7 @@ router.get('/track/:code', trackLimiter, wrap(async (req, res) => {
     status: o.status,
     status_label: S.STATUSES[o.status],
     zone: o.zone_name,
-    service: (S.SERVICES[o.service] || {}).label,
+    items: o.items_count,
     recipient: (o.recipient_name || '').split(' ')[0],
     sender: o.partner_name || (o.sender_name || '').split(' ')[0],
     courier: o.courier_name ? o.courier_name.split(' ')[0] : null,
@@ -175,6 +177,8 @@ router.post('/inscription', formLimiter, wrap(async (req, res) => {
 }));
 
 const HOME = { agence: '/livreur/agence', partenaire: '/livreur/partenaire', coursier: '/livreur/coursier' };
+// Page de connexion de chaque espace.
+const LOGIN = { partenaire: '/livreur/connexion', agence: '/livreur/agence/connexion', coursier: '/livreur/agence/connexion' };
 
 router.post('/login', loginLimiter, wrap(async (req, res) => {
   const phone = normPhone(req.body.phone);
@@ -182,6 +186,10 @@ router.post('/login', loginLimiter, wrap(async (req, res) => {
   if (!u || !(await verifyPassword(String(req.body.password || ''), u.password_hash))) {
     return bad(res, 'Téléphone ou mot de passe incorrect.', 401);
   }
+  // Deux espaces séparés : partenaires d'un côté, agence (agents + livreurs) de l'autre.
+  const space = req.body.space;
+  if (space === 'partenaire' && u.role !== 'partenaire') return bad(res, 'Ce compte appartient à l\'équipe : connectez-vous depuis l\'espace agence.', 403);
+  if (space === 'agence' && u.role === 'partenaire') return bad(res, 'Ce compte est un compte partenaire : connectez-vous depuis l\'espace partenaire.', 403);
   if (u.status === 'pending') return bad(res, 'Votre compte est en cours de validation par l\'agence (24 h ouvrées).', 403);
   if (u.status !== 'active') return bad(res, 'Ce compte est suspendu. Contactez l\'agence.', 403);
   setLvSession(res, u);
@@ -419,6 +427,7 @@ agency.put('/orders/:id', wrap(async (req, res) => {
   for (const k of ['cod_amount', 'fee']) {
     if (b[k] !== undefined) { sets.push(k + ' = ?'); args.push(Math.max(0, Math.round(Number(b[k]) || 0))); }
   }
+  if (b.items_count !== undefined) { sets.push('items_count = ?'); args.push(Math.min(999, Math.max(1, int(b.items_count)))); }
   if (b.fee_payer !== undefined) { sets.push('fee_payer = ?'); args.push(b.fee_payer === 'partenaire' ? 'partenaire' : 'destinataire'); }
   if (b.zone_id !== undefined) {
     const z = await db.prepare('SELECT * FROM lv_zones WHERE id = ?').get(int(b.zone_id));
@@ -571,24 +580,23 @@ agency.post('/payouts/:partnerId', wrap(async (req, res) => {
   res.json({ ok: true, amount, count: rows.length });
 }));
 
-// --- Zones et tarifs ---
+// --- Zones desservies et délais ---
 agency.get('/zones', wrap(async (_req, res) => {
   res.json({ zones: await db.prepare('SELECT * FROM lv_zones ORDER BY sort, id').all() });
 }));
 agency.post('/zones', wrap(async (req, res) => {
   const b = req.body || {};
   if (!str(b.name)) return bad(res, 'Nom de zone obligatoire.');
-  await db.prepare('INSERT INTO lv_zones (name, region, kind, price, delay, active, sort) VALUES (?, ?, ?, ?, ?, 1, ?)')
-    .run(str(b.name, 80), str(b.region, 80), b.kind === 'commune' ? 'commune' : 'ville', Math.max(0, Math.round(Number(b.price) || 0)), str(b.delay, 40), 999);
+  await db.prepare('INSERT INTO lv_zones (name, region, kind, delay, active, sort) VALUES (?, ?, ?, ?, 1, ?)')
+    .run(str(b.name, 80), str(b.region, 80), b.kind === 'commune' ? 'commune' : 'ville', str(b.delay, 40), 999);
   res.status(201).json({ ok: true });
 }));
 agency.put('/zones/:id', wrap(async (req, res) => {
   const z = await db.prepare('SELECT * FROM lv_zones WHERE id = ?').get(int(req.params.id));
   if (!z) return bad(res, 'Zone introuvable.', 404);
   const b = req.body || {};
-  await db.prepare('UPDATE lv_zones SET name = ?, region = ?, price = ?, delay = ?, active = ? WHERE id = ?')
-    .run(str(b.name ?? z.name, 80), str(b.region ?? z.region, 80), b.price !== undefined ? Math.max(0, Math.round(Number(b.price) || 0)) : z.price,
-      str(b.delay ?? z.delay, 40), b.active !== undefined ? (b.active ? 1 : 0) : z.active, z.id);
+  await db.prepare('UPDATE lv_zones SET name = ?, region = ?, delay = ?, active = ? WHERE id = ?')
+    .run(str(b.name ?? z.name, 80), str(b.region ?? z.region, 80), str(b.delay ?? z.delay, 40), b.active !== undefined ? (b.active ? 1 : 0) : z.active, z.id);
   res.json({ ok: true });
 }));
 
@@ -616,4 +624,4 @@ router.use((err, _req, res, next) => {
   next(err);
 });
 
-module.exports = { router, HOME };
+module.exports = { router, HOME, LOGIN };

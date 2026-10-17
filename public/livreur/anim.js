@@ -86,23 +86,30 @@ window.LVAnim = (function () {
   function tween(el, force) {
     if (reduce) return;
     const txt = el.textContent;
-    if (el._tw || (!force && txt === el._last)) return;
-    const m = txt.match(/^([^\d]*)(\d+(?:[\s  ]\d{3})*)(.*)$/);
+    // Texte écrit par l'animation elle-même : on l'ignore.
+    if (el._tw && txt === el._frame) return;
+    if (!el._tw && !force && txt === el._last) return;
+    const m = txt.match(/^([^\d]*)(\d+(?:[\s\u202f\u00a0]\d{3})*)(.*)$/);
     if (!m) return;
     const target = Number(m[2].replace(/\D/g, ''));
     if (!target) return;
+    // Nouvelle valeur (même en cours d'animation) : elle remplace la précédente.
+    const gen = (el._gen || 0) + 1;
+    el._gen = gen;
     el._last = txt;
     el._tw = true;
     const t0 = performance.now();
     const dur = 1100;
-    const grouped = /[\s  ]/.test(m[2]) || target >= 1000;
+    const grouped = /[\s\u202f\u00a0]/.test(m[2]) || target >= 1000;
     const fmt = (n) => (grouped ? n.toLocaleString('fr-FR') : String(n));
     (function step(t) {
+      if (el._gen !== gen) return;
       const k = Math.min(1, (t - t0) / dur);
       const e = 1 - Math.pow(1 - k, 3);
-      el.textContent = m[1] + fmt(Math.round(target * e)) + m[3];
+      el._frame = k < 1 ? m[1] + fmt(Math.round(target * e)) + m[3] : txt;
+      el.textContent = el._frame;
       if (k < 1) requestAnimationFrame(step);
-      else { el.textContent = txt; el._tw = false; }
+      else el._tw = false;
     })(t0);
   }
 
