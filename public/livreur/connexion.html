@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — Karat Livreur</title>
+  <meta name="description" content="Connectez-vous à votre espace Karat Livreur : partenaire, livreur ou agence." />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <main class="page-narrow">
+    <h1 class="page-title">Connexion</h1>
+    <p class="page-sub">Un seul accès pour les partenaires, les livreurs et l'agence.</p>
+    <form class="card" id="login-form">
+      <div class="form-msg"></div>
+      <div class="field"><label>Téléphone</label><input name="phone" type="tel" required autocomplete="username" placeholder="22 22 22 22" /></div>
+      <div class="field"><label>Mot de passe</label><input name="password" type="password" required autocomplete="current-password" /></div>
+      <button class="btn btn-primary btn-block" type="submit">Se connecter</button>
+      <p class="muted" style="font-size:13.5px;margin-top:14px;text-align:center">Mot de passe oublié ? Contactez l'agence sur <a class="gold" data-contact="wa" href="#" target="_blank" rel="noopener">WhatsApp</a>.</p>
+    </form>
+    <p class="auth-switch">Pas encore de compte ? <a href="/livreur/inscription">Devenir partenaire</a> · <a href="/livreur/inscription-coursier">Devenir livreur</a></p>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    var form = document.getElementById('login-form');
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(form, '/login');
+      if (!r.ok) return;
+      var suite = new URLSearchParams(location.search).get('suite');
+      var role = r.data.user.role;
+      location.href = suite && suite.indexOf('/livreur/' + (role === 'coursier' ? 'coursier' : role)) === 0 ? suite : r.data.redirect;
+    });
+  })();
+  </script>
+</body>
+</html>
