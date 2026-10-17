@@ -11,7 +11,7 @@ const { config } = require('./config');
 // Prix mensuel affiché selon le pays d'inscription.
 const PRICING = {
   SN: { amount: 5000, currency: 'FCFA', methods: ['wave', 'orange-money'] },
-  MR: { amount: 1000, currency: 'MRU', methods: ['bankily'] },
+  MR: { amount: 350, currency: 'MRU', methods: ['bankily'] },
 };
 
 // Libellés/visuels des moyens de paiement.
