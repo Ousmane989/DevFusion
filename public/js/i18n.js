@@ -357,13 +357,13 @@
     if (document.getElementById('karat-lang-style')) return;
     var s = document.createElement('style'); s.id = 'karat-lang-style';
     s.textContent = '.karat-lang{position:relative;display:inline-block;line-height:0}'
-      + '.kl-btn{width:42px;height:42px;border:1px solid rgba(0,0,0,.08);background:#fff;color:#333;border-radius:12px;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1);transition:background .15s}'
-      + '.kl-btn:hover{background:#f4f4f5}.kl-btn svg{width:22px;height:22px}'
-      + '.kl-menu{position:absolute;top:calc(100% + 10px);inset-inline-end:0;min-width:190px;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;box-shadow:0 20px 44px rgba(0,0,0,.2);padding:8px;z-index:95;display:flex;flex-direction:column;text-align:start}'
+      + '.kl-btn{width:40px;height:40px;border:1px solid var(--line,#2a2723);background:var(--bg-card,var(--surface,#171717));color:var(--gold,var(--accent,#d4af37));border-radius:12px;display:grid;place-items:center;cursor:pointer;transition:border-color .15s,color .15s}'
+      + '.kl-btn:hover{border-color:var(--gold,var(--accent,#d4af37));color:var(--gold-light,var(--accent,#f5d77e))}.kl-btn svg{width:21px;height:21px}'
+      + '.kl-menu{position:absolute;top:calc(100% + 10px);inset-inline-end:0;min-width:170px;background:var(--bg-card,var(--surface,#171717));border:1px solid var(--line,#2a2723);border-radius:14px;box-shadow:0 22px 48px rgba(0,0,0,.5);padding:6px;z-index:95;display:flex;flex-direction:column;text-align:start}'
       + '.kl-menu[hidden]{display:none}'
-      + '.kl-menu button{display:block;width:100%;text-align:start;background:none;border:none;font:500 18px system-ui,-apple-system,sans-serif;color:#1a1a1a;padding:12px 18px;border-radius:12px;cursor:pointer}'
-      + '.kl-menu button:hover{background:#f4f4f5}'
-      + '.kl-menu button.current{color:#b4b4b8;cursor:default;background:none}'
+      + '.kl-menu button{display:block;width:100%;text-align:start;background:none;border:none;font:500 15px var(--sans,system-ui,-apple-system,sans-serif);color:var(--text,#f4f1ea);padding:11px 16px;border-radius:10px;cursor:pointer;white-space:nowrap}'
+      + '.kl-menu button:hover{background:color-mix(in srgb,var(--gold,var(--accent,#d4af37)) 14%,transparent);color:var(--gold-light,var(--accent,#f5d77e))}'
+      + '.kl-menu button.current{color:var(--text-mute,var(--muted,#837e72));cursor:default;background:none}'
       + '.karat-lang.float{position:fixed;z-index:80;bottom:14px;inset-inline-start:14px}'
       + '.karat-lang.float .kl-menu{top:auto;bottom:calc(100% + 10px);inset-inline-end:auto;inset-inline-start:0}'
       + '@media(max-width:900px){.karat-lang.float{bottom:80px}}';
