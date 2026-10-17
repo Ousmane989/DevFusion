@@ -11,13 +11,13 @@
 </head>
 <body>
   <div id="lv-header"></div>
-  <main class="page-mid">
-    <span class="eyebrow">Suivi en temps réel</span>
-    <h1 class="page-title">Où est mon colis ?</h1>
-    <p class="page-sub">Saisissez le code de suivi communiqué par le vendeur ou reçu lors de votre commande.</p>
-    <form class="track-form" id="track-form" style="margin-bottom:26px">
-      <input name="code" placeholder="KL-XXXXXX" aria-label="Code de suivi" required />
-      <button class="btn btn-primary" type="submit">Suivre</button>
+  <header class="page-hero"><div class="container"><span class="eyebrow">Suivi en temps réel</span><h1>Où est mon colis ?</h1><p>Saisissez le code de suivi communiqué par le vendeur ou reçu lors de votre commande.</p></div></header>
+  <main class="page-mid page-body">
+    <form class="card" id="track-form" style="margin-bottom:22px">
+      <div class="track-form">
+        <input name="code" placeholder="KL-XXXXXX" aria-label="Code de suivi" required />
+        <button class="btn btn-green" type="submit">Suivre le colis</button>
+      </div>
     </form>
     <div class="form-msg" id="track-msg"></div>
     <div class="card hidden" id="track-result"></div>
@@ -55,11 +55,17 @@
         '<dt>Service</dt><dd>' + LV.esc(d.service || '') + '</dd>' +
         (d.courier ? '<dt>Livreur</dt><dd>' + LV.esc(d.courier) + '</dd>' : '') +
         (d.amount ? '<dt>À payer à la livraison</dt><dd><b>' + LV.money(d.amount) + '</b></dd>' : '') +
-        '</dl><h3 style="margin-top:26px;font-size:17px">Historique</h3><ul class="timeline">' +
+        '</dl><div class="map-mini" id="track-map"></div><h3 style="margin-top:26px;font-size:17px">Historique</h3><ul class="timeline">' +
         ev.map(function (e, i) {
           return '<li class="' + (i === 0 ? 'last' : '') + '"><strong>' + LV.esc(e.label) + '</strong><span>' + LV.date(e.created_at, true) + (e.note ? ' — ' + LV.esc(e.note) : '') + '</span></li>';
         }).join('') + '</ul>';
       box.classList.remove('hidden');
+      // Itinéraire Nouakchott → destination (ou Nouakchott seule pour la capitale).
+      LV.info().then(function (inf) {
+        var m = document.getElementById('track-map');
+        if (!m || !inf || !inf.zones) return;
+        m.innerHTML = LV.mapSvg(inf.zones, { only: d.zone });
+      });
     }
 
     form.addEventListener('submit', function (e) {
