@@ -35,6 +35,7 @@ function resolveJwtSecret() {
   }
 }
 const jwt = resolveJwtSecret();
+const LIVREUR_DEFAULTS = require('../public/livreur/defaults.json').contact;
 
 const config = {
   env: process.env.NODE_ENV || 'development',
@@ -66,14 +67,15 @@ const config = {
   adminWhatsapp: (process.env.ADMIN_WHATSAPP || '221787489776').replace(/[^0-9]/g, ''),
   // Karat Livreur (agence de livraison, Mauritanie) : coordonnées affichées
   // sur le site et compte agence d'amorçage.
+  // Valeurs par défaut dans public/livreur/defaults.json (partagé avec le site).
   livreur: {
-    phone: process.env.LIVREUR_PHONE || '+222 00 00 00 00',
-    whatsapp: (process.env.LIVREUR_WHATSAPP || '22200000000').replace(/[^0-9]/g, ''),
-    email: process.env.LIVREUR_EMAIL || 'contact@karat-livreur.mr',
-    address: process.env.LIVREUR_ADDRESS || 'Tevragh Zeina, Nouakchott, Mauritanie',
+    phone: process.env.LIVREUR_PHONE || LIVREUR_DEFAULTS.phone,
+    whatsapp: (process.env.LIVREUR_WHATSAPP || LIVREUR_DEFAULTS.whatsapp).replace(/[^0-9]/g, ''),
+    email: process.env.LIVREUR_EMAIL || LIVREUR_DEFAULTS.email,
+    address: process.env.LIVREUR_ADDRESS || LIVREUR_DEFAULTS.address,
     // Position de l'agence sur le plan (Nouakchott par défaut).
-    lat: Number(process.env.LIVREUR_LAT || 18.0865),
-    lng: Number(process.env.LIVREUR_LNG || -15.9785),
+    lat: Number(process.env.LIVREUR_LAT || LIVREUR_DEFAULTS.lat),
+    lng: Number(process.env.LIVREUR_LNG || LIVREUR_DEFAULTS.lng),
     adminPhone: (process.env.LIVREUR_ADMIN_PHONE || '').replace(/[^0-9]/g, ''),
     adminPassword: process.env.LIVREUR_ADMIN_PASSWORD || '',
   },

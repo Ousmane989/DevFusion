@@ -1,0 +1,57 @@
+{
+  "contact": {
+    "phone": "+222 00 00 00 00",
+    "whatsapp": "22200000000",
+    "email": "contact@karat-livreur.mr",
+    "address": "Tevragh Zeina, Nouakchott, Mauritanie",
+    "lat": 18.0865,
+    "lng": -15.9785
+  },
+  "zones": [
+    { "name": "Tevragh Zeina", "region": "Nouakchott", "kind": "commune", "price": 100, "delay": "Moins de 2 h" },
+    { "name": "Ksar", "region": "Nouakchott", "kind": "commune", "price": 100, "delay": "Moins de 2 h" },
+    { "name": "Sebkha", "region": "Nouakchott", "kind": "commune", "price": 100, "delay": "Moins de 2 h" },
+    { "name": "El Mina", "region": "Nouakchott", "kind": "commune", "price": 150, "delay": "Moins de 3 h" },
+    { "name": "Teyarett", "region": "Nouakchott", "kind": "commune", "price": 100, "delay": "Moins de 2 h" },
+    { "name": "Dar Naïm", "region": "Nouakchott", "kind": "commune", "price": 150, "delay": "Moins de 3 h" },
+    { "name": "Toujounine", "region": "Nouakchott", "kind": "commune", "price": 150, "delay": "Moins de 3 h" },
+    { "name": "Arafat", "region": "Nouakchott", "kind": "commune", "price": 150, "delay": "Moins de 3 h" },
+    { "name": "Riyad", "region": "Nouakchott", "kind": "commune", "price": 200, "delay": "Moins de 3 h" },
+    { "name": "Nouadhibou", "region": "Dakhlet Nouadhibou", "kind": "ville", "price": 400, "delay": "24 à 48 h" },
+    { "name": "Rosso", "region": "Trarza", "kind": "ville", "price": 300, "delay": "24 h" },
+    { "name": "Boutilimit", "region": "Trarza", "kind": "ville", "price": 300, "delay": "24 h" },
+    { "name": "Akjoujt", "region": "Inchiri", "kind": "ville", "price": 350, "delay": "24 à 48 h" },
+    { "name": "Aleg", "region": "Brakna", "kind": "ville", "price": 350, "delay": "24 à 48 h" },
+    { "name": "Boghé", "region": "Brakna", "kind": "ville", "price": 400, "delay": "48 h" },
+    { "name": "Kaédi", "region": "Gorgol", "kind": "ville", "price": 400, "delay": "48 h" },
+    { "name": "Atar", "region": "Adrar", "kind": "ville", "price": 450, "delay": "48 h" },
+    { "name": "Tidjikja", "region": "Tagant", "kind": "ville", "price": 500, "delay": "48 à 72 h" },
+    { "name": "Kiffa", "region": "Assaba", "kind": "ville", "price": 450, "delay": "48 h" },
+    { "name": "Sélibaby", "region": "Guidimaka", "kind": "ville", "price": 500, "delay": "48 à 72 h" },
+    { "name": "Aïoun", "region": "Hodh El Gharbi", "kind": "ville", "price": 550, "delay": "48 à 72 h" },
+    { "name": "Néma", "region": "Hodh Ech Chargui", "kind": "ville", "price": 600, "delay": "72 h" },
+    { "name": "Zouérate", "region": "Tiris Zemmour", "kind": "ville", "price": 600, "delay": "72 h" }
+  ],
+  "services": {
+    "standard": {
+      "label": "Livraison standard",
+      "extra": 0
+    },
+    "express": {
+      "label": "Express (moins de 2 h)",
+      "extra": 100
+    },
+    "ecommerce": {
+      "label": "Livraison e-commerce",
+      "extra": 0
+    },
+    "course": {
+      "label": "Course à la demande",
+      "extra": 50
+    },
+    "colis": {
+      "label": "Colis volumineux",
+      "extra": 150
+    }
+  }
+}
