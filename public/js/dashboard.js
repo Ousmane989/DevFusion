@@ -301,7 +301,7 @@
     if (q('#ship-free-label')) q('#ship-free-label').textContent = 'Livraison offerte à partir de (' + CUR + ') — 0 pour désactiver';
     ['#pf-fcfa', '#kpi-rev-fcfa', '#kpi-basket-fcfa', '#an-basket-alt'].forEach((s) => { const e = q(s); if (e) e.textContent = ''; });
 
-    qa('#visit-shop, #store-visit-btn').forEach((vs) => {
+    qa('#visit-shop, #store-visit-btn, #visit-shop-side').forEach((vs) => {
       if (window.__KARAT_SPA__) { vs.href = '#/boutique'; vs.removeAttribute('target'); }
       else vs.href = '/boutique/' + slugify(user.shopName);
     });
@@ -707,7 +707,7 @@
       msg(q('#store-msg'), 'error', 'Erreur lors de l\'enregistrement.');
     }
   }
-  function updateVisitLink(slug) { if (window.__KARAT_SPA__ || !slug) return; qa('#visit-shop, #store-visit-btn').forEach((a) => { a.href = '/boutique/' + slug; }); }
+  function updateVisitLink(slug) { if (window.__KARAT_SPA__ || !slug) return; qa('#visit-shop, #store-visit-btn, #visit-shop-side').forEach((a) => { a.href = '/boutique/' + slug; }); }
   function updateStoreLink(st) {
     const a = q('#store-link'); if (!a || !st) return;
     a.textContent = st.domain || ((st.slug || '') + '.' + (st.baseDomain || 'karat.shop'));

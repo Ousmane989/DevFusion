@@ -859,10 +859,21 @@ img { max-width: 100%; display: block; }
 .orders-summary .kpi .k-val { margin-top: 8px; }
 
 @media (max-width: 900px) {
+  /* Pas de barre du haut sur téléphone : la navigation se fait par la barre
+     d'onglets en bas (dont le bouton « Menu » ouvre ce tiroir). */
+  .dash-top { display: none; }
   .dash-shell { grid-template-columns: 1fr; }
   .side-toggle { display: inline-flex; }
-  .dash-side { position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; width: 260px; background: var(--bg); transform: translateX(-100%); transition: transform .35s var(--ease); border-right: 1px solid var(--line); min-height: 100vh; }
-  .dash-side.open { transform: translateX(0); box-shadow: 30px 0 60px rgba(0,0,0,.5); overflow-y: auto; }
+  /* Tiroir plein écran qui défile, avec de la marge en bas pour tout voir.
+     Hauteur = écran exact (dvh pour les mobiles) + défilement interne : ainsi le
+     pied (langue + déconnexion) reste toujours atteignable. */
+  .dash-side { position: fixed; top: 0; left: 0; z-index: 60; width: 270px; max-width: 86vw;
+    height: 100vh; height: 100dvh; min-height: 0; max-height: 100dvh;
+    background: var(--bg); transform: translateX(-100%); transition: transform .35s var(--ease);
+    border-right: 1px solid var(--line); overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 20px 16px calc(32px + env(safe-area-inset-bottom, 0px)); }
+  .dash-side.open { transform: translateX(0); box-shadow: 30px 0 60px rgba(0,0,0,.5); }
+  .side-visit { display: flex; }
   /* Voile sombre derrière le menu ouvert (fermeture au toucher). */
   .dash-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
   .dash-scrim.open { opacity: 1; pointer-events: auto; }
@@ -1000,6 +1011,17 @@ img { max-width: 100%; display: block; }
   font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; }
 .side-logout:hover { border-color: #e6675f; color: #f0a29c; }
 .side-logout svg { width: 18px; height: 18px; }
+/* « Voir ma boutique » dans le menu : affiché uniquement sur téléphone, où la
+   barre du haut (qui porte ce lien sur ordinateur) est masquée. */
+.side-visit { display: none; align-items: center; gap: 10px; width: 100%; padding: 11px 14px;
+  border: 1px solid rgba(212,175,55,.35); border-radius: 10px; background: rgba(212,175,55,.06); color: var(--gold-light);
+  font-family: inherit; font-size: 0.9rem; text-decoration: none; transition: all .2s; }
+.side-visit:hover { border-color: var(--gold); background: rgba(212,175,55,.12); }
+.side-visit svg { width: 18px; height: 18px; flex: none; }
+/* Sélecteur de langue dans le pied du menu : s'ouvre vers le HAUT et vers la
+   droite pour ne jamais être coupé par le bas de l'écran. */
+.side-foot [data-lang-switch] { justify-content: flex-start; }
+.side-foot .kl-menu { top: auto; bottom: calc(100% + 10px); inset-inline-start: 0; inset-inline-end: auto; }
 
 /* Barres horizontales (meilleures ventes, villes) */
 .bar-list { display: grid; gap: 14px; }
