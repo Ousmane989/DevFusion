@@ -65,8 +65,20 @@ sont **désactivées si `prefers-reduced-motion`** est actif.
 
 Agence de livraison **dédiée aux e-commerçants** (boutiques Instagram, Facebook,
 TikTok, sites web), intégrée à l'application et accessible sur **`/livreur`**.
-Le site public sert à recruter des partenaires : pas de tarifs affichés, pas
-d'offre pour les particuliers. Les livreurs sont créés par l'agence.
+Le site public sert à recruter des partenaires (pas d'offre pour les
+particuliers). Les livreurs sont créés par l'agence.
+
+**Tarif unique** : 150 MRU par produit livré, quelle que soit la zone
+(`fee_per_item` dans `public/livreur/defaults.json`, ou variable
+`LIVREUR_FEE_PER_ITEM`). Chaque commande indique son nombre de produits ;
+frais = nombre de produits × tarif. L'agence peut ajuster les frais d'une
+commande.
+
+**Deux espaces séparés**, chacun avec sa propre connexion :
+- **Espace partenaire** — connexion `/livreur/connexion` (e-commerçants) ;
+- **Espace agence** — connexion `/livreur/agence/connexion` (agents de
+  l'agence et livreurs).
+Une connexion refuse les comptes de l'autre espace.
 Données séparées des boutiques (tables `lv_*`, créées automatiquement en SQLite
 comme en PostgreSQL) et session dédiée.
 
@@ -76,7 +88,8 @@ comme en PostgreSQL) et session dédiée.
 | `/livreur` | Accueil pour les e-commerçants : héro + suivi de colis, services (stockage, confirmation, livraison, encaissement), fonctionnement, couverture (carte de la Mauritanie, délais), avantages, types de partenaires, espace partenaire, FAQ, contact, bouton WhatsApp |
 | `/livreur/suivi` | Suivi d'un colis par code `KL-XXXXXX` (étapes + historique) |
 | `/livreur/inscription` | Inscription partenaire (validée par l'agence) |
-| `/livreur/connexion` | Connexion unique (téléphone + mot de passe), redirige vers le bon espace |
+| `/livreur/connexion` | Connexion de l'espace partenaire |
+| `/livreur/agence/connexion` | Connexion de l'espace agence (agents et livreurs) |
 
 **Espaces**
 - **Partenaire** (`/livreur/partenaire`) : tableau de bord, nouvelle commande (avec
@@ -88,8 +101,8 @@ comme en PostgreSQL) et session dédiée.
 - **Agence** (`/livreur/agence`) : tableau de bord, centre d'appel (confirmer,
   reporter, annuler), dispatch par zone, toutes les commandes (édition complète,
   historique, export CSV), livreurs, partenaires, équipe, stock, caisse des
-  livreurs, reversements, zones & frais de livraison (usage interne, non affichés
-  sur le site), messages du formulaire de contact.
+  livreurs, reversements, zones desservies & délais, messages du formulaire de
+  contact.
   Les administrateurs Karat existants ont aussi accès à l'espace agence.
 
 **Circuit de l'argent** : le livreur encaisse (prix articles + frais si payés par

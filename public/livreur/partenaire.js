@@ -10,7 +10,7 @@
     { id: 'reversements', label: 'Reversements', icon: 'cash' },
     { id: 'profil', label: 'Mon profil', icon: 'user' },
   ];
-  let info = { zones: [], services: {}, statuses: {} };
+  let info = { zones: [], fee_per_item: 0, statuses: {} };
   let statusFilter = '';
 
   const shell = await LV.appShell('partenaire', 'Espace partenaire', SECTIONS, (id) => VIEWS[id] && VIEWS[id]());
@@ -41,7 +41,7 @@
       '<p style="margin-bottom:16px">' + badge(o.status, o.status_label) + '</p><dl class="kv">' +
       '<dt>Client</dt><dd>' + esc(o.recipient_name) + ' · ' + esc(LV.phoneFmt(o.recipient_phone)) + '</dd>' +
       '<dt>Adresse</dt><dd>' + esc(o.zone_name) + ' — ' + esc(o.address) + '</dd>' +
-      '<dt>Colis</dt><dd>' + esc(o.description || '—') + '</dd>' +
+      '<dt>Colis</dt><dd>' + esc(o.description || '—') + ' · ' + o.items_count + ' produit(s)</dd>' +
       '<dt>Prix articles</dt><dd>' + money(o.cod_amount) + '</dd>' +
       '<dt>Frais livraison</dt><dd>' + money(o.fee) + ' (payés par ' + (o.fee_payer === 'partenaire' ? 'vous' : 'le client') + ')</dd>' +
       '<dt>Encaissé</dt><dd>' + money(o.collected) + '</dd>' +
@@ -123,19 +123,21 @@
   async function setupNewForm() {
     const f = document.getElementById('p-new');
     f.zone_id.innerHTML = LV.zoneOptions(info.zones);
-    f.service.innerHTML = Object.entries(info.services).map(([k, s]) => '<option value="' + k + '"' + (k === 'ecommerce' ? ' selected' : '') + '>' + esc(s.label) + (s.extra ? ' (+' + money(s.extra) + ')' : '') + '</option>').join('');
+    const perItem = Number(info.fee_per_item) || 0;
+    document.getElementById('p-fee-rule').textContent = money(perItem) + ' de livraison par produit.';
     const st = await api('/partner/stock');
     (st.data.stock || []).forEach((s) => { f.stock_id.insertAdjacentHTML('beforeend', '<option value="' + s.id + '">' + esc(s.name) + ' (' + s.qty + ' en stock)</option>'); });
+    // Frais = tarif unique × nombre de produits.
     function calc() {
-      const z = info.zones.find((x) => String(x.id) === f.zone_id.value);
-      const s = info.services[f.service.value];
-      if (!z) { document.getElementById('p-fee').textContent = '—'; document.getElementById('p-total').textContent = '—'; return; }
-      const fee = z.price + (s ? s.extra : 0);
+      const fee = perItem * Math.max(1, Math.round(Number(f.items_count.value) || 1));
       const cod = Math.max(0, Number(f.cod_amount.value) || 0);
       document.getElementById('p-fee').textContent = money(fee);
       document.getElementById('p-total').textContent = money(cod + (f.fee_payer.value === 'destinataire' ? fee : 0));
     }
-    ['zone_id', 'service', 'cod_amount', 'fee_payer'].forEach((k) => { f[k].addEventListener('input', calc); f[k].addEventListener('change', calc); });
+    // Article du stock : le nombre de produits suit la quantité prélevée.
+    f.stock_qty.addEventListener('input', () => { if (f.stock_id.value) f.items_count.value = f.stock_qty.value; });
+    ['items_count', 'stock_qty', 'cod_amount', 'fee_payer'].forEach((k) => { f[k].addEventListener('input', calc); f[k].addEventListener('change', calc); });
+    calc();
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       const r = await LV.submit(f, '/partner/orders');
