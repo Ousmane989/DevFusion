@@ -859,11 +859,14 @@ img { max-width: 100%; display: block; }
 .orders-summary .kpi .k-val { margin-top: 8px; }
 
 @media (max-width: 900px) {
-  /* Pas de barre du haut sur téléphone : la navigation se fait par la barre
-     d'onglets en bas (dont le bouton « Menu » ouvre ce tiroir). */
-  .dash-top { display: none; }
+  /* Barre du haut réduite à l'essentiel sur téléphone : on garde le logo
+     (toujours visible) mais on retire le « menu du haut » encombrant (bouton
+     hamburger, « Voir ma boutique », avatar, « Déconnexion ») qui chevauchait
+     le tiroir. La navigation se fait par la barre d'onglets du bas. */
+  .dash-top-inner { justify-content: center; padding: 10px 16px; }
+  .dash-user { display: none; }
+  .side-toggle { display: none; }
   .dash-shell { grid-template-columns: 1fr; }
-  .side-toggle { display: inline-flex; }
   /* Tiroir plein écran qui défile, avec de la marge en bas pour tout voir.
      Hauteur = écran exact (dvh pour les mobiles) + défilement interne : ainsi le
      pied (langue + déconnexion) reste toujours atteignable. */
