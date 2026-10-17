@@ -35,7 +35,8 @@ function resolveJwtSecret() {
   }
 }
 const jwt = resolveJwtSecret();
-const LIVREUR_DEFAULTS = require('../public/livreur/defaults.json').contact;
+const LIVREUR_FEES = require('../public/livreur/defaults.json');
+const LIVREUR_DEFAULTS = LIVREUR_FEES.contact;
 
 const config = {
   env: process.env.NODE_ENV || 'development',
@@ -76,6 +77,8 @@ const config = {
     // Position de l'agence sur le plan (Nouakchott par défaut).
     lat: Number(process.env.LIVREUR_LAT || LIVREUR_DEFAULTS.lat),
     lng: Number(process.env.LIVREUR_LNG || LIVREUR_DEFAULTS.lng),
+    // Tarif unique : frais de livraison par produit (150 MRU par défaut).
+    feePerItem: Number(process.env.LIVREUR_FEE_PER_ITEM || LIVREUR_FEES.fee_per_item),
     adminPhone: (process.env.LIVREUR_ADMIN_PHONE || '').replace(/[^0-9]/g, ''),
     adminPassword: process.env.LIVREUR_ADMIN_PASSWORD || '',
   },

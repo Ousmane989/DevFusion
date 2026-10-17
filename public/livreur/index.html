@@ -9,8 +9,8 @@
   <meta property="og:description" content="L'agence de livraison des e-commerçants en Mauritanie : stockage, confirmation, livraison, encaissement et reversement." />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/favicon.svg" />
-  <script src="/livreur/theme.js?v=20261018"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261018" />
+  <script src="/livreur/theme.js?v=20261018d"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261018d" />
 </head>
 <body class="lv-intro">
   <div id="lv-header"></div>
@@ -30,7 +30,7 @@
         </div>
         <div class="hero-proof">
           <div><span class="ic" data-ic="cash"></span><p><strong>Paiement</strong><span>à la livraison</span></p></div>
-          <div><span class="ic" data-ic="warehouse"></span><p><strong>Stockage</strong><span>de vos produits</span></p></div>
+          <div><span class="ic" data-ic="tag"></span><p><strong><span data-fee>150 MRU</span></strong><span>par produit livré</span></p></div>
           <div><span class="ic" data-ic="shield"></span><p><strong>Reversement</strong><span>sous 48 h</span></p></div>
         </div>
       </div>
@@ -119,6 +119,25 @@
           <p>Le livreur encaisse à la livraison. Vous recevez votre argent par Bankily, Masrvi, Sedad ou en espèces.</p>
           <ul class="checks"><li>Paiement à la livraison</li><li>Reversement sous 48 h</li><li>Relevés téléchargeables</li></ul>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TARIF ============================ -->
+  <section id="tarif" style="padding-top:0">
+    <div class="container">
+      <div class="cta-band price-band reveal">
+        <div class="price-main">
+          <span class="eyebrow">Notre tarif</span>
+          <div class="price-big"><span data-fee>150 MRU</span><small>par produit livré</small></div>
+          <p class="dim">Un seul tarif, simple et sans surprise. Exemple : une commande de 3 produits = <b data-fee-x="3">450 MRU</b> de livraison.</p>
+        </div>
+        <ul class="checks price-checks">
+          <li>Aucun frais d'inscription</li>
+          <li>Aucun abonnement, aucun engagement</li>
+          <li>Payé par votre client à la livraison, ou déduit de votre reversement : vous choisissez</li>
+          <li>Appel de confirmation du client compris</li>
+        </ul>
       </div>
     </div>
   </section>
@@ -246,6 +265,7 @@
       <div class="section-head reveal"><span class="eyebrow">FAQ</span><h2>Questions fréquentes</h2></div>
       <div class="faq">
         <details class="reveal"><summary>Comment devenir partenaire ?</summary><p>Inscrivez-vous gratuitement sur la page <a class="gold" href="/livreur/inscription">Devenir partenaire</a>. Votre compte est validé sous 24 h ouvrées et nous vous appelons pour organiser le dépôt de votre stock.</p></details>
+        <details class="reveal"><summary>Combien coûte la livraison ?</summary><p><span data-fee>150 MRU</span> par produit livré. Les frais sont payés par votre client à la livraison, ou déduits de votre reversement si vous préférez les offrir.</p></details>
         <details class="reveal"><summary>Comment vous envoyer mes commandes ?</summary><p>Depuis votre espace partenaire en quelques secondes, ou par téléphone et WhatsApp. Chaque commande reçoit un code de suivi à partager avec votre client.</p></details>
         <details class="reveal"><summary>Quand est-ce que je reçois mon argent ?</summary><p>Dès que le livreur a remis l'argent encaissé à l'agence, le montant apparaît dans votre espace. Le reversement est fait sous 48 h maximum, par Bankily, Masrvi, Sedad ou en espèces.</p></details>
         <details class="reveal"><summary>Que se passe-t-il si mon client est absent ou refuse ?</summary><p>Le livreur indique le motif et notre centre d'appel recontacte le client pour reprogrammer. En cas de refus, le colis vous est retourné et vous êtes prévenu.</p></details>
@@ -292,8 +312,8 @@
 
   <div id="lv-footer"></div>
 
-  <script src="/livreur/lv.js?v=20261018"></script>
-  <script src="/livreur/anim.js?v=20261018"></script>
+  <script src="/livreur/lv.js?v=20261018d"></script>
+  <script src="/livreur/anim.js?v=20261018d"></script>
   <script>
   (function () {
     'use strict';
@@ -326,6 +346,13 @@
       var names = zones.map(function (z) { return z.name; });
       var once = names.map(function (n) { return '<span>' + LV.esc(n) + '</span>'; }).join('');
       document.getElementById('ticker').innerHTML = once + once;
+
+      // Tarif unique par produit.
+      var fee = Number(d.fee_per_item) || 0;
+      if (fee) {
+        document.querySelectorAll('[data-fee]').forEach(function (el) { el.textContent = LV.money(fee); });
+        document.querySelectorAll('[data-fee-x]').forEach(function (el) { el.textContent = LV.money(fee * Number(el.getAttribute('data-fee-x'))); });
+      }
 
       var communes = zones.filter(function (z) { return z.kind === 'commune'; });
       var villes = zones.filter(function (z) { return z.kind !== 'commune'; });
