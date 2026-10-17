@@ -12,6 +12,7 @@ const { PLANS, isoIn, getUserById, getUserByEmail } = require('../account');
 const { requireAuth, requireAdmin } = require('../middleware');
 const { verifyPassword, signSession, setSessionCookie } = require('../auth');
 const { config, isAdminUser } = require('../config');
+const { sendEmail, emailConfig } = require('../mailer');
 
 const router = express.Router();
 
@@ -40,21 +41,50 @@ router.use(requireAuth, requireAdmin);
 // GET /api/admin/settings — réglages de l'espace admin.
 router.get('/settings', async (_req, res, next) => {
   try {
-    const row = await db.prepare("SELECT value FROM app_config WHERE key = 'admin_whatsapp'").get();
-    res.json({ ok: true, whatsapp: (row && row.value) || config.adminWhatsapp });
+    const val = async (k) => { const r = await db.prepare('SELECT value FROM app_config WHERE key = ?').get(k); return r && r.value; };
+    const cfg = await emailConfig();
+    res.json({
+      ok: true,
+      whatsapp: (await val('admin_whatsapp')) || config.adminWhatsapp,
+      email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName },
+    });
   } catch (err) { next(err); }
 });
 
-// PUT /api/admin/settings { whatsapp } — modifie le numéro WhatsApp d'activation.
+// PUT /api/admin/settings { whatsapp?, emailApiKey?, emailFrom?, emailFromName? }
 router.put('/settings', async (req, res, next) => {
   try {
-    const num = String(req.body?.whatsapp || '').replace(/[^0-9]/g, '');
-    if (num.length < 8) return res.status(400).json({ errors: { whatsapp: 'Numéro WhatsApp invalide (format international).' } });
-    await db.prepare(
-      "INSERT INTO app_config (key, value) VALUES ('admin_whatsapp', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-    ).run(num);
-    res.json({ ok: true, whatsapp: num });
+    const b = req.body || {};
+    const setCfg = (k, v) => db.prepare(
+      'INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+    ).run(k, v);
+    if (b.whatsapp !== undefined) {
+      const num = String(b.whatsapp || '').replace(/[^0-9]/g, '');
+      if (num.length < 8) return res.status(400).json({ errors: { whatsapp: 'Numéro WhatsApp invalide (format international).' } });
+      await setCfg('admin_whatsapp', num);
+    }
+    // La clé API n'est enregistrée que si une valeur non masquée est fournie.
+    if (b.emailApiKey !== undefined && b.emailApiKey && !/•/.test(b.emailApiKey)) await setCfg('email_api_key', String(b.emailApiKey).trim());
+    if (b.emailFrom !== undefined) await setCfg('email_from', String(b.emailFrom).trim());
+    if (b.emailFromName !== undefined) await setCfg('email_from_name', String(b.emailFromName).trim());
+    const cfg = await emailConfig();
+    res.json({ ok: true, email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName } });
   } catch (err) { next(err); }
+});
+
+// POST /api/admin/email-test — envoie un e-mail de test à l'adresse admin.
+router.post('/email-test', async (req, res, next) => {
+  try {
+    const to = (req.account && req.account.email) || req.user.email;
+    await sendEmail({
+      to, name: (req.account && req.account.name) || 'Admin',
+      subject: 'Karat — test d\'envoi e-mail',
+      html: '<div style="font-family:Arial,sans-serif;padding:24px"><h2>Karat ✓</h2><p>Votre configuration e-mail fonctionne : les codes de vérification et de réinitialisation seront bien envoyés.</p></div>',
+    });
+    res.json({ ok: true, to });
+  } catch (err) {
+    res.status(400).json({ error: (err && err.message) || 'Échec de l\'envoi.' });
+  }
 });
 
 // État d'abonnement lisible pour un compte (« à jour » ou non).

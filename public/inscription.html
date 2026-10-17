@@ -148,8 +148,11 @@
           return;
         }
 
-        // Compte créé et connecté directement : accès immédiat au tableau de bord.
-        window.location.href = '/tableau-de-bord';
+        // Compte créé : vérification de l'e-mail par code avant l'accès.
+        sessionStorage.setItem('karat_email', payload.email);
+        if (data.devCode) sessionStorage.setItem('karat_devcode', data.devCode);
+        else sessionStorage.removeItem('karat_devcode');
+        window.location.href = '/verification';
       });
     })();
   </script>

@@ -21,10 +21,14 @@ const { config, isAdminUser } = require('../config');
 
 const router = express.Router();
 
-// Le code ne doit JAMAIS être renvoyé au navigateur en production (fuite de
-// sécurité) : il part uniquement par e-mail. On ne l'expose qu'en développement
-// local sans SMTP, pour faciliter les tests automatisés.
+// Le code n'est renvoyé au navigateur QUE s'il n'a pas pu être envoyé (aucun
+// service e-mail configuré, ou échec d'envoi) : cela permet la saisie à l'écran
+// en attendant que l'e-mail soit opérationnel. Dès que l'envoi réussit, le code
+// ne transite plus par le navigateur.
 function devCodeFor(result) {
+  if (!result) return undefined;
+  if (result.delivered) return undefined;
+  if (result.devCode) return result.devCode;
   return (!config.isProd && !hasSmtp) ? result.devCode : undefined;
 }
 
@@ -83,19 +87,21 @@ router.post('/signup', authLimiter, async (req, res) => {
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
   const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
-  // Inscription directe (pas de code par e-mail) avec essai gratuit de
-  // TRIAL_DAYS jours. L'utilisateur est connecté dans la foulée ; à la fin
-  // de l'essai, le compte se verrouille jusqu'à activation manuelle.
+  // Inscription avec vérification de l'e-mail : le compte est créé en essai
+  // (TRIAL_DAYS jours) mais NON vérifié. Un code est envoyé par e-mail ;
+  // l'utilisateur doit le saisir pour activer et accéder à son tableau de bord.
   const info = await db
     .prepare(
       `INSERT INTO users (name, email, phone, shop_name, password_hash, plan, status, email_verified, country, currency, trial_ends_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, 'trial', 0, ?, ?, ?)`
     )
     .run(String(b.name).trim(), email, String(b.phone).trim(), String(b.shopName).trim(), passwordHash, plan, country, currency, isoIn(TRIAL_DAYS));
 
   const user = await getUserById(info.lastInsertRowid);
-  setSessionCookie(res, signSession(user));
-  res.status(201).json({ ok: true, user: publicUser(user), message: 'Compte créé.' });
+  const code = await issueCode(user.id, 'email');
+  const result = await sendCode({ to: user.email, name: user.name, code, purpose: 'email' });
+  // Pas de session tant que l'e-mail n'est pas vérifié.
+  res.status(201).json({ ok: true, needsVerification: true, email: user.email, devCode: devCodeFor(result), message: 'Compte créé. Vérifiez votre e-mail.' });
 });
 
 // ------------------------------------------------------------------
@@ -160,12 +166,12 @@ router.post('/login', authLimiter, async (req, res) => {
   if (!user || !(await verifyPassword(String(password || ''), user.password_hash))) {
     return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
   }
-  // La vérification par e-mail a été supprimée : plus aucun blocage à la
-  // connexion. On régularise seulement l'ancien indicateur « e-mail vérifié ».
-  // Le statut (essai / actif / verrouillé) n'est PAS forcé ici : un essai
-  // expiré doit rester verrouillé jusqu'à l'activation manuelle.
+  // E-mail non vérifié : on (re)envoie un code et on redirige vers la
+  // vérification. Les comptes déjà vérifiés se connectent normalement.
   if (!user.email_verified) {
-    await db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(user.id);
+    const code = await issueCode(user.id, 'email');
+    const result = await sendCode({ to: user.email, name: user.name, code, purpose: 'email' });
+    return res.status(403).json({ needsVerification: true, email: user.email, devCode: devCodeFor(result) });
   }
 
   setSessionCookie(res, signSession(user));

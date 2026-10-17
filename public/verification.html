@@ -64,8 +64,15 @@
       if (!email) { window.location.href = '/inscription'; return; }
       document.getElementById('email-label').textContent = email;
 
-      // Le code est envoyé par e-mail : on invite l'utilisateur à consulter sa boîte.
-      Karat.msg(msgEl, 'info', 'Un code de vérification a été envoyé à votre adresse e-mail. Pensez à vérifier vos spams.');
+      // Si l'e-mail n'a pas pu être envoyé (service non configuré), on affiche le
+      // code à l'écran et on pré-remplit, pour ne pas bloquer l'inscription.
+      const devCode = sessionStorage.getItem('karat_devcode');
+      if (devCode && /^[0-9]{6}$/.test(devCode)) {
+        Karat.msg(msgEl, 'info', 'Envoi e-mail non encore configuré — votre code : ' + devCode);
+        devCode.split('').forEach((c, k) => { if (inputs[k]) inputs[k].value = c; });
+      } else {
+        Karat.msg(msgEl, 'info', 'Un code de vérification a été envoyé à votre adresse e-mail. Pensez à vérifier vos spams.');
+      }
 
       // Navigation entre les cases du code.
       inputs.forEach((input, i) => {
