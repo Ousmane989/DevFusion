@@ -11,19 +11,21 @@
   <link rel="icon" href="/favicon.svg" />
   <link rel="stylesheet" href="/livreur/livreur.css" />
 </head>
-<body>
+<body class="lv-intro">
   <div id="lv-header"></div>
 
   <!-- ============================ HÉRO ============================ -->
   <section class="hero" id="accueil">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <span class="parcel p1" data-ic="box"></span><span class="parcel p2" data-ic="cart"></span><span class="parcel p3" data-ic="pin"></span>
     <div class="container hero-grid">
       <div class="reveal">
         <span class="hero-badge"><b>Nouveau</b> Livraison express à Nouakchott en moins de 2 h</span>
-        <h1>Livrez partout en <span class="hl">Mauritanie</span>, sans vous déplacer.</h1>
+        <h1 class="split">Livrez partout à <span class="hl rotator" data-words="Nouakchott,Nouadhibou,Rosso,Kiffa,Atar,Kaédi,Zouérate,Néma">Nouakchott</span> sans vous déplacer.</h1>
         <p class="lead">Depuis notre agence de Nouakchott, nos livreurs récupèrent, livrent et encaissent pour vous. Stockage, appel de confirmation, suivi en direct et reversement rapide : vous vendez, on s'occupe du reste.</p>
         <div class="hero-cta">
           <a href="/livreur/commander" class="btn btn-primary"><span data-ico="bolt"></span> Commander une course</a>
-          <a href="/livreur/inscription" class="btn btn-outline-light">Ouvrir un compte partenaire</a>
+          <a href="/livreur/inscription" class="btn btn-ghost">Ouvrir un compte partenaire</a>
         </div>
         <div class="hero-proof">
           <div><span class="ic" data-ic="cash"></span><p><strong>Paiement</strong><span>à la livraison</span></p></div>
@@ -55,7 +57,19 @@
         </div>
       </div>
     </div>
-    <div class="hero-wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 40 C 240 80 480 0 720 30 S 1200 70 1440 20 V70 H0 Z"/></svg></div>
+    <div class="road" aria-hidden="true">
+      <div class="truck"><svg viewBox="0 0 170 84">
+        <circle class="smoke" cx="8" cy="56" r="6" fill="#cfd8cb"/><circle class="smoke s2" cx="8" cy="56" r="6" fill="#cfd8cb"/><circle class="smoke s3" cx="8" cy="56" r="6" fill="#cfd8cb"/>
+        <rect x="14" y="12" width="96" height="48" rx="9" fill="#0b6b43"/>
+        <rect x="14" y="52" width="96" height="8" fill="#d21034"/>
+        <text x="62" y="42" font-family="Sora, Arial, sans-serif" font-weight="800" font-size="16" fill="#ffc21a" text-anchor="middle">KARAT</text>
+        <path d="M110 26h28l20 20v14h-48z" fill="#10935c"/>
+        <path d="M118 31h17l13 14h-30z" fill="#e7f4ec"/>
+        <rect x="151" y="50" width="7" height="5" rx="2" fill="#ffc21a"/>
+        <g class="wheel"><circle cx="40" cy="64" r="11" fill="#063b26"/><circle cx="40" cy="64" r="4.5" fill="#ffc21a"/><rect x="38.6" y="54" width="2.8" height="20" fill="#ffc21a" opacity=".55"/></g>
+        <g class="wheel"><circle cx="132" cy="64" r="11" fill="#063b26"/><circle cx="132" cy="64" r="4.5" fill="#ffc21a"/><rect x="130.6" y="54" width="2.8" height="20" fill="#ffc21a" opacity=".55"/></g>
+      </svg></div>
+    </div>
   </section>
 
   <!-- Bandeau des villes -->
@@ -64,10 +78,10 @@
   <!-- ============================ ENGAGEMENTS ============================ -->
   <section class="stats">
     <div class="container stats-grid">
-      <div class="stat reveal"><span class="ic" data-ic="pin"></span><p><strong>9</strong><span>moughataas de Nouakchott</span></p></div>
-      <div class="stat reveal"><span class="ic" data-ic="route"></span><p><strong>15</strong><span>wilayas desservies</span></p></div>
-      <div class="stat reveal"><span class="ic" data-ic="headset"></span><p><strong>7j/7</strong><span>service client</span></p></div>
-      <div class="stat reveal"><span class="ic" data-ic="cash"></span><p><strong>48 h</strong><span>reversement partenaires</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="pin"></span><p><strong data-count>9</strong><span>moughataas de Nouakchott</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="route"></span><p><strong data-count>15</strong><span>wilayas desservies</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="headset"></span><p><strong data-count>7j/7</strong><span>service client</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="cash"></span><p><strong data-count>48 h</strong><span>reversement partenaires</span></p></div>
     </div>
   </section>
 
@@ -263,7 +277,7 @@
     <div class="container cta-grid">
       <div class="cta-band reveal">
         <div><h2>Vous vendez en ligne ?</h2><p class="dim">Ouvrez votre compte partenaire gratuitement : validation sous 24 h ouvrées et dépôt de stock à l'agence.</p></div>
-        <div class="actions"><a href="/livreur/inscription" class="btn btn-primary">Devenir partenaire</a><a href="#tarifs" class="btn btn-outline-light">Voir les tarifs</a></div>
+        <div class="actions"><a href="/livreur/inscription" class="btn btn-primary">Devenir partenaire</a><a href="#tarifs" class="btn btn-ghost">Voir les tarifs</a></div>
       </div>
       <div class="cta-band yellow reveal">
         <div><h2>Vous avez une moto ?</h2><p class="dim">Rejoignez l'équipe de livreurs Karat : tournées quotidiennes et paiement chaque semaine.</p></div>
@@ -325,6 +339,7 @@
   <div id="lv-footer"></div>
 
   <script src="/livreur/lv.js"></script>
+  <script src="/livreur/anim.js"></script>
   <script>
   (function () {
     'use strict';
@@ -373,7 +388,7 @@
       mapEl.innerHTML = LV.mapSvg(zones);
       document.getElementById('city-list').innerHTML =
         '<div class="city-item" data-zone="nkc"><span>Nouakchott<small>' + communes.length + ' moughataas</small></span><b>dès ' + LV.money(minC) + '</b></div>' +
-        villes.map(function (z) { return '<div class="city-item" data-zone="' + z.id + '"><span>' + LV.esc(z.name) + '<small>' + LV.esc(z.region) + ' · ' + LV.esc(z.delay) + '</small></span><b>' + LV.money(z.price) + '</b></div>'; }).join('');
+        villes.map(function (z, i) { return '<div class="city-item" style="--i:' + (i + 1) + '" data-zone="' + z.id + '"><span>' + LV.esc(z.name) + '<small>' + LV.esc(z.region) + ' · ' + LV.esc(z.delay) + '</small></span><b>' + LV.money(z.price) + '</b></div>'; }).join('');
       function focus(id) {
         document.querySelectorAll('[data-zone].on, .route.on').forEach(function (e) { e.classList.remove('on'); });
         document.querySelectorAll('[data-zone="' + id + '"]').forEach(function (e) { e.classList.add('on'); });
@@ -386,6 +401,8 @@
         if (!z) return;
         var r = mapEl.querySelector('[data-route="' + id + '"]');
         if (r) r.classList.add('on');
+        var tip = document.getElementById('map-tip');
+        tip.classList.remove('bump'); void tip.offsetWidth; tip.classList.add('bump');
         document.getElementById('tip-title').textContent = 'Nouakchott → ' + z.name;
         document.getElementById('tip-text').textContent = LV.money(z.price) + ' · délai ' + z.delay;
       }
