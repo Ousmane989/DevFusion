@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi de colis — Karat Livreur</title>
+  <meta name="description" content="Suivez votre colis Karat Livreur en temps réel avec votre code de suivi." />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <header class="page-hero"><div class="container"><span class="eyebrow">Suivi en temps réel</span><h1>Où est mon colis ?</h1><p>Saisissez le code de suivi communiqué par le vendeur ou reçu lors de votre commande.</p></div></header>
+  <main class="page-mid page-body">
+    <form class="card" id="track-form" style="margin-bottom:22px">
+      <div class="track-form">
+        <input name="code" placeholder="KL-XXXXXX" aria-label="Code de suivi" required />
+        <button class="btn btn-green" type="submit">Suivre le colis</button>
+      </div>
+    </form>
+    <div class="form-msg" id="track-msg"></div>
+    <div class="card hidden" id="track-result"></div>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    var STEPS = ['nouvelle', 'confirmee', 'recuperee', 'en_cours', 'livree'];
+    var STEP_LABELS = ['Reçue', 'Confirmée', 'Récupérée', 'En route', 'Livrée'];
+    var RANK = { nouvelle: 0, confirmee: 1, assignee: 1, reportee: 1, recuperee: 2, en_cours: 3, echec: 3, livree: 4 };
+    var form = document.getElementById('track-form');
+    var box = document.getElementById('track-result');
+    var msg = document.getElementById('track-msg');
+
+    async function track(code) {
+      LV.clearMsg(msg);
+      box.classList.add('hidden');
+      var r = await LV.api('/track/' + encodeURIComponent(code));
+      if (!r.ok) { LV.msg(msg, 'error', r.data.error || 'Colis introuvable.'); return; }
+      var d = r.data;
+      var rank = RANK[d.status];
+      var bars = rank == null ? '' : '<div class="progress">' + STEPS.map(function (_, i) { return '<i class="' + (i <= rank ? 'on' : '') + '"></i>'; }).join('') +
+        '</div><div class="progress-labels">' + STEP_LABELS.map(function (l) { return '<span>' + l + '</span>'; }).join('') + '</div>';
+      var ev = d.events.slice().reverse();
+      box.innerHTML =
+        '<div class="panel-head" style="margin-bottom:6px"><div><span class="muted">Colis</span><h2 class="code" style="font-size:22px">' + LV.esc(d.code) + '</h2></div>' +
+        '<div class="actions">' + LV.badge(d.status, d.status_label) + '</div></div>' + bars +
+        '<dl class="kv" style="margin-top:22px">' +
+        '<dt>Expéditeur</dt><dd>' + LV.esc(d.sender || '—') + '</dd>' +
+        '<dt>Destinataire</dt><dd>' + LV.esc(d.recipient) + '</dd>' +
+        '<dt>Destination</dt><dd>' + LV.esc(d.zone) + '</dd>' +
+        '<dt>Service</dt><dd>' + LV.esc(d.service || '') + '</dd>' +
+        (d.courier ? '<dt>Livreur</dt><dd>' + LV.esc(d.courier) + '</dd>' : '') +
+        (d.amount ? '<dt>À payer à la livraison</dt><dd><b>' + LV.money(d.amount) + '</b></dd>' : '') +
+        '</dl><div class="map-mini" id="track-map"></div><h3 style="margin-top:26px;font-size:17px">Historique</h3><ul class="timeline">' +
+        ev.map(function (e, i) {
+          return '<li class="' + (i === 0 ? 'last' : '') + '"><strong>' + LV.esc(e.label) + '</strong><span>' + LV.date(e.created_at, true) + (e.note ? ' — ' + LV.esc(e.note) : '') + '</span></li>';
+        }).join('') + '</ul>';
+      box.classList.remove('hidden');
+      // Itinéraire Nouakchott → destination (ou Nouakchott seule pour la capitale).
+      LV.info().then(function (inf) {
+        var m = document.getElementById('track-map');
+        if (!m || !inf || !inf.zones) return;
+        m.innerHTML = LV.mapSvg(inf.zones, { only: d.zone });
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var c = form.code.value.trim();
+      history.replaceState(null, '', '?code=' + encodeURIComponent(c));
+      track(c);
+    });
+    var q = new URLSearchParams(location.search).get('code');
+    if (q) { form.code.value = q; track(q); }
+  })();
+  </script>
+</body>
+</html>

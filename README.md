@@ -61,6 +61,53 @@ sont **désactivées si `prefers-reduced-motion`** est actif.
 
 ---
 
+## 🚚 Karat Livreur — agence de livraison (Mauritanie)
+
+Plateforme de livraison intégrée à l'application, accessible sur **`/livreur`**.
+Données séparées des boutiques (tables `lv_*`, créées automatiquement en SQLite
+comme en PostgreSQL) et session dédiée.
+
+**Pages publiques**
+| URL | Contenu |
+|-----|---------|
+| `/livreur` | Accueil : héro + suivi de colis, services, fonctionnement, avantages, simulateur de tarifs, couverture (Nouakchott + wilayas), espaces, recrutement, FAQ, contact, bouton WhatsApp |
+| `/livreur/suivi` | Suivi d'un colis par code `KL-XXXXXX` (étapes + historique) |
+| `/livreur/commander` | Commande d'une course par un particulier, prix affiché avant validation |
+| `/livreur/inscription` | Inscription partenaire (validée par l'agence) |
+| `/livreur/inscription-coursier` | Candidature livreur (validée par l'agence) |
+| `/livreur/connexion` | Connexion unique (téléphone + mot de passe), redirige vers le bon espace |
+
+**Espaces**
+- **Partenaire** (`/livreur/partenaire`) : tableau de bord, nouvelle commande (avec
+  article du stock), commandes + suivi + annulation, stock déposé, reversements,
+  relevé CSV, profil (moyen de reversement : Bankily, Masrvi, Sedad…).
+- **Livreur** (`/livreur/coursier`, pensé mobile) : tournée du jour, appel /
+  WhatsApp / itinéraire, statuts (récupéré → en route → livré / échec / reporté),
+  preuve de remise (nom du réceptionnaire), caisse à remettre.
+- **Agence** (`/livreur/agence`) : tableau de bord, centre d'appel (confirmer,
+  reporter, annuler), dispatch par zone, toutes les commandes (édition complète,
+  historique, export CSV), livreurs, partenaires, équipe, stock, caisse des
+  livreurs, reversements, zones & tarifs, messages du formulaire de contact.
+  Les administrateurs Karat existants ont aussi accès à l'espace agence.
+
+**Circuit de l'argent** : le livreur encaisse (prix articles + frais si payés par
+le client) → l'agence « reçoit la caisse » → le montant net devient reversable
+au partenaire (frais déduits s'il les paie) → « Reverser » l'enregistre.
+
+**Design** : thème clair aux couleurs du drapeau mauritanien (vert, jaune or,
+rouge), carte SVG de la Mauritanie (agence à Nouakchott, itinéraires et tarifs
+par ville), plan OpenStreetMap de l'agence, carte d'itinéraire sur la page de suivi.
+
+**Configuration** (voir `.env.example`) : `LIVREUR_PHONE`, `LIVREUR_WHATSAPP`,
+`LIVREUR_EMAIL`, `LIVREUR_ADDRESS`, la position du plan `LIVREUR_LAT` /
+`LIVREUR_LNG` et le compte agence initial
+`LIVREUR_ADMIN_PHONE` / `LIVREUR_ADMIN_PASSWORD`.
+
+**Démo (hors production uniquement)** — mot de passe `demo1234` :
+agence `22200000001`, partenaire `22200000002`, livreur `22200000003`.
+
+---
+
 ## 🗂 Structure du projet
 
 ```

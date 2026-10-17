@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace agence — Karat Livreur</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar"></aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>Espace agence</h1>
+        <div class="actions"><button class="btn btn-primary btn-sm" data-new-order>+ <span class="lbl">Nouvelle commande</span></button></div>
+      </header>
+      <div class="content">
+        <div data-view="dashboard" class="hidden">
+          <div class="kpis" id="a-kpis"></div>
+          <div class="grid grid-2">
+            <div class="panel flush"><div class="panel-head"><h2>À confirmer</h2><div class="actions"><button class="btn btn-ghost btn-sm" data-goto="appel">Centre d'appel</button></div></div><div class="table-wrap" id="a-dash-confirm"></div></div>
+            <div class="panel flush"><div class="panel-head"><h2>À assigner</h2><div class="actions"><button class="btn btn-ghost btn-sm" data-goto="dispatch">Dispatch</button></div></div><div class="table-wrap" id="a-dash-dispatch"></div></div>
+          </div>
+        </div>
+
+        <div data-view="appel" class="hidden">
+          <p class="dim" style="margin-bottom:14px">Appelez chaque destinataire pour confirmer l'adresse, le montant et l'heure de livraison.</p>
+          <div class="tabs" id="a-call-tabs"></div>
+          <div class="list-cards" id="a-call"></div>
+        </div>
+
+        <div data-view="dispatch" class="hidden">
+          <p class="dim" style="margin-bottom:14px">Commandes confirmées en attente d'un livreur, regroupées par zone.</p>
+          <div id="a-dispatch"></div>
+        </div>
+
+        <div data-view="commandes" class="hidden">
+          <div class="filters">
+            <input type="search" id="a-q" placeholder="Code, nom, téléphone, adresse" />
+            <select id="a-f-status"></select>
+            <select id="a-f-partner"></select>
+            <select id="a-f-courier"></select>
+            <a class="btn btn-ghost btn-sm" href="/api/livreur/agency/export.csv">Export CSV</a>
+          </div>
+          <div class="panel flush"><div class="table-wrap" id="a-orders"></div></div>
+        </div>
+
+        <div data-view="livreurs" class="hidden">
+          <div class="panel flush"><div class="panel-head"><h2>Livreurs</h2><div class="actions"><button class="btn btn-primary btn-sm" data-new-user="coursier">+ Ajouter un livreur</button></div></div><div class="table-wrap" id="a-couriers"></div></div>
+        </div>
+
+        <div data-view="partenaires" class="hidden">
+          <div class="panel flush"><div class="panel-head"><h2>Partenaires</h2><div class="actions"><button class="btn btn-primary btn-sm" data-new-user="partenaire">+ Ajouter un partenaire</button></div></div><div class="table-wrap" id="a-partners"></div></div>
+        </div>
+
+        <div data-view="stock" class="hidden">
+          <div class="panel flush"><div class="panel-head"><h2>Stock des partenaires</h2><div class="actions"><button class="btn btn-primary btn-sm" id="a-new-stock">+ Enregistrer un dépôt</button></div></div><div class="table-wrap" id="a-stock"></div></div>
+        </div>
+
+        <div data-view="caisse" class="hidden">
+          <div class="kpis" id="a-cash-kpis"></div>
+          <div class="panel flush"><div class="panel-head"><h2>Caisse des livreurs</h2></div><div class="table-wrap" id="a-cash"></div></div>
+          <div class="panel flush"><div class="panel-head"><h2>Historique des remises</h2></div><div class="table-wrap" id="a-remits"></div></div>
+        </div>
+
+        <div data-view="reversements" class="hidden">
+          <div class="kpis" id="a-pay-kpis"></div>
+          <div class="panel flush"><div class="panel-head"><h2>À reverser aux partenaires</h2></div><div class="table-wrap" id="a-payouts"></div></div>
+          <div class="panel flush"><div class="panel-head"><h2>Historique des reversements</h2></div><div class="table-wrap" id="a-payhist"></div></div>
+        </div>
+
+        <div data-view="tarifs" class="hidden">
+          <div class="panel flush"><div class="panel-head"><h2>Zones & tarifs</h2><div class="actions"><button class="btn btn-primary btn-sm" id="a-new-zone">+ Ajouter une zone</button></div></div><div class="table-wrap" id="a-zones"></div></div>
+        </div>
+
+        <div data-view="messages" class="hidden">
+          <div class="list-cards" id="a-messages"></div>
+        </div>
+
+        <div data-view="equipe" class="hidden">
+          <div class="panel flush"><div class="panel-head"><h2>Agents de l'agence</h2><div class="actions"><button class="btn btn-primary btn-sm" data-new-user="agence">+ Ajouter un agent</button></div></div><div class="table-wrap" id="a-team"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/livreur/lv.js"></script>
+  <script src="/livreur/agence.js"></script>
+</body>
+</html>

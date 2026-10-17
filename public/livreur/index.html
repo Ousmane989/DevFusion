@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karat Livreur — Livraison express et e-commerce en Mauritanie</title>
+  <meta name="description" content="Karat Livreur, agence de livraison à Nouakchott : express en moins de 2 h, livraison e-commerce avec stockage et paiement à la livraison, colis vers toutes les wilayas de Mauritanie. Suivi en temps réel." />
+  <meta property="og:title" content="Karat Livreur — Livraison partout en Mauritanie" />
+  <meta property="og:description" content="Agence à Nouakchott. Livraison express, e-commerce et colis. Paiement à la livraison, suivi en temps réel." />
+  <meta name="theme-color" content="#063b26" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div id="lv-header"></div>
+
+  <!-- ============================ HÉRO ============================ -->
+  <section class="hero" id="accueil">
+    <div class="container hero-grid">
+      <div class="reveal">
+        <span class="hero-badge"><b>Nouveau</b> Livraison express à Nouakchott en moins de 2 h</span>
+        <h1>Livrez partout en <span class="hl">Mauritanie</span>, sans vous déplacer.</h1>
+        <p class="lead">Depuis notre agence de Nouakchott, nos livreurs récupèrent, livrent et encaissent pour vous. Stockage, appel de confirmation, suivi en direct et reversement rapide : vous vendez, on s'occupe du reste.</p>
+        <div class="hero-cta">
+          <a href="/livreur/commander" class="btn btn-primary"><span data-ico="bolt"></span> Commander une course</a>
+          <a href="/livreur/inscription" class="btn btn-outline-light">Ouvrir un compte partenaire</a>
+        </div>
+        <div class="hero-proof">
+          <div><span class="ic" data-ic="cash"></span><p><strong>Paiement</strong><span>à la livraison</span></p></div>
+          <div><span class="ic" data-ic="clock"></span><p><strong>&lt; 2 h</strong><span>express Nouakchott</span></p></div>
+          <div><span class="ic" data-ic="shield"></span><p><strong>Reversement</strong><span>sous 48 h</span></p></div>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="float-card float-a"><span class="ic" data-ic="shield"></span><p><strong>Colis livré ✓</strong><span>Tevragh Zeina · il y a 3 min</span></p></div>
+        <div class="track-card">
+          <h3><span class="ic" data-ic="search"></span> Suivre un colis</h3>
+          <p>Entrez le code de suivi reçu (ex. KL-7XQ4PA).</p>
+          <form class="track-form" id="home-track">
+            <input name="code" placeholder="KL-XXXXXX" aria-label="Code de suivi" required />
+            <button class="btn btn-green" type="submit">Suivre</button>
+          </form>
+          <div class="divider"></div>
+          <div class="contact-lines">
+            <a data-contact="phone" href="#"><span class="ico-box" data-ic="phone"></span><span>…</span></a>
+            <a data-contact="wa" href="#" target="_blank" rel="noopener"><span class="ico-box" data-ic="chat"></span><span>Commander sur WhatsApp</span></a>
+            <a href="#carte"><span class="ico-box" data-ic="pin"></span><span>Agence à Nouakchott — voir la carte</span></a>
+          </div>
+        </div>
+        <div class="float-card float-b">
+          <div class="row-top"><strong>KL-7XQ4PA · En route</strong><span class="badge st-en_cours">Live</span></div>
+          <span>Ksar → Arafat · arrivée estimée 25 min</span>
+          <div class="bar"><i></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 40 C 240 80 480 0 720 30 S 1200 70 1440 20 V70 H0 Z"/></svg></div>
+  </section>
+
+  <!-- Bandeau des villes -->
+  <div class="ticker-wrap" aria-hidden="true"><div class="ticker"><div class="ticker-track" id="ticker"></div></div></div>
+
+  <!-- ============================ ENGAGEMENTS ============================ -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="stat reveal"><span class="ic" data-ic="pin"></span><p><strong>9</strong><span>moughataas de Nouakchott</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="route"></span><p><strong>15</strong><span>wilayas desservies</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="headset"></span><p><strong>7j/7</strong><span>service client</span></p></div>
+      <div class="stat reveal"><span class="ic" data-ic="cash"></span><p><strong>48 h</strong><span>reversement partenaires</span></p></div>
+    </div>
+  </section>
+
+  <!-- ============================ SERVICES ============================ -->
+  <section id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Nos services</span>
+        <h2>Une solution pour <span class="hl-under">chaque envoi</span></h2>
+        <p>Particulier, boutique en ligne, restaurant ou entreprise : nous adaptons la livraison à votre activité.</p>
+      </div>
+      <div class="grid grid-4">
+        <article class="card hover service-card reveal">
+          <span class="tag">Populaire</span>
+          <div class="card-ico" data-ico="bolt"></div>
+          <h3>Livraison express</h3>
+          <p>Moins de 2 h dans Nouakchott. Enlèvement dans l'heure qui suit votre demande.</p>
+          <ul class="checks"><li>Prise en charge rapide</li><li>Suivi en direct</li><li>Preuve de remise</li></ul>
+          <p class="price-from">À partir de <b data-price="express">—</b></p>
+        </article>
+        <article class="card hover service-card c2 reveal">
+          <div class="card-ico" data-ico="cart"></div>
+          <h3>Livraison e-commerce</h3>
+          <p>Stockage de vos produits, appel de confirmation, livraison et encaissement.</p>
+          <ul class="checks"><li>Stock chez Karat Livreur</li><li>Paiement à la livraison</li><li>Reversement rapide</li></ul>
+          <p class="price-from">À partir de <b data-price="ecommerce">—</b></p>
+        </article>
+        <article class="card hover service-card c3 reveal">
+          <div class="card-ico" data-ico="route"></div>
+          <h3>Course à la demande</h3>
+          <p>Documents, clés, achats, repas : un livreur se déplace pour vous dans la journée.</p>
+          <ul class="checks"><li>Prix annoncé avant départ</li><li>Aller-retour possible</li><li>Particuliers et pros</li></ul>
+          <p class="price-from">À partir de <b data-price="course">—</b></p>
+        </article>
+        <article class="card hover service-card c4 reveal">
+          <div class="card-ico" data-ico="box"></div>
+          <h3>Colis & interurbain</h3>
+          <p>Envois vers Nouadhibou, Rosso, Kiffa, Atar, Zouérate et toutes les capitales régionales.</p>
+          <ul class="checks"><li>Colis de toutes tailles</li><li>Emballage soigné</li><li>Remise contre signature</li></ul>
+          <p class="price-from">Intérieur dès <b data-price="ville">—</b></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ FONCTIONNEMENT ============================ -->
+  <section id="fonctionnement" class="section-dark">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Comment ça marche</span>
+        <h2>4 étapes, <span class="hl">zéro souci</span></h2>
+        <p>Un circuit simple, pensé pour les vendeurs en ligne et leurs clients.</p>
+      </div>
+      <div class="grid grid-4 steps">
+        <div class="card step reveal"><h3>Vous transmettez la commande</h3><p>Depuis votre espace partenaire, par téléphone ou WhatsApp. Vos produits peuvent être stockés chez nous.</p></div>
+        <div class="card step reveal"><h3>Nous appelons le client</h3><p>Notre centre d'appel confirme l'adresse, le montant et l'heure de livraison avec votre client.</p></div>
+        <div class="card step reveal"><h3>Un livreur livre</h3><p>Le colis est récupéré puis livré avec suivi en temps réel et preuve de remise.</p></div>
+        <div class="card step reveal"><h3>Vous êtes payé</h3><p>Le client paie à la réception. Vous recevez votre argent par Bankily, Masrvi, Sedad ou en espèces.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CARTE ============================ -->
+  <section id="carte" class="section-dark" style="padding-top:20px">
+    <div class="container map-wrap">
+      <div class="reveal">
+        <span class="eyebrow">Notre réseau</span>
+        <h2 style="font-size:clamp(30px,4.2vw,46px);margin-bottom:16px">Depuis <span class="hl">Nouakchott</span>, vers toute la Mauritanie</h2>
+        <p class="dim" style="font-size:17px">Notre agence est installée à Nouakchott. Livraison le jour même dans les 9 moughataas de la capitale, et sous 24 à 72 h vers les capitales régionales. Cliquez sur une ville pour voir le tarif.</p>
+        <div class="hq-card">
+          <span class="ic" data-ic="warehouse"></span>
+          <div><strong>Agence Karat Livreur — Nouakchott</strong><span data-contact="address"><span>…</span></span></div>
+        </div>
+        <div class="city-list" id="city-list"></div>
+      </div>
+      <div class="map-card reveal">
+        <div id="mr-map"></div>
+        <div class="map-legend"><span><i style="background:var(--red)"></i>Agence (Nouakchott)</span><span><i style="background:#fff"></i>Villes desservies</span><span><i style="background:var(--accent)"></i>Itinéraires</span></div>
+        <div class="map-tip" id="map-tip">
+          <span class="ic" data-ic="pin"></span>
+          <div><strong id="tip-title">Nouakchott</strong><span id="tip-text">Siège de l'agence · livraison express &lt; 2 h</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ AVANTAGES (bento) ============================ -->
+  <section id="avantages">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Pourquoi Karat Livreur</span>
+        <h2>La livraison premium, <span class="hl-under">au prix juste</span></h2>
+      </div>
+      <div class="bento">
+        <div class="card big reveal">
+          <div class="card-ico" data-ico="bike"></div>
+          <h3 style="font-size:26px">Une application pour chaque livreur</h3>
+          <p>Tournée du jour, appel du client en un clic, itinéraire, preuve de livraison et caisse : tout est suivi en temps réel par l'agence.</p>
+          <div class="phone" aria-hidden="true">
+            <div class="phone-screen">
+              <div class="ph-title">Ma tournée · 6 courses</div>
+              <div class="ph-card"><div class="ph-row"><b>KL-C3RTMT</b><span class="badge st-en_cours" style="font-size:10px;padding:2px 7px">En route</span></div><span>Aïcha · Tevragh Zeina</span><div class="ph-row"><span>À encaisser</span><b style="color:var(--brand)">2 600 MRU</b></div><div class="ph-btn">Livré ✓</div></div>
+              <div class="ph-card"><div class="ph-row"><b>KL-UAEGE9</b><span class="badge st-assignee" style="font-size:10px;padding:2px 7px">Assigné</span></div><span>Ali · Ksar</span><div class="ph-btn y">Colis récupéré</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card reveal"><div class="card-ico" data-ico="clock"></div><h3>Rapidité</h3><p>Tournées organisées chaque jour par quartier pour livrer plus vite.</p></div>
+        <div class="card yellow reveal"><div class="card-ico" data-ico="shield"></div><h3>Sécurité</h3><p>Livreurs identifiés, colis suivis, argent remis à l'agence le jour même.</p></div>
+        <div class="card reveal"><div class="card-ico" data-ico="headset"></div><h3>Centre d'appel</h3><p>Chaque destinataire est appelé avant la livraison pour réduire les retours.</p></div>
+        <div class="card reveal"><div class="card-ico" data-ico="warehouse"></div><h3>Stockage</h3><p>Déposez votre stock : nous préparons et expédions vos commandes.</p></div>
+        <div class="card wide reveal"><div class="card-ico" data-ico="chart"></div><div><h3>Tableau de bord partenaire</h3><p>Ventes, livraisons, stock et reversements consultables à tout moment, avec relevés téléchargeables.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TARIFS ============================ -->
+  <section id="tarifs" class="section-alt">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Tarifs</span>
+        <h2>Des prix clairs, <span class="hl-under">annoncés à l'avance</span></h2>
+        <p>Le tarif dépend de la zone de livraison et du service choisi. Aucun frais d'inscription, aucun abonnement.</p>
+      </div>
+      <div class="pricing-wrap">
+        <div class="card sim-card reveal">
+          <div class="card-ico" style="background:rgba(255,194,26,.16);color:var(--accent)" data-ico="tag"></div>
+          <h3 style="font-size:24px">Simulateur de prix</h3>
+          <p style="margin-bottom:20px">Estimez le coût de votre livraison en deux clics.</p>
+          <div class="field"><label for="sim-zone">Zone de livraison</label><select id="sim-zone"></select></div>
+          <div class="field"><label for="sim-service">Service</label><select id="sim-service"></select></div>
+          <div class="sim-result hidden" id="sim-result">
+            <span class="muted">Prix estimé</span>
+            <strong id="sim-price"></strong>
+            <span class="dim" id="sim-delay"></span>
+          </div>
+          <a href="/livreur/commander" class="btn btn-primary btn-block" style="margin-top:20px">Commander maintenant</a>
+        </div>
+        <div class="card reveal" style="padding:0;overflow:hidden">
+          <div class="zones-table">
+            <table>
+              <thead><tr><th>Zone</th><th>Région</th><th>Délai</th><th class="num">Standard</th></tr></thead>
+              <tbody id="zones-body"><tr><td colspan="4" class="muted">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ POUR QUI ============================ -->
+  <section>
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Pour qui ?</span>
+        <h2>Ils peuvent compter sur nous</h2>
+      </div>
+      <div class="grid grid-4">
+        <div class="card hover reveal"><div class="card-ico" data-ico="store"></div><h3>E-commerçants</h3><p>Boutiques Instagram, Facebook, TikTok ou sites Karat : nous livrons et encaissons pour vous.</p></div>
+        <div class="card hover reveal"><div class="card-ico" style="background:var(--accent-soft);color:var(--accent-dark)" data-ico="tag"></div><h3>Restaurants & commerces</h3><p>Livraison de repas, pâtisseries, courses et commandes clients dans l'heure.</p></div>
+        <div class="card hover reveal"><div class="card-ico" style="background:var(--red-soft);color:var(--red)" data-ico="users"></div><h3>Entreprises</h3><p>Courrier, documents et colis entre vos agences, à Nouakchott comme en région.</p></div>
+        <div class="card hover reveal"><div class="card-ico" data-ico="user"></div><h3>Particuliers</h3><p>Un cadeau, un oubli, un document : commandez une course en ligne en une minute.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ESPACES ============================ -->
+  <section id="espaces" class="section-alt">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">La plateforme</span>
+        <h2>Un espace pour chacun</h2>
+        <p>Toute l'activité est centralisée : commandes, tournées, stock, caisse et reversements.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="card hover space-card reveal">
+          <div class="preview"><div class="pv-row"><div class="pv">Commandes<b>128</b></div><div class="pv y">À reverser<b>48 500</b></div></div><div class="line"></div><div class="line s"></div></div>
+          <div class="body"><h3>Espace partenaire</h3><p>Créez vos commandes, suivez vos ventes, votre stock déposé, vos reversements et téléchargez vos relevés.</p><a href="/livreur/partenaire" class="btn btn-green btn-sm">Accéder →</a></div>
+        </div>
+        <div class="card hover space-card reveal">
+          <div class="preview"><div class="pv-row"><div class="pv">À livrer<b>6</b></div><div class="pv y">Caisse<b>12 400</b></div></div><div class="line"></div><div class="line s"></div></div>
+          <div class="body"><h3>Espace livreur</h3><p>Tournée du jour, itinéraires, appel du client en un clic, preuve de livraison et caisse à remettre.</p><a href="/livreur/coursier" class="btn btn-green btn-sm">Accéder →</a></div>
+        </div>
+        <div class="card hover space-card reveal">
+          <div class="preview"><div class="pv-row"><div class="pv">À confirmer<b>14</b></div><div class="pv">À assigner<b>9</b></div><div class="pv y">Livrées<b>87</b></div></div><div class="line"></div><div class="line s"></div></div>
+          <div class="body"><h3>Espace agence</h3><p>Centre d'appel, dispatch, livreurs et partenaires, stock, caisse, reversements et tarifs.</p><a href="/livreur/agence" class="btn btn-green btn-sm">Accéder →</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ RECRUTEMENT ============================ -->
+  <section>
+    <div class="container cta-grid">
+      <div class="cta-band reveal">
+        <div><h2>Vous vendez en ligne ?</h2><p class="dim">Ouvrez votre compte partenaire gratuitement : validation sous 24 h ouvrées et dépôt de stock à l'agence.</p></div>
+        <div class="actions"><a href="/livreur/inscription" class="btn btn-primary">Devenir partenaire</a><a href="#tarifs" class="btn btn-outline-light">Voir les tarifs</a></div>
+      </div>
+      <div class="cta-band yellow reveal">
+        <div><h2>Vous avez une moto ?</h2><p class="dim">Rejoignez l'équipe de livreurs Karat : tournées quotidiennes et paiement chaque semaine.</p></div>
+        <div class="actions"><a href="/livreur/inscription-coursier" class="btn btn-primary">Devenir livreur</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ FAQ ============================ -->
+  <section id="faq" class="section-alt">
+    <div class="container">
+      <div class="section-head reveal"><span class="eyebrow">FAQ</span><h2>Questions fréquentes</h2></div>
+      <div class="faq">
+        <details class="reveal"><summary>Comment suivre mon colis ?</summary><p>Chaque envoi reçoit un code de suivi (KL-XXXXXX). Saisissez-le sur la page <a class="gold" href="/livreur/suivi">Suivi</a> pour voir chaque étape en temps réel.</p></details>
+        <details class="reveal"><summary>Quels moyens de paiement acceptez-vous ?</summary><p>Le destinataire paie en espèces à la livraison, ou par Bankily, Masrvi ou Sedad. Les reversements aux partenaires se font par les mêmes moyens.</p></details>
+        <details class="reveal"><summary>Quand suis-je payé en tant que partenaire ?</summary><p>Dès que le livreur a remis l'argent à l'agence, le montant apparaît dans votre espace. Le reversement est effectué sous 48 h maximum.</p></details>
+        <details class="reveal"><summary>Que se passe-t-il si le client est absent ?</summary><p>Le livreur indique le motif, notre centre d'appel recontacte le client pour reprogrammer la livraison. En cas de refus, le colis vous est retourné.</p></details>
+        <details class="reveal"><summary>Puis-je stocker mes produits chez vous ?</summary><p>Oui. Déposez votre stock à l'agence de Nouakchott : nous l'enregistrons dans votre espace et le décomptons automatiquement à chaque livraison.</p></details>
+        <details class="reveal"><summary>Livrez-vous en dehors de Nouakchott ?</summary><p>Oui, vers les capitales des wilayas (Nouadhibou, Rosso, Kaédi, Kiffa, Atar, Zouérate, Néma…) sous 24 à 72 h selon la destination.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CONTACT + PLAN ============================ -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Contact</span>
+        <h2>Venez nous voir à <span class="hl-under">Nouakchott</span></h2>
+        <p>Une question, un devis pour un volume important, un partenariat ? Passez à l'agence ou écrivez-nous.</p>
+      </div>
+      <div class="contact-wrap">
+        <div class="osm reveal">
+          <iframe id="osm-frame" title="Plan de l'agence Karat Livreur à Nouakchott" loading="lazy" referrerpolicy="no-referrer"></iframe>
+          <div class="addr"><span class="ic" data-ic="pin"></span><div><strong>Agence Karat Livreur</strong><span data-contact="address"><span>…</span></span></div></div>
+        </div>
+        <form class="card reveal" id="contact-form">
+          <h3 style="margin-bottom:6px">Écrivez-nous</h3>
+          <p style="margin-bottom:18px">Nous vous rappelons rapidement.</p>
+          <div class="form-msg"></div>
+          <div class="row">
+            <div class="field"><label>Nom</label><input name="name" required /></div>
+            <div class="field"><label>Téléphone</label><input name="phone" type="tel" required placeholder="22 22 22 22" /></div>
+          </div>
+          <div class="field"><label>Objet</label>
+            <select name="subject"><option>Demande de devis</option><option>Devenir partenaire</option><option>Réclamation</option><option>Autre</option></select>
+          </div>
+          <div class="field"><label>Message</label><textarea name="message" required></textarea></div>
+          <button class="btn btn-green btn-block" type="submit">Envoyer le message</button>
+          <div class="contact-lines" style="margin-top:20px;grid-template-columns:1fr 1fr">
+            <a data-contact="phone" href="#"><span class="ico-box" data-ic="phone"></span><span>…</span></a>
+            <a data-contact="wa" href="#" target="_blank" rel="noopener"><span class="ico-box" data-ic="chat"></span><span>WhatsApp</span></a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div id="lv-footer"></div>
+
+  <script src="/livreur/lv.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    // Icônes déclarées dans le HTML.
+    document.querySelectorAll('[data-ico]').forEach(function (el) {
+      if (el.classList.contains('card-ico')) el.innerHTML = LV.icon(el.getAttribute('data-ico'));
+      else el.outerHTML = LV.icon(el.getAttribute('data-ico'), 'ico');
+    });
+    document.querySelectorAll('[data-ic]').forEach(function (el) { el.innerHTML = LV.icon(el.getAttribute('data-ic'), el.classList.contains('ico-box') ? 'ico' : ''); });
+
+    document.getElementById('home-track').addEventListener('submit', function (e) {
+      e.preventDefault();
+      location.href = '/livreur/suivi?code=' + encodeURIComponent(this.code.value.trim());
+    });
+
+    LV.info().then(function (d) {
+      if (!d || !d.zones) return;
+      var zones = d.zones;
+      var c = d.contact || {};
+
+      // Plan OpenStreetMap centré sur l'agence.
+      if (c.lat && c.lng) {
+        var dl = 0.012;
+        document.getElementById('osm-frame').src = 'https://www.openstreetmap.org/export/embed.html?bbox=' +
+          (c.lng - dl * 1.6) + ',' + (c.lat - dl) + ',' + (c.lng + dl * 1.6) + ',' + (c.lat + dl) + '&layer=mapnik&marker=' + c.lat + ',' + c.lng;
+      }
+
+      // Bandeau défilant.
+      var names = zones.map(function (z) { return z.name; });
+      var once = names.map(function (n) { return '<span>' + LV.esc(n) + '</span>'; }).join('');
+      document.getElementById('ticker').innerHTML = once + once;
+
+      // Prix « à partir de » sur les services.
+      var communes = zones.filter(function (z) { return z.kind === 'commune'; });
+      var villes = zones.filter(function (z) { return z.kind !== 'commune'; });
+      var minC = Math.min.apply(null, communes.map(function (z) { return z.price; }));
+      var minV = Math.min.apply(null, villes.map(function (z) { return z.price; }));
+      document.querySelectorAll('[data-price]').forEach(function (el) {
+        var k = el.getAttribute('data-price');
+        el.textContent = k === 'ville' ? LV.money(minV) : LV.money(minC + ((d.services[k] || {}).extra || 0));
+      });
+
+      // Carte de la Mauritanie + liste des villes.
+      var mapEl = document.getElementById('mr-map');
+      mapEl.innerHTML = LV.mapSvg(zones);
+      document.getElementById('city-list').innerHTML =
+        '<div class="city-item" data-zone="nkc"><span>Nouakchott<small>' + communes.length + ' moughataas</small></span><b>dès ' + LV.money(minC) + '</b></div>' +
+        villes.map(function (z) { return '<div class="city-item" data-zone="' + z.id + '"><span>' + LV.esc(z.name) + '<small>' + LV.esc(z.region) + ' · ' + LV.esc(z.delay) + '</small></span><b>' + LV.money(z.price) + '</b></div>'; }).join('');
+      function focus(id) {
+        document.querySelectorAll('[data-zone].on, .route.on').forEach(function (e) { e.classList.remove('on'); });
+        document.querySelectorAll('[data-zone="' + id + '"]').forEach(function (e) { e.classList.add('on'); });
+        if (id === 'nkc') {
+          document.getElementById('tip-title').textContent = 'Nouakchott — agence';
+          document.getElementById('tip-text').textContent = communes.map(function (z) { return z.name; }).join(', ') + ' · dès ' + LV.money(minC);
+          return;
+        }
+        var z = zones.find(function (x) { return String(x.id) === String(id); });
+        if (!z) return;
+        var r = mapEl.querySelector('[data-route="' + id + '"]');
+        if (r) r.classList.add('on');
+        document.getElementById('tip-title').textContent = 'Nouakchott → ' + z.name;
+        document.getElementById('tip-text').textContent = LV.money(z.price) + ' · délai ' + z.delay;
+      }
+      document.getElementById('carte').addEventListener('click', function (e) {
+        var t = e.target.closest('[data-zone]');
+        if (t) focus(t.getAttribute('data-zone'));
+      });
+
+      // Simulateur + grille.
+      document.getElementById('sim-zone').innerHTML = LV.zoneOptions(zones);
+      document.getElementById('sim-service').innerHTML = Object.keys(d.services).map(function (k) {
+        var s = d.services[k];
+        return '<option value="' + k + '">' + LV.esc(s.label) + (s.extra ? ' (+' + LV.money(s.extra) + ')' : '') + '</option>';
+      }).join('');
+      document.getElementById('zones-body').innerHTML = zones.map(function (z) {
+        return '<tr><td><b>' + LV.esc(z.name) + '</b></td><td class="muted">' + LV.esc(z.region) + '</td><td class="muted">' + LV.esc(z.delay) + '</td><td class="num"><span class="price-tag">' + LV.money(z.price) + '</span></td></tr>';
+      }).join('');
+      function sim() {
+        var z = zones.find(function (x) { return String(x.id) === document.getElementById('sim-zone').value; });
+        var box = document.getElementById('sim-result');
+        if (!z) { box.classList.add('hidden'); return; }
+        var s = d.services[document.getElementById('sim-service').value];
+        document.getElementById('sim-price').textContent = LV.money(z.price + (s ? s.extra : 0));
+        document.getElementById('sim-delay').textContent = 'Délai indicatif : ' + z.delay;
+        box.classList.remove('hidden');
+      }
+      document.getElementById('sim-zone').addEventListener('change', sim);
+      document.getElementById('sim-service').addEventListener('change', sim);
+    });
+
+    document.getElementById('contact-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(this, '/contact');
+      if (r.ok) { this.reset(); LV.msg(this.querySelector('.form-msg'), 'success', 'Merci ! Votre message a bien été envoyé, nous vous rappelons rapidement.'); }
+    });
+  })();
+  </script>
+</body>
+</html>

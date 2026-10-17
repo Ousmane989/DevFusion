@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace livreur — Karat Livreur</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar"></aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>Espace livreur</h1>
+        <div class="actions"><button class="btn btn-ghost btn-sm" id="c-refresh">Actualiser</button></div>
+      </header>
+      <div class="content">
+        <div data-view="tournee" class="hidden">
+          <div class="kpis" id="c-kpis"></div>
+          <h2 style="font-size:18px;margin-bottom:12px">À livrer</h2>
+          <div class="list-cards" id="c-active"></div>
+          <h2 style="font-size:18px;margin:28px 0 12px">Terminées aujourd'hui</h2>
+          <div class="list-cards" id="c-done"></div>
+        </div>
+        <div data-view="caisse" class="hidden">
+          <div class="kpis" id="c-cash-kpis"></div>
+          <div class="panel flush">
+            <div class="panel-head"><h2>Encaissements à remettre à l'agence</h2></div>
+            <div class="table-wrap" id="c-cash-list"></div>
+          </div>
+          <div class="panel flush">
+            <div class="panel-head"><h2>Remises effectuées</h2></div>
+            <div class="table-wrap" id="c-remits"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/livreur/lv.js"></script>
+  <script src="/livreur/coursier.js"></script>
+</body>
+</html>

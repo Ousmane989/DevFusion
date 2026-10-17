@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace partenaire — Karat Livreur</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar"></aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>Espace partenaire</h1>
+        <div class="actions"><button class="btn btn-primary btn-sm" data-goto="nouvelle">+ <span class="lbl">Nouvelle commande</span></button></div>
+      </header>
+      <div class="content">
+        <!-- Tableau de bord -->
+        <div data-view="dashboard" class="hidden">
+          <div class="kpis" id="p-kpis"></div>
+          <div class="panel flush">
+            <div class="panel-head"><h2>Dernières commandes</h2><div class="actions"><button class="btn btn-ghost btn-sm" data-goto="commandes">Tout voir</button></div></div>
+            <div class="table-wrap" id="p-recent"></div>
+          </div>
+        </div>
+
+        <!-- Nouvelle commande -->
+        <div data-view="nouvelle" class="hidden">
+          <form class="panel" id="p-new" style="max-width:820px">
+            <div class="form-msg"></div>
+            <div class="fieldset-title">Destinataire</div>
+            <div class="row">
+              <div class="field"><label>Nom du client</label><input name="recipient_name" required /></div>
+              <div class="field"><label>Téléphone du client</label><input name="recipient_phone" type="tel" required placeholder="22 22 22 22" /></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Zone</label><select name="zone_id" required></select></div>
+              <div class="field"><label>Service</label><select name="service"></select></div>
+            </div>
+            <div class="field"><label>Adresse de livraison</label><input name="address" required placeholder="Quartier, rue, point de repère" /></div>
+            <div class="fieldset-title" style="margin-top:12px">Colis</div>
+            <div class="row">
+              <div class="field"><label>Article en stock (facultatif)</label><select name="stock_id"><option value="">— Aucun (enlèvement chez moi) —</option></select></div>
+              <div class="field"><label>Quantité</label><input name="stock_qty" type="number" min="1" value="1" /></div>
+            </div>
+            <div class="field"><label>Description</label><input name="description" placeholder="Ex. 2 robes taille M" /></div>
+            <div class="field"><label>Adresse d'enlèvement</label><input name="pickup_address" placeholder="Par défaut : adresse de votre profil ou notre entrepôt" /></div>
+            <div class="fieldset-title" style="margin-top:12px">Paiement</div>
+            <div class="row">
+              <div class="field"><label>Prix des articles à encaisser (MRU)</label><input name="cod_amount" type="number" min="0" value="0" /><small>0 si déjà payé par le client.</small></div>
+              <div class="field"><label>Frais de livraison payés par</label><select name="fee_payer"><option value="destinataire">Le client (ajoutés au montant)</option><option value="partenaire">Moi (déduits de mon reversement)</option></select></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Date de livraison souhaitée</label><input name="scheduled_for" type="date" /></div>
+              <div class="field"><label>Instructions</label><input name="note" placeholder="Ex. livrer après 16 h" /></div>
+            </div>
+            <div class="sim-result" style="margin:4px 0 18px">
+              <div class="row" style="gap:10px">
+                <div><span class="muted">Frais de livraison</span><strong id="p-fee" style="font-size:24px">—</strong></div>
+                <div><span class="muted">Le livreur encaisse</span><strong id="p-total" class="gold" style="font-size:24px">—</strong></div>
+              </div>
+            </div>
+            <button class="btn btn-primary" type="submit">Enregistrer la commande</button>
+          </form>
+        </div>
+
+        <!-- Commandes -->
+        <div data-view="commandes" class="hidden">
+          <div class="tabs" id="p-tabs"></div>
+          <div class="filters">
+            <input type="search" id="p-q" placeholder="Rechercher (code, nom, téléphone)" />
+            <a class="btn btn-ghost btn-sm" href="/api/livreur/partner/export.csv">Exporter le relevé (CSV)</a>
+          </div>
+          <div class="panel flush"><div class="table-wrap" id="p-orders"></div></div>
+        </div>
+
+        <!-- Stock -->
+        <div data-view="stock" class="hidden">
+          <div class="panel">
+            <p class="dim" style="margin-bottom:16px">Votre stock déposé à l'agence. Il est mis à jour par l'agence à chaque dépôt et décompté automatiquement à chaque livraison.</p>
+            <div class="table-wrap" id="p-stock"></div>
+          </div>
+        </div>
+
+        <!-- Reversements -->
+        <div data-view="reversements" class="hidden">
+          <div class="kpis" id="p-pay-kpis"></div>
+          <div class="panel flush">
+            <div class="panel-head"><h2>Historique des reversements</h2></div>
+            <div class="table-wrap" id="p-payouts"></div>
+          </div>
+        </div>
+
+        <!-- Profil -->
+        <div data-view="profil" class="hidden">
+          <form class="panel" id="p-profile" style="max-width:720px">
+            <div class="form-msg"></div>
+            <div class="row">
+              <div class="field"><label>Nom de l'activité</label><input name="business_name" /></div>
+              <div class="field"><label>Votre nom</label><input name="name" /></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>E-mail</label><input name="email" type="email" /></div>
+              <div class="field"><label>Ville</label><input name="city" /></div>
+            </div>
+            <div class="field"><label>Adresse d'enlèvement</label><input name="address" /></div>
+            <div class="fieldset-title" style="margin-top:12px">Recevoir mes reversements</div>
+            <div class="row">
+              <div class="field"><label>Moyen</label><select name="payout_method"><option value="">—</option><option>Bankily</option><option>Masrvi</option><option>Sedad</option><option>Espèces à l'agence</option><option>Virement bancaire</option></select></div>
+              <div class="field"><label>Numéro / compte</label><input name="payout_number" /></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Enregistrer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/livreur/lv.js"></script>
+  <script src="/livreur/partenaire.js"></script>
+</body>
+</html>

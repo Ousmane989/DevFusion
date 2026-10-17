@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devenir partenaire — Karat Livreur</title>
+  <meta name="description" content="Ouvrez votre compte partenaire Karat Livreur : livraison, stockage et encaissement pour votre boutique." />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/livreur/livreur.css" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <header class="page-hero"><div class="container"><span class="eyebrow">Compte partenaire</span><h1>Confiez-nous vos livraisons</h1><p>Inscription gratuite. Notre équipe valide votre compte sous 24 h ouvrées et vous contacte pour le dépôt de votre stock.</p></div></header>
+  <main class="page-mid page-body">
+    <form class="card" id="signup-form">
+      <div class="form-msg"></div>
+      <div class="row">
+        <div class="field"><label>Nom de votre activité / boutique</label><input name="business_name" required /></div>
+        <div class="field"><label>Type d'activité</label>
+          <select name="activity"><option>Boutique en ligne</option><option>Mode & beauté</option><option>Électronique</option><option>Restauration</option><option>Pharmacie / santé</option><option>Entreprise / bureau</option><option>Autre</option></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Votre nom complet</label><input name="name" required /></div>
+        <div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" required placeholder="22 22 22 22" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>E-mail (facultatif)</label><input name="email" type="email" /></div>
+        <div class="field"><label>Ville</label><input name="city" value="Nouakchott" /></div>
+      </div>
+      <div class="field"><label>Adresse d'enlèvement</label><input name="address" placeholder="Quartier, rue, point de repère" /></div>
+      <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="6" required autocomplete="new-password" /><small>6 caractères minimum.</small></div>
+      <button class="btn btn-primary btn-block" type="submit">Créer mon compte partenaire</button>
+    </form>
+    <p class="auth-switch">Déjà inscrit ? <a href="/livreur/connexion">Se connecter</a></p>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    var form = document.getElementById('signup-form');
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var r = await LV.submit(form, '/inscription');
+      if (!r.ok) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      form.innerHTML = '<div style="text-align:center;padding:20px 0"><h2 style="margin-bottom:10px">Demande envoyée ✓</h2><p class="dim">Merci ! Votre compte sera validé sous 24 h ouvrées. Vous pourrez ensuite vous connecter avec votre téléphone et votre mot de passe.</p><a class="btn btn-primary" style="margin-top:20px" href="/livreur">Retour à l\'accueil</a></div>';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+  </script>
+</body>
+</html>
