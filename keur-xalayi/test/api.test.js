@@ -196,7 +196,7 @@ test('archivage puis réinscription', async () => {
   await query('DELETE FROM eleves WHERE id = $1', [eleveId]);
 });
 
-test('passage en classe supérieure (aperçu)', async () => {
+test('passage en classe supérieure (aperçu) : GS → CI → CP', async () => {
   const annees = (await appel('dir', '/api/annees')).donnees;
   const active = annees.find((a) => a.active);
   let suivante = annees.find((a) => a.date_debut > active.date_debut);
@@ -209,4 +209,8 @@ test('passage en classe supérieure (aperçu)', async () => {
   assert.ok(cm2.every((p) => p.action === 'fin_cycle'));
   const ps = ap.plan.find((p) => p.classe.startsWith('Petite') && p.action === 'passe');
   if (ps) assert.strictEqual(ps.niveau_cible, 'Moyenne Section');
+  const gs = ap.plan.find((p) => p.classe.startsWith('Grande') && p.action === 'passe');
+  if (gs) assert.strictEqual(gs.niveau_cible, 'CI', 'la Grande Section passe au CI');
+  const ci = ap.plan.find((p) => p.classe === 'CI' && p.action === 'passe');
+  if (ci) assert.strictEqual(ci.niveau_cible, 'CP', 'le CI passe au CP');
 });
