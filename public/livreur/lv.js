@@ -318,6 +318,49 @@ window.LV = (function () {
     return { user, show, start: () => show(location.hash.slice(1)) };
   }
 
+  // ----- Temps réel -----
+  // Exécute fn toutes les ms millisecondes, en pause quand l'onglet est caché,
+  // et ajoute un indicateur « En direct » dans la barre du haut.
+  function live(fn, ms) {
+    const actions = document.querySelector('.topbar .actions');
+    if (actions && !document.querySelector('.live-badge')) {
+      actions.insertAdjacentHTML('afterbegin', '<span class="live-badge" title="Mise à jour automatique"><i></i>En direct</span>');
+    }
+    let busy = false;
+    const tick = async () => {
+      if (busy || document.hidden) return;
+      busy = true;
+      try { await fn(); } catch (_) { /* réseau momentanément indisponible */ }
+      busy = false;
+    };
+    setInterval(tick, ms);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  }
+
+  // Alerte : message + petit son + compteur dans le titre de l'onglet.
+  let unseen = 0;
+  const baseTitle = document.title;
+  function notify(text) {
+    toast('🔔 ' + text);
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [880, 1320].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.16);
+        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + i * 0.16 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.16 + 0.15);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + i * 0.16);
+        o.stop(ctx.currentTime + i * 0.16 + 0.16);
+      });
+    } catch (_) { /* son indisponible */ }
+    if (document.hidden) { unseen++; document.title = '(' + unseen + ') ' + baseTitle; }
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { unseen = 0; document.title = baseTitle; } });
+  const modalOpen = () => !!document.querySelector('#lv-modal.open');
+
   function setCount(id, n) {
     const el = document.querySelector('[data-count="' + id + '"]');
     if (!el) return;
@@ -337,7 +380,7 @@ window.LV = (function () {
   }
 
   return {
-    icon, brand, api, esc, money, phoneFmt, date, badge, USER_STATUS, msg, clearMsg, toast, modal, closeModal,
+    icon, brand, api, esc, money, phoneFmt, date, badge, USER_STATUS, msg, clearMsg, toast, modal, closeModal, live, notify, modalOpen,
     formData, submit, info, zoneOptions, publicChrome, mapSvg, fillContacts, appShell, setCount, logout, WA_SVG,
   };
 })();

@@ -896,6 +896,17 @@ body.leaving { animation: leave .28s ease forwards; }
 .kv { display: grid; grid-template-columns: 160px 1fr; gap: 8px 14px; font-size: 14.5px; }
 .kv dt { color: var(--text-mute); }
 
+/* Indicateur « En direct » (espaces) */
+.live-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--brand); background: var(--brand-soft); white-space: nowrap; }
+.live-badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 0 rgba(18,160,95,.6); animation: ping-green 1.8s ease-out infinite; }
+@keyframes ping-green { 0% { box-shadow: 0 0 0 0 rgba(18,160,95,.55); } 100% { box-shadow: 0 0 0 9px rgba(18,160,95,0); } }
+.req-item { display: flex; align-items: center; gap: 14px; padding: 14px 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.req-item .who { flex: 1; min-width: 180px; }
+.req-item .who b { display: block; }
+.req-item .who span { color: var(--text-mute); font-size: 13px; }
+.req-item .actions { display: flex; gap: 8px; }
+@media (max-width: 640px) { .live-badge { display: none; } .req-item { padding: 14px 16px; } }
+
 /* Modale */
 .modal { position: fixed; inset: 0; z-index: 100; background: rgba(4,42,27,.55); backdrop-filter: blur(4px); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
 .modal.open { display: flex; }
