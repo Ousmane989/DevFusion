@@ -22,7 +22,7 @@ export async function afficher(el) {
     <div class="kpis">
       ${kpi('Élèves inscrits', eff.total, `${eff.garcons} garçons · ${eff.filles} filles (${pctF} %)`, 'var(--secondaire)')}
       ${f ? kpi(`Encaissé en ${nomMois(f.mois)}`, argent(f.encaisse_mois), `Mensualités attendues : ${argent(f.attendu_mois)}`, 'var(--succes)') : ''}
-      ${f ? kpi('Taux de recouvrement', `${f.taux_recouvrement} %`, `<div class="barre-progres" style="margin-top:.4rem"><div style="width:${Math.min(100, f.taux_recouvrement)}%"></div></div>
+      ${f ? kpi('Taux de recouvrement', f.taux_recouvrement === null ? '—' : `${f.taux_recouvrement} %`, `<div class="barre-progres" style="margin-top:.4rem"><div style="width:${Math.min(100, f.taux_recouvrement)}%"></div></div>
         ${f.statuts.payes} payés · ${f.statuts.partiels} partiels · ${f.statuts.impayes} impayés`, 'var(--primaire)') : ''}
       ${f ? kpi('Total des impayés', argent(f.total_impayes), `${f.nb_eleves_impayes} élève(s) concerné(s) · <a href="#/impayes">voir</a>`, 'var(--danger)') : ''}
       ${kpi('Absences du jour', d.absences.absents, `${d.absences.retards} retard(s) · appel fait dans ${d.appels.faits}/${d.appels.total} classe(s)`, 'var(--primaire)')}
