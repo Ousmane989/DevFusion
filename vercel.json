@@ -2,14 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/index.js": {
-      "includeFiles": "{public,db}/**",
+      "includeFiles": "{public/**,db/**,node_modules/pdfkit/js/standard-fonts/*.cjs,node_modules/pdfkit/js/data/**}",
       "maxDuration": 60
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
   ],
   "crons": [
-    { "path": "/api/cron/quotidien", "schedule": "5 9 * * *" }
+    {
+      "path": "/api/cron/quotidien",
+      "schedule": "5 9 * * *"
+    }
+  ],
+  "regions": [
+    "dub1"
   ]
 }
