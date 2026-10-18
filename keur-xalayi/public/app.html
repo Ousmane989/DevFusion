@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Keur Xalayi</title>
+  <meta name="theme-color" content="#1f5f6b">
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="menu" id="menu">
+      <div class="marque">
+        <div class="logo-kx" id="logo-menu">KX</div>
+        <div><b id="nom-ecole">Keur Xalayi</b><small id="role-user"></small></div>
+      </div>
+      <nav id="nav"></nav>
+      <div class="pied">
+        <div id="nom-user" class="gras"></div>
+        <button class="btn lien" style="color:#fff" id="btn-mdp">Changer mon mot de passe</button><br>
+        <button class="btn lien" style="color:#fff" id="btn-deco">Se déconnecter</button>
+      </div>
+    </aside>
+    <div class="voile cache" id="voile"></div>
+    <div class="contenu">
+      <header class="barre">
+        <button class="btn clair petit seul-mobile" id="btn-menu" aria-label="Menu">☰</button>
+        <div class="titre" id="titre">Chargement…</div>
+        <span class="annee" id="annee"></span>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+    <nav class="nav-bas" id="nav-bas"></nav>
+  </div>
+  <div id="toasts"></div>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
