@@ -213,7 +213,7 @@ export function graphiqueBarres(etiquettes, series, { hauteur = 220, format = (v
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   for (let k = 0; k <= 4; k++) {
     const v = (max / 4) * k; const yy = y(v);
-    svg += `<line x1="${m.g}" x2="${W - m.d}" y1="${yy}" y2="${yy}" stroke="#eee5da"/><text x="${m.g - 6}" y="${yy + 4}" font-size="10" text-anchor="end" fill="#8a8077">${e(abrege(v))}</text>`;
+    svg += `<line x1="${m.g}" x2="${W - m.d}" y1="${yy}" y2="${yy}" stroke="#e6e8f4"/><text x="${m.g - 6}" y="${yy + 4}" font-size="10" text-anchor="end" fill="#7d81a0">${e(abrege(v))}</text>`;
   }
   etiquettes.forEach((et, i) => {
     const x0 = m.g + i * pas + (pas - lb * series.length) / 2;
@@ -221,7 +221,7 @@ export function graphiqueBarres(etiquettes, series, { hauteur = 220, format = (v
       const v = s.valeurs[i] || 0;
       svg += `<rect x="${x0 + j * lb}" y="${y(v)}" width="${lb - 2}" height="${Math.max(0, H - m.b - y(v))}" rx="3" fill="${s.couleur}"><title>${e(s.nom)} — ${e(et)} : ${e(format(v))}</title></rect>`;
     });
-    svg += `<text x="${m.g + i * pas + pas / 2}" y="${H - m.b + 16}" font-size="11" text-anchor="middle" fill="#5f574f">${e(et)}</text>`;
+    svg += `<text x="${m.g + i * pas + pas / 2}" y="${H - m.b + 16}" font-size="11" text-anchor="middle" fill="#5f6380">${e(et)}</text>`;
   });
   svg += '</svg>';
   return `<div class="graphique">${svg}</div><div class="legende">${series.map((s) => `<span><i style="background:${s.couleur}"></i>${e(s.nom)}</span>`).join('')}</div>`;

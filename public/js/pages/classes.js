@@ -14,7 +14,7 @@ export async function afficher(el) {
     <div class="grille g4" style="margin-bottom:1rem">
       ${kpi('Classes', classes.length, '', 'var(--secondaire)')}
       ${kpi('Élèves', total, `${classes.reduce((s, c) => s + c.garcons, 0)} garçons · ${classes.reduce((s, c) => s + c.filles, 0)} filles`)}
-      ${kpi('Moyenne par classe', classes.length ? Math.round(total / classes.length) : 0, 'élèves', 'var(--accent)')}
+      ${kpi('Moyenne par classe', classes.length ? Math.round(total / classes.length) : 0, 'élèves', 'var(--primaire)')}
       ${kpi('Sans titulaire', classes.filter((c) => !c.enseignant_id).length, 'classe(s)', 'var(--danger)')}
     </div>
     <div class="grille g3">
