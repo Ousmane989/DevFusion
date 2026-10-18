@@ -10,7 +10,7 @@ const { requireAuth } = require('../middleware');
 const S = require('../livreur/store');
 
 const router = express.Router();
-router.get('/__ping', (_req, res) => res.json({ v: 'diag4', hasFns: typeof S.listActiveAgencies === 'function' && typeof S.collabsForMerchant === 'function' && typeof S.createBoutiqueOrder === 'function' }));
+router.get('/__ping', (_req, res) => res.json({ v: 'diag5', hasFns: typeof S.listActiveAgencies === 'function' && typeof S.collabsForMerchant === 'function' && typeof S.createBoutiqueOrder === 'function' }));
 router.use(requireAuth);
 router.use(async (_req, res, next) => { try { await S.ensureReady(); next(); } catch (e) { res.status(500).json({ error: 'debug-mw', detail: String((e && (e.stack || e.message)) || e).slice(0, 600) }); } });
 
@@ -56,7 +56,7 @@ router.post('/request', async (req, res, next) => {
     await S.db.prepare('INSERT INTO lv_collabs (merchant_id, agency_id, shop_name, phone, city, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, agencyId, u.shop_name || '', u.phone || '', u.country || '', 'pending', S.now());
     res.status(201).json({ ok: true, status: 'pending' });
-  } catch (err) { next(err); }
+  } catch (err) { res.status(500).json({ error: 'debug-req', detail: String((err && (err.stack || err.message)) || err).slice(0, 600) }); }
 });
 
 // POST /api/delivery/cancel { agencyId } — retirer la demande / arrêter la collaboration.
