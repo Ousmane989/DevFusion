@@ -1,5 +1,8 @@
 # Karat — plateforme SaaS de boutiques en ligne
 
+> Ce dépôt contient aussi **Keur Xalayi**, une plateforme de gestion scolaire
+> indépendante : voir [`keur-xalayi/README.md`](keur-xalayi/README.md).
+
 Karat permet aux commerçants de **Mauritanie** et du **Sénégal** de créer une
 boutique en ligne premium, d'ajouter leurs produits et d'encaisser via les
 paiements mobiles locaux. Le revenu provient d'un **abonnement mensuel**.
