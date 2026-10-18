@@ -13,7 +13,7 @@ comme sur téléphone.
 | Module | Contenu |
 |---|---|
 | **Connexion & rôles** | Identifiant + mot de passe (bcrypt), sessions sécurisées, 3 rôles : Directeur, Secrétaire/Comptable, Enseignant (sa classe uniquement) |
-| **Classes** | PS → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
+| **Classes** | PS, MS, GS, CI, CP → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
 | **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +221 obligatoire (+222 accepté), recherche, filtres, archivage, réinscription |
 | **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, modes sénégalais (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi et Sedad si le pays est réglé sur la Mauritanie), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, envoi du reçu par WhatsApp, annulation tracée |
 | **Impayés** | Par mois et par classe, regroupés par élève, rappel en un clic, export |

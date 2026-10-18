@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS annees_scolaires (
 -- Une seule année active à la fois.
 CREATE UNIQUE INDEX IF NOT EXISTS annees_une_active ON annees_scolaires (active) WHERE active;
 
--- ---------- Niveaux prédéfinis (PS → CM2) et tarifs par défaut ----------
+-- ---------- Niveaux prédéfinis (PS, MS, GS, CI, CP → CM2) et tarifs par défaut ----------
 CREATE TABLE IF NOT EXISTS niveaux (
   id                SERIAL PRIMARY KEY,
-  code              TEXT    NOT NULL UNIQUE,          -- PS, MS, GS, CP, CE1…
+  code              TEXT    NOT NULL UNIQUE,          -- PS, MS, GS, CI, CP, CE1…
   nom               TEXT    NOT NULL,
   ordre             INTEGER NOT NULL UNIQUE,          -- sert au passage en classe supérieure
   cycle             TEXT    NOT NULL CHECK (cycle IN ('maternelle','primaire')),
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS matieres (
   nom         TEXT NOT NULL,
   coefficient NUMERIC(4,2) NOT NULL DEFAULT 1 CHECK (coefficient > 0),
   bareme      INTEGER NOT NULL DEFAULT 10 CHECK (bareme IN (10,20)),
-  niveaux     TEXT[] NOT NULL DEFAULT ARRAY['CP','CE1','CE2','CM1','CM2'], -- codes des niveaux concernés
+  niveaux     TEXT[] NOT NULL DEFAULT ARRAY['CI','CP','CE1','CE2','CM1','CM2'], -- codes des niveaux concernés
   ordre       INTEGER NOT NULL DEFAULT 0,
   UNIQUE (nom)
 );
