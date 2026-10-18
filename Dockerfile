@@ -1,5 +1,5 @@
 FROM node:22-alpine
-ENV NODE_ENV=production TZ=Africa/Nouakchott
+ENV NODE_ENV=production TZ=Africa/Dakar
 RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY package*.json ./

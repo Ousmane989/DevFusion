@@ -1,5 +1,5 @@
 // Paiements : encaisser, journal, situation des mensualités (par mois et par classe).
-import { get, post, e, qs, tableau, options, argent, nomMois, dateFr, badge, MODES, estRole, ouvrir, formulaire, champ, toast, avatar, boutonsExport, activerExports, aujourdhui, kpi, erreur } from '../ui.js';
+import { get, post, e, qs, tableau, options, argent, nomMois, dateFr, badge, MODES, modesDuPays, estRole, ouvrir, formulaire, champ, toast, avatar, boutonsExport, activerExports, aujourdhui, kpi, erreur } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 let minuteur;
@@ -104,7 +104,7 @@ export async function afficher(el, params) {
       zone.innerHTML = `<div class="filtres">
           <input type="search" id="q" placeholder="🔍 Élève, matricule ou n° de reçu" class="recherche">
           <input type="date" id="du" value="${debutMois}" title="Du"><input type="date" id="au" value="${aujourdhui()}" title="Au">
-          <select id="mode">${options(Object.entries(MODES), '', { vide: 'Tous les modes' })}</select>
+          <select id="mode">${options(modesDuPays(), '', { vide: 'Tous les modes' })}</select>
           <select id="classe">${options(optClasses, '', { vide: 'Toutes les classes' })}</select>
         </div><div class="ligne" style="margin-bottom:.6rem"><b id="total"></b><span class="espace"></span><span id="exp"></span></div><div id="tab"></div>`;
       const lire = () => ({ q: zone.querySelector('#q').value, du: zone.querySelector('#du').value, au: zone.querySelector('#au').value, mode: zone.querySelector('#mode').value, classe_id: zone.querySelector('#classe').value });

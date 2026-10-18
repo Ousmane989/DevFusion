@@ -59,8 +59,8 @@ function dateFr(iso) {
   return `${j}/${m}/${a}`;
 }
 
-/** Formate un montant : 12 500 MRU */
-function montant(n, devise = 'MRU') {
+/** Formate un montant : 12 500 FCFA */
+function montant(n, devise = 'FCFA') {
   const v = Math.round(Number(n || 0) * 100) / 100;
   const s = v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(/ | /g, ' ');
   return `${s} ${devise}`;
@@ -69,9 +69,9 @@ function montant(n, devise = 'MRU') {
 /**
  * Normalise un numéro WhatsApp : retire espaces/tirets, ajoute l'indicatif
  * par défaut si absent. Renvoie null si invalide.
- * Mauritanie (+222) : 8 chiffres ; Sénégal (+221) : 9 chiffres.
+ * Sénégal (+221) : 9 chiffres ; Mauritanie (+222) : 8 chiffres.
  */
-function normaliserTel(tel, indicatifDefaut = '+222') {
+function normaliserTel(tel, indicatifDefaut = '+221') {
   if (!tel) return null;
   let t = String(tel).replace(/[\s.\-()]/g, '');
   if (t.startsWith('00')) t = '+' + t.slice(2);
@@ -94,9 +94,11 @@ function exiger(obj, champs) {
 /** Convertit '' en null (formulaires). */
 const vide = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : v);
 
+// Modes de paiement : ceux du Sénégal, puis ceux de la Mauritanie.
 const MODES_PAIEMENT = {
-  especes: 'Espèces', bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad',
-  wave: 'Wave', orange_money: 'Orange Money',
+  especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Mixx by Yas (Free Money)',
+  virement: 'Virement bancaire', cheque: 'Chèque',
+  bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad',
 };
 
 module.exports = {

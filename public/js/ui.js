@@ -42,7 +42,16 @@ export function e(v) {
 export const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 export const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 export const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-export const MODES = { especes: 'Espèces', bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad', wave: 'Wave', orange_money: 'Orange Money' };
+export const MODES = {
+  especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Mixx by Yas (Free Money)',
+  virement: 'Virement bancaire', cheque: 'Chèque', bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad',
+};
+/** Modes proposés dans les formulaires selon le pays de l'école (indicatif +221 = Sénégal). */
+export function modesDuPays() {
+  const senegal = !ctx.ecole || ctx.ecole.indicatif_defaut !== '+222';
+  const codes = senegal ? ['especes', 'wave', 'orange_money', 'free_money', 'virement', 'cheque'] : ['especes', 'bankily', 'masrvi', 'sedad', 'virement', 'cheque'];
+  return codes.map((c) => [c, MODES[c]]);
+}
 export const STATUTS = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé', non_concerne: '—', present: 'Présent', absent: 'Absent', retard: 'Retard' };
 export const ROLES = { directeur: 'Directeur', secretaire: 'Secrétaire / Comptable', enseignant: 'Enseignant' };
 
@@ -297,12 +306,12 @@ export function resultatEnvoi(messages, titre = 'Messages WhatsApp') {
   }));
 }
 
-/** Champ numéro de téléphone avec choix de l'indicatif (+222 / +221). */
+/** Champ numéro de téléphone avec choix de l'indicatif (+221 / +222). */
 export function champTel(nom, valeur, { requis = false } = {}) {
   const v = String(valeur || '');
-  const ind = v.startsWith('+221') ? '+221' : v.startsWith('+222') ? '+222' : (ctx.ecole ? ctx.ecole.indicatif_defaut : '+222');
+  const ind = v.startsWith('+221') ? '+221' : v.startsWith('+222') ? '+222' : (ctx.ecole ? ctx.ecole.indicatif_defaut : '+221');
   const num = v.replace(/^\+22[12]/, '');
-  return `<div class="tel" data-tel="${e(nom)}"><select aria-label="Indicatif">${options([['+222', '🇲🇷 +222'], ['+221', '🇸🇳 +221']], ind)}</select>
+  return `<div class="tel" data-tel="${e(nom)}"><select aria-label="Indicatif">${options([['+221', '🇸🇳 +221'], ['+222', '🇲🇷 +222']], ind)}</select>
     <input inputmode="tel" placeholder="${ind === '+221' ? '77 123 45 67' : '22 12 34 56'}" value="${e(num)}" ${requis ? 'required' : ''}>
     <input type="hidden" name="${e(nom)}" value="${e(v)}"></div>`;
 }

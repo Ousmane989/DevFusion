@@ -1,7 +1,7 @@
 -- =====================================================================
 --  Keur Xalayi — schéma de la base de données (PostgreSQL / Supabase)
 --  Le script est idempotent : il peut être relancé sans perte de données.
---  Montants : NUMERIC(12,2) dans la devise choisie (MRU ou FCFA).
+--  Montants : NUMERIC(12,2) dans la devise choisie (FCFA au Sénégal, MRU en Mauritanie).
 -- =====================================================================
 
 -- ---------- Paramètres de l'école (une seule ligne, id = 1) ----------
@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS parametres (
   adresse                 TEXT,
   telephone               TEXT,
   email                   TEXT,
-  devise                  TEXT    NOT NULL DEFAULT 'MRU' CHECK (devise IN ('MRU','FCFA')),
-  indicatif_defaut        TEXT    NOT NULL DEFAULT '+222' CHECK (indicatif_defaut IN ('+222','+221')),
+  devise                  TEXT    NOT NULL DEFAULT 'FCFA' CHECK (devise IN ('MRU','FCFA')),
+  indicatif_defaut        TEXT    NOT NULL DEFAULT '+221' CHECK (indicatif_defaut IN ('+221','+222')),
   -- Rappels WhatsApp
   rappel_auto             BOOLEAN NOT NULL DEFAULT TRUE,
   rappel_jour             INTEGER NOT NULL DEFAULT 25 CHECK (rappel_jour BETWEEN 1 AND 28),
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS paiements (
   mois            DATE,                                  -- 1er jour du mois concerné (mensualité)
   montant         NUMERIC(12,2) NOT NULL CHECK (montant > 0),
   date_paiement   DATE NOT NULL DEFAULT CURRENT_DATE,
-  mode            TEXT NOT NULL CHECK (mode IN ('especes','bankily','masrvi','sedad','wave','orange_money')),
+  mode            TEXT NOT NULL,                         -- voir MODES_PAIEMENT (src/utils.js)
   reference       TEXT,                                  -- n° de transaction mobile
   numero_recu     TEXT NOT NULL,                         -- R2610-00001 (un reçu peut couvrir plusieurs mois)
   remarque        TEXT,
@@ -321,3 +321,8 @@ CREATE TABLE IF NOT EXISTS sauvegardes (
 -- ---------- Compteurs (matricules et numéros de reçus) ----------
 CREATE SEQUENCE IF NOT EXISTS seq_matricule;
 CREATE SEQUENCE IF NOT EXISTS seq_recu;
+
+-- ---------- Modes de paiement acceptés (Sénégal et Mauritanie) ----------
+ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_mode_check;
+ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
+  ('especes','wave','orange_money','free_money','virement','cheque','bankily','masrvi','sedad'));

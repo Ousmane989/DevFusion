@@ -24,7 +24,7 @@ async function sauvegardeDuJour() {
 }
 
 function demarrerTaches() {
-  const tz = process.env.TZ || 'Africa/Nouakchott';
+  const tz = process.env.TZ || 'Africa/Dakar';
   cron.schedule('5 * * * *', () => {
     executerQuotidien()
       .then((r) => r.rappels.length && console.log('  ✉ Rappels envoyés :', JSON.stringify(r.rappels)))
