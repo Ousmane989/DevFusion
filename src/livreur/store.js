@@ -210,7 +210,17 @@ async function seed() {
 function ensureReady() {
   if (!ready) {
     ready = (async () => {
-      await db.exec(SCHEMA);
+      // On exécute chaque instruction séparément et on tolère les échecs de DDL
+      // « redondant ». En production (Supabase), les tables appartiennent au rôle
+      // propriétaire (karat_app) et le rôle applicatif ne peut pas relancer
+      // CREATE INDEX / ALTER dessus (« must be owner of table … ») — or, en
+      // Postgres, CREATE INDEX IF NOT EXISTS vérifie la propriété AVANT de voir
+      // que l'index existe déjà. Les tables/index existent donc déjà : on ignore
+      // l'échec et on continue. (Sur une base vierge, chaque instruction réussit.)
+      const stmts = SCHEMA.split(';').map((s) => s.trim()).filter(Boolean);
+      for (const stmt of stmts) {
+        try { await db.exec(stmt); } catch (_) { /* déjà en place sous un autre rôle */ }
+      }
       // Bases créées avant le tarif par produit : ajout de la colonne.
       try { await db.exec('ALTER TABLE lv_orders ADD COLUMN items_count INTEGER NOT NULL DEFAULT 1'); } catch (_) { /* déjà présente */ }
       await seed();
