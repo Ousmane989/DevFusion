@@ -183,6 +183,17 @@ test('rôles : l\'enseignant ne voit que sa classe, la secrétaire n\'a pas acc�
   assert.strictEqual((await appel('sec', '/api/finances/bilan')).statut, 403);
 });
 
+test('suppression d\'un compte utilisateur', async () => {
+  const cree = await appel('dir', '/api/utilisateurs', { methode: 'POST', corps: { identifiant: 'test.suppr', mot_de_passe: 'secret123', nom_complet: 'Test', role: 'secretaire' } });
+  assert.strictEqual(cree.statut, 201);
+  assert.strictEqual((await appel('dir', `/api/utilisateurs/${cree.donnees.id}`, { methode: 'DELETE' })).statut, 200);
+  const liste = (await appel('dir', '/api/utilisateurs')).donnees;
+  assert.ok(!liste.some((u) => u.identifiant === 'test.suppr'));
+  const moi = (await appel('dir', '/api/auth/moi')).donnees.utilisateur;
+  assert.strictEqual((await appel('dir', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 400, 'pas de suppression de son propre compte');
+  assert.strictEqual((await appel('sec', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 403, 'réservé au directeur');
+});
+
 test('archivage puis réinscription', async () => {
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/archiver`, { methode: 'POST', corps: { motif: 'Déménagement' } })).statut, 200);
   const archives = (await appel('dir', '/api/eleves?statut=archive')).donnees;
