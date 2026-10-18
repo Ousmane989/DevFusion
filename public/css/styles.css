@@ -767,6 +767,25 @@ img { max-width: 100%; display: block; }
 .academy-item-sub { font-size: .76rem; color: var(--text-mute); }
 .academy-item-sub em { color: var(--gold-light); font-style: normal; }
 
+/* ================= Agence de livraison (collaboration) ================= */
+.agency-list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.ag-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-card); }
+.ag-ic { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; color: var(--gold); border: 1px solid var(--line); background: rgba(212,175,55,.08); }
+.ag-ic svg { width: 24px; height: 24px; }
+.ag-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ag-name { font-weight: 600; }
+.ag-city { font-size: .84rem; color: var(--text-mute); }
+.ag-chip { align-self: flex-start; font-size: .76rem; font-weight: 600; padding: 3px 10px; border-radius: 50px; border: 1px solid var(--line); color: var(--text-mute); }
+.ag-chip.ok { color: #7fe0a8; border-color: rgba(52,199,123,.4); background: rgba(52,199,123,.12); }
+.ag-chip.wait { color: var(--gold-light); border-color: rgba(212,175,55,.4); background: rgba(212,175,55,.1); }
+.ag-chip.no { color: #f0a29c; border-color: rgba(230,103,95,.4); }
+.ag-act { flex: none; }
+@media (max-width: 560px) {
+  .ag-card { flex-wrap: wrap; }
+  .ag-act { width: 100%; }
+  .ag-act .btn { width: 100%; }
+}
+
 /* --- Table produits : cellules & actions --- */
 .small { font-size: 0.78rem; }
 .orders td .muted.small { margin-top: 2px; }

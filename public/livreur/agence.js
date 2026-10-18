@@ -9,6 +9,7 @@
     { id: 'commandes', label: 'Commandes', icon: 'list' },
     { id: 'livreurs', label: 'Livreurs', icon: 'bike' },
     { id: 'partenaires', label: 'Partenaires', icon: 'store' },
+    { id: 'boutiques', label: 'Boutiques Karat', icon: 'store' },
     { id: 'stock', label: 'Stock', icon: 'warehouse' },
     { id: 'caisse', label: 'Caisse', icon: 'cash' },
     { id: 'reversements', label: 'Reversements', icon: 'shield' },
@@ -340,6 +341,27 @@
         '<div class="btns"><a class="btn btn-dark btn-sm" target="_blank" rel="noopener" href="https://wa.me/' + esc(m.phone) + '">WhatsApp</a><button class="btn btn-ghost btn-sm" data-msg="' + m.id + '" data-handled="' + (m.handled ? 0 : 1) + '">' + (m.handled ? 'Marquer non traité' : 'Marquer traité') + '</button></div></div>').join('')
         : '<div class="empty">Aucun message.</div>';
     },
+    async boutiques() {
+      const r = await api('/agency/collabs');
+      const rows = (r.data && r.data.collabs) || [];
+      LV.setCount('boutiques', rows.filter((c) => c.status === 'pending').length);
+      const stat = {
+        pending: '<b style="color:#b8860b">En attente</b>',
+        accepted: '<b style="color:#1a9e5b">Acceptée ✓</b>',
+        rejected: '<span class="muted">Refusée</span>',
+      };
+      const act = (c) => c.status === 'pending'
+        ? '<button class="btn btn-primary btn-sm" data-collab-accept="' + c.id + '">Accepter</button> <button class="btn btn-ghost btn-sm" data-collab-reject="' + c.id + '">Refuser</button>'
+        : (c.status === 'accepted'
+          ? '<button class="btn btn-ghost btn-sm" data-collab-reject="' + c.id + '">Suspendre</button>'
+          : '<button class="btn btn-primary btn-sm" data-collab-accept="' + c.id + '">Accepter</button>');
+      document.getElementById('a-collabs').innerHTML = rows.length
+        ? '<table><thead><tr><th>Boutique</th><th>Téléphone</th><th>Demandée le</th><th>Statut</th><th></th></tr></thead><tbody>' +
+          rows.map((c) => '<tr><td><b>' + esc(c.shop_name || '—') + '</b></td><td><a class="gold" href="tel:+' + esc(c.phone) + '">' + esc(phoneFmt(c.phone)) + '</a></td>' +
+            '<td class="muted">' + date(c.created_at, true) + '</td><td>' + (stat[c.status] || esc(c.status)) + '</td>' +
+            '<td class="num">' + act(c) + '</td></tr>').join('') + '</tbody></table>'
+        : '<div class="empty">Aucune demande de collaboration des boutiques Karat.</div>';
+    },
   };
 
   function refresh() {
@@ -473,6 +495,17 @@
       await api('/agency/messages/' + b.dataset.msg, { handled: b.dataset.handled === '1' }, 'PUT');
       return VIEWS.messages();
     }
+
+    if ((b = t.closest('[data-collab-accept]'))) {
+      const r = await api('/agency/collabs/' + b.dataset.collabAccept + '/accept', {});
+      if (!r.ok) return toast(r.data.error, true);
+      toast('Collaboration acceptée — vous recevrez ses commandes.'); return VIEWS.boutiques();
+    }
+    if ((b = t.closest('[data-collab-reject]'))) {
+      const r = await api('/agency/collabs/' + b.dataset.collabReject + '/reject', {});
+      if (!r.ok) return toast(r.data.error, true);
+      toast('Mis à jour'); return VIEWS.boutiques();
+    }
   });
 
   let qTimer;
@@ -480,12 +513,22 @@
   ['a-f-status', 'a-f-partner', 'a-f-courier'].forEach((id) => document.getElementById(id).addEventListener('change', VIEWS.commandes));
 
   shell.start();
-  // Compteurs de la barre latérale chargés dès l'ouverture.
-  if ((location.hash.slice(1) || 'dashboard') !== 'dashboard') {
-    api('/agency/summary').then((s) => {
+  // Compteurs de la barre latérale.
+  function syncCounts() {
+    return api('/agency/summary').then((s) => {
+      if (!s.ok) return;
       const d = s.data;
       LV.setCount('appel', d.to_confirm); LV.setCount('dispatch', d.unassigned); LV.setCount('messages', d.messages);
       LV.setCount('livreurs', d.pending_users.coursier || 0); LV.setCount('partenaires', d.pending_users.partenaire || 0);
+      LV.setCount('boutiques', d.boutique_requests || 0);
     });
   }
+  if ((location.hash.slice(1) || 'dashboard') !== 'dashboard') syncCounts();
+  // Temps réel : rafraîchit les compteurs et la vue courante toutes les 25 s,
+  // pour voir arriver les nouvelles commandes et demandes sans recharger.
+  setInterval(() => {
+    syncCounts();
+    const id = location.hash.slice(1) || 'dashboard';
+    if (['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch'].includes(id)) refresh();
+  }, 25000);
 })();

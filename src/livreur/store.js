@@ -135,6 +135,19 @@ const SCHEMA = `
     handled INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS lv_collabs (
+    id ${ID},
+    merchant_id INTEGER NOT NULL,
+    agency_id INTEGER NOT NULL,
+    shop_name TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    city TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL,
+    responded_at TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX IF NOT EXISTS idx_lv_collabs_merchant ON lv_collabs(merchant_id);
+  CREATE INDEX IF NOT EXISTS idx_lv_collabs_agency ON lv_collabs(agency_id, status);
 `;
 
 // Villes desservies et délais : public/livreur/defaults.json, fichier partagé
@@ -237,7 +250,69 @@ async function addEvent(orderId, status, note, actor) {
     .run(orderId, status, note || '', actor || '', now());
 }
 
+// ------------------------------------------------------------------
+// Collaboration boutique Karat ↔ agence de livraison.
+// Un commerçant Karat demande ; l'agence accepte ; ses commandes boutique
+// sont alors transmises automatiquement à l'agence (temps réel).
+// ------------------------------------------------------------------
+
+// Agences actives disponibles (pour que le commerçant choisisse).
+async function listActiveAgencies() {
+  await ensureReady();
+  return db.prepare("SELECT id, name, business_name, city, phone FROM lv_users WHERE role = 'agence' AND status = 'active' ORDER BY id").all();
+}
+
+// Collaboration ACCEPTÉE d'un commerçant (ou null).
+async function acceptedCollabFor(merchantId) {
+  if (!merchantId) return null;
+  await ensureReady();
+  return db.prepare("SELECT * FROM lv_collabs WHERE merchant_id = ? AND status = 'accepted' ORDER BY id DESC").get(merchantId);
+}
+
+// Toutes les collaborations d'un commerçant (pour afficher l'état côté boutique).
+async function collabsForMerchant(merchantId) {
+  await ensureReady();
+  return db.prepare('SELECT * FROM lv_collabs WHERE merchant_id = ? ORDER BY id DESC').all(merchantId);
+}
+
+// Crée une commande de livraison à partir d'une commande boutique Karat.
+// Non bloquant pour la boutique : l'appelant protège toujours par try/catch.
+async function createBoutiqueOrder({ merchant, order }) {
+  await ensureReady();
+  const itemsCount = Math.min(999, Math.max(1, Math.round(Number(order.items_count) || 1)));
+  const t = now();
+  const o = {
+    code: newTrackingCode(),
+    source: 'boutique',
+    partner_id: null,
+    service: 'ecommerce',
+    sender_name: String(merchant.shop_name || 'Boutique').slice(0, 120),
+    sender_phone: String(merchant.pickup_phone || merchant.phone || '').replace(/[^0-9]/g, ''),
+    pickup_address: String(merchant.pickup_address || '').slice(0, 300),
+    recipient_name: String(order.customer || '').slice(0, 120),
+    recipient_phone: String(order.phone || '').replace(/[^0-9]/g, ''),
+    address: String(order.address || order.city || '').slice(0, 300),
+    zone_id: null,
+    zone_name: String(order.city || '').slice(0, 120),
+    description: String(order.description || '').slice(0, 500),
+    stock_id: null,
+    stock_qty: 0,
+    items_count: itemsCount,
+    cod_amount: Math.max(0, Math.round(Number(order.total) || 0)),
+    fee: deliveryFee(itemsCount),
+    fee_payer: 'destinataire',
+    scheduled_for: '',
+    received_by: '',
+    note: 'Commande boutique Karat' + (order.ref ? ' · Réf ' + order.ref : ''),
+  };
+  const cols = Object.keys(o);
+  const r = await db.prepare(`INSERT INTO lv_orders (${cols.join(', ')}, status, created_at, updated_at) VALUES (${cols.map(() => '?').join(', ')}, 'nouvelle', ?, ?)`)
+    .run(...cols.map((k) => o[k]), t, t);
+  await addEvent(r.lastInsertRowid, 'nouvelle', 'Commande reçue depuis la boutique Karat', o.sender_name);
+  return r.lastInsertRowid;
+}
+
 module.exports = {
   db, now, today, ensureReady, newTrackingCode, findZone, deliveryFee, collectedAmount, partnerNet, addEvent,
-  STATUSES,
+  STATUSES, listActiveAgencies, acceptedCollabFor, collabsForMerchant, createBoutiqueOrder,
 };

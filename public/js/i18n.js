@@ -161,6 +161,13 @@
     'Créez votre page Facebook professionnelle avec Meta Business et reliez-la à votre boutique Karat.': 'Create your professional Facebook page with Meta Business and link it to your Karat store.',
     'Installez le Pixel Meta et connectez-le à votre boutique pour mesurer vos visiteurs et vos ventes.': 'Install the Meta Pixel and connect it to your store to measure your visitors and sales.',
     'Créez et lancez votre première publicité sur Meta Business pour attirer des clients vers votre boutique.': 'Create and launch your first ad on Meta Business to bring customers to your store.',
+    // Agence de livraison (collaboration)
+    'Agence de livraison': 'Delivery agency',
+    "Confiez vos livraisons à une agence partenaire. Envoyez une demande : dès qu'elle accepte, vos commandes lui sont transmises automatiquement, en temps réel.": 'Hand your deliveries to a partner agency. Send a request: as soon as it accepts, your orders are forwarded to it automatically, in real time.',
+    "1. Vous envoyez une demande à une agence. 2. L'agence l'accepte. 3. Chaque nouvelle commande de votre boutique arrive directement chez elle pour être livrée — paiement à la livraison.": '1. You send a request to an agency. 2. The agency accepts it. 3. Every new order from your store goes straight to it for delivery — cash on delivery.',
+    'Demander la collaboration': 'Request collaboration', 'Collaboration active ✓': 'Collaboration active ✓', 'Demande en attente…': 'Request pending…',
+    'Demande refusée': 'Request declined', 'Non connectée': 'Not connected', 'Redemander': 'Request again', 'Annuler la demande': 'Cancel request', 'Arrêter': 'Stop',
+    'Aucune agence de livraison disponible pour le moment.': 'No delivery agency available at the moment.',
   };
 
   var AR = {
@@ -306,6 +313,13 @@
     'Créez votre page Facebook professionnelle avec Meta Business et reliez-la à votre boutique Karat.': 'أنشئ صفحتك الاحترافية على فيسبوك عبر Meta Business واربطها بمتجر Karat.',
     'Installez le Pixel Meta et connectez-le à votre boutique pour mesurer vos visiteurs et vos ventes.': 'ثبّت Meta Pixel واربطه بمتجرك لقياس زوّارك ومبيعاتك.',
     'Créez et lancez votre première publicité sur Meta Business pour attirer des clients vers votre boutique.': 'أنشئ وأطلق أول إعلان لك على Meta Business لجذب العملاء إلى متجرك.',
+    // Agence de livraison (collaboration)
+    'Agence de livraison': 'وكالة التوصيل',
+    "Confiez vos livraisons à une agence partenaire. Envoyez une demande : dès qu'elle accepte, vos commandes lui sont transmises automatiquement, en temps réel.": 'أوكِل عمليات التوصيل إلى وكالة شريكة. أرسل طلبًا: بمجرد قبولها، تُحوَّل طلباتك إليها تلقائيًا، في الوقت الفعلي.',
+    "1. Vous envoyez une demande à une agence. 2. L'agence l'accepte. 3. Chaque nouvelle commande de votre boutique arrive directement chez elle pour être livrée — paiement à la livraison.": '1. ترسل طلبًا إلى وكالة. 2. تقبله الوكالة. 3. يصل كل طلب جديد من متجرك إليها مباشرة للتوصيل — الدفع عند الاستلام.',
+    'Demander la collaboration': 'طلب التعاون', 'Collaboration active ✓': 'تعاون نشط ✓', 'Demande en attente…': 'الطلب قيد الانتظار…',
+    'Demande refusée': 'تم رفض الطلب', 'Non connectée': 'غير متصلة', 'Redemander': 'إعادة الطلب', 'Annuler la demande': 'إلغاء الطلب', 'Arrêter': 'إيقاف',
+    'Aucune agence de livraison disponible pour le moment.': 'لا توجد وكالة توصيل متاحة حاليًا.',
   };
 
   var DICT = { en: EN, ar: AR };
