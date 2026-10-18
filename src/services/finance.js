@@ -115,7 +115,7 @@ async function resumeMois(mois, opts = {}) {
   const encaisse = s.reduce((t, x) => t + Math.min(x.verse, x.du), 0);
   return {
     mois, attendu, encaisse, reste: attendu - encaisse,
-    taux: attendu > 0 ? Math.round((encaisse / attendu) * 1000) / 10 : 100,
+    taux: attendu > 0 ? Math.round((encaisse / attendu) * 1000) / 10 : null, // null : rien d'attendu ce mois
     nbPayes: s.filter((x) => x.statut === 'paye').length,
     nbPartiels: s.filter((x) => x.statut === 'partiel').length,
     nbImpayes: s.filter((x) => x.statut === 'impaye').length,
