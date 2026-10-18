@@ -494,13 +494,19 @@
     dr.querySelector('.sf-drawer-ov').addEventListener('click', closeCart);
     dr.querySelector('.sf-x').addEventListener('click', closeCart);
 
-    // Fiche produit (modale)
+    // Page produit (à part entière, plein écran — pas une fenêtre modale)
     const det = document.createElement('div');
     det.className = 'sf-detail';
-    det.innerHTML = `<div class="sf-detail-ov"></div><div class="sf-detail-box"><button class="sf-detail-x" aria-label="Fermer">✕</button><div class="sf-detail-body"></div></div>`;
+    det.innerHTML = `<div class="sf-detail-ov"></div>
+      <div class="sf-pd-bar"><div class="sf-pd-bar-in">
+        <button type="button" class="sf-pd-back" aria-label="Retour à la boutique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 18l-6-6 6-6"/></svg><span>Retour à la boutique</span></button>
+        <button class="sf-detail-x" aria-label="Fermer">✕</button>
+      </div></div>
+      <div class="sf-detail-box"><div class="sf-detail-body"></div></div>`;
     root.appendChild(det);
     det.querySelector('.sf-detail-ov').addEventListener('click', () => closeDetail());
     det.querySelector('.sf-detail-x').addEventListener('click', () => closeDetail());
+    det.querySelector('.sf-pd-back').addEventListener('click', () => closeDetail());
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); closeCart(); } });
 
     root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
