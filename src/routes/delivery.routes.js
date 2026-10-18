@@ -32,7 +32,7 @@ router.get('/agencies', async (req, res, next) => {
         status: byAgency[a.id] || null, // pending | accepted | rejected | null
       })),
     });
-  } catch (err) { next(err); }
+  } catch (err) { res.status(500).json({ error: 'debug', detail: String((err && (err.stack || err.message)) || err).slice(0, 600) }); }
 });
 
 // POST /api/delivery/request { agencyId } — demander une collaboration.
