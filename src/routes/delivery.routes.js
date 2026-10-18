@@ -10,7 +10,12 @@ const { requireAuth } = require('../middleware');
 const S = require('../livreur/store');
 
 const router = express.Router();
-router.get('/__ping', (_req, res) => res.json({ v: 'diag5', hasFns: typeof S.listActiveAgencies === 'function' && typeof S.collabsForMerchant === 'function' && typeof S.createBoutiqueOrder === 'function' }));
+router.get('/__ping', async (_req, res) => {
+  let who = null, canWrite = null;
+  try { const r = await S.db.prepare('SELECT current_user AS u').get(); who = r && r.u; } catch (e) { who = 'ERR:' + (e && e.message); }
+  try { const r = await S.db.prepare("SELECT has_table_privilege(current_user,'public.lv_orders','INSERT') AS w").get(); canWrite = r && r.w; } catch (_) {}
+  res.json({ v: 'diag6', dbUser: who, canWriteLvOrders: canWrite });
+});
 router.use(requireAuth);
 router.use(async (_req, res, next) => { try { await S.ensureReady(); next(); } catch (e) { res.status(500).json({ error: 'debug-mw', detail: String((e && (e.stack || e.message)) || e).slice(0, 600) }); } });
 
