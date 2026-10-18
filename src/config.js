@@ -30,7 +30,14 @@ function resolveJwtSecret() {
     fs.writeFileSync(file, s, { mode: 0o600 });
     return { secret: s, generated: true };
   } catch (_) {
-    // Systeme de fichiers en lecture seule : secret ephemere en memoire.
+    // Systeme de fichiers en lecture seule (serverless, ex. Vercel) : chaque
+    // instance aurait sinon son propre secret aleatoire et les sessions seraient
+    // refusees d'une instance a l'autre. On derive donc un secret stable et prive
+    // de DATABASE_URL ; a defaut, secret ephemere en memoire.
+    if (process.env.DATABASE_URL) {
+      const s = crypto.createHmac('sha256', process.env.DATABASE_URL).update('karat-session-secret').digest('hex');
+      return { secret: s, generated: true };
+    }
     return { secret: crypto.randomBytes(48).toString('hex'), generated: true, ephemeral: true };
   }
 }
