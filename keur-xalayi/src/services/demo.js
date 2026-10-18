@@ -19,6 +19,10 @@ const tel = () => '+222' + alea(['2', '3', '4']) + String(Math.floor(Math.random
 async function demo() {
   const n = await one('SELECT COUNT(*) AS n FROM eleves');
   if (n.n > 0) { console.log('  Des élèves existent déjà : données de démonstration ignorées.'); return; }
+  // Verrou : si plusieurs instances démarrent en même temps, une seule remplit la base.
+  await query('CREATE TABLE IF NOT EXISTS demo_verrou (id INTEGER PRIMARY KEY)');
+  const verrou = await query('INSERT INTO demo_verrou VALUES (1) ON CONFLICT DO NOTHING RETURNING id');
+  if (!verrou.length) return;
   const annee = await one('SELECT * FROM annees_scolaires WHERE active');
 
   await query(`UPDATE parametres SET adresse = 'Tevragh Zeina, Nouakchott', telephone = '+222 45 25 00 00', slogan = 'École maternelle et primaire' WHERE id = 1`);
