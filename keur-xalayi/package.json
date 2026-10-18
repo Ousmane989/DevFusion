@@ -10,7 +10,7 @@
     "dev": "node --watch server.js",
     "db:init": "node scripts/init-db.js",
     "db:demo": "node scripts/init-db.js --demo",
-    "test": "node --test test/"
+    "test": "node --test --test-concurrency=1 test/*.test.js"
   },
   "engines": {
     "node": ">=18"
