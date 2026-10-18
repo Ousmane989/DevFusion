@@ -1,21 +1,47 @@
 'use strict';
 
-// Données de référence créées au premier démarrage : niveaux PS → CM2,
+// Données de référence créées au premier démarrage : niveaux PS → CM2 (dont le CI),
 // matières, compétences de maternelle, année scolaire, compte directeur.
 const bcrypt = require('bcryptjs');
-const { query, one } = require('../db');
+const { query, one, tx } = require('../db');
 const config = require('../config');
 
 const NIVEAUX = [
   ['PS', 'Petite Section', 1, 'maternelle'],
   ['MS', 'Moyenne Section', 2, 'maternelle'],
   ['GS', 'Grande Section', 3, 'maternelle'],
-  ['CP', 'CP', 4, 'primaire'],
-  ['CE1', 'CE1', 5, 'primaire'],
-  ['CE2', 'CE2', 6, 'primaire'],
-  ['CM1', 'CM1', 7, 'primaire'],
-  ['CM2', 'CM2', 8, 'primaire'],
+  ['CI', 'CI', 4, 'primaire'], // Cours d'Initiation (Sénégal)
+  ['CP', 'CP', 5, 'primaire'],
+  ['CE1', 'CE1', 6, 'primaire'],
+  ['CE2', 'CE2', 7, 'primaire'],
+  ['CM1', 'CM1', 8, 'primaire'],
+  ['CM2', 'CM2', 9, 'primaire'],
 ];
+
+/**
+ * Bases créées avant l'ajout du CI : on insère le CI entre la Grande Section
+ * et le CP (décalage des ordres), avec les tarifs du CP comme point de départ,
+ * les mêmes matières que le CP et une classe CI dans l'année active.
+ */
+async function ajouterCI() {
+  const ci = await one("SELECT id FROM niveaux WHERE code = 'CI'");
+  const cp = await one("SELECT * FROM niveaux WHERE code = 'CP'");
+  if (ci || !cp) return;
+  await tx(async (c) => {
+    // Décalage en deux temps pour respecter l'unicité de « ordre ».
+    await c.query('UPDATE niveaux SET ordre = ordre + 100 WHERE ordre >= $1', [cp.ordre]);
+    await c.query('UPDATE niveaux SET ordre = ordre - 99 WHERE ordre >= 100');
+    const n = await c.one(
+      `INSERT INTO niveaux (code, nom, ordre, cycle, frais_inscription, mensualite)
+       VALUES ('CI', 'CI', $1, 'primaire', $2, $3) RETURNING id`,
+      [cp.ordre, cp.frais_inscription, cp.mensualite]);
+    await c.query("UPDATE matieres SET niveaux = array_append(niveaux, 'CI') WHERE 'CP' = ANY(niveaux) AND NOT 'CI' = ANY(niveaux)");
+    await c.query(
+      `INSERT INTO classes (annee_id, niveau_id, groupe, nom)
+       SELECT id, $1, '', 'CI' FROM annees_scolaires WHERE active ON CONFLICT DO NOTHING`, [n.id]);
+  });
+  console.log('  ✔ Niveau CI ajouté entre la Grande Section et le CP.');
+}
 
 const MATIERES = [
   ['Français', 3, 10], ['Mathématiques', 3, 10], ['Arabe', 2, 10],
@@ -46,6 +72,7 @@ function anneeParDefaut(d = new Date()) {
 }
 
 async function amorcer() {
+  await ajouterCI();
   for (const [code, nom, ordre, cycle] of NIVEAUX) {
     await query(
       `INSERT INTO niveaux (code, nom, ordre, cycle) VALUES ($1,$2,$3,$4) ON CONFLICT (code) DO NOTHING`,

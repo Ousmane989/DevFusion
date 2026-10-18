@@ -13,7 +13,7 @@ const PRENOMS_F = ['Fatou', 'Awa', 'Aminata', 'Khady', 'Ndèye', 'Mariama', 'Ast
 const NOMS = ['DIOP', 'NDIAYE', 'FALL', 'SOW', 'BA', 'DIALLO', 'SECK', 'GUEYE', 'FAYE', 'SARR', 'MBAYE', 'DIOUF', 'CISSÉ', 'THIAM', 'NIANG', 'KANE'];
 const QUARTIERS = ['Médina', 'Parcelles Assainies', 'Grand Yoff', 'Sicap Liberté', 'HLM', 'Ouakam', 'Pikine', 'Guédiawaye'];
 const LIEUX = ['Dakar', 'Dakar', 'Dakar', 'Pikine', 'Rufisque', 'Thiès', 'Kaolack', 'Saint-Louis'];
-const TARIFS = { PS: [20000, 15000], MS: [20000, 15000], GS: [20000, 17500], CP: [25000, 17500], CE1: [25000, 17500], CE2: [25000, 20000], CM1: [30000, 22500], CM2: [30000, 22500] };
+const TARIFS = { PS: [20000, 15000], MS: [20000, 15000], GS: [20000, 17500], CI: [25000, 17500], CP: [25000, 17500], CE1: [25000, 17500], CE2: [25000, 20000], CM1: [30000, 22500], CM2: [30000, 22500] };
 
 const alea = (t) => t[Math.floor(Math.random() * t.length)];
 const tel = () => '+221' + alea(['77', '78', '76', '70', '75']) + String(Math.floor(Math.random() * 1e7)).padStart(7, '0');
@@ -62,7 +62,7 @@ async function demo() {
   let nbEleves = 0;
   for (const c of classes) {
     const [frais, mens] = TARIFS[c.code];
-    const ageBase = { PS: 3, MS: 4, GS: 5, CP: 6, CE1: 7, CE2: 8, CM1: 9, CM2: 10 }[c.code];
+    const ageBase = { PS: 3, MS: 4, GS: 5, CI: 6, CP: 7, CE1: 8, CE2: 9, CM1: 10, CM2: 11 }[c.code];
     const nb = 6 + Math.floor(Math.random() * 5);
     for (let k = 0; k < nb; k++) {
       const garcon = Math.random() < 0.5;

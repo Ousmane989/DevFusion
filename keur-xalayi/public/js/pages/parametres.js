@@ -3,7 +3,7 @@
 import { get, post, put, del, e, options, champ, champTel, activerTels, lireForm, tableau, dateHeure, toast, erreur, reduireImage, formulaire, confirmer, resultatEnvoi } from '../ui.js';
 import { rafraichirContexte } from '../app.js';
 
-const NIVEAUX_CODES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
+const NIVEAUX_CODES = ['CI', 'CP', 'CE1', 'CE2', 'CM1', 'CM2'];
 
 export async function afficher(el, params) {
   el.innerHTML = `<div class="entete-page"><h1>Paramètres</h1></div>

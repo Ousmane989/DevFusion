@@ -71,7 +71,7 @@ router.get('/matieres', ah(async (req, res) => {
 }));
 
 router.post('/matieres', autoriser('directeur'), ah(async (req, res) => {
-  const { nom, coefficient = 1, bareme = 10, niveaux = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'] } = req.body;
+  const { nom, coefficient = 1, bareme = 10, niveaux = ['CI', 'CP', 'CE1', 'CE2', 'CM1', 'CM2'] } = req.body;
   if (!nom) throw new HttpError(400, 'Nom de la matière obligatoire.');
   res.status(201).json(await one(
     'INSERT INTO matieres (nom, coefficient, bareme, niveaux, ordre) VALUES ($1,$2,$3,$4,(SELECT COALESCE(MAX(ordre),0)+1 FROM matieres)) RETURNING *',
