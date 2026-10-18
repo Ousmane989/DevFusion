@@ -257,12 +257,21 @@ img { max-width: 100%; display: block; }
    ================================================================== */
 /* Conteneur défilant en flux bloc : la fiche s'affiche près du haut et
    défile de haut en bas — jamais coupée, quel que soit son contenu. */
-.sf-detail { position: fixed; inset: 0; z-index: 70; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Page produit à part entière : plein écran, fond plein (pas de fenêtre modale
+   flottante au-dessus de la boutique). */
+.sf-detail { position: fixed; inset: 0; z-index: 70; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
 .sf-detail.open { display: block; }
-.sf-detail-ov { position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(4px); animation: sfFade .3s ease; }
-.sf-detail-box { position: relative; z-index: 1; width: 100%; max-width: 760px; margin: 5vh auto; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; animation: sfPop .35s cubic-bezier(.16,1,.3,1); box-shadow: 0 40px 90px -30px rgba(0,0,0,.8); }
+.sf-detail-ov { display: none; }
+.sf-detail-box { position: relative; z-index: 1; width: 100%; max-width: 1000px; margin: 0 auto; background: var(--bg); border: none; border-radius: 0; box-shadow: none; animation: sfFade .3s ease; }
+/* Barre supérieure de la page produit : bouton « Retour à la boutique ». */
+.sf-pd-bar { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.sf-pd-bar-in { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px clamp(14px, 4vw, 26px); }
+.sf-pd-back { display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--line); color: var(--text);
+  border-radius: 50px; padding: 9px 18px; font-family: var(--body); font-size: 0.92rem; cursor: pointer; transition: all .2s; }
+.sf-pd-back:hover { border-color: var(--accent); color: var(--accent); }
+.sf-pd-back svg { width: 18px; height: 18px; }
 @keyframes sfPop { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
-.sf-detail-x { position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 70%, transparent); color: var(--text); cursor: pointer; font-size: 1rem; }
+.sf-detail-x { position: static; flex: none; z-index: 3; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 1rem; }
 .sf-detail-x:hover { border-color: var(--accent); color: var(--accent); }
 .sf-detail-grid { display: grid; grid-template-columns: 1fr 1fr; }
 .sf-detail-visual { min-height: 280px; }
@@ -414,7 +423,7 @@ img { max-width: 100%; display: block; }
 
 /* Page produit sur grand écran : image à gauche, infos + commande à droite. */
 @media (min-width: 760px) {
-  .sf-detail-box.pd { max-width: 900px; }
+  .sf-detail-box.pd { max-width: 1000px; }
   .sf-pd { display: grid; grid-template-columns: 0.92fr 1.08fr; align-items: start; }
   /* Image compacte et fixée en haut pendant qu'on lit / commande à droite. */
   .sf-pd-media { position: sticky; top: 0; align-self: start; }
