@@ -278,6 +278,7 @@
     if (name === 'analytics') loadAnalytics();       // toujours rafraichir
     if (name === 'payment') loadPayment();            // encaissements a jour
     if (name === 'formation' && !loaded.formation) loadFormation();
+    if (name === 'delivery') loadDelivery();
     if (name === 'finance' && !loaded.finance) loadFinance();
     if (name === 'developer' && !loaded.developer) loadDeveloper();
     if (name === 'settings' && !loaded.settings) loadSettings();
@@ -1186,6 +1187,46 @@
   }
 
   // ================================================================
+  // Agence de livraison — collaboration (demande / acceptation)
+  // ================================================================
+  async function loadDelivery() {
+    const r = await api('/api/delivery/agencies', 'GET');
+    renderAgencies((r.ok && r.data && r.data.agencies) || []);
+    loaded.delivery = true;
+  }
+  function agencyChip(status) {
+    if (status === 'accepted') return '<span class="ag-chip ok">Collaboration active ✓</span>';
+    if (status === 'pending') return '<span class="ag-chip wait">Demande en attente…</span>';
+    if (status === 'rejected') return '<span class="ag-chip no">Demande refusée</span>';
+    return '<span class="ag-chip">Non connectée</span>';
+  }
+  function agencyBtn(a) {
+    if (a.status === 'accepted' || a.status === 'pending') {
+      return '<button type="button" class="btn btn-ghost btn-sm" data-ag-cancel="' + a.id + '">' + (a.status === 'accepted' ? 'Arrêter' : 'Annuler la demande') + '</button>';
+    }
+    return '<button type="button" class="btn btn-primary btn-sm" data-ag-req="' + a.id + '">' + (a.status === 'rejected' ? 'Redemander' : 'Demander la collaboration') + '</button>';
+  }
+  function renderAgencies(list) {
+    const el = q('#agency-list'); if (!el) return;
+    if (!list.length) { el.innerHTML = '<div class="panel" style="text-align:center;color:var(--text-mute)">Aucune agence de livraison disponible pour le moment.</div>'; return; }
+    el.innerHTML = list.map((a) => '<div class="ag-card">'
+      + '<div class="ag-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8zM5.5 19a2 2 0 1 0 0 .01M18.5 19a2 2 0 1 0 0 .01"/></svg></div>'
+      + '<div class="ag-body"><div class="ag-name">' + esc(a.name) + '</div>' + (a.city ? '<div class="ag-city">' + esc(a.city) + '</div>' : '') + agencyChip(a.status) + '</div>'
+      + '<div class="ag-act">' + agencyBtn(a) + '</div></div>').join('');
+    if (window.KaratI18n) window.KaratI18n.apply();
+  }
+  async function requestAgency(id) {
+    const r = await api('/api/delivery/request', 'POST', { agencyId: Number(id) });
+    if (r.ok) { dashToast('Demande envoyée ✓'); loadDelivery(); }
+    else dashToast('✖ ' + ((r.data && r.data.error) || 'Erreur'));
+  }
+  async function cancelAgency(id) {
+    if (!window.confirm('Arrêter la collaboration ou annuler la demande ?')) return;
+    const r = await api('/api/delivery/cancel', 'POST', { agencyId: Number(id) });
+    if (r.ok) { dashToast('Mis à jour'); loadDelivery(); }
+  }
+
+  // ================================================================
   // Multi-boutiques : sélecteur + création
   // ================================================================
   let shopsData = [];
@@ -1267,6 +1308,13 @@
     if (alist) alist.addEventListener('click', (e) => { const b = e.target.closest('.academy-item'); if (b) playModule(b.dataset.mod); });
     const adone = q('#academy-done-btn');
     if (adone) adone.addEventListener('click', () => { fmToggleDone(fmCurrent); renderFormation(); playModule(fmCurrent); });
+    // Agence de livraison : demander / annuler une collaboration.
+    const agList = q('#agency-list');
+    if (agList) agList.addEventListener('click', (e) => {
+      let b;
+      if ((b = e.target.closest('[data-ag-req]'))) return requestAgency(b.dataset.agReq);
+      if ((b = e.target.closest('[data-ag-cancel]'))) return cancelAgency(b.dataset.agCancel);
+    });
     // Barre d'onglets du bas (téléphone) : navigation rapide type appli.
     qa('.dash-tab[data-section]').forEach((t) => t.addEventListener('click', () => switchSection(t.dataset.section)));
     q('#tab-more') && q('#tab-more').addEventListener('click', () => setSide(!q('#dash-side').classList.contains('open')));

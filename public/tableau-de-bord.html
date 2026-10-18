@@ -131,6 +131,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8zM5.5 19a2 2 0 1 0 0 .01M18.5 19a2 2 0 1 0 0 .01"/></svg>
             <span>Livraison</span>
           </button>
+          <button class="side-link" data-section="delivery">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.6 10.6 15.4 7.4M8.6 13.4l6.8 3.2"/></svg>
+            <span>Agence de livraison</span>
+          </button>
           <button class="side-link" data-section="payment">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
             <span>Paiement</span>
@@ -318,6 +322,19 @@
             <button type="button" class="btn btn-ghost btn-sm" id="ship-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Ajouter une zone</button>
             <div class="pf-actions"><button type="button" class="btn btn-primary" id="ship-save">Enregistrer la livraison</button></div>
           </div>
+        </section>
+
+        <!-- ================= AGENCE DE LIVRAISON ================= -->
+        <section class="dash-section" id="sec-delivery">
+          <div class="dash-title"><div><h1>Agence de livraison</h1><p>Confiez vos livraisons à une agence partenaire. Envoyez une demande : dès qu'elle accepte, vos commandes lui sont transmises automatiquement, en temps réel.</p></div></div>
+          <div class="agency-note panel" style="max-width:720px;display:flex;gap:14px;align-items:flex-start">
+            <span style="font-size:1.5rem;line-height:1">🚚</span>
+            <div>
+              <strong>Comment ça marche</strong>
+              <p class="pf-hint" style="margin-top:4px">1. Vous envoyez une demande à une agence. 2. L'agence l'accepte. 3. Chaque nouvelle commande de votre boutique arrive directement chez elle pour être livrée — paiement à la livraison.</p>
+            </div>
+          </div>
+          <div id="agency-list" class="agency-list" style="max-width:720px"></div>
         </section>
 
         <!-- ================= MA BOUTIQUE ================= -->

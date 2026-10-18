@@ -8,8 +8,38 @@ const { themeById, defaultShipping, publicProduct, slugify, isoCurrency } = requ
 const { createOrder } = require('../ordersStore');
 const { config } = require('../config');
 const { findStore } = require('../storefront');
+const LV = require('../livreur/store');
 
 const router = express.Router();
+
+// Transmet une commande boutique à l'agence de livraison si le commerçant a
+// une collaboration ACCEPTÉE. Appelé en « fire-and-forget » après la réponse :
+// une erreur ici ne doit JAMAIS empêcher la commande du client.
+async function mirrorToAgency(user, body, items, total, order) {
+  const collab = await LV.acceptedCollabFor(user.id);
+  if (!collab) return;
+  const st = await db.prepare('SELECT address, phone FROM store_settings WHERE user_id = ?').get(user.id);
+  const itemsCount = items.reduce((n, it) => n + (Number(it.qty) || 1), 0);
+  const desc = items.map((it) => (it.qty > 1 ? it.qty + '× ' : '') + it.name + (it.variant ? ' (' + it.variant + ')' : '')).join(', ');
+  await LV.createBoutiqueOrder({
+    merchant: {
+      shop_name: user.shop_name,
+      phone: user.phone,
+      pickup_phone: (st && st.phone) || user.phone,
+      pickup_address: (st && st.address) || '',
+    },
+    order: {
+      customer: String(body.name || '').trim(),
+      phone: String(body.phone || '').trim(),
+      city: String(body.city || '').trim(),
+      address: String(body.address || body.city || '').trim(),
+      description: desc,
+      items_count: itemsCount,
+      total,
+      ref: order && order.ref,
+    },
+  });
+}
 
 // Sources de trafic reconnues (dont les campagnes Facebook / Instagram).
 const TRAFFIC_SOURCES = ['direct', 'social', 'search', 'whatsapp', 'referral', 'facebook', 'instagram', 'ads'];
@@ -197,6 +227,9 @@ router.post('/store/:slug/order', orderLimiter, async (req, res) => {
   });
 
   res.status(201).json({ ok: true, ref: order.ref, subtotal, shipping, total, payment: 'cod' });
+
+  // Transmission à l'agence partenaire (après la réponse, jamais bloquante).
+  mirrorToAgency(user, b, items, total, order).catch(() => {});
 });
 
 module.exports = router;

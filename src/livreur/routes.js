@@ -371,7 +371,7 @@ router.use('/courier', courier);
 const agency = express.Router();
 agency.use(requireRole('agence'));
 
-agency.get('/summary', wrap(async (_req, res) => {
+agency.get('/summary', wrap(async (req, res) => {
   const d = S.today();
   const all = await db.prepare('SELECT status, cod_amount, fee, fee_payer, courier_id, cash_remit_id, payout_id, partner_id, created_at, delivered_at FROM lv_orders').all();
   const by = {};
@@ -392,11 +392,13 @@ agency.get('/summary', wrap(async (_req, res) => {
   const couriers = await db.prepare("SELECT COUNT(*) AS n FROM lv_users WHERE role = 'coursier' AND status = 'active'").get();
   const partners = await db.prepare("SELECT COUNT(*) AS n FROM lv_users WHERE role = 'partenaire' AND status = 'active'").get();
   const msgs = await db.prepare('SELECT COUNT(*) AS n FROM lv_messages WHERE handled = 0').get();
+  const collabReq = await db.prepare("SELECT COUNT(*) AS n FROM lv_collabs WHERE agency_id = ? AND status = 'pending'").get(req.lv.id);
   res.json({
     total: all.length, by, today_new: todayNew, today_delivered: todayDelivered, cash_out: cashOut, payout_due: payoutDue,
     fees_month: feesMonth, unassigned, to_confirm: by.nouvelle || 0,
     pending_users: Object.fromEntries(pend.map((p) => [p.role, Number(p.n)])),
     couriers: Number(couriers.n), partners: Number(partners.n), messages: Number(msgs.n),
+    boutique_requests: Number(collabReq.n),
   });
 }));
 
@@ -640,6 +642,28 @@ agency.get('/export.csv', wrap(async (_req, res) => {
   const rows = await db.prepare('SELECT * FROM lv_orders ORDER BY id DESC').all();
   res.set('Content-Disposition', 'attachment; filename="commandes-karat-livreur.csv"');
   res.type('text/csv; charset=utf-8').send(toCsv(rows));
+}));
+
+// --- Collaborations avec les boutiques Karat (demande / acceptation) ---
+agency.get('/collabs', wrap(async (req, res) => {
+  const rows = await db.prepare(
+    "SELECT * FROM lv_collabs WHERE agency_id = ? ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, id DESC"
+  ).all(req.lv.id);
+  res.json({ collabs: rows });
+}));
+
+agency.post('/collabs/:id/accept', wrap(async (req, res) => {
+  const c = await db.prepare('SELECT * FROM lv_collabs WHERE id = ? AND agency_id = ?').get(int(req.params.id), req.lv.id);
+  if (!c) return bad(res, 'Demande introuvable.', 404);
+  await db.prepare("UPDATE lv_collabs SET status = 'accepted', responded_at = ? WHERE id = ?").run(S.now(), c.id);
+  res.json({ ok: true });
+}));
+
+agency.post('/collabs/:id/reject', wrap(async (req, res) => {
+  const c = await db.prepare('SELECT * FROM lv_collabs WHERE id = ? AND agency_id = ?').get(int(req.params.id), req.lv.id);
+  if (!c) return bad(res, 'Demande introuvable.', 404);
+  await db.prepare("UPDATE lv_collabs SET status = 'rejected', responded_at = ? WHERE id = ?").run(S.now(), c.id);
+  res.json({ ok: true });
 }));
 
 router.use('/agency', agency);
