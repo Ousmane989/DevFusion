@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion — Keur Xalayi</title>
+  <meta name="theme-color" content="#1f5f6b">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <main class="connexion">
+    <form class="boite" id="form" autocomplete="on">
+      <div class="logo-kx" id="logo">KX</div>
+      <h1 id="nom">Keur Xalayi</h1>
+      <p class="centre muted" style="margin-top:-.2rem">Espace de gestion de l'école</p>
+      <div id="msg"></div>
+      <div class="champ">
+        <label for="identifiant">Identifiant</label>
+        <input id="identifiant" name="identifiant" autocomplete="username" autocapitalize="none" required autofocus>
+      </div>
+      <div class="champ">
+        <label for="mdp">Mot de passe</label>
+        <input id="mdp" name="mot_de_passe" type="password" autocomplete="current-password" required>
+        <label class="case petit" style="margin-top:.4rem"><input type="checkbox" id="voir"> Afficher le mot de passe</label>
+      </div>
+      <button class="btn bloc" id="ok">Se connecter</button>
+      <p class="centre petit muted" style="margin-top:1.2rem">Mot de passe oublié ? Demandez à la direction de le réinitialiser.</p>
+    </form>
+  </main>
+  <script>
+    // Page de connexion : redirige vers l'application si déjà connecté.
+    fetch('/api/auth/moi').then((r) => { if (r.ok) location.replace('/app'); });
+    document.getElementById('voir').onchange = (e) => { document.getElementById('mdp').type = e.target.checked ? 'text' : 'password'; };
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('ok');
+      const msg = document.getElementById('msg');
+      btn.disabled = true; btn.textContent = 'Connexion…'; msg.innerHTML = '';
+      try {
+        const r = await fetch('/api/auth/connexion', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifiant: e.target.identifiant.value, mot_de_passe: e.target.mot_de_passe.value }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.erreur || 'Connexion impossible.');
+        location.replace('/app');
+      } catch (err) {
+        msg.innerHTML = '<div class="alerte danger"></div>';
+        msg.firstChild.textContent = err.message;
+        btn.disabled = false; btn.textContent = 'Se connecter';
+      }
+    };
+  </script>
+</body>
+</html>
