@@ -127,9 +127,7 @@ export async function rafraichirContexte() {
   $('role-user').textContent = ROLES[ctx.utilisateur.role];
   $('nom-user').textContent = ctx.utilisateur.nom_complet;
   $('annee').textContent = ctx.annee ? ctx.annee.libelle : 'Aucune année active';
-  $('logo-menu').outerHTML = ctx.ecole.logo
-    ? `<img id="logo-menu" src="${e(ctx.ecole.logo)}" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;background:#fff">`
-    : '<div class="logo-kx" id="logo-menu">KX</div>';
+  $('logo-menu').src = ctx.ecole.logo || '/img/embleme.png'; // logo personnalisé, sinon celui de l'école
 }
 
 async function demarrer() {

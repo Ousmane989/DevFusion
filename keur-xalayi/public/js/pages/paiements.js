@@ -58,7 +58,7 @@ export async function afficher(el, params) {
           ${kpi('Attendu', argent(r.attendu), nomMois(d.mois), 'var(--secondaire)')}
           ${kpi('Encaissé', argent(r.encaisse), `${r.taux} % recouvré`, 'var(--succes)')}
           ${kpi('Reste à encaisser', argent(r.reste), '', 'var(--danger)')}
-          ${kpi('Élèves', `${r.nbPayes} / ${r.nbPayes + r.nbPartiels + r.nbImpayes}`, `ont payé · ${r.nbPartiels} partiel(s)`, 'var(--accent)')}</div>`;
+          ${kpi('Élèves', `${r.nbPayes} / ${r.nbPayes + r.nbPartiels + r.nbImpayes}`, `ont payé · ${r.nbPartiels} partiel(s)`, 'var(--primaire)')}</div>`;
         const st = zone.querySelector('#statut').value;
         const liste = st ? d.liste.filter((x) => x.statut === st) : d.liste;
         zone.querySelector('#tab').innerHTML = tableau([
@@ -79,7 +79,7 @@ export async function afficher(el, params) {
     async grille() {
       zone.innerHTML = `<div class="filtres"><select id="classe">${options(optClasses, params.classe_id || (classes[0] && classes[0].id))}</select></div>
         <div class="legende" style="margin-bottom:.7rem"><span><i style="background:var(--succes)"></i>Payé</span><span><i style="background:var(--accent)"></i>Partiel</span>
-        <span><i style="background:var(--danger)"></i>Impayé</span><span><i style="background:#e8e1d8"></i>À venir</span></div><div id="tab"></div>`;
+        <span><i style="background:var(--danger)"></i>Impayé</span><span><i style="background:#e3e5f2"></i>À venir</span></div><div id="tab"></div>`;
       const charger = async () => {
         const cid = zone.querySelector('#classe').value;
         if (!cid) return;

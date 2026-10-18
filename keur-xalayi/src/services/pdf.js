@@ -9,14 +9,23 @@ const { one } = require('../db');
 const { dateFr, nomMois, montant, MODES_PAIEMENT } = require('../utils');
 
 const COULEURS = {
-  primaire: '#D9632B', // orange terre cuite
-  secondaire: '#1F5F6B', // bleu-vert profond
-  accent: '#F2B134', // jaune tournesol
-  texte: '#2B2B2B',
-  gris: '#6B6B6B',
-  clair: '#FFF4E8',
-  ligne: '#E8DCCF',
+  primaire: '#2E3192', // bleu du logo de l'école
+  secondaire: '#23266F', // bleu foncé (en-têtes de tableaux)
+  accent: '#9294DC', // bleu clair
+  texte: '#1F2133',
+  gris: '#5F6380',
+  clair: '#EEF0FA',
+  ligne: '#DDE0F0',
+  zebre: '#F7F8FD',
 };
+
+// Logo officiel, utilisé tant qu'aucun autre logo n'est choisi dans les Paramètres.
+const LOGO_ECOLE = (() => {
+  try { return require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'public', 'img', 'logo.png')); } catch { return null; }
+})();
+const EMBLEME_ECOLE = (() => {
+  try { return require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'public', 'img', 'embleme.png')); } catch { return null; }
+})();
 
 /** Exécute une fonction de dessin et renvoie le PDF en mémoire. */
 function produire(options, dessiner) {
@@ -39,9 +48,9 @@ async function parametres() {
   return one('SELECT * FROM parametres WHERE id = 1');
 }
 
-/** Logo de l'école ou pastille « KX » par défaut. */
-function dessinerLogo(doc, p, x, y, taille) {
-  const img = imageDepuisDataUrl(p.logo);
+/** Logo choisi dans les Paramètres, sinon logo officiel, sinon pastille « KX ». */
+function dessinerLogo(doc, p, x, y, taille, { petit = false } = {}) {
+  const img = imageDepuisDataUrl(p.logo) || (petit ? EMBLEME_ECOLE : LOGO_ECOLE);
   if (img) {
     try { doc.image(img, x, y, { fit: [taille, taille], align: 'center', valign: 'center' }); return; } catch { /* image illisible */ }
   }
@@ -63,7 +72,7 @@ function entete(doc, p, titre, sousTitre) {
   doc.text(coord.join('\n'), l + 66, doc.y + 1, { width: largeur - 66 });
   const yBande = Math.max(doc.y, y0 + 54) + 8;
   doc.rect(l, yBande, largeur, 3).fill(COULEURS.primaire);
-  doc.rect(l + largeur * 0.7, yBande, largeur * 0.3, 3).fill(COULEURS.accent);
+  doc.rect(l + largeur * 0.7, yBande, largeur * 0.3, 3).fill(COULEURS.accent); // filet bleu clair
   doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(14).text(titre, l, yBande + 12, { width: largeur, align: 'center' });
   if (sousTitre) doc.font('Helvetica').fontSize(9.5).fillColor(COULEURS.gris).text(sousTitre, { width: largeur, align: 'center' });
   doc.moveDown(0.8);
@@ -245,7 +254,7 @@ async function bulletins(resultats, inscriptionIds, observations = {}) {
             n.note === null ? '—' : (n.note / n.bareme * 10).toFixed(2), n.note === null ? '—' : (n.note / n.bareme * 10 * n.coefficient).toFixed(2)])
           : el.moyennes_periodes.map((m, i) => [`${p.libelle_periode} ${i + 1}`, m === null ? '—' : m.toFixed(2)]);
         rows.forEach((r, i) => {
-          if (i % 2) doc.rect(l, y, largeur, 18).fill('#FBF7F2');
+          if (i % 2) doc.rect(l, y, largeur, 18).fill(COULEURS.zebre);
           let xx = l;
           doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(9.5);
           r.forEach((v, j) => { doc.text(v, xx + 6, y + 5, { width: largeur * cols[j][1] - 12, align: j === 0 ? 'left' : 'center' }); xx += largeur * cols[j][1]; });
@@ -326,7 +335,8 @@ async function cartes(eleves, annee) {
       doc.roundedRect(x, y, W, 34, 10).clip().rect(x, y, W, 34).fill(COULEURS.primaire);
       doc.restore();
       doc.rect(x, y + 34, W, 3).fill(COULEURS.accent);
-      dessinerLogo(doc, p, x + 8, y + 5, 24);
+      doc.circle(x + 20, y + 17, 13).fill('#FFFFFF');
+      dessinerLogo(doc, p, x + 9, y + 6, 22, { petit: true });
       doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10.5).text(p.nom_ecole.toUpperCase(), x + 38, y + 7, { width: W - 46, lineBreak: false, ellipsis: true });
       doc.font('Helvetica').fontSize(7).text(`Carte scolaire ${annee || ''}`, x + 38, y + 21);
       // Photo
@@ -377,7 +387,7 @@ async function tableau(titre, sousTitre, colonnes, lignes, { paysage = false, to
       doc.font('Helvetica').fontSize(8.5);
       const h = Math.max(16, ...colonnes.map((c, i) => doc.heightOfString(String(ligne[c.cle] ?? ''), { width: W[i] - 8 }) + 6));
       if (y + h > basPage()) { piedDePage(doc, p); doc.addPage(); y = enteteTableau(doc.page.margins.top); }
-      if (n % 2) doc.rect(l, y, largeur, h).fill('#FBF7F2');
+      if (n % 2) doc.rect(l, y, largeur, h).fill(COULEURS.zebre);
       let x = l;
       doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5);
       colonnes.forEach((c, i) => { doc.text(String(ligne[c.cle] ?? ''), x + 4, y + 4, { width: W[i] - 8, align: c.align || 'left' }); x += W[i]; });

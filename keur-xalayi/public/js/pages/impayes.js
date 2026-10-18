@@ -31,7 +31,7 @@ export async function afficher(el, params) {
     for (const x of d.liste) parClasse[x.classe] = (parClasse[x.classe] || 0) + x.reste;
     el.querySelector('#resume').innerHTML = `<div class="grille g3" style="margin-bottom:1rem">
       ${kpi('Total restant dû', argent(d.total), lire().mois ? nomMois(lire().mois) : 'tous les mois échus', 'var(--danger)')}
-      ${kpi('Élèves concernés', parEleve.size, `${d.liste.length} mensualité(s) non soldée(s)`, 'var(--accent)')}
+      ${kpi('Élèves concernés', parEleve.size, `${d.liste.length} mensualité(s) non soldée(s)`, 'var(--primaire)')}
       ${kpi('Classe la plus concernée', e(Object.entries(parClasse).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'), Object.keys(parClasse).length ? argent(Math.max(...Object.values(parClasse))) : '', 'var(--secondaire)')}</div>`;
     const vue = el.querySelector('#vue').value;
     const cols = vue === 'eleve'
