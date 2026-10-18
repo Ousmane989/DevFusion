@@ -41,7 +41,7 @@ export async function afficher(el, params) {
           ${kpi('Moyenne de la classe', st.moyenne_classe ?? '—', '/ 10', 'var(--secondaire)')}
           ${kpi('Plus forte moyenne', st.plus_forte ?? '—', '', 'var(--succes)')}
           ${kpi('Plus faible moyenne', st.plus_faible ?? '—', '', 'var(--danger)')}
-          ${kpi('Moyenne ≥ 5', `${st.admis} / ${st.evalues}`, st.evalues ? `${Math.round((st.admis / st.evalues) * 100)} % des élèves` : '', 'var(--accent)')}
+          ${kpi('Moyenne ≥ 5', `${st.admis} / ${st.evalues}`, st.evalues ? `${Math.round((st.admis / st.evalues) * 100)} % des élèves` : '', 'var(--primaire)')}
         </div>
         ${tableau([
     { titre: 'Rang', rendu: (l) => (l.rang ? `<b style="font-size:1.1rem">${l.rang}${l.rang === 1 ? 'er' : 'e'}</b>` : '—') },

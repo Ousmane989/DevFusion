@@ -12,13 +12,13 @@ async function classeur(titre, colonnes, lignes, { ecole = 'Keur Xalayi', devise
   const wb = new ExcelJS.Workbook();
   wb.creator = ecole;
   const ws = wb.addWorksheet(titre.slice(0, 31).replace(/[\\/?*[\]:]/g, '-'));
-  ws.addRow([`${ecole} — ${titre}`]).font = { bold: true, size: 14, color: { argb: 'FF1F5F6B' } };
+  ws.addRow([`${ecole} — ${titre}`]).font = { bold: true, size: 14, color: { argb: 'FF2E3192' } };
   ws.addRow([`Exporté le ${new Date().toLocaleDateString('fr-FR')}`]).font = { italic: true, color: { argb: 'FF6B6B6B' } };
   ws.addRow([]);
   const entete = ws.addRow(colonnes.map((c) => c.titre));
   entete.eachCell((cell) => {
     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9632B' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E3192' } };
     cell.alignment = { vertical: 'middle' };
   });
   for (const l of lignes) {

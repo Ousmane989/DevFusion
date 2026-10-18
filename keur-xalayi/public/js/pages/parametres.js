@@ -26,7 +26,7 @@ export async function afficher(el, params) {
         <div class="grille g2">
           <div>${champ('Logo de l\'école', `<div class="ligne"><div id="apercu"></div><div>
             <label class="btn clair petit" style="margin:0">🖼️ Choisir une image<input type="file" id="logo" accept="image/png,image/jpeg" class="cache"></label><br>
-            <button type="button" class="btn lien petit" id="sans-logo">Retirer</button></div></div>`, { aide: 'Image carrée de préférence (PNG ou JPEG). Il apparaît sur les reçus, bulletins et cartes.' })}</div>
+            <button type="button" class="btn lien petit" id="sans-logo">Revenir au logo officiel</button></div></div>`, { aide: 'Image carrée de préférence (PNG ou JPEG). Il apparaît sur les reçus, bulletins et cartes.' })}</div>
           <div>
             ${champ('Nom de l\'école', `<input name="nom_ecole" required value="${e(p.nom_ecole)}">`, { requis: true })}
             ${champ('Slogan / sous-titre', `<input name="slogan" value="${e(p.slogan)}">`)}
@@ -38,7 +38,7 @@ export async function afficher(el, params) {
           ${champ('Indicatif téléphonique par défaut', `<select name="indicatif_defaut">${options([['+222', '+222 (Mauritanie)'], ['+221', '+221 (Sénégal)']], p.indicatif_defaut)}</select>`)}
         </div>
         <div class="ligne fin"><button class="btn">💾 Enregistrer</button></div></form>`;
-      const apercu = () => { zone.querySelector('#apercu').innerHTML = logo ? `<img src="${e(logo)}" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">` : '<div class="logo-kx" style="width:90px;height:90px;font-size:1.8rem">KX</div>'; };
+      const apercu = () => { zone.querySelector('#apercu').innerHTML = logo ? `<img src="${e(logo)}" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">` : '<img src="/img/logo.png" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">'; };
       apercu();
       zone.querySelector('#logo').onchange = async (ev) => { try { logo = await reduireImage(ev.target.files[0], { max: 400, type: 'image/png' }); apercu(); } catch (err) { erreur(err); } };
       zone.querySelector('#sans-logo').onclick = () => { logo = null; apercu(); };

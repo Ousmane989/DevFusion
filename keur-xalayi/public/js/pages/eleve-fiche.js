@@ -57,7 +57,7 @@ export async function afficher(el, { id, nouveau }) {
           <div class="kpi" style="--couleur:var(--danger)"><div class="lib">Reste dû à ce jour</div><div class="val">${argent(s.totalReste)}</div></div>
           <div class="kpi" style="--couleur:var(--secondaire)"><div class="lib">Mensualité</div><div class="val">${argent(insc.mensualite - insc.reduction)}</div>
             <div class="det">${insc.reduction > 0 ? `Réduction de ${argent(insc.reduction)} — ${e(insc.reduction_motif)}` : 'Sans réduction'}</div></div>
-          <div class="kpi" style="--couleur:var(--accent)"><div class="lib">Frais d'inscription</div><div class="val">${argent(s.inscriptionFrais.verse)} / ${argent(s.inscriptionFrais.du)}</div>
+          <div class="kpi" style="--couleur:var(--primaire)"><div class="lib">Frais d'inscription</div><div class="val">${argent(s.inscriptionFrais.verse)} / ${argent(s.inscriptionFrais.du)}</div>
             <div class="det">${s.inscriptionFrais.reste > 0 ? `Reste ${argent(s.inscriptionFrais.reste)}` : 'Réglés ✔'}</div></div>
         </div>
         <div class="carte"><h2>Mois par mois</h2>

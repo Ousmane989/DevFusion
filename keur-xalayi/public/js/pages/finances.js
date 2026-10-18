@@ -19,7 +19,7 @@ export async function afficher(el) {
         </div>
         <div class="grille g2">
           <div class="carte"><h2>Évolution mensuelle</h2>${graphiqueBarres(b.lignes.map((l) => nomMois(l.mois, true)), [
-    { nom: 'Recettes', couleur: '#2e8b57', valeurs: b.lignes.map((l) => l.recettes) },
+    { nom: 'Recettes', couleur: '#2e3192', valeurs: b.lignes.map((l) => l.recettes) },
     { nom: 'Dépenses', couleur: '#c0392b', valeurs: b.lignes.map((l) => l.depenses) },
   ], { format: argent })}</div>
           <div class="carte"><h2>Dépenses par catégorie</h2>${b.par_categorie.length ? `<ul class="liste">${b.par_categorie.map((c) => {
