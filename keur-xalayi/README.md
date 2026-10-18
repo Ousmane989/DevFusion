@@ -1,6 +1,6 @@
 # 🏫 Keur Xalayi — plateforme de gestion scolaire
 
-Application web de gestion pour l'école maternelle et primaire **Keur Xalayi** :
+Application web de gestion pour l'école maternelle et primaire **Keur Xalayi** (Sénégal) :
 inscriptions, paiements, rappels WhatsApp, présences, notes et bulletins,
 personnel, finances. L'interface est en français et s'utilise sur ordinateur
 comme sur téléphone.
@@ -14,8 +14,8 @@ comme sur téléphone.
 |---|---|
 | **Connexion & rôles** | Identifiant + mot de passe (bcrypt), sessions sécurisées, 3 rôles : Directeur, Secrétaire/Comptable, Enseignant (sa classe uniquement) |
 | **Classes** | PS → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
-| **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +222/+221 obligatoire, recherche, filtres, archivage, réinscription |
-| **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, 6 modes (espèces, Bankily, Masrvi, Sedad, Wave, Orange Money), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, envoi du reçu par WhatsApp, annulation tracée |
+| **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +221 obligatoire (+222 accepté), recherche, filtres, archivage, réinscription |
+| **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, modes sénégalais (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi et Sedad si le pays est réglé sur la Mauritanie), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, envoi du reçu par WhatsApp, annulation tracée |
 | **Impayés** | Par mois et par classe, regroupés par élève, rappel en un clic, export |
 | **Rappels WhatsApp** | Automatiques (jour configurable, ex. le 25), uniquement aux impayés ou à tous, second rappel après la date limite, modèles personnalisables, historique, aucun doublon |
 | **Communication** | Annonces à toute l'école / une classe / un parent (un message par famille), avis d'absence, envoi des résultats et du bulletin |
@@ -24,7 +24,7 @@ comme sur téléphone.
 | **Personnel** | Enseignants et employés, salaires versés par mois |
 | **Finances** | Dépenses par catégorie, bilan mensuel recettes / dépenses / solde, graphiques |
 | **Tableau de bord** | Effectifs, répartition par classe et par sexe, encaissé / attendu, taux de recouvrement, impayés, absences du jour, derniers paiements et inscriptions |
-| **Autres** | Emploi du temps, calendrier scolaire, exports Excel et PDF de toutes les listes, liste de classe, cartes d'élève avec photo et QR code, année scolaire et passage automatique en classe supérieure, sauvegarde automatique quotidienne, paramètres (nom, logo, adresse, téléphone, devise MRU/FCFA, tarifs) |
+| **Autres** | Emploi du temps, calendrier scolaire, exports Excel et PDF de toutes les listes, liste de classe, cartes d'élève avec photo et QR code, année scolaire et passage automatique en classe supérieure, sauvegarde automatique quotidienne, paramètres (nom, logo, adresse, téléphone, devise FCFA (ou MRU), tarifs) |
 
 ## Installation (5 minutes)
 
@@ -42,7 +42,7 @@ Connexion initiale : identifiant **`directeur`**, mot de passe défini par
 `ADMIN_MOT_DE_PASSE` dans `.env` (par défaut `KeurXalayi2026` — **à changer dès
 la première connexion** via « Changer mon mot de passe »).
 
-Pour essayer avec des données fictives (52 élèves, paiements, notes, présences) :
+Pour essayer avec des données fictives d'une école de Dakar (environ 60 élèves, paiements en FCFA, notes, présences) :
 
 ```bash
 npm run db:demo               # comptes de test : secretaire / enseignant — mot de passe demo1234
@@ -63,7 +63,7 @@ sauvegardes.
 
 ## Premiers réglages (dans l'application)
 
-1. **Paramètres → École** : logo, adresse, téléphone, devise (MRU ou FCFA).
+1. **Paramètres → École** : logo, adresse, téléphone, devise (FCFA par défaut) et pays (Sénégal +221 par défaut).
 2. **Paramètres → Tarifs** : frais d'inscription et mensualité de chaque niveau.
 3. **Personnel** : ajoutez les enseignants ; **Classes** : désignez les titulaires et créez les groupes (CE1 B…).
 4. **Utilisateurs** : créez les comptes de la secrétaire et des enseignants (un enseignant est lié à sa fiche du personnel).

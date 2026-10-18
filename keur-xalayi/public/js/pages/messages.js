@@ -26,7 +26,7 @@ export async function afficher(el, params) {
           ${champ('Destinataires', `<select name="cible" id="cible">${options([['ecole', 'Tous les parents de l\'école'], ['classe', 'Les parents d\'une classe'], ['parent', 'Un parent précis'], ['numero', 'Un autre numéro']], 'ecole')}</select>`, { aide: 'Un seul message par famille, même avec plusieurs enfants.' })}
           <div id="z-classe" class="cache">${champ('Classe', `<select name="classe_id">${options(classes.map((c) => [c.id, c.nom]), '', { vide: '— Choisir —' })}</select>`)}</div>
           <div id="z-parent" class="cache">${champ('Élève', '<input id="q-eleve" placeholder="Tapez le nom de l\'élève…" autocomplete="off"><input type="hidden" name="eleve_id"><div id="sugg"></div>')}</div>
-          <div id="z-numero" class="cache">${champ('Numéro WhatsApp', '<input name="telephone" placeholder="+222…">')}</div>
+          <div id="z-numero" class="cache">${champ('Numéro WhatsApp', '<input name="telephone" placeholder="+221 77 123 45 67">')}</div>
         </div>
         ${champ('Modèle', `<select id="modele">${options([['libre', 'Message libre'], ['reunion', 'Réunion des parents'], ['fete', 'Fête de l\'école'], ['vacances', 'Vacances'], ['fermeture', 'Fermeture exceptionnelle']], 'libre')}</select>`)}
         ${champ('Message', `<textarea name="texte" id="texte" rows="6" required>${e(MODELES.libre)}</textarea>`, { aide: 'Variables : {nom_parent}, {nom_eleve}, {classe}. Remplacez les [CROCHETS].' })}

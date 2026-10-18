@@ -1,5 +1,5 @@
 // Personnel (enseignants, employés) et suivi des salaires versés.
-import { get, post, put, del, e, options, champ, champTel, activerTels, formulaire, tableau, argent, nomMois, dateFr, aujourdhui, moisCourant, MODES, toast, confirmer, boutonsExport, activerExports, badge, erreur } from '../ui.js';
+import { get, post, put, del, e, options, champ, champTel, activerTels, formulaire, tableau, argent, nomMois, dateFr, aujourdhui, moisCourant, MODES, modesDuPays, toast, confirmer, boutonsExport, activerExports, badge, erreur } from '../ui.js';
 
 const POSTES = ['Enseignant', 'Enseignante maternelle', 'Directeur', 'Secrétaire', 'Comptable', 'Surveillant', 'Gardien', 'Agent d\'entretien', 'Cuisinier', 'Chauffeur', 'Autre'];
 
@@ -74,7 +74,7 @@ export async function afficher(el, params) {
           `<div class="grille g2">${champ('Mois', `<select name="mois">${options(optMois.map((m) => [m, nomMois(m)]), mois)}</select>`)}
           ${champ('Montant', `<input type="number" name="montant" min="1" step="any" required value="${Math.max(0, p.salaire_base - p.verse) || ''}">`, { requis: true })}
           ${champ('Date', `<input type="date" name="date_paiement" value="${aujourdhui()}">`)}
-          ${champ('Mode', `<select name="mode">${options(Object.entries(MODES), 'especes')}</select>`)}</div>
+          ${champ('Mode', `<select name="mode">${options(modesDuPays(), 'especes')}</select>`)}</div>
           ${champ('Remarque', '<input name="remarque" placeholder="Ex. avance, prime…">')}`,
           async (f) => { await post('/personnel/salaires', { ...f, personnel_id: p.id }); toast('Salaire enregistré.', 'succes'); vues.salaires(); });
       });

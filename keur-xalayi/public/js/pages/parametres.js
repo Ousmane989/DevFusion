@@ -32,10 +32,10 @@ export async function afficher(el, params) {
             ${champ('Slogan / sous-titre', `<input name="slogan" value="${e(p.slogan)}">`)}
           </div>
           ${champ('Adresse', `<input name="adresse" value="${e(p.adresse)}" placeholder="Quartier, ville">`)}
-          ${champ('Téléphone', `<input name="telephone" value="${e(p.telephone)}" placeholder="+222 …">`)}
+          ${champ('Téléphone', `<input name="telephone" value="${e(p.telephone)}" placeholder="+221 33 …">`)}
           ${champ('E-mail', `<input type="email" name="email" value="${e(p.email)}">`)}
-          ${champ('Devise', `<select name="devise">${options([['MRU', 'Ouguiya (MRU) — Mauritanie'], ['FCFA', 'Franc CFA (FCFA) — Sénégal']], p.devise)}</select>`)}
-          ${champ('Indicatif téléphonique par défaut', `<select name="indicatif_defaut">${options([['+222', '+222 (Mauritanie)'], ['+221', '+221 (Sénégal)']], p.indicatif_defaut)}</select>`)}
+          ${champ('Devise', `<select name="devise">${options([['FCFA', 'Franc CFA (FCFA) — Sénégal'], ['MRU', 'Ouguiya (MRU) — Mauritanie']], p.devise)}</select>`)}
+          ${champ('Pays (indicatif téléphonique)', `<select name="indicatif_defaut">${options([['+221', 'Sénégal (+221)'], ['+222', 'Mauritanie (+222)']], p.indicatif_defaut)}</select>`, { aide: 'Détermine aussi les modes de paiement proposés (Wave, Orange Money…).' })}
         </div>
         <div class="ligne fin"><button class="btn">💾 Enregistrer</button></div></form>`;
       const apercu = () => { zone.querySelector('#apercu').innerHTML = logo ? `<img src="${e(logo)}" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">` : '<img src="/img/logo.png" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">'; };

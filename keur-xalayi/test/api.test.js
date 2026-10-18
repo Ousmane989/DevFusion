@@ -69,13 +69,13 @@ test('inscription d\'un élève avec matricule automatique et contrôle du Whats
   assert.strictEqual(mauvais.statut, 400);
   const r = await appel('dir', '/api/eleves', {
     methode: 'POST',
-    corps: { nom: 'Test', prenom: 'Élève', sexe: 'F', whatsapp: '22 33 44 55', classe_id: classe.id, reduction: 500, reduction_motif: 'Fratrie' },
+    corps: { nom: 'Test', prenom: 'Élève', sexe: 'F', whatsapp: '77 123 45 67', classe_id: classe.id, reduction: 500, reduction_motif: 'Fratrie' },
   });
   assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
   assert.match(r.donnees.matricule, /^KX\d{2}-\d{4}$/);
   eleveId = r.donnees.id; inscriptionId = r.donnees.inscription_id;
   const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
-  assert.strictEqual(fiche.eleve.whatsapp, '+22222334455');
+  assert.strictEqual(fiche.eleve.whatsapp, '+221771234567');
   assert.strictEqual(fiche.eleve.nom, 'TEST');
   assert.strictEqual(fiche.inscription.mensualite, classe.mensualite_effective);
   const recherche = (await appel('dir', '/api/eleves?q=test')).donnees;
@@ -87,7 +87,7 @@ test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async 
   const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
   const du = fiche.inscription.mensualite - fiche.inscription.reduction;
   const r = await appel('dir', '/api/paiements', {
-    methode: 'POST', corps: { inscription_id: inscriptionId, type: 'mensualite', mois: [mois[0], mois[1]], montant: du + du / 2, mode: 'bankily', reference: 'TX1' },
+    methode: 'POST', corps: { inscription_id: inscriptionId, type: 'mensualite', mois: [mois[0], mois[1]], montant: du + du / 2, mode: 'wave', reference: 'TX1' },
   });
   assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
   const solde = (await appel('dir', `/api/eleves/${eleveId}`)).donnees.solde;
@@ -104,7 +104,7 @@ test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async 
   assert.strictEqual((await fetch(base + lien.pathname + '?s=faux')).status, 403);
   const wa = await appel('dir', `/api/paiements/recu/${r.donnees.numero_recu}/whatsapp`, { methode: 'POST', corps: {} });
   assert.strictEqual(wa.statut, 200);
-  assert.match(wa.donnees.lien, /^https:\/\/wa\.me\/22222334455\?text=/);
+  assert.match(wa.donnees.lien, /^https:\/\/wa\.me\/221771234567\?text=/);
 });
 
 test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {

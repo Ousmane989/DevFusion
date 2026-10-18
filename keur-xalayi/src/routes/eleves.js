@@ -23,7 +23,7 @@ async function nettoyer(body, partiel = false) {
   if (d.sexe && !['M', 'F'].includes(d.sexe)) throw new HttpError(400, 'Sexe invalide.');
   if (d.whatsapp !== undefined) {
     const t = normaliserTel(d.whatsapp, p.indicatif_defaut);
-    if (!t) throw new HttpError(400, 'Numéro WhatsApp invalide : indiquez +222 suivi de 8 chiffres ou +221 suivi de 9 chiffres.');
+    if (!t) throw new HttpError(400, 'Numéro WhatsApp invalide : indiquez +221 suivi de 9 chiffres (ex. 77 123 45 67), ou +222 suivi de 8 chiffres.');
     d.whatsapp = t;
   }
   if (d.telephone2) {

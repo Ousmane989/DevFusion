@@ -1,6 +1,6 @@
 // Fenêtre d'encaissement d'un paiement (partagée par la fiche élève,
 // la page Paiements et la page Impayés), puis reçu PDF / WhatsApp.
-import { get, post, e, champ, options, formulaire, modale, argent, nomMois, aujourdhui, MODES, toast, erreur, ouvrir, resultatEnvoi } from '../ui.js';
+import { get, post, e, champ, options, formulaire, modale, argent, nomMois, aujourdhui, MODES, modesDuPays, toast, erreur, ouvrir, resultatEnvoi } from '../ui.js';
 
 /**
  * @param {number} eleveId
@@ -27,7 +27,7 @@ export async function encaisser(eleveId, apres, moisPreselection = []) {
     <div class="grille g2">
       ${champ('Montant', '<input type="number" name="montant" id="montant" min="1" step="any" required inputmode="decimal">', { requis: true })}
       ${champ('Date', `<input type="date" name="date_paiement" value="${aujourdhui()}" max="${aujourdhui()}">`)}
-      ${champ('Mode de paiement', `<select name="mode" id="mode">${options(Object.entries(MODES), 'especes')}</select>`, { requis: true })}
+      ${champ('Mode de paiement', `<select name="mode" id="mode">${options(modesDuPays(), 'especes')}</select>`, { requis: true })}
       ${champ('Référence de transaction', '<input name="reference" id="ref" placeholder="N° de l\'opération (paiement mobile)">')}
     </div>`;
 

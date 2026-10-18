@@ -1,5 +1,5 @@
 // Finances : bilan mensuel (recettes, dépenses, solde), graphiques et dépenses.
-import { get, post, del, e, qs, options, champ, formulaire, tableau, argent, nomMois, dateFr, aujourdhui, MODES, toast, confirmer, estRole, graphiqueBarres, kpi, boutonsExport, activerExports, erreur } from '../ui.js';
+import { get, post, del, e, qs, options, champ, formulaire, tableau, argent, nomMois, dateFr, aujourdhui, MODES, modesDuPays, toast, confirmer, estRole, graphiqueBarres, kpi, boutonsExport, activerExports, erreur } from '../ui.js';
 
 export async function afficher(el) {
   const directeur = estRole('directeur');
@@ -67,9 +67,9 @@ export async function afficher(el) {
       zone.querySelector('#ajout').onclick = () => formulaire('Nouvelle dépense', `<div class="grille g2">
           ${champ('Date', `<input type="date" name="date" value="${aujourdhui()}" max="${aujourdhui()}">`)}
           ${champ('Catégorie', `<select name="categorie" required>${options(categories.map((c) => [c, c]), '', { vide: '— Choisir —' })}</select>`, { requis: true })}</div>
-          ${champ('Libellé', '<input name="libelle" required placeholder="Ex. Facture SOMELEC d\'octobre">', { requis: true })}
+          ${champ('Libellé', '<input name="libelle" required placeholder="Ex. Facture SENELEC d\'octobre">', { requis: true })}
           <div class="grille g2">${champ('Montant', '<input type="number" name="montant" min="1" step="any" required>', { requis: true })}
-          ${champ('Mode de paiement', `<select name="mode">${options(Object.entries(MODES), 'especes')}</select>`)}</div>
+          ${champ('Mode de paiement', `<select name="mode">${options(modesDuPays(), 'especes')}</select>`)}</div>
           <p class="petit muted">Les salaires s'enregistrent dans « Personnel & salaires ».</p>`,
       async (f) => { await post('/finances/depenses', f); toast('Dépense enregistrée.', 'succes'); charger(); });
       zone.querySelectorAll('select, input').forEach((s) => { s.onchange = charger; });
