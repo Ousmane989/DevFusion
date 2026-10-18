@@ -160,4 +160,18 @@
     });
   }
   shell.start();
+
+  // Temps réel : dès qu'une commande change de statut, la vue se met à jour.
+  let stamp = null;
+  LV.live(async () => {
+    const r = await api('/partner/summary');
+    if (!r.ok) return;
+    const next = JSON.stringify([r.data.total, r.data.by, r.data.pending_payout]);
+    if (stamp && next !== stamp) {
+      LV.notify('Vos commandes ont été mises à jour');
+      const id = location.hash.slice(1) || 'dashboard';
+      if (!LV.modalOpen() && ['dashboard', 'commandes', 'reversements'].includes(id)) VIEWS[id]();
+    }
+    stamp = next;
+  }, 15000);
 })();
