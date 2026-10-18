@@ -18,7 +18,7 @@ types.setTypeParser(20, (v) => parseInt(v, 10)); // COUNT(*) (bigint)
 const pool = new Pool({
   connectionString: config.databaseUrl,
   ssl: config.databaseSsl ? { rejectUnauthorized: false } : false,
-  max: 10,
+  max: Number(process.env.PG_POOL_MAX || 10),
 });
 
 async function query(text, params = []) {
