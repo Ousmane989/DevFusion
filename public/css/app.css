@@ -1,29 +1,30 @@
 /* =====================================================================
    Keur Xalayi — feuille de style
-   Couleurs chaleureuses (terre cuite, tournesol) et professionnelles
-   (bleu-vert). Gros boutons, textes lisibles, adapté au téléphone.
+   Couleurs de l'école : bleu du logo (#2E3192) et blanc.
+   Gros boutons, textes lisibles, adapté au téléphone.
    ===================================================================== */
 :root {
-  --primaire: #d9632b;
-  --primaire-fonce: #b44e1f;
-  --primaire-clair: #fdebdf;
-  --secondaire: #1f5f6b;
-  --secondaire-clair: #e3f0f2;
-  --accent: #f2b134;
-  --accent-clair: #fff4d9;
-  --fond: #fbf6ef;
+  /* Bleu du logo de l'école (#2E3192) et blanc */
+  --primaire: #2e3192;
+  --primaire-fonce: #23266f;
+  --primaire-clair: #e9eaf8;
+  --secondaire: #23266f;
+  --secondaire-clair: #eef0fa;
+  --accent: #e0a100;        /* réservé aux statuts « partiel / en cours / retard » */
+  --accent-clair: #fff6dc;
+  --fond: #f5f6fb;
   --carte: #ffffff;
-  --texte: #2b2b2b;
-  --muted: #6b6b6b;
-  --bord: #eadfd2;
+  --texte: #1f2133;
+  --muted: #5f6380;
+  --bord: #dde0f0;
   --succes: #2e8b57;
   --succes-clair: #e3f4ea;
-  --alerte: #b07d00;
-  --alerte-clair: #fff4d6;
+  --alerte: #a87600;
+  --alerte-clair: #fff6dc;
   --danger: #c0392b;
   --danger-clair: #fbe5e2;
   --rayon: 14px;
-  --ombre: 0 2px 10px rgba(80, 50, 20, 0.07);
+  --ombre: 0 2px 10px rgba(46, 49, 146, 0.08);
   --menu: 248px;
   font-size: 16px;
 }
@@ -53,15 +54,11 @@ h3 { font-size: 1.05rem; }
 /* ---------- Mise en page ---------- */
 .app { display: flex; min-height: 100vh; }
 .menu {
-  width: var(--menu); background: var(--secondaire); color: #fff;
+  width: var(--menu); background: var(--primaire); color: #fff;
   position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; z-index: 30;
   overflow-y: auto;
 }
 .menu .marque { display: flex; align-items: center; gap: .7rem; padding: 1.1rem 1rem; border-bottom: 1px solid rgba(255,255,255,.12); }
-.menu .marque img, .logo-kx {
-  width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: var(--primaire);
-  display: grid; place-items: center; color: #fff; font-weight: 800; flex: none;
-}
 .menu .marque b { display: block; font-size: 1.05rem; }
 .menu .marque small { opacity: .75; }
 .menu nav { padding: .6rem 0; flex: 1; }
@@ -71,17 +68,17 @@ h3 { font-size: 1.05rem; }
   padding: .62rem 1.2rem; font-weight: 600; border-left: 4px solid transparent;
 }
 .menu nav a:hover { background: rgba(255,255,255,.08); }
-.menu nav a.actif { background: rgba(255,255,255,.14); border-left-color: var(--accent); }
+.menu nav a.actif { background: rgba(255,255,255,.16); border-left-color: #fff; }
 .menu nav a .ico { width: 1.4rem; text-align: center; font-size: 1.1rem; }
 .menu .pied { padding: 1rem; border-top: 1px solid rgba(255,255,255,.12); font-size: .85rem; }
 
 .contenu { flex: 1; margin-left: var(--menu); min-width: 0; }
 .barre {
-  position: sticky; top: 0; z-index: 20; background: rgba(251,246,239,.94); backdrop-filter: blur(6px);
+  position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.94); backdrop-filter: blur(6px);
   display: flex; align-items: center; gap: .8rem; padding: .7rem 1.5rem; border-bottom: 1px solid var(--bord);
 }
 .barre .titre { font-weight: 800; font-size: 1.1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.barre .annee { background: var(--accent-clair); color: #7a5600; padding: .2rem .65rem; border-radius: 99px; font-weight: 700; font-size: .85rem; }
+.barre .annee { background: var(--primaire-clair); color: var(--primaire); padding: .2rem .65rem; border-radius: 99px; font-weight: 700; font-size: .85rem; }
 .page { padding: 1.4rem 1.5rem 6rem; max-width: 1280px; }
 
 /* Navigation basse (téléphone) */
@@ -142,7 +139,7 @@ h3 { font-size: 1.05rem; }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn.sec { background: var(--secondaire); }
-.btn.sec:hover { background: #174a53; }
+.btn.sec:hover { background: #191b52; }
 .btn.clair { background: #fff; color: var(--texte); border: 1px solid var(--bord); }
 .btn.clair:hover { background: var(--fond); }
 .btn.vert { background: #25a35a; }
@@ -178,7 +175,7 @@ legend { font-weight: 800; color: var(--secondaire); padding: 0 .4rem; }
 table { width: 100%; border-collapse: collapse; font-size: .93rem; }
 th, td { padding: .6rem .75rem; text-align: left; border-bottom: 1px solid var(--bord); vertical-align: middle; }
 th { background: var(--secondaire-clair); color: var(--secondaire); font-weight: 800; font-size: .82rem; text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; }
-tbody tr:hover { background: #fffaf4; }
+tbody tr:hover { background: #f8f9fe; }
 tbody tr:last-child td { border-bottom: 0; }
 td.num, th.num { text-align: right; white-space: nowrap; }
 tr.cliquable { cursor: pointer; }
@@ -214,13 +211,13 @@ tfoot td { font-weight: 800; background: var(--fond); }
 
 /* Alertes */
 .alerte { border-radius: 12px; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .7rem; align-items: flex-start; }
-.alerte.info { background: var(--secondaire-clair); color: #164650; }
+.alerte.info { background: var(--secondaire-clair); color: var(--primaire-fonce); }
 .alerte.attention { background: var(--alerte-clair); color: #6d4d00; }
 .alerte.danger { background: var(--danger-clair); color: #7d241b; }
 .alerte.succes { background: var(--succes-clair); color: #1d5b39; }
 
 /* Fenêtre modale */
-.modale-fond { position: fixed; inset: 0; background: rgba(30,20,10,.45); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 4vh 1rem; overflow-y: auto; }
+.modale-fond { position: fixed; inset: 0; background: rgba(20,22,60,.45); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 4vh 1rem; overflow-y: auto; }
 .modale { background: #fff; border-radius: 18px; width: 100%; max-width: 560px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
 .modale.large { max-width: 860px; }
 .modale header { display: flex; align-items: center; padding: 1rem 1.2rem; border-bottom: 1px solid var(--bord); }
@@ -232,7 +229,7 @@ tfoot td { font-weight: 800; background: var(--fond); }
 
 /* Notifications */
 #toasts { position: fixed; top: 1rem; right: 1rem; z-index: 60; display: flex; flex-direction: column; gap: .5rem; max-width: calc(100vw - 2rem); }
-.toast { background: var(--secondaire); color: #fff; padding: .8rem 1.1rem; border-radius: 12px; box-shadow: var(--ombre); font-weight: 700; animation: entree .2s; }
+.toast { background: var(--primaire); color: #fff; padding: .8rem 1.1rem; border-radius: 12px; box-shadow: var(--ombre); font-weight: 700; animation: entree .2s; }
 .toast.erreur { background: var(--danger); }
 .toast.succes { background: var(--succes); }
 @keyframes entree { from { transform: translateY(-8px); opacity: 0; } }
@@ -266,14 +263,14 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .pastille.paye { background: var(--succes); }
 .pastille.partiel { background: var(--accent); }
 .pastille.impaye { background: var(--danger); }
-.pastille.avenir { background: #e8e1d8; color: #9a8f82; }
+.pastille.avenir { background: #e3e5f2; color: #8b8fae; }
 .pastille.non_concerne { background: #f3f3f3; color: #bbb; }
 
 /* Graphiques SVG */
 .graphique svg { width: 100%; height: auto; display: block; }
 .legende { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .85rem; font-weight: 700; margin-top: .4rem; }
 .legende i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; }
-.barre-progres { height: 10px; background: #f0e7dc; border-radius: 99px; overflow: hidden; }
+.barre-progres { height: 10px; background: #e6e8f4; border-radius: 99px; overflow: hidden; }
 .barre-progres > div { height: 100%; background: var(--succes); border-radius: 99px; }
 
 /* Listes simples */
@@ -293,7 +290,7 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .cal .j.auj { border-color: var(--primaire); box-shadow: 0 0 0 2px var(--primaire-clair); }
 .cal .j .n { font-weight: 800; }
 .cal .ev { display: block; border-radius: 4px; padding: 1px 4px; margin-top: 2px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ev.vacances { background: #2e8b57; } .ev.examen { background: #c0392b; } .ev.evenement { background: #d9632b; } .ev.ferie { background: #7b5ea7; } .ev.reunion { background: #1f5f6b; }
+.ev.vacances { background: #2e8b57; } .ev.examen { background: #c0392b; } .ev.evenement { background: #2e3192; } .ev.ferie { background: #7b5ea7; } .ev.reunion { background: #5b5fc7; }
 @media (max-width: 640px) { .cal .j { min-height: 54px; } .cal .ev { font-size: 0; height: 6px; padding: 0; } }
 
 /* Emploi du temps */
@@ -305,10 +302,9 @@ tfoot td { font-weight: 800; background: var(--fond); }
 
 /* Connexion */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background:
-  radial-gradient(circle at 15% 20%, rgba(242,177,52,.25), transparent 40%),
-  radial-gradient(circle at 85% 80%, rgba(217,99,43,.2), transparent 45%), var(--fond); }
-.connexion .boite { width: 100%; max-width: 400px; background: #fff; border-radius: 22px; padding: 2rem 1.6rem; box-shadow: 0 20px 50px rgba(80,50,20,.12); }
-.connexion .logo-kx { width: 74px; height: 74px; font-size: 1.6rem; margin: 0 auto .8rem; }
+  radial-gradient(circle at 15% 20%, rgba(46,49,146,.16), transparent 42%),
+  radial-gradient(circle at 85% 80%, rgba(46,49,146,.10), transparent 45%), var(--fond); }
+.connexion .boite { width: 100%; max-width: 400px; background: #fff; border-radius: 22px; padding: 2rem 1.6rem; box-shadow: 0 20px 50px rgba(46,49,146,.14); }
 .connexion h1 { text-align: center; color: var(--secondaire); }
 
 /* Impression */
@@ -325,3 +321,8 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .kpis { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 @media (max-width: 420px) { .kpis { grid-template-columns: 1fr 1fr; gap: .6rem; } }
 .liste li .nowrap { flex: none; }
+
+/* Logo de l'école (bleu sur fond blanc) */
+.logo-ecole { background: #fff; border-radius: 50%; object-fit: contain; padding: 3px; flex: none; }
+.menu .marque .logo-ecole { width: 46px; height: 46px; }
+.connexion .logo-connexion { display: block; width: 170px; height: auto; margin: 0 auto .6rem; }

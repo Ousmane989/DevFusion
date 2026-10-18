@@ -23,7 +23,7 @@ export async function afficher(el) {
       ${kpi('Élèves inscrits', eff.total, `${eff.garcons} garçons · ${eff.filles} filles (${pctF} %)`, 'var(--secondaire)')}
       ${f ? kpi(`Encaissé en ${nomMois(f.mois)}`, argent(f.encaisse_mois), `Mensualités attendues : ${argent(f.attendu_mois)}`, 'var(--succes)') : ''}
       ${f ? kpi('Taux de recouvrement', `${f.taux_recouvrement} %`, `<div class="barre-progres" style="margin-top:.4rem"><div style="width:${Math.min(100, f.taux_recouvrement)}%"></div></div>
-        ${f.statuts.payes} payés · ${f.statuts.partiels} partiels · ${f.statuts.impayes} impayés`, 'var(--accent)') : ''}
+        ${f.statuts.payes} payés · ${f.statuts.partiels} partiels · ${f.statuts.impayes} impayés`, 'var(--primaire)') : ''}
       ${f ? kpi('Total des impayés', argent(f.total_impayes), `${f.nb_eleves_impayes} élève(s) concerné(s) · <a href="#/impayes">voir</a>`, 'var(--danger)') : ''}
       ${kpi('Absences du jour', d.absences.absents, `${d.absences.retards} retard(s) · appel fait dans ${d.appels.faits}/${d.appels.total} classe(s)`, 'var(--primaire)')}
     </div>
@@ -32,15 +32,15 @@ export async function afficher(el) {
       <div class="carte">
         <h2>🏫 Répartition par classe</h2>
         ${eff.par_classe.length ? graphiqueBarres(eff.par_classe.map((c) => nomCourt(c.nom)), [
-    { nom: 'Garçons', couleur: '#1f5f6b', valeurs: eff.par_classe.map((c) => c.garcons) },
-    { nom: 'Filles', couleur: '#d9632b', valeurs: eff.par_classe.map((c) => c.filles) },
+    { nom: 'Garçons', couleur: '#2e3192', valeurs: eff.par_classe.map((c) => c.garcons) },
+    { nom: 'Filles', couleur: '#9294dc', valeurs: eff.par_classe.map((c) => c.filles) },
   ], { hauteur: 200 }) : videHtml('Aucune classe.')}
       </div>
       ${f && f.evolution.length ? `<div class="carte">
         <h2>📈 Recouvrement des mensualités</h2>
         ${graphiqueBarres(f.evolution.map((m) => nomMois(m.mois, true)), [
-    { nom: 'Attendu', couleur: '#eadfd2', valeurs: f.evolution.map((m) => m.attendu) },
-    { nom: 'Encaissé', couleur: '#2e8b57', valeurs: f.evolution.map((m) => m.encaisse) },
+    { nom: 'Attendu', couleur: '#dde0f0', valeurs: f.evolution.map((m) => m.attendu) },
+    { nom: 'Encaissé', couleur: '#2e3192', valeurs: f.evolution.map((m) => m.encaisse) },
   ], { hauteur: 200, format: argent })}
       </div>` : `<div class="carte"><h2>🚸 Absents aujourd'hui</h2>${listeAbsents(d)}</div>`}
     </div>
