@@ -50,4 +50,18 @@ router.put('/:id', ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Suppression d'un compte. Les paiements, notes et présences saisis par ce
+// compte sont conservés (l'auteur devient vide).
+router.delete('/:id', ah(async (req, res) => {
+  const u = await one('SELECT id, role FROM utilisateurs WHERE id = $1', [req.params.id]);
+  if (!u) throw new HttpError(404, 'Compte introuvable.');
+  if (u.id === req.user.id) throw new HttpError(400, 'Vous ne pouvez pas supprimer votre propre compte.');
+  if (u.role === 'directeur') {
+    const autres = await one(`SELECT COUNT(*) AS n FROM utilisateurs WHERE role = 'directeur' AND actif AND id <> $1`, [u.id]);
+    if (autres.n === 0) throw new HttpError(400, 'Il doit rester au moins un compte directeur actif.');
+  }
+  await query('DELETE FROM utilisateurs WHERE id = $1', [u.id]);
+  res.json({ ok: true });
+}));
+
 module.exports = router;

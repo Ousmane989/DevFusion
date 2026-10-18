@@ -1,5 +1,5 @@
 // Comptes utilisateurs et rôles (réservé au directeur).
-import { get, post, put, e, options, champ, formulaire, tableau, dateHeure, badge, ROLES, toast } from '../ui.js';
+import { get, post, put, del, e, options, champ, formulaire, tableau, dateHeure, badge, ROLES, toast, confirmer, erreur, ctx } from '../ui.js';
 
 export async function afficher(el) {
   const [users, personnel] = await Promise.all([get('/utilisateurs'), get('/personnel')]);
@@ -13,7 +13,8 @@ export async function afficher(el) {
     { titre: 'Rôle', rendu: (u) => badge(u.role === 'directeur' ? 'ko' : u.role === 'secretaire' ? 'info' : 'ok', ROLES[u.role]) },
     { titre: 'État', rendu: (u) => (u.actif ? badge('ok', 'Actif') : badge('neutre', 'Désactivé')) },
     { titre: 'Dernière connexion', rendu: (u) => (u.derniere_connexion ? dateHeure(u.derniere_connexion) : '—') },
-    { titre: '', rendu: (u) => `<button class="btn petit clair" data-modif="${u.id}">✏️ Modifier</button>` },
+    { titre: '', rendu: (u) => `<button class="btn petit clair" data-modif="${u.id}">✏️ Modifier</button>
+      ${u.id !== ctx.utilisateur.id ? `<button class="btn petit clair" data-suppr="${u.id}" title="Supprimer le compte">🗑️</button>` : ''}` },
   ], users)}`;
 
   const champsCommuns = (u = {}) => `
@@ -29,6 +30,14 @@ export async function afficher(el) {
     ${champ('Identifiant de connexion', '<input name="identifiant" required autocapitalize="none" placeholder="ex. fatou.diallo">', { requis: true })}
     ${champ('Mot de passe', '<input name="mot_de_passe" required minlength="6" autocomplete="new-password">', { requis: true, aide: '6 caractères minimum. Communiquez-le à la personne.' })}
     ${champsCommuns()}`, async (d) => { await post('/utilisateurs', d); toast('Compte créé.', 'succes'); afficher(el); }));
+
+  el.querySelectorAll('[data-suppr]').forEach((b) => {
+    const u = users.find((x) => String(x.id) === b.dataset.suppr);
+    b.onclick = async () => {
+      if (!(await confirmer(`Supprimer définitivement le compte « ${u.identifiant} » (${u.nom_complet}) ? Les paiements et notes saisis restent enregistrés. Pour un départ temporaire, préférez « Modifier » puis décocher « Compte actif ».`, { titre: 'Supprimer le compte', ok: 'Supprimer', danger: true }))) return;
+      try { await del(`/utilisateurs/${u.id}`); toast('Compte supprimé.', 'succes'); afficher(el); } catch (err) { erreur(err); }
+    };
+  });
 
   el.querySelectorAll('[data-modif]').forEach((b) => {
     const u = users.find((x) => String(x.id) === b.dataset.modif);
