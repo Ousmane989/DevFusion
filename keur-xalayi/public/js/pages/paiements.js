@@ -56,7 +56,7 @@ export async function afficher(el, params) {
         const r = d.resume;
         zone.querySelector('#resume').innerHTML = `<div class="grille g4" style="margin-bottom:1rem">
           ${kpi('Attendu', argent(r.attendu), nomMois(d.mois), 'var(--secondaire)')}
-          ${kpi('Encaissé', argent(r.encaisse), `${r.taux} % recouvré`, 'var(--succes)')}
+          ${kpi('Encaissé', argent(r.encaisse), r.taux === null ? 'rien d\'attendu ce mois' : `${r.taux} % recouvré`, 'var(--succes)')}
           ${kpi('Reste à encaisser', argent(r.reste), '', 'var(--danger)')}
           ${kpi('Élèves', `${r.nbPayes} / ${r.nbPayes + r.nbPartiels + r.nbImpayes}`, `ont payé · ${r.nbPartiels} partiel(s)`, 'var(--primaire)')}</div>`;
         const st = zone.querySelector('#statut').value;

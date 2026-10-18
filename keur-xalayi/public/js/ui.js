@@ -215,7 +215,12 @@ export const videHtml = (texte, ico = '📭') => `<div class="vide"><span class=
  */
 export function graphiqueBarres(etiquettes, series, { hauteur = 220, format = (v) => v } = {}) {
   const W = Math.max(320, etiquettes.length * 60); const H = hauteur; const m = { h: 14, b: 34, g: 52, d: 8 };
-  const max = Math.max(1, ...series.flatMap((s) => s.valeurs)) * 1.1;
+  const brut = Math.max(0, ...series.flatMap((s) => s.valeurs));
+  if (brut <= 0) return videHtml('Pas encore de données.', '📊');
+  // Graduation « ronde » (1 à 5 × 10ⁿ) : 4 paliers entiers et distincts.
+  const puissance = 10 ** Math.floor(Math.log10(brut / 4));
+  const pasAxe = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map((k) => k * puissance).find((p) => p * 4 >= brut && (Number.isInteger(p) || brut < 1)) || puissance * 10;
+  const max = Math.max(pasAxe * 4, 1);
   const pas = (W - m.g - m.d) / Math.max(1, etiquettes.length);
   const lb = Math.min(26, (pas * 0.7) / series.length);
   const y = (v) => H - m.b - (v / max) * (H - m.b - m.h);
