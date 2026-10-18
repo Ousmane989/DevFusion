@@ -197,6 +197,7 @@
         kpi('À reverser', money(d.payout_due), 'Aux partenaires', false, 'reversements') +
         kpi('Frais de livraison (mois)', money(d.fees_month), 'Chiffre d\'affaires agence', true) +
         kpi('Inscriptions à valider', pend, d.couriers + ' livreurs · ' + d.partners + ' partenaires', pend > 0, (d.pending_users.coursier ? 'livreurs' : 'partenaires'));
+      await renderRequests();
       document.getElementById('a-dash-confirm').innerHTML = miniOrders(n.data.orders || []);
       document.getElementById('a-dash-dispatch').innerHTML = miniOrders((c.data.orders || []).filter((o) => !o.courier_id));
       LV.setCount('appel', d.to_confirm);
@@ -364,6 +365,22 @@
     },
   };
 
+  // Demandes de partenariat en attente (inscriptions sur le site + boutiques Karat).
+  async function renderRequests() {
+    const [u, c] = await Promise.all([api('/agency/users?role=partenaire&status=pending'), api('/agency/collabs')]);
+    const partnersReq = (u.data && u.data.users) || [];
+    const shopsReq = ((c.data && c.data.collabs) || []).filter((x) => x.status === 'pending');
+    const rows = partnersReq.map((p) =>
+      '<div class="req-item"><span class="badge st-pending">Nouveau partenaire</span><div class="who"><b>' + esc(p.business_name || p.name) + '</b><span>' + esc(p.name) + ' · ' +
+      esc(phoneFmt(p.phone)) + (p.activity ? ' · ' + esc(p.activity) : '') + ' · ' + date(p.created_at, true) + '</span></div>' +
+      '<div class="actions"><a class="btn btn-dark btn-sm" href="tel:+' + esc(p.phone) + '">Appeler</a><button class="btn btn-success btn-sm" data-user="' + p.id + '" data-set="active">Accepter</button>' +
+      '<button class="btn btn-danger btn-sm" data-user="' + p.id + '" data-set="suspended">Refuser</button></div></div>').concat(shopsReq.map((x) =>
+      '<div class="req-item"><span class="badge st-confirmee">Boutique Karat</span><div class="who"><b>' + esc(x.shop_name || '—') + '</b><span>' + esc(phoneFmt(x.phone)) + ' · ' + date(x.created_at, true) + '</span></div>' +
+      '<div class="actions"><button class="btn btn-success btn-sm" data-collab-accept="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>'));
+    document.getElementById('a-requests-panel').classList.toggle('hidden', !rows.length);
+    document.getElementById('a-requests').innerHTML = rows.join('');
+  }
+
   function refresh() {
     const id = location.hash.slice(1) || 'dashboard';
     (VIEWS[id] || VIEWS.dashboard)();
@@ -499,12 +516,12 @@
     if ((b = t.closest('[data-collab-accept]'))) {
       const r = await api('/agency/collabs/' + b.dataset.collabAccept + '/accept', {});
       if (!r.ok) return toast(r.data.error, true);
-      toast('Collaboration acceptée — vous recevrez ses commandes.'); return VIEWS.boutiques();
+      toast('Collaboration acceptée — vous recevrez ses commandes.'); return refresh();
     }
     if ((b = t.closest('[data-collab-reject]'))) {
       const r = await api('/agency/collabs/' + b.dataset.collabReject + '/reject', {});
       if (!r.ok) return toast(r.data.error, true);
-      toast('Mis à jour'); return VIEWS.boutiques();
+      toast('Mis à jour'); return refresh();
     }
   });
 
@@ -516,19 +533,28 @@
   // Compteurs de la barre latérale.
   function syncCounts() {
     return api('/agency/summary').then((s) => {
-      if (!s.ok) return;
+      if (!s.ok) return null;
       const d = s.data;
       LV.setCount('appel', d.to_confirm); LV.setCount('dispatch', d.unassigned); LV.setCount('messages', d.messages);
       LV.setCount('livreurs', d.pending_users.coursier || 0); LV.setCount('partenaires', d.pending_users.partenaire || 0);
       LV.setCount('boutiques', d.boutique_requests || 0);
+      return d;
     });
   }
-  if ((location.hash.slice(1) || 'dashboard') !== 'dashboard') syncCounts();
-  // Temps réel : rafraîchit les compteurs et la vue courante toutes les 25 s,
-  // pour voir arriver les nouvelles commandes et demandes sans recharger.
-  setInterval(() => {
-    syncCounts();
+  // Temps réel : toutes les 15 s, compteurs + vue courante mis à jour, et
+  // alerte (message + son) à chaque nouvelle commande ou demande de partenariat.
+  let last = await syncCounts();
+  const requestsOf = (d) => (d.pending_users.partenaire || 0) + (d.boutique_requests || 0);
+  LV.live(async () => {
+    const d = await syncCounts();
+    if (!d) return;
+    if (last) {
+      const newOrders = d.total - last.total;
+      if (newOrders > 0) LV.notify(newOrders === 1 ? 'Nouvelle commande reçue' : newOrders + ' nouvelles commandes reçues');
+      if (requestsOf(d) > requestsOf(last)) LV.notify('Nouvelle demande de partenariat');
+    }
+    last = d;
     const id = location.hash.slice(1) || 'dashboard';
-    if (['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch'].includes(id)) refresh();
-  }, 25000);
+    if (!LV.modalOpen() && ['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch', 'partenaires'].includes(id)) refresh();
+  }, 15000);
 })();

@@ -98,4 +98,17 @@
     },
   };
   shell.start();
+
+  // Temps réel : alerte dès qu'une nouvelle course est assignée.
+  let known = null;
+  LV.live(async () => {
+    const r = await api('/courier/tour');
+    if (!r.ok) return;
+    const ids = (r.data.active || []).map((o) => o.id);
+    if (known && ids.some((id) => !known.includes(id))) {
+      LV.notify('Nouvelle course assignée');
+      if (!LV.modalOpen() && (location.hash.slice(1) || 'tournee') === 'tournee') VIEWS.tournee();
+    }
+    known = ids;
+  }, 15000);
 })();
