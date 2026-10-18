@@ -10,8 +10,9 @@ const { requireAuth } = require('../middleware');
 const S = require('../livreur/store');
 
 const router = express.Router();
+router.get('/__ping', (_req, res) => res.json({ v: 'diag2', hasFns: typeof S.listActiveAgencies === 'function' && typeof S.collabsForMerchant === 'function' && typeof S.createBoutiqueOrder === 'function' }));
 router.use(requireAuth);
-router.use(async (_req, _res, next) => { try { await S.ensureReady(); next(); } catch (e) { next(e); } });
+router.use(async (_req, res, next) => { try { await S.ensureReady(); next(); } catch (e) { res.status(500).json({ error: 'debug-mw', detail: String((e && (e.stack || e.message)) || e).slice(0, 600) }); } });
 
 const merchantId = (req) => (req.account && req.account.id) || req.user.id;
 
