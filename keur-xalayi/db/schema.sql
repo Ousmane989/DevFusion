@@ -326,3 +326,9 @@ CREATE SEQUENCE IF NOT EXISTS seq_recu;
 ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_mode_check;
 ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
   ('especes','wave','orange_money','free_money','virement','cheque','bankily','masrvi','sedad'));
+
+-- ---------- Comptes enseignants créés par les enseignants eux-mêmes ----------
+-- L'enseignant s'inscrit depuis l'Espace Enseignants en choisissant sa classe ;
+-- le compte reste « en attente » tant que la directrice ne l'a pas validé.
+ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS en_attente BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS classe_demandee INTEGER REFERENCES classes(id) ON DELETE SET NULL;

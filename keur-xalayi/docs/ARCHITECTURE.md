@@ -85,6 +85,11 @@ Ainsi :
 On choisit son espace sur la page de connexion ; le serveur vérifie que le
 compte correspond (rôle `directeur` ou `enseignant`).
 
+Les enseignants créent eux-mêmes leur compte (« Créer mon compte » dans l'Espace
+Enseignants) en choisissant leur classe : une fiche du personnel est créée et le
+compte reste « en attente » (`utilisateurs.en_attente`, `classe_demandee`) jusqu'à
+la validation par la directrice, qui en fait le titulaire de la classe.
+
 | Module | Espace Directrice | Espace Enseignants |
 |---|:-:|:-:|
 | Tableau de bord | ✅ complet | ✅ sa classe |
