@@ -10,14 +10,11 @@ const { requireAuth } = require('../middleware');
 const S = require('../livreur/store');
 
 const router = express.Router();
-router.get('/__ping', async (_req, res) => {
-  let who = null, canWrite = null;
-  try { const r = await S.db.prepare('SELECT current_user AS u').get(); who = r && r.u; } catch (e) { who = 'ERR:' + (e && e.message); }
-  try { const r = await S.db.prepare("SELECT has_table_privilege(current_user,'public.lv_orders','INSERT') AS w").get(); canWrite = r && r.w; } catch (_) {}
-  res.json({ v: 'diag6', dbUser: who, canWriteLvOrders: canWrite });
-});
+
 router.use(requireAuth);
-router.use(async (_req, res, next) => { try { await S.ensureReady(); next(); } catch (e) { res.status(500).json({ error: 'debug-mw', detail: String((e && (e.stack || e.message)) || e).slice(0, 600) }); } });
+router.use(async (_req, _res, next) => {
+  try { await S.ensureReady(); next(); } catch (err) { next(err); }
+});
 
 const merchantId = (req) => (req.account && req.account.id) || req.user.id;
 
@@ -38,7 +35,7 @@ router.get('/agencies', async (req, res, next) => {
         status: byAgency[a.id] || null, // pending | accepted | rejected | null
       })),
     });
-  } catch (err) { res.status(500).json({ error: 'debug', detail: String((err && (err.stack || err.message)) || err).slice(0, 600) }); }
+  } catch (err) { next(err); }
 });
 
 // POST /api/delivery/request { agencyId } — demander une collaboration.
@@ -61,7 +58,7 @@ router.post('/request', async (req, res, next) => {
     await S.db.prepare('INSERT INTO lv_collabs (merchant_id, agency_id, shop_name, phone, city, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, agencyId, u.shop_name || '', u.phone || '', u.country || '', 'pending', S.now());
     res.status(201).json({ ok: true, status: 'pending' });
-  } catch (err) { res.status(500).json({ error: 'debug-req', detail: String((err && (err.stack || err.message)) || err).slice(0, 600) }); }
+  } catch (err) { next(err); }
 });
 
 // POST /api/delivery/cancel { agencyId } — retirer la demande / arrêter la collaboration.
