@@ -396,7 +396,7 @@
       const rows = (r.data && r.data.collabs) || [];
       LV.setCount('boutiques', rows.filter((c) => c.status === 'pending').length);
       const stat = {
-        pending: '<b style="color:#b8860b">En attente</b>',
+        pending: '<b class="dim">En attente</b>',
         accepted: '<b style="color:#1a9e5b">Acceptée ✓</b>',
         rejected: '<span class="muted">Refusée</span>',
       };
