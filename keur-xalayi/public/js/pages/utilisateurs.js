@@ -5,12 +5,12 @@ export async function afficher(el) {
   const [users, personnel] = await Promise.all([get('/utilisateurs'), get('/personnel')]);
   const optPers = personnel.map((p) => [p.id, `${p.prenom} ${p.nom} — ${p.poste}`]);
   el.innerHTML = `<div class="entete-page"><h1>Utilisateurs</h1><button class="btn" id="ajout">＋ Nouveau compte</button></div>
-    <div class="alerte info"><div><b>Directeur</b> : accès total · <b>Secrétaire / Comptable</b> : inscriptions, paiements, messages ·
-      <b>Enseignant</b> : uniquement sa classe (appel et notes). Un enseignant doit être lié à sa fiche du personnel, et désigné titulaire de la classe.</div></div>
+    <div class="alerte info"><div>Deux espaces : <b>Espace Directrice</b> — accès complet (inscriptions, paiements, messages, finances, réglages) ·
+      <b>Espace Enseignants</b> — uniquement sa classe (appel, notes, bulletins, emploi du temps). Un compte enseignant doit être lié à sa fiche du personnel, et l'enseignant désigné titulaire de sa classe.</div></div>
     ${tableau([
     { titre: 'Nom', rendu: (u) => `<b>${e(u.nom_complet)}</b>${u.personnel ? `<div class="petit muted">${e(u.personnel)}</div>` : ''}` },
     { titre: 'Identifiant', rendu: (u) => `<code>${e(u.identifiant)}</code>` },
-    { titre: 'Rôle', rendu: (u) => badge(u.role === 'directeur' ? 'ko' : u.role === 'secretaire' ? 'info' : 'ok', ROLES[u.role]) },
+    { titre: 'Espace', rendu: (u) => badge(u.role === 'directeur' ? 'info' : 'ok', ROLES[u.role] || u.role) },
     { titre: 'État', rendu: (u) => (u.actif ? badge('ok', 'Actif') : badge('neutre', 'Désactivé')) },
     { titre: 'Dernière connexion', rendu: (u) => (u.derniere_connexion ? dateHeure(u.derniere_connexion) : '—') },
     { titre: '', rendu: (u) => `<button class="btn petit clair" data-modif="${u.id}">✏️ Modifier</button>
@@ -19,7 +19,7 @@ export async function afficher(el) {
 
   const champsCommuns = (u = {}) => `
     ${champ('Nom complet', `<input name="nom_complet" required value="${e(u.nom_complet)}">`, { requis: true })}
-    ${champ('Rôle', `<select name="role" id="role">${options(Object.entries(ROLES), u.role || 'enseignant')}</select>`)}
+    ${champ('Espace', `<select name="role" id="role">${options(Object.entries(ROLES), u.role || 'enseignant')}</select>`)}
     <div id="z-pers">${champ('Fiche du personnel', `<select name="personnel_id">${options(optPers, u.personnel_id, { vide: '— Aucune —' })}</select>`, { aide: 'Obligatoire pour un enseignant.' })}</div>`;
   const lierRole = (m) => {
     const r = m.el.querySelector('#role'); const z = m.el.querySelector('#z-pers');

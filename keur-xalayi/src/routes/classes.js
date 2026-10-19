@@ -95,7 +95,7 @@ router.get('/:id/emploi', ah(async (req, res) => {
   res.json(await query('SELECT * FROM emploi_du_temps WHERE classe_id = $1 ORDER BY jour, heure_debut', [req.params.id]));
 }));
 
-router.post('/:id/emploi', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.post('/:id/emploi', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['jour', 'heure_debut', 'heure_fin', 'matiere']);
   const { jour, heure_debut, heure_fin, matiere, intervenant } = req.body;
   res.status(201).json(await one(
@@ -104,7 +104,7 @@ router.post('/:id/emploi', autoriser('directeur', 'secretaire'), ah(async (req, 
     [req.params.id, jour, heure_debut, heure_fin, matiere, vide(intervenant)]));
 }));
 
-router.delete('/:id/emploi/:creneau', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.delete('/:id/emploi/:creneau', autoriser('directeur'), ah(async (req, res) => {
   await query('DELETE FROM emploi_du_temps WHERE id = $1 AND classe_id = $2', [req.params.creneau, req.params.id]);
   res.json({ ok: true });
 }));

@@ -36,7 +36,7 @@ export async function afficher(el, params) {
       <div class="barre-action">
         <div class="gras" id="compte" style="flex-basis:100%"></div>
         <button class="btn" id="enreg">💾 Enregistrer l'appel</button>
-        ${ctx.utilisateur.role !== 'secretaire' ? '<button class="btn vert" id="enreg-notif">💾 Enregistrer et prévenir les parents</button>' : ''}
+        <button class="btn vert" id="enreg-notif">💾 Enregistrer et prévenir les parents</button>
       </div>`;
 
     const maj = () => {

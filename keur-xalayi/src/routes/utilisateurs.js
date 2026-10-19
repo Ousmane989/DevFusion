@@ -10,7 +10,8 @@ const { autoriser } = require('../auth');
 const router = express.Router();
 router.use(autoriser('directeur'));
 
-const ROLES = ['directeur', 'secretaire', 'enseignant'];
+// Deux espaces : la directrice (accès complet) et les enseignants (leur classe).
+const ROLES = ['directeur', 'enseignant'];
 
 router.get('/', ah(async (req, res) => {
   res.json(await query(
