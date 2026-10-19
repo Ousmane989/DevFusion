@@ -296,13 +296,8 @@ partner.post('/orders', wrap(async (req, res) => {
   res.status(201).json({ order: decorate(saved) });
 }));
 
-partner.post('/orders/:id/cancel', wrap(async (req, res) => {
-  const o = await db.prepare('SELECT * FROM lv_orders WHERE id = ? AND partner_id = ?').get(int(req.params.id), req.lv.id);
-  if (!o) return bad(res, 'Commande introuvable.', 404);
-  if (!['nouvelle', 'confirmee', 'reportee'].includes(o.status)) return bad(res, 'Cette commande est déjà prise en charge : contactez l\'agence.');
-  await setStatus(o, 'annulee', { actor: req.lv.business_name || req.lv.name, note: 'Annulée par le partenaire' });
-  res.json({ ok: true });
-}));
+// Le partenaire (boutique) ne peut PAS annuler une commande : seule l'agence
+// gère le cycle de vie des commandes (l'endpoint d'annulation a été retiré).
 
 partner.get('/stock', wrap(async (req, res) => {
   res.json({ stock: await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(req.lv.id) });
