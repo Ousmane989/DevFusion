@@ -88,7 +88,7 @@ window.LV = (function () {
       '<defs><linearGradient id="mrLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14905b"/><stop offset="1" stop-color="#0a5a39"/></linearGradient>' +
       '<clipPath id="mrClip"><path d="' + d + '"/></clipPath></defs>' + grid +
       '<path class="land" d="' + d + '"/>' +
-      '<g clip-path="url(#mrClip)" opacity=".12"><path d="M0 ' + H * 0.35 + ' Q' + W * 0.5 + ' ' + H * 0.25 + ' ' + W + ' ' + H * 0.4 + '" stroke="#ffd75e" stroke-width="40" fill="none"/></g>' +
+      '<g clip-path="url(#mrClip)" opacity=".12"><path d="M0 ' + H * 0.35 + ' Q' + W * 0.5 + ' ' + H * 0.25 + ' ' + W + ' ' + H * 0.4 + '" stroke="#ffffff" stroke-width="40" fill="none"/></g>' +
       '<text class="ocean-lbl" x="4" y="' + Math.round(H * 0.82) + '" transform="rotate(-90 4 ' + Math.round(H * 0.82) + ')">OCÉAN ATLANTIQUE</text>' +
       routes + cities +
       '<g class="hq"><circle class="pulse" cx="' + hq[0] + '" cy="' + hq[1] + '" r="9"/><circle class="core" cx="' + hq[0] + '" cy="' + hq[1] + '" r="9"/>' +
