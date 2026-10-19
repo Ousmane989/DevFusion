@@ -74,6 +74,8 @@ router.get('/', ah(async (req, res) => {
         WHERE i.annee_id = $1 ORDER BY i.created_at DESC LIMIT 8`, [annee.id]);
     const aEnvoyer = await one(`SELECT COUNT(*) AS n FROM messages WHERE statut = 'a_envoyer' AND created_at > now() - interval '15 days'`);
     resultat.messages_a_envoyer = aEnvoyer.n;
+    const demandes = await one('SELECT COUNT(*) AS n FROM utilisateurs WHERE en_attente');
+    resultat.demandes_comptes = demandes.n; // comptes enseignants à valider
   }
   res.json(resultat);
 }));
