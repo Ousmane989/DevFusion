@@ -24,6 +24,14 @@ router.post('/connexion', limiteur, ah(async (req, res) => {
   const user = await one('SELECT * FROM utilisateurs WHERE lower(identifiant) = lower($1)', [String(req.body.identifiant).trim()]);
   const ok = user && user.actif && (await bcrypt.compare(String(req.body.mot_de_passe), user.mot_de_passe));
   if (!ok) throw new HttpError(401, 'Identifiant ou mot de passe incorrect.');
+  // Espace choisi sur la page de connexion : « direction » ou « enseignants ».
+  const espace = req.body.espace;
+  if (espace === 'enseignants' && user.role !== 'enseignant') {
+    throw new HttpError(403, 'Ce compte n\'est pas un compte enseignant : utilisez l\'Espace Directrice.');
+  }
+  if (espace === 'direction' && user.role === 'enseignant') {
+    throw new HttpError(403, 'Ce compte est un compte enseignant : utilisez l\'Espace Enseignants.');
+  }
   await query('UPDATE utilisateurs SET derniere_connexion = now() WHERE id = $1', [user.id]);
   creerSession(res, user);
   res.json({ ok: true, role: user.role });

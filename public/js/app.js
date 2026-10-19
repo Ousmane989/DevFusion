@@ -2,26 +2,26 @@
 // Point d'entrée de l'application : session, menu selon le rôle, routeur.
 // Chaque page est un module dans /js/pages qui exporte `afficher(el, params)`.
 // =====================================================================
-import { ctx, get, post, e, toast, erreur, formulaire, champ, ROLES } from './ui.js';
+import { ctx, get, post, e, toast, erreur, formulaire, champ, ESPACES } from './ui.js';
 
-const D = 'directeur'; const S = 'secretaire'; const T = 'enseignant';
+const D = 'directeur'; const T = 'enseignant'; // deux espaces : directrice et enseignants
 
 // Menu : [route, icône, libellé, rôles, groupe]
 const MENU = [
-  ['', '🏠', 'Tableau de bord', [D, S, T], 'Accueil'],
-  ['eleves', '👧', 'Élèves', [D, S, T], 'Élèves'],
-  ['classes', '🏫', 'Classes', [D, S, T], 'Élèves'],
+  ['', '🏠', 'Tableau de bord', [D, T], 'Accueil'],
+  ['eleves', '👧', 'Élèves', [D, T], 'Élèves'],
+  ['classes', '🏫', 'Classes', [D, T], 'Élèves'],
   ['presences', '✅', 'Faire l\'appel', [D, T], 'Élèves'],
-  ['presences/stats', '📊', 'Assiduité', [D, S, T], 'Élèves'],
+  ['presences/stats', '📊', 'Assiduité', [D, T], 'Élèves'],
   ['notes', '📝', 'Notes', [D, T], 'Élèves'],
-  ['bulletins', '📄', 'Bulletins', [D, S, T], 'Élèves'],
-  ['paiements', '💰', 'Paiements', [D, S], 'Argent'],
-  ['impayes', '⏰', 'Impayés', [D, S], 'Argent'],
-  ['finances', '📈', 'Finances', [D, S], 'Argent'],
-  ['rappels', '🔔', 'Rappels WhatsApp', [D, S], 'Communication'],
-  ['messages', '💬', 'Annonces & historique', [D, S], 'Communication'],
-  ['emploi-du-temps', '🗓️', 'Emploi du temps', [D, S, T], 'Organisation'],
-  ['calendrier', '📅', 'Calendrier scolaire', [D, S, T], 'Organisation'],
+  ['bulletins', '📄', 'Bulletins', [D, T], 'Élèves'],
+  ['paiements', '💰', 'Paiements', [D], 'Argent'],
+  ['impayes', '⏰', 'Impayés', [D], 'Argent'],
+  ['finances', '📈', 'Finances', [D], 'Argent'],
+  ['rappels', '🔔', 'Rappels WhatsApp', [D], 'Communication'],
+  ['messages', '💬', 'Annonces & historique', [D], 'Communication'],
+  ['emploi-du-temps', '🗓️', 'Emploi du temps', [D, T], 'Organisation'],
+  ['calendrier', '📅', 'Calendrier scolaire', [D, T], 'Organisation'],
   ['personnel', '👩‍🏫', 'Personnel & salaires', [D], 'Organisation'],
   ['annee', '🎓', 'Année scolaire', [D], 'Administration'],
   ['utilisateurs', '🔑', 'Utilisateurs', [D], 'Administration'],
@@ -30,25 +30,25 @@ const MENU = [
 
 // Routes : motif -> [module, titre, rôles]
 const ROUTES = [
-  [/^$/, 'tableau-de-bord', 'Tableau de bord', [D, S, T]],
-  [/^eleves$/, 'eleves', 'Élèves', [D, S, T]],
-  [/^eleves\/nouveau$/, 'eleve-form', 'Nouvelle inscription', [D, S]],
-  [/^eleves\/(\d+)\/modifier$/, 'eleve-form', 'Modifier l\'élève', [D, S]],
-  [/^eleves\/(\d+)$/, 'eleve-fiche', 'Fiche élève', [D, S, T]],
-  [/^classes$/, 'classes', 'Classes', [D, S, T]],
-  [/^classes\/(\d+)$/, 'classe', 'Classe', [D, S, T]],
-  [/^paiements$/, 'paiements', 'Paiements', [D, S]],
-  [/^impayes$/, 'impayes', 'Impayés', [D, S]],
-  [/^rappels$/, 'rappels', 'Rappels WhatsApp', [D, S]],
-  [/^messages$/, 'messages', 'Annonces & historique', [D, S]],
+  [/^$/, 'tableau-de-bord', 'Tableau de bord', [D, T]],
+  [/^eleves$/, 'eleves', 'Élèves', [D, T]],
+  [/^eleves\/nouveau$/, 'eleve-form', 'Nouvelle inscription', [D]],
+  [/^eleves\/(\d+)\/modifier$/, 'eleve-form', 'Modifier l\'élève', [D]],
+  [/^eleves\/(\d+)$/, 'eleve-fiche', 'Fiche élève', [D, T]],
+  [/^classes$/, 'classes', 'Classes', [D, T]],
+  [/^classes\/(\d+)$/, 'classe', 'Classe', [D, T]],
+  [/^paiements$/, 'paiements', 'Paiements', [D]],
+  [/^impayes$/, 'impayes', 'Impayés', [D]],
+  [/^rappels$/, 'rappels', 'Rappels WhatsApp', [D]],
+  [/^messages$/, 'messages', 'Annonces & historique', [D]],
   [/^presences$/, 'presences', 'Faire l\'appel', [D, T]],
-  [/^presences\/stats$/, 'presences-stats', 'Assiduité', [D, S, T]],
+  [/^presences\/stats$/, 'presences-stats', 'Assiduité', [D, T]],
   [/^notes$/, 'notes', 'Saisie des notes', [D, T]],
-  [/^bulletins$/, 'bulletins', 'Résultats & bulletins', [D, S, T]],
+  [/^bulletins$/, 'bulletins', 'Résultats & bulletins', [D, T]],
   [/^personnel$/, 'personnel', 'Personnel & salaires', [D]],
-  [/^finances$/, 'finances', 'Finances', [D, S]],
-  [/^emploi-du-temps$/, 'emploi', 'Emploi du temps', [D, S, T]],
-  [/^calendrier$/, 'calendrier', 'Calendrier scolaire', [D, S, T]],
+  [/^finances$/, 'finances', 'Finances', [D]],
+  [/^emploi-du-temps$/, 'emploi', 'Emploi du temps', [D, T]],
+  [/^calendrier$/, 'calendrier', 'Calendrier scolaire', [D, T]],
   [/^annee$/, 'annee', 'Année scolaire', [D]],
   [/^utilisateurs$/, 'utilisateurs', 'Utilisateurs', [D]],
   [/^parametres$/, 'parametres', 'Paramètres', [D]],
@@ -57,7 +57,6 @@ const ROUTES = [
 // Raccourcis de la barre du bas (téléphone) selon le rôle.
 const RACCOURCIS = {
   directeur: ['', 'eleves', 'paiements', 'impayes'],
-  secretaire: ['', 'eleves', 'paiements', 'impayes'],
   enseignant: ['', 'presences', 'notes', 'eleves'],
 };
 
@@ -124,7 +123,7 @@ export async function rafraichirContexte() {
   const moi = await get('/auth/moi');
   Object.assign(ctx, moi);
   $('nom-ecole').textContent = ctx.ecole.nom_ecole;
-  $('role-user').textContent = ROLES[ctx.utilisateur.role];
+  $('role-user').textContent = ESPACES[ctx.utilisateur.role] || '';
   $('nom-user').textContent = ctx.utilisateur.nom_complet;
   $('annee').textContent = ctx.annee ? ctx.annee.libelle : 'Aucune année active';
   $('logo-menu').src = ctx.ecole.logo || '/img/embleme.png'; // logo personnalisé, sinon celui de l'école

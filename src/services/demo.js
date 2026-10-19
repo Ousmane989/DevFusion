@@ -2,7 +2,7 @@
 
 // Données de démonstration (élèves, paiements, présences, notes…) pour
 // découvrir la plateforme. Ajoutées seulement si aucun élève n'existe.
-// Mot de passe des comptes « secretaire » et « enseignant » : DEMO_MOT_DE_PASSE (défaut demo1234).
+// Mot de passe du compte « enseignant » : DEMO_MOT_DE_PASSE (défaut demo1234).
 const bcrypt = require('bcryptjs');
 const { query, one } = require('../db');
 const { aujourdhui, moisEntre, debutMois } = require('../utils');
@@ -49,7 +49,6 @@ async function demo() {
   // Comptes de démonstration.
   const motDePasseDemo = process.env.DEMO_MOT_DE_PASSE || 'demo1234';
   const hash = await bcrypt.hash(motDePasseDemo, 10);
-  await query(`INSERT INTO utilisateurs (identifiant, mot_de_passe, nom_complet, role) VALUES ('secretaire', $1, 'Aminata Sy', 'secretaire') ON CONFLICT DO NOTHING`, [hash]);
   const cp = classes.find((c) => c.code === 'CE1');
   const profCE1 = profs[classes.indexOf(cp)];
   await query(`INSERT INTO utilisateurs (identifiant, mot_de_passe, nom_complet, role, personnel_id) VALUES ('enseignant', $1, $2, 'enseignant', $3) ON CONFLICT DO NOTHING`,
@@ -151,7 +150,7 @@ async function demo() {
       : [['08:00', '10:00', 'Français'], ['10:00', '10:30', 'Récréation'], ['10:30', '12:00', 'Mathématiques'], ['15:00', '16:30', 'Arabe']];
     for (let j = 1; j <= 5; j++) for (const [d, f, m] of cours) await query('INSERT INTO emploi_du_temps (classe_id, jour, heure_debut, heure_fin, matiere) VALUES ($1,$2,$3,$4,$5)', [c.id, j, d, f, m]);
   }
-  console.log(`  ✔ Démonstration : ${nbEleves} élèves, ${profs.length} enseignants. Comptes : secretaire / enseignant.`);
+  console.log(`  ✔ Démonstration : ${nbEleves} élèves, ${profs.length} enseignants. Compte de test : enseignant.`);
 }
 
 module.exports = { demo };

@@ -326,3 +326,15 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .logo-ecole { background: #fff; border-radius: 50%; object-fit: contain; padding: 3px; flex: none; }
 .menu .marque .logo-ecole { width: 46px; height: 46px; }
 .connexion .logo-connexion { display: block; width: 170px; height: auto; margin: 0 auto .6rem; }
+
+/* Page de connexion : choix entre l'Espace Directrice et l'Espace Enseignants */
+.espaces { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin: .4rem 0 1.1rem; }
+.espace { margin: 0; cursor: pointer; }
+.espace input { position: absolute; opacity: 0; pointer-events: none; }
+.espace span { display: flex; flex-direction: column; gap: .2rem; height: 100%; padding: .75rem .7rem; border: 2px solid var(--bord);
+  border-radius: 14px; background: #fff; text-align: center; transition: border-color .15s, background .15s; }
+.espace b { font-size: .95rem; color: var(--texte); }
+.espace small { font-weight: 400; font-size: .78rem; color: var(--muted); line-height: 1.25; }
+.espace input:checked + span { border-color: var(--primaire); background: var(--primaire-clair); }
+.espace input:checked + span b { color: var(--primaire); }
+.espace input:focus-visible + span { box-shadow: 0 0 0 3px var(--primaire-clair); }

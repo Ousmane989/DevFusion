@@ -16,42 +16,62 @@
     <form class="boite" id="form" autocomplete="on">
       <img class="logo-connexion" src="/img/logo.png" alt="Logo de l'école Keur Xalayi" width="170" height="168">
       <h1 class="cache">Keur Xalayi</h1>
-      <p class="centre muted" style="margin-top:-.2rem">Espace de gestion de l'école</p>
+
+      <!-- Deux espaces : la directrice et les enseignants -->
+      <div class="espaces" role="radiogroup" aria-label="Choisissez votre espace">
+        <label class="espace">
+          <input type="radio" name="espace" value="direction" checked>
+          <span><b>👩‍💼 Espace Directrice</b><small>Gestion complète de l'école</small></span>
+        </label>
+        <label class="espace">
+          <input type="radio" name="espace" value="enseignants">
+          <span><b>👩‍🏫 Espace Enseignants</b><small>Appel, notes et bulletins de ma classe</small></span>
+        </label>
+      </div>
+
       <div id="msg"></div>
       <div class="champ">
         <label for="identifiant">Identifiant</label>
-        <input id="identifiant" name="identifiant" autocomplete="username" autocapitalize="none" required autofocus>
+        <input id="identifiant" name="identifiant" autocomplete="username" autocapitalize="none" required>
       </div>
       <div class="champ">
         <label for="mdp">Mot de passe</label>
         <input id="mdp" name="mot_de_passe" type="password" autocomplete="current-password" required>
         <label class="case petit" style="margin-top:.4rem"><input type="checkbox" id="voir"> Afficher le mot de passe</label>
       </div>
-      <button class="btn bloc" id="ok">Se connecter</button>
-      <p class="centre petit muted" style="margin-top:1.2rem">Mot de passe oublié ? Demandez à la direction de le réinitialiser.</p>
+      <button class="btn bloc" id="ok">Entrer dans l'Espace Directrice</button>
+      <p class="centre petit muted" style="margin-top:1.2rem" id="aide">Mot de passe oublié ? Seule la directrice peut le réinitialiser.</p>
     </form>
   </main>
   <script>
-    // Page de connexion : redirige vers l'application si déjà connecté.
+    // Page de connexion : choix de l'espace (mémorisé sur cet appareil), puis connexion.
     fetch('/api/auth/moi').then((r) => { if (r.ok) location.replace('/app'); });
+    const form = document.getElementById('form');
+    const btn = document.getElementById('ok');
+    const libelles = { direction: 'Entrer dans l\'Espace Directrice', enseignants: 'Entrer dans l\'Espace Enseignants' };
+    const majEspace = () => { btn.textContent = libelles[form.espace.value]; };
+    try { const m = localStorage.getItem('kx-espace'); if (m && libelles[m]) form.espace.value = m; } catch { /* stockage indisponible */ }
+    majEspace();
+    form.querySelectorAll('input[name=espace]').forEach((r) => { r.onchange = () => { majEspace(); document.getElementById('identifiant').focus(); }; });
     document.getElementById('voir').onchange = (e) => { document.getElementById('mdp').type = e.target.checked ? 'text' : 'password'; };
-    document.getElementById('form').onsubmit = async (e) => {
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('ok');
       const msg = document.getElementById('msg');
+      const espace = form.espace.value;
       btn.disabled = true; btn.textContent = 'Connexion…'; msg.innerHTML = '';
       try {
         const r = await fetch('/api/auth/connexion', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifiant: e.target.identifiant.value, mot_de_passe: e.target.mot_de_passe.value }),
+          body: JSON.stringify({ identifiant: form.identifiant.value, mot_de_passe: form.mot_de_passe.value, espace }),
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.erreur || 'Connexion impossible.');
+        try { localStorage.setItem('kx-espace', espace); } catch { /* stockage indisponible */ }
         location.replace('/app');
       } catch (err) {
         msg.innerHTML = '<div class="alerte danger"></div>';
         msg.firstChild.textContent = err.message;
-        btn.disabled = false; btn.textContent = 'Se connecter';
+        btn.disabled = false; majEspace();
       }
     };
   </script>

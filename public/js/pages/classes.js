@@ -25,7 +25,7 @@ export async function afficher(el) {
           <div style="font-size:2rem;font-weight:800;margin:.3rem 0">${c.effectif} <span class="petit muted" style="font-weight:600">élève(s)</span></div>
           <div class="petit muted">${c.garcons} garçons · ${c.filles} filles${c.salle ? ` · Salle ${e(c.salle)}` : ''}</div>
           <div style="margin:.5rem 0">👩‍🏫 ${c.enseignant ? e(c.enseignant) : '<span class="badge ko">Aucun titulaire</span>'}</div>
-          ${estRole('directeur', 'secretaire') ? `<div class="petit">Inscription : <b>${argent(c.frais_effectif)}</b> · Mensualité : <b>${argent(c.mensualite_effective)}</b>
+          ${estRole('directeur') ? `<div class="petit">Inscription : <b>${argent(c.frais_effectif)}</b> · Mensualité : <b>${argent(c.mensualite_effective)}</b>
             ${c.mensualite !== null || c.frais_inscription !== null ? ' <span class="badge neutre">tarif propre</span>' : ''}</div>` : ''}
           <div class="ligne" style="margin-top:.8rem">
             <a class="btn petit sec" href="#/classes/${c.id}">Ouvrir</a>
