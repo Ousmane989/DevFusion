@@ -15,7 +15,7 @@ const CATEGORIES = ['Loyer', 'Électricité', 'Eau', 'Internet / Téléphone', '
 router.get('/categories', (req, res) => res.json(CATEGORIES));
 
 // ---- Dépenses ----
-router.get('/depenses', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.get('/depenses', autoriser('directeur'), ah(async (req, res) => {
   const { du, au, categorie } = req.query;
   const params = []; const where = [];
   if (du) { params.push(du); where.push(`d.date >= $${params.length}`); }
@@ -27,7 +27,7 @@ router.get('/depenses', autoriser('directeur', 'secretaire'), ah(async (req, res
   res.json({ depenses: rows, total: rows.reduce((s, r) => s + r.montant, 0) });
 }));
 
-router.post('/depenses', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.post('/depenses', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['categorie', 'libelle', 'montant']);
   if (!(Number(req.body.montant) > 0)) throw new HttpError(400, 'Montant invalide.');
   res.status(201).json(await one(

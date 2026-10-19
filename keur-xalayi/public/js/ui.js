@@ -53,7 +53,8 @@ export function modesDuPays() {
   return codes.map((c) => [c, MODES[c]]);
 }
 export const STATUTS = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé', non_concerne: '—', present: 'Présent', absent: 'Absent', retard: 'Retard' };
-export const ROLES = { directeur: 'Directeur', secretaire: 'Secrétaire / Comptable', enseignant: 'Enseignant' };
+export const ROLES = { directeur: 'Directrice', enseignant: 'Enseignant(e)' };
+export const ESPACES = { directeur: 'Espace Directrice', enseignant: 'Espace Enseignants' };
 
 export function argent(n) {
   const v = Math.round(Number(n || 0) * 100) / 100;

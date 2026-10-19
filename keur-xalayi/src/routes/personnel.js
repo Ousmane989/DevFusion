@@ -9,7 +9,7 @@ const { autoriser } = require('../auth');
 
 const router = express.Router();
 
-router.get('/', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.get('/', autoriser('directeur'), ah(async (req, res) => {
   const tous = req.query.tous === '1';
   res.json(await query(
     `SELECT p.*, (SELECT string_agg(c.nom, ', ' ORDER BY c.nom) FROM classes c JOIN annees_scolaires a ON a.id = c.annee_id AND a.active

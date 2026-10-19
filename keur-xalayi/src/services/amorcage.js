@@ -119,7 +119,7 @@ async function amorcer() {
   if (nbUsers.n === 0) {
     const hash = await bcrypt.hash(config.admin.motDePasse, 10);
     await query(
-      `INSERT INTO utilisateurs (identifiant, mot_de_passe, nom_complet, role) VALUES ($1,$2,'Direction','directeur')
+      `INSERT INTO utilisateurs (identifiant, mot_de_passe, nom_complet, role) VALUES ($1,$2,'Directrice','directeur')
        ON CONFLICT (identifiant) DO NOTHING`,
       [config.admin.identifiant, hash],
     );

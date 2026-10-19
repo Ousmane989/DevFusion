@@ -13,7 +13,7 @@ export async function afficher(el, params) {
     </div>
     <div class="ligne" style="margin-bottom:1rem">
       <button class="btn" id="pdf">🖨️ Bulletins de toute la classe (PDF)</button>
-      ${estRole('directeur', 'secretaire') ? '<button class="btn vert" id="envoyer">📲 Envoyer les résultats aux parents</button>' : ''}
+      ${estRole('directeur') ? '<button class="btn vert" id="envoyer">📲 Envoyer les résultats aux parents</button>' : ''}
       ${estRole('directeur', 'enseignant') ? '<a class="btn clair" id="saisie">📝 Saisir les notes</a>' : ''}
     </div>
     <div id="zone"></div>`;

@@ -12,7 +12,7 @@ comme sur téléphone.
 
 | Module | Contenu |
 |---|---|
-| **Connexion & rôles** | Identifiant + mot de passe (bcrypt), sessions sécurisées, 3 rôles : Directeur, Secrétaire/Comptable, Enseignant (sa classe uniquement) |
+| **Deux espaces** | Connexion par identifiant + mot de passe (bcrypt), sessions sécurisées. **Espace Directrice** : gestion complète. **Espace Enseignants** : chaque enseignant ne voit que sa classe (appel, notes, bulletins) |
 | **Classes** | PS, MS, GS, CI, CP → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
 | **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +221 obligatoire (+222 accepté), recherche, filtres, archivage, réinscription |
 | **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, modes sénégalais (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi et Sedad si le pays est réglé sur la Mauritanie), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, envoi du reçu par WhatsApp, annulation tracée |
@@ -45,7 +45,7 @@ la première connexion** via « Changer mon mot de passe »).
 Pour essayer avec des données fictives d'une école de Dakar (environ 60 élèves, paiements en FCFA, notes, présences) :
 
 ```bash
-npm run db:demo               # comptes de test : secretaire / enseignant — mot de passe demo1234
+npm run db:demo               # compte de test « enseignant » — mot de passe demo1234
 ```
 
 ### Avec Supabase
@@ -66,7 +66,7 @@ sauvegardes.
 1. **Paramètres → École** : logo, adresse, téléphone, devise (FCFA par défaut) et pays (Sénégal +221 par défaut).
 2. **Paramètres → Tarifs** : frais d'inscription et mensualité de chaque niveau.
 3. **Personnel** : ajoutez les enseignants ; **Classes** : désignez les titulaires et créez les groupes (CE1 B…).
-4. **Utilisateurs** : créez les comptes de la secrétaire et des enseignants (un enseignant est lié à sa fiche du personnel).
+4. **Utilisateurs** : créez les comptes des enseignants (chacun lié à sa fiche du personnel et titulaire de sa classe).
 5. **Rappels WhatsApp** : jour du rappel, date limite, second rappel, texte des messages.
 6. **Année scolaire** : vérifiez les dates (octobre → juillet par défaut).
 

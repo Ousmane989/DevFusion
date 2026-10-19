@@ -13,7 +13,7 @@ const { classeur } = require('../services/excel');
 
 const router = express.Router();
 const STATUTS = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé' };
-const gestion = ['directeur', 'secretaire'];
+const gestion = ['directeur'];
 
 /** Définitions des listes exportables. */
 const LISTES = {
@@ -241,7 +241,7 @@ router.get('/cartes.pdf', ah(async (req, res) => {
   if (req.query.classe_id) { verifierClasse(req, req.query.classe_id); params.push(req.query.classe_id); filtre += ` AND c.id = $${params.length}`; }
   if (req.query.eleve_ids) { params.push(String(req.query.eleve_ids).split(',').map(Number)); filtre += ` AND e.id = ANY($${params.length})`; }
   if (req.user.classes) { params.push(req.user.classes); filtre += ` AND c.id = ANY($${params.length})`; }
-  if (!req.query.classe_id && !req.query.eleve_ids && req.user.role !== 'directeur' && req.user.role !== 'secretaire') throw new HttpError(400, 'Choisissez une classe.');
+  if (!req.query.classe_id && !req.query.eleve_ids && req.user.role !== 'directeur') throw new HttpError(400, 'Choisissez une classe.');
   const eleves = await query(
     `SELECT e.*, c.nom AS classe FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id
        JOIN annees_scolaires a ON a.id = i.annee_id AND a.active JOIN classes c ON c.id = i.classe_id JOIN niveaux n ON n.id = c.niveau_id

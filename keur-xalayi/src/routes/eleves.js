@@ -8,7 +8,7 @@ const { autoriser, verifierClasse } = require('../auth');
 const { soldeInscription } = require('../services/finance');
 
 const router = express.Router();
-const gestion = autoriser('directeur', 'secretaire');
+const gestion = autoriser('directeur'); // inscriptions et modifications : espace directrice
 
 const CHAMPS = ['nom', 'prenom', 'sexe', 'date_naissance', 'lieu_naissance', 'pere_nom', 'mere_nom',
   'tuteur_nom', 'whatsapp', 'telephone2', 'adresse', 'remarques'];

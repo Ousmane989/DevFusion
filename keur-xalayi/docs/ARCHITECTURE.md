@@ -80,22 +80,25 @@ Ainsi :
 - **Matricule** : `KX` + 2 chiffres de l'année d'inscription + numéro, ex. `KX26-0007`.
 - **Reçu** : `R` + année/mois + numéro, ex. `R2610-00042`.
 
-## 3. Rôles et droits
+## 3. Les deux espaces
 
-| Module | Directeur | Secrétaire / Comptable | Enseignant |
-|---|:-:|:-:|:-:|
-| Tableau de bord | ✅ complet | ✅ (sans finances globales) | ✅ sa classe |
-| Élèves (inscription, fiche) | ✅ | ✅ | 👁 sa classe |
-| Classes | ✅ | 👁 | 👁 sa classe |
-| Paiements, impayés, reçus | ✅ | ✅ | ❌ |
-| Rappels et messages WhatsApp | ✅ | ✅ | ❌ |
-| Présences | ✅ | 👁 | ✅ sa classe |
-| Notes et bulletins | ✅ | 👁 bulletins | ✅ sa classe |
-| Personnel et salaires | ✅ | ❌ | ❌ |
-| Finances (dépenses, bilan) | ✅ | ✅ dépenses | ❌ |
-| Emploi du temps, calendrier | ✅ | ✅ | 👁 |
-| Année scolaire (réinscription, passage) | ✅ | ❌ | ❌ |
-| Paramètres, utilisateurs, sauvegardes | ✅ | ❌ | ❌ |
+On choisit son espace sur la page de connexion ; le serveur vérifie que le
+compte correspond (rôle `directeur` ou `enseignant`).
+
+| Module | Espace Directrice | Espace Enseignants |
+|---|:-:|:-:|
+| Tableau de bord | ✅ complet | ✅ sa classe |
+| Élèves (inscription, fiche) | ✅ | 👁 sa classe |
+| Classes | ✅ | 👁 sa classe |
+| Paiements, impayés, reçus | ✅ | ❌ |
+| Rappels et messages WhatsApp | ✅ | ❌ |
+| Présences (appel) | ✅ | ✅ sa classe |
+| Notes et bulletins | ✅ | ✅ sa classe |
+| Personnel et salaires | ✅ | ❌ |
+| Finances (dépenses, bilan) | ✅ | ❌ |
+| Emploi du temps, calendrier | ✅ | 👁 |
+| Année scolaire (réinscription, passage) | ✅ | ❌ |
+| Paramètres, utilisateurs, sauvegardes | ✅ | ❌ |
 
 ## 4. Arborescence des pages
 

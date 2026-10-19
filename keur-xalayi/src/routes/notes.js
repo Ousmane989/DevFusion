@@ -114,7 +114,7 @@ router.get('/bulletins.pdf', ah(async (req, res) => {
 }));
 
 // ---- Envoi des résultats aux parents par WhatsApp ----
-router.post('/bulletins/envoyer', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.post('/bulletins/envoyer', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['classe_id', 'periode']);
   const periode = await verifierPeriode(req.body.periode, true);
   const r = await resultatsClasse(req.body.classe_id, periode);

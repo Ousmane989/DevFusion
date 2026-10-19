@@ -4,7 +4,7 @@ import { get, post, put, del, e, options, champ, formulaire, dateFr, estRole, to
 const TYPES = { vacances: 'Vacances', examen: 'Examen / composition', evenement: 'Événement', ferie: 'Jour férié', reunion: 'Réunion' };
 
 export async function afficher(el) {
-  const modif = estRole('directeur', 'secretaire');
+  const modif = estRole('directeur');
   const d0 = new Date();
   let annee = d0.getFullYear(); let mois = d0.getMonth();
   el.innerHTML = `<div class="entete-page"><h1>Calendrier scolaire</h1>${modif ? '<button class="btn" id="ajout">＋ Ajouter</button>' : ''}</div>

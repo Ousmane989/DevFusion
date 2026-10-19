@@ -9,7 +9,7 @@ const rappels = require('../services/rappels');
 const { envoyerMessages, lienWaMe } = require('../services/whatsapp');
 
 const router = express.Router();
-router.use(autoriser('directeur', 'secretaire'));
+router.use(autoriser('directeur'));
 
 const canalDe = (body) => (body.manuel ? 'manuel' : undefined);
 

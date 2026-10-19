@@ -11,7 +11,7 @@ const { envoyerMessages } = require('../services/whatsapp');
 const { lienRecu } = require('../services/liens');
 
 const router = express.Router();
-router.use(autoriser('directeur', 'secretaire'));
+router.use(autoriser('directeur'));
 
 // ---- Journal des paiements ----
 router.get('/', ah(async (req, res) => {

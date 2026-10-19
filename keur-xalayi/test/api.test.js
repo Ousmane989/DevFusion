@@ -169,29 +169,41 @@ test('appel, notes, bulletins, exports et cartes', async () => {
   assert.strictEqual((await appel('dir', `/api/notes/bulletins.pdf?classe_id=${mat.id}&periode=1`)).statut, 200);
 });
 
-test('rôles : l\'enseignant ne voit que sa classe, la secrétaire n\'a pas accès aux salaires', async () => {
+test('deux espaces : l\'enseignant ne voit que sa classe et n\'accède pas à la gestion', async () => {
   await connecter('ens', 'enseignant', 'demo1234');
-  await connecter('sec', 'secretaire', 'demo1234');
   const classesEns = (await appel('ens', '/api/classes')).donnees;
   assert.strictEqual(classesEns.length, 1);
-  assert.strictEqual((await appel('ens', '/api/paiements')).statut, 403);
+  for (const c of ['/api/paiements', '/api/personnel/salaires', '/api/finances/bilan', '/api/finances/depenses', '/api/utilisateurs', '/api/whatsapp/historique']) {
+    assert.strictEqual((await appel('ens', c)).statut, 403, c);
+  }
   assert.strictEqual((await appel('ens', `/api/classes/${classe.id}`)).statut, 403);
   const eleves = (await appel('ens', '/api/eleves')).donnees;
   assert.ok(eleves.every((e) => e.classe_id === classesEns[0].id));
-  assert.strictEqual((await appel('sec', '/api/personnel/salaires')).statut, 403);
-  assert.strictEqual((await appel('sec', '/api/paiements')).statut, 200);
-  assert.strictEqual((await appel('sec', '/api/finances/bilan')).statut, 403);
+  assert.strictEqual((await appel('ens', `/api/presences/appel?classe_id=${classesEns[0].id}`)).statut, 200);
+  // Le rôle secrétaire n'existe plus.
+  const sec = await appel('dir', '/api/utilisateurs', { methode: 'POST', corps: { identifiant: 'x.sec', mot_de_passe: 'secret123', nom_complet: 'X', role: 'secretaire' } });
+  assert.strictEqual(sec.statut, 400);
+});
+
+test('connexion : chaque compte entre par son espace', async () => {
+  const essai = (identifiant, mdp, espace) => fetch(base + '/api/auth/connexion', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifiant, mot_de_passe: mdp, espace }),
+  }).then((r) => r.status);
+  assert.strictEqual(await essai('enseignant', 'demo1234', 'direction'), 403);
+  assert.strictEqual(await essai('enseignant', 'demo1234', 'enseignants'), 200);
+  assert.strictEqual(await essai(config.admin.identifiant, config.admin.motDePasse, 'enseignants'), 403);
+  assert.strictEqual(await essai(config.admin.identifiant, config.admin.motDePasse, 'direction'), 200);
 });
 
 test('suppression d\'un compte utilisateur', async () => {
-  const cree = await appel('dir', '/api/utilisateurs', { methode: 'POST', corps: { identifiant: 'test.suppr', mot_de_passe: 'secret123', nom_complet: 'Test', role: 'secretaire' } });
-  assert.strictEqual(cree.statut, 201);
+  const cree = await appel('dir', '/api/utilisateurs', { methode: 'POST', corps: { identifiant: 'test.suppr', mot_de_passe: 'secret123', nom_complet: 'Test', role: 'enseignant', personnel_id: classe.enseignant_id } });
+  assert.strictEqual(cree.statut, 201, JSON.stringify(cree.donnees));
   assert.strictEqual((await appel('dir', `/api/utilisateurs/${cree.donnees.id}`, { methode: 'DELETE' })).statut, 200);
   const liste = (await appel('dir', '/api/utilisateurs')).donnees;
   assert.ok(!liste.some((u) => u.identifiant === 'test.suppr'));
   const moi = (await appel('dir', '/api/auth/moi')).donnees.utilisateur;
   assert.strictEqual((await appel('dir', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 400, 'pas de suppression de son propre compte');
-  assert.strictEqual((await appel('sec', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 403, 'réservé au directeur');
+  assert.strictEqual((await appel('ens', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 403, 'réservé à la directrice');
 });
 
 test('archivage puis réinscription', async () => {

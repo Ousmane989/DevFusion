@@ -54,7 +54,7 @@ async function authentifier(req, res, next) {
   }
 }
 
-/** Limite l'accès à certains rôles : autoriser('directeur', 'secretaire') */
+/** Limite l'accès à certains rôles : autoriser('directeur') ou autoriser('directeur', 'enseignant') */
 function autoriser(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
