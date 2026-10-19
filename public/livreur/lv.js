@@ -277,6 +277,7 @@ window.LV = (function () {
 
   // ----- Coque des espaces (barre latérale + onglets) -----
   // sections : [{ id, label, icon }] ; chaque section a un <div data-view="id">.
+  const SPACE_TAG = { agence: 'Centre de contrôle', partenaire: 'Partenaire', coursier: 'Livreur' };
   async function appShell(role, sub, sections, onShow) {
     const me = await api('/me');
     if (!me.ok || me.data.user.role !== role) {
@@ -286,6 +287,8 @@ window.LV = (function () {
     const user = me.data.user;
     currentRole = user.role;
     const app = document.querySelector('.app');
+    // Chaque espace a sa propre identité visuelle (voir .space-* dans livreur.css).
+    document.body.classList.add('space-' + role);
     const side = app.querySelector('.sidebar');
     side.innerHTML = brand(sub) + '<nav class="side-nav">' + sections.map((s) =>
       '<button data-go="' + s.id + '">' + icon(s.icon) + '<span>' + esc(s.label) + '</span><em class="count hidden" data-count="' + s.id + '"></em></button>').join('') +
@@ -293,6 +296,7 @@ window.LV = (function () {
       '<button class="btn btn-ghost btn-sm btn-block" data-logout>' + icon('logout', 'ico') + ' Déconnexion</button></div>';
     app.querySelector('.topbar .actions').insertAdjacentHTML('afterbegin', themeButton());
     const title = app.querySelector('.topbar h1');
+    title.insertAdjacentHTML('afterend', '<span class="space-tag">' + esc(SPACE_TAG[role] || role) + '</span>');
     function show(id) {
       const s = sections.find((x) => x.id === id) || sections[0];
       side.querySelectorAll('[data-go]').forEach((b) => b.classList.toggle('active', b.dataset.go === s.id));

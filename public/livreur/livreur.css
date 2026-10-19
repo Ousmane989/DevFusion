@@ -975,3 +975,72 @@ body.leaving { animation: leave .28s ease forwards; }
   .page-body .card { padding: 22px; }
 }
 .map-mini .mr-map { max-width: 380px; margin: 0 auto; }
+
+/* ==================================================================
+   IDENTITÉ DE CHAQUE ESPACE
+   Agence : « centre de contrôle » sombre et doré.
+   Partenaire : clair et vert. Livreur : clair, accent jaune.
+   ================================================================== */
+.space-tag {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--brand-soft); color: var(--brand);
+}
+.space-coursier .space-tag { background: var(--accent-soft); color: var(--accent-dark); }
+
+.space-agence {
+  --ops-1: #07140f; --ops-2: #0c2219; --ops-line: rgba(255,255,255,.08); --ops-text: #b9cdc3;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(11,107,67,.10) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--bg);
+}
+.space-agence .sidebar {
+  background: linear-gradient(180deg, var(--ops-2), var(--ops-1)); color: var(--ops-text); border-right-color: var(--ops-line);
+}
+.space-agence .sidebar .brand-name { color: #fff; }
+.space-agence .sidebar .brand small { color: var(--accent); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.space-agence .side-nav button { color: var(--ops-text); }
+.space-agence .side-nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
+.space-agence .side-nav button.active { background: linear-gradient(90deg, rgba(255,194,26,.18), rgba(255,194,26,.04)); color: var(--accent); }
+.space-agence .side-foot { border-top-color: var(--ops-line); }
+.space-agence .side-foot strong { color: #fff; }
+.space-agence .side-foot .muted { color: var(--ops-text); }
+.space-agence .side-foot .btn-ghost { color: #fff; border-color: var(--ops-line); background: rgba(255,255,255,.04); }
+.space-agence .side-foot .btn-ghost .ico { color: var(--accent); }
+.space-agence .topbar { border-bottom: 2px solid var(--accent); }
+.space-agence .space-tag { background: var(--ops-2); color: var(--accent); }
+.space-agence .space-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #2bd47d; animation: ping 2s ease-out infinite; }
+.space-agence .kpi { border-top: 3px solid var(--brand); }
+.space-agence .kpi.accent { background: linear-gradient(160deg, var(--ops-2), var(--ops-1)); border-color: var(--ops-2); }
+.space-agence .kpi.accent span, .space-agence .kpi.accent small { color: var(--ops-text); }
+.space-agence .kpi.accent strong { color: var(--accent); }
+
+.ops-hero {
+  display: flex; align-items: center; gap: 24px; justify-content: space-between; flex-wrap: wrap;
+  padding: 26px 30px; margin-bottom: 22px; border-radius: var(--radius); color: #fff; position: relative; overflow: hidden;
+  background:
+    radial-gradient(600px 220px at 100% 0%, rgba(255,194,26,.22), transparent 70%),
+    linear-gradient(120deg, var(--ops-1), var(--ops-2) 55%, var(--brand-dark));
+  box-shadow: var(--shadow); animation: fadeUp .6s var(--ease) backwards;
+}
+.ops-hero::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); transform: translateX(-100%);
+  animation: opsSweep 6s ease-in-out infinite;
+}
+.ops-hero h2 { font-size: 28px; color: #fff; margin: 8px 0 6px; }
+.ops-hero p { color: var(--ops-text); margin: 0; max-width: 560px; }
+.ops-live { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.ops-live i { width: 8px; height: 8px; border-radius: 50%; background: #2bd47d; animation: ping 2s ease-out infinite; }
+.ops-clock { text-align: right; }
+.ops-clock strong { display: block; font-family: var(--head); font-size: 44px; line-height: 1; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ops-clock span { color: var(--ops-text); font-size: 14px; text-transform: capitalize; }
+@keyframes opsSweep { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@media (max-width: 640px) {
+  .ops-hero { padding: 20px; }
+  .ops-hero h2 { font-size: 22px; }
+  .ops-clock { text-align: left; }
+  .ops-clock strong { font-size: 34px; }
+  .topbar .space-tag { display: none; }
+}
+:root[data-theme="dark"] .space-agence .kpi.accent { border-color: var(--ops-line); }
