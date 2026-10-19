@@ -15,7 +15,7 @@ export async function afficher(el, { id }) {
       <button class="btn clair" id="cartes">🪪 Cartes d'élève</button>
       ${estRole('directeur', 'enseignant') ? `<a class="btn sec" href="#/presences?classe_id=${c.id}">✅ Faire l'appel</a>` : ''}
       <a class="btn clair" href="#/emploi-du-temps?classe_id=${c.id}">🗓️ Emploi du temps</a>
-      ${estRole('directeur', 'secretaire') ? `<a class="btn clair" href="#/impayes?classe_id=${c.id}">⏰ Impayés</a>` : ''}
+      ${estRole('directeur') ? `<a class="btn clair" href="#/impayes?classe_id=${c.id}">⏰ Impayés</a>` : ''}
     </div>
     <div id="liste"></div>
     ${decisions && c.eleves.length ? `<div class="carte" style="margin-top:1rem"><h2>🎓 Décisions de fin d'année</h2>

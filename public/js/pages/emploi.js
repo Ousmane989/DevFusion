@@ -4,7 +4,7 @@ import { get, post, del, e, options, champ, formulaire, JOURS, estRole, toast, c
 export async function afficher(el, params) {
   const classes = await get('/classes');
   if (!classes.length) { el.innerHTML = '<div class="carte vide">Aucune classe.</div>'; return; }
-  const modif = estRole('directeur', 'secretaire');
+  const modif = estRole('directeur');
   let classeId = params.classe_id || classes[0].id;
   el.innerHTML = `<div class="filtres"><select id="classe">${options(classes.map((c) => [c.id, c.nom]), classeId)}</select></div>
     <div class="ligne" style="margin-bottom:1rem">${modif ? '<button class="btn" id="ajout">＋ Ajouter un cours</button>' : ''}<button class="btn clair" onclick="window.print()">🖨️ Imprimer</button></div>

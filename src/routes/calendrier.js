@@ -17,7 +17,7 @@ router.get('/', ah(async (req, res) => {
   res.json(await query(`SELECT * FROM evenements ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY date_debut`, params));
 }));
 
-router.post('/', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.post('/', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['titre', 'type', 'date_debut']);
   if (!TYPES.includes(req.body.type)) throw new HttpError(400, 'Type d\'événement invalide.');
   res.status(201).json(await one(
@@ -25,7 +25,7 @@ router.post('/', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
     [req.body.titre, req.body.type, req.body.date_debut, vide(req.body.date_fin) || req.body.date_debut, vide(req.body.description)]));
 }));
 
-router.put('/:id', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.put('/:id', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['titre', 'type', 'date_debut']);
   if (!TYPES.includes(req.body.type)) throw new HttpError(400, 'Type d\'événement invalide.');
   res.json(await one(
@@ -33,7 +33,7 @@ router.put('/:id', autoriser('directeur', 'secretaire'), ah(async (req, res) => 
     [req.body.titre, req.body.type, req.body.date_debut, vide(req.body.date_fin) || req.body.date_debut, vide(req.body.description), req.params.id]));
 }));
 
-router.delete('/:id', autoriser('directeur', 'secretaire'), ah(async (req, res) => {
+router.delete('/:id', autoriser('directeur'), ah(async (req, res) => {
   await query('DELETE FROM evenements WHERE id = $1', [req.params.id]);
   res.json({ ok: true });
 }));

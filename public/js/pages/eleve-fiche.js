@@ -6,7 +6,7 @@ export async function afficher(el, { id, nouveau }) {
   const d = await get(`/eleves/${id}`);
   const v = d.eleve;
   const insc = d.inscription;
-  const gestion = estRole('directeur', 'secretaire');
+  const gestion = estRole('directeur');
   const age = v.date_naissance ? Math.floor((Date.now() - new Date(v.date_naissance)) / 31557600000) : null;
   const info = (lib, val) => (val ? `<div><div class="petit muted">${e(lib)}</div><div class="gras">${val}</div></div>` : '');
 

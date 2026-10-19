@@ -9,7 +9,7 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page">
       <h1>Élèves</h1>
-      ${estRole('directeur', 'secretaire') ? '<a class="btn" href="#/eleves/nouveau">＋ Nouvelle inscription</a>' : ''}
+      ${estRole('directeur') ? '<a class="btn" href="#/eleves/nouveau">＋ Nouvelle inscription</a>' : ''}
     </div>
     <div class="filtres">
       <input class="recherche" type="search" id="q" placeholder="🔍 Nom, prénom, matricule, parent ou téléphone…" value="${e(filtres.q)}">
