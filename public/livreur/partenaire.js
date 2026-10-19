@@ -36,8 +36,7 @@
     const r = await api('/partner/orders/' + id);
     if (!r.ok) return toast(r.data.error, true);
     const o = r.data.order;
-    const canCancel = ['nouvelle', 'confirmee', 'reportee'].includes(o.status);
-    const body = modal('Commande ' + o.code,
+    modal('Commande ' + o.code,
       '<p style="margin-bottom:16px">' + badge(o.status, o.status_label) + '</p><dl class="kv">' +
       '<dt>Client</dt><dd>' + esc(o.recipient_name) + ' · ' + esc(LV.phoneFmt(o.recipient_phone)) + '</dd>' +
       '<dt>Adresse</dt><dd>' + esc(o.zone_name) + ' — ' + esc(o.address) + '</dd>' +
@@ -50,15 +49,7 @@
       (o.received_by ? '<dt>Reçu par</dt><dd>' + esc(o.received_by) + '</dd>' : '') +
       '</dl><h3 style="margin:22px 0 4px;font-size:16px">Suivi</h3><ul class="timeline">' +
       r.data.events.slice().reverse().map((e, i) => '<li class="' + (i ? '' : 'last') + '"><strong>' + esc(e.label) + '</strong><span>' + date(e.created_at, true) + (e.note ? ' — ' + esc(e.note) : '') + '</span></li>').join('') +
-      '</ul><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><a class="btn btn-ghost btn-sm" target="_blank" href="/livreur/suivi?code=' + encodeURIComponent(o.code) + '">Lien de suivi client</a>' +
-      (canCancel ? '<button class="btn btn-danger btn-sm" data-cancel>Annuler la commande</button>' : '') + '</div>');
-    const c = body.querySelector('[data-cancel]');
-    if (c) c.addEventListener('click', async () => {
-      if (!confirm('Annuler cette commande ?')) return;
-      const x = await api('/partner/orders/' + o.id + '/cancel', {});
-      if (!x.ok) return toast(x.data.error, true);
-      closeModal(); toast('Commande annulée'); VIEWS.commandes();
-    });
+      '</ul><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><a class="btn btn-ghost btn-sm" target="_blank" href="/livreur/suivi?code=' + encodeURIComponent(o.code) + '">Lien de suivi client</a></div>');
   }
 
   const VIEWS = {
