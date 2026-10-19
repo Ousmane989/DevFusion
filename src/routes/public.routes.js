@@ -22,7 +22,9 @@ async function mirrorToAgency(user, body, items, total, order) {
   const itemsCount = items.reduce((n, it) => n + (Number(it.qty) || 1), 0);
   const desc = items.map((it) => (it.qty > 1 ? it.qty + '× ' : '') + it.name + (it.variant ? ' (' + it.variant + ')' : '')).join(', ');
   await LV.createBoutiqueOrder({
+    collab,
     merchant: {
+      id: user.id,
       shop_name: user.shop_name,
       phone: user.phone,
       pickup_phone: (st && st.phone) || user.phone,
@@ -226,10 +228,12 @@ router.post('/store/:slug/order', orderLimiter, async (req, res) => {
     items, subtotal, shipping, total,
   });
 
-  res.status(201).json({ ok: true, ref: order.ref, subtotal, shipping, total, payment: 'cod' });
+  // Transmission à l'agence partenaire AVANT la réponse : en serverless (Vercel),
+  // le travail lancé après la réponse peut être interrompu. Jamais bloquante :
+  // une erreur ici n'empêche pas la commande du client.
+  try { await mirrorToAgency(user, b, items, total, order); } catch (_) { /* agence indisponible */ }
 
-  // Transmission à l'agence partenaire (après la réponse, jamais bloquante).
-  mirrorToAgency(user, b, items, total, order).catch(() => {});
+  res.status(201).json({ ok: true, ref: order.ref, subtotal, shipping, total, payment: 'cod' });
 });
 
 module.exports = router;

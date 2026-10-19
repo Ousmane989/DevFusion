@@ -90,9 +90,10 @@
       const r = await api('/partner/stock');
       const rows = r.data.stock || [];
       document.getElementById('p-stock').innerHTML = rows.length
-        ? '<table><thead><tr><th>Article</th><th>Référence</th><th>Emplacement</th><th class="num">Quantité</th><th>Mis à jour</th></tr></thead><tbody>' +
-          rows.map((s) => '<tr><td>' + esc(s.name) + '</td><td class="muted">' + esc(s.sku || '—') + '</td><td class="muted">' + esc(s.location || '—') + '</td><td class="num"><b style="color:' + (s.qty <= 2 ? 'var(--danger)' : 'inherit') + '">' + s.qty + '</b></td><td class="muted">' + date(s.updated_at, true) + '</td></tr>').join('') + '</tbody></table>'
-        : '<div class="empty">Aucun stock déposé. Contactez l\'agence pour déposer vos produits.</div>';
+        ? '<table><thead><tr><th>Article</th><th>Référence</th><th>Emplacement</th><th class="num">Quantité</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
+          rows.map((s) => '<tr><td>' + esc(s.name) + '</td><td class="muted">' + esc(s.sku || '—') + '</td><td class="muted">' + esc(s.location || '—') + '</td><td class="num"><b style="color:' + (s.qty <= 2 ? 'var(--danger)' : 'inherit') + '">' + s.qty + '</b></td><td class="muted">' + date(s.updated_at, true) + '</td>' +
+            '<td class="num"><button class="btn btn-ghost btn-sm" data-stock-qty="' + s.id + '" data-qty="' + s.qty + '">Modifier</button></td></tr>').join('') + '</tbody></table>'
+        : '<div class="empty">Aucun article. Cliquez sur « Ajouter un article » pour saisir votre stock.</div>';
     },
     async reversements() {
       const [s, p] = await Promise.all([api('/partner/summary'), api('/partner/payouts')]);
@@ -159,6 +160,30 @@
       LV.msg(f.querySelector('.form-msg'), 'success', 'Profil enregistré.');
     });
   }
+  // Stock saisi à la main par le partenaire.
+  document.getElementById('p-new-stock').addEventListener('click', () => {
+    const body = modal('Ajouter un article',
+      '<form><div class="form-msg"></div>' +
+      '<div class="row"><div class="field"><label>Article</label><input name="name" required /></div><div class="field"><label>Référence</label><input name="sku" /></div></div>' +
+      '<div class="field"><label>Quantité</label><input type="number" name="qty" min="0" value="1" required /></div>' +
+      '<button class="btn btn-primary btn-block" type="submit">Enregistrer</button></form>');
+    const f = body.querySelector('form');
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const r = await LV.submit(f, '/partner/stock');
+      if (!r.ok) return;
+      closeModal(); toast('Article ajouté'); VIEWS.stock();
+    });
+  });
+  document.getElementById('p-stock').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-stock-qty]');
+    if (!b) return;
+    const n = prompt('Nouvelle quantité en stock :', b.dataset.qty);
+    if (n === null || n.trim() === '' || !Number.isFinite(Number(n))) return;
+    const r = await api('/partner/stock/' + b.dataset.stockQty, { qty: Number(n) }, 'PUT');
+    if (!r.ok) return toast(r.data.error, true);
+    toast('Stock mis à jour'); VIEWS.stock();
+  });
   shell.start();
 
   // Temps réel : dès qu'une commande change de statut, la vue se met à jour.
@@ -168,7 +193,7 @@
     if (!r.ok) return;
     const next = JSON.stringify([r.data.total, r.data.by, r.data.pending_payout]);
     if (stamp && next !== stamp) {
-      LV.notify('Vos commandes ont été mises à jour');
+      LV.notify(r.data.total > JSON.parse(stamp)[0] ? 'Nouvelle commande reçue' : 'Vos commandes ont été mises à jour');
       const id = location.hash.slice(1) || 'dashboard';
       if (!LV.modalOpen() && ['dashboard', 'commandes', 'reversements'].includes(id)) VIEWS[id]();
     }

@@ -88,7 +88,8 @@ async function insertOrder(o, actor) {
   return db.prepare(ORDER_SELECT + ' WHERE o.id = ?').get(r.lastInsertRowid);
 }
 
-// Changement de statut + effets (stock, tentatives, date de livraison).
+// Changement de statut + effets (tentatives, date de livraison). Le stock
+// n'est jamais décompté automatiquement : il est saisi à la main.
 async function setStatus(order, status, { actor, note, received_by } = {}) {
   if (!S.STATUSES[status]) throw Object.assign(new Error('Statut inconnu.'), { status: 400 });
   const t = S.now();
@@ -97,10 +98,6 @@ async function setStatus(order, status, { actor, note, received_by } = {}) {
   if (status === 'livree') {
     sets.push('delivered_at = ?'); args.push(t);
     if (received_by != null) { sets.push('received_by = ?'); args.push(str(received_by, 120)); }
-    if (order.stock_id && !order.stock_applied) {
-      await db.prepare('UPDATE lv_stock SET qty = qty - ?, updated_at = ? WHERE id = ?').run(order.stock_qty || 1, t, order.stock_id);
-      sets.push('stock_applied = 1');
-    }
   }
   if (status === 'echec') sets.push('attempts = attempts + 1');
   args.push(order.id);
@@ -309,6 +306,23 @@ partner.post('/orders/:id/cancel', wrap(async (req, res) => {
 
 partner.get('/stock', wrap(async (req, res) => {
   res.json({ stock: await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(req.lv.id) });
+}));
+
+// Stock saisi manuellement par le partenaire (l'agence peut aussi le corriger).
+partner.post('/stock', wrap(async (req, res) => {
+  const b = req.body || {};
+  if (!str(b.name)) return bad(res, 'Le nom de l\'article est obligatoire.');
+  await db.prepare('INSERT INTO lv_stock (partner_id, name, sku, qty, location, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(req.lv.id, str(b.name, 120), str(b.sku, 60), Math.max(0, Math.round(Number(b.qty) || 0)), '', S.now());
+  res.status(201).json({ ok: true });
+}));
+partner.put('/stock/:id', wrap(async (req, res) => {
+  const s = await db.prepare('SELECT * FROM lv_stock WHERE id = ? AND partner_id = ?').get(int(req.params.id), req.lv.id);
+  if (!s) return bad(res, 'Article introuvable.', 404);
+  const qty = Math.max(0, Math.round(Number(req.body && req.body.qty)));
+  if (!Number.isFinite(qty)) return bad(res, 'Quantité invalide.');
+  await db.prepare('UPDATE lv_stock SET qty = ?, updated_at = ? WHERE id = ?').run(qty, S.now(), s.id);
+  res.json({ ok: true });
 }));
 
 partner.get('/payouts', wrap(async (req, res) => {
@@ -647,15 +661,39 @@ agency.get('/export.csv', wrap(async (_req, res) => {
 // --- Collaborations avec les boutiques Karat (demande / acceptation) ---
 agency.get('/collabs', wrap(async (req, res) => {
   const rows = await db.prepare(
-    "SELECT * FROM lv_collabs WHERE agency_id = ? ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, id DESC"
+    "SELECT c.*, p.business_name AS partner_name, p.phone AS partner_phone FROM lv_collabs c LEFT JOIN lv_users p ON p.id = c.partner_id " +
+    "WHERE c.agency_id = ? ORDER BY CASE WHEN c.status = 'pending' THEN 0 ELSE 1 END, c.id DESC"
   ).all(req.lv.id);
   res.json({ collabs: rows });
 }));
 
+// Accepter une boutique Karat en la liant à un compte partenaire (existant ou
+// créé ici) : ses commandes arrivent alors chez l'agence ET chez le partenaire.
+// Rappelé sur une collaboration déjà acceptée, change simplement le compte lié.
 agency.post('/collabs/:id/accept', wrap(async (req, res) => {
   const c = await db.prepare('SELECT * FROM lv_collabs WHERE id = ? AND agency_id = ?').get(int(req.params.id), req.lv.id);
   if (!c) return bad(res, 'Demande introuvable.', 404);
+  const b = req.body || {};
+  let partnerId = null;
+  if (b.partner_id === 'new') {
+    const phone = normPhone(b.phone || c.phone);
+    const password = String(b.password || '');
+    if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
+    if (password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères.');
+    if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Un compte existe déjà avec ce numéro : choisissez-le dans la liste.', 409);
+    const shop = str(b.business_name, 120) || c.shop_name || 'Boutique';
+    const r = await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, activity, city, created_at)
+      VALUES ('partenaire', ?, ?, ?, 'active', ?, 'Boutique Karat', ?, ?)`)
+      .run(shop, phone, await hashPassword(password), shop, c.city || 'Nouakchott', S.now());
+    partnerId = r.lastInsertRowid;
+  } else {
+    const p = await db.prepare("SELECT id, status FROM lv_users WHERE id = ? AND role = 'partenaire'").get(int(b.partner_id));
+    if (!p) return bad(res, 'Choisissez le compte partenaire de cette boutique (ou créez-en un).');
+    if (p.status !== 'active') await db.prepare("UPDATE lv_users SET status = 'active' WHERE id = ?").run(p.id);
+    partnerId = p.id;
+  }
   await db.prepare("UPDATE lv_collabs SET status = 'accepted', responded_at = ? WHERE id = ?").run(S.now(), c.id);
+  await S.linkCollabPartner(c, partnerId);
   res.json({ ok: true });
 }));
 

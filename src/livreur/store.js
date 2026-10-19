@@ -223,6 +223,10 @@ function ensureReady() {
       }
       // Bases créées avant le tarif par produit : ajout de la colonne.
       try { await db.exec('ALTER TABLE lv_orders ADD COLUMN items_count INTEGER NOT NULL DEFAULT 1'); } catch (_) { /* déjà présente */ }
+      // Liaison boutique Karat ↔ compte partenaire : les commandes de la boutique
+      // arrivent à la fois chez l'agence et dans l'espace du partenaire lié.
+      try { await db.exec('ALTER TABLE lv_collabs ADD COLUMN partner_id INTEGER'); } catch (_) { /* déjà présente */ }
+      try { await db.exec('ALTER TABLE lv_orders ADD COLUMN merchant_id INTEGER'); } catch (_) { /* déjà présente */ }
       await seed();
     })().catch((e) => { ready = null; throw e; });
   }
@@ -287,14 +291,17 @@ async function collabsForMerchant(merchantId) {
 
 // Crée une commande de livraison à partir d'une commande boutique Karat.
 // Non bloquant pour la boutique : l'appelant protège toujours par try/catch.
-async function createBoutiqueOrder({ merchant, order }) {
+// La commande est rattachée au compte partenaire lié à la collaboration, pour
+// apparaître aussi dans son espace.
+async function createBoutiqueOrder({ merchant, order, collab }) {
   await ensureReady();
   const itemsCount = Math.min(999, Math.max(1, Math.round(Number(order.items_count) || 1)));
   const t = now();
   const o = {
     code: newTrackingCode(),
     source: 'boutique',
-    partner_id: null,
+    partner_id: (collab && collab.partner_id) || null,
+    merchant_id: merchant.id || null,
     service: 'ecommerce',
     sender_name: String(merchant.shop_name || 'Boutique').slice(0, 120),
     sender_phone: String(merchant.pickup_phone || merchant.phone || '').replace(/[^0-9]/g, ''),
@@ -322,7 +329,16 @@ async function createBoutiqueOrder({ merchant, order }) {
   return r.lastInsertRowid;
 }
 
+// Rattache une collaboration à un compte partenaire et lui transfère les
+// commandes boutique déjà reçues qui n'avaient pas encore de partenaire.
+async function linkCollabPartner(collab, partnerId) {
+  await ensureReady();
+  await db.prepare('UPDATE lv_collabs SET partner_id = ? WHERE id = ?').run(partnerId, collab.id);
+  await db.prepare("UPDATE lv_orders SET partner_id = ? WHERE partner_id IS NULL AND source = 'boutique' AND (merchant_id = ? OR (merchant_id IS NULL AND sender_name = ?))")
+    .run(partnerId, collab.merchant_id, collab.shop_name || '');
+}
+
 module.exports = {
   db, now, today, ensureReady, newTrackingCode, findZone, deliveryFee, collectedAmount, partnerNet, addEvent,
-  STATUSES, listActiveAgencies, acceptedCollabFor, collabsForMerchant, createBoutiqueOrder,
+  STATUSES, listActiveAgencies, acceptedCollabFor, collabsForMerchant, createBoutiqueOrder, linkCollabPartner,
 };
