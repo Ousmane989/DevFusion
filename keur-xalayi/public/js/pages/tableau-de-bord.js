@@ -15,6 +15,8 @@ export async function afficher(el) {
       <span class="muted">${e(dateLongue(d.jour))}</span>
     </div>
 
+    ${d.demandes_comptes ? `<div class="alerte info">👩‍🏫 <div><b>${d.demandes_comptes} enseignant(s)</b> ont créé leur compte et attendent votre validation.
+      <a href="#/utilisateurs">Voir les demandes</a></div></div>` : ''}
     ${d.messages_a_envoyer ? `<div class="alerte attention">🔔 <div><b>${d.messages_a_envoyer} message(s) WhatsApp</b> préparé(s) attendent d'être envoyés.
       <a href="#/messages?statut=a_envoyer">Les envoyer maintenant</a></div></div>` : ''}
     ${d.appels.total && d.appels.faits < d.appels.total && new Date().getHours() >= 9 ? `<div class="alerte info">📋 Appel non fait aujourd'hui : ${e(d.appels.classes_sans_appel.join(', '))}</div>` : ''}

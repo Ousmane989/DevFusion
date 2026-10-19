@@ -195,6 +195,48 @@ test('connexion : chaque compte entre par son espace', async () => {
   assert.strictEqual(await essai(config.admin.identifiant, config.admin.motDePasse, 'direction'), 200);
 });
 
+test('inscription d\'un enseignant par lui-même, puis validation par la directrice', async () => {
+  const publiques = await fetch(base + '/api/auth/classes').then((r) => r.json());
+  const cible = publiques.find((c) => c.nom === 'CM1');
+  assert.ok(cible && !('effectif' in cible), 'liste publique des classes sans données d\'élèves');
+  const id = `test.prof${Date.now() % 100000}`;
+  const inscrire = (corps) => fetch(base + '/api/auth/inscription-enseignant', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
+  });
+  const { query, one } = require('../src/db');
+  const ancienTitulaire = (await one('SELECT enseignant_id FROM classes WHERE id = $1', [cible.id])).enseignant_id;
+  const corps = { prenom: 'Awa', nom: 'Test', telephone: '77 111 22 33', identifiant: id, mot_de_passe: 'secret123', classe_id: cible.id };
+  assert.strictEqual((await inscrire({ ...corps, telephone: '12' })).status, 400);
+  assert.strictEqual((await inscrire(corps)).status, 201);
+  assert.strictEqual((await inscrire(corps)).status, 409, 'identifiant déjà pris');
+  const connexion = () => fetch(base + '/api/auth/connexion', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifiant: id, mot_de_passe: 'secret123', espace: 'enseignants' }),
+  });
+  const avant = await connexion();
+  assert.strictEqual(avant.status, 403);
+  assert.match((await avant.json()).erreur, /attente/);
+  const demande = (await appel('dir', '/api/utilisateurs')).donnees.find((u) => u.identifiant === id);
+  assert.ok(demande.en_attente && demande.classe_demandee === cible.id);
+  assert.strictEqual((await appel('ens', `/api/utilisateurs/${demande.id}/valider`, { methode: 'POST', corps: {} })).statut, 403);
+  assert.strictEqual((await appel('dir', `/api/utilisateurs/${demande.id}/valider`, { methode: 'POST', corps: {} })).statut, 200);
+  const apres = await connexion();
+  assert.strictEqual(apres.status, 200);
+  sessions.prof = apres.headers.get('set-cookie').split(';')[0];
+  const sesClasses = (await appel('prof', '/api/classes')).donnees;
+  assert.deepStrictEqual(sesClasses.map((c) => c.id), [cible.id], 'l\'enseignant voit uniquement sa classe');
+  // Une demande refusée disparaît.
+  const id2 = id + 'b';
+  assert.strictEqual((await inscrire({ ...corps, identifiant: id2 })).status, 201);
+  const d2 = (await appel('dir', '/api/utilisateurs')).donnees.find((u) => u.identifiant === id2);
+  assert.strictEqual((await appel('dir', `/api/utilisateurs/${d2.id}/refuser`, { methode: 'POST', corps: {} })).statut, 200);
+  assert.ok(!(await appel('dir', '/api/utilisateurs')).donnees.some((u) => u.identifiant === id2));
+  // Nettoyage : la classe retrouve son titulaire, le compte et la fiche de test sont supprimés.
+  const u = (await appel('dir', '/api/utilisateurs')).donnees.find((x) => x.identifiant === id);
+  await query('UPDATE classes SET enseignant_id = $1 WHERE id = $2', [ancienTitulaire, cible.id]);
+  await appel('dir', `/api/utilisateurs/${u.id}`, { methode: 'DELETE' });
+  await query('DELETE FROM personnel WHERE id = $1', [u.personnel_id]);
+});
+
 test('suppression d\'un compte utilisateur', async () => {
   const cree = await appel('dir', '/api/utilisateurs', { methode: 'POST', corps: { identifiant: 'test.suppr', mot_de_passe: 'secret123', nom_complet: 'Test', role: 'enseignant', personnel_id: classe.enseignant_id } });
   assert.strictEqual(cree.statut, 201, JSON.stringify(cree.donnees));

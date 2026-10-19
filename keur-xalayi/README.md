@@ -12,7 +12,7 @@ comme sur téléphone.
 
 | Module | Contenu |
 |---|---|
-| **Deux espaces** | Connexion par identifiant + mot de passe (bcrypt), sessions sécurisées. **Espace Directrice** : gestion complète. **Espace Enseignants** : chaque enseignant ne voit que sa classe (appel, notes, bulletins) |
+| **Deux espaces** | Connexion par identifiant + mot de passe (bcrypt), sessions sécurisées. **Espace Directrice** : gestion complète. **Espace Enseignants** : chaque enseignant crée lui-même son compte en choisissant sa classe (validé ensuite par la directrice), puis ne voit que sa classe (appel, notes, bulletins) |
 | **Classes** | PS, MS, GS, CI, CP → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
 | **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +221 obligatoire (+222 accepté), recherche, filtres, archivage, réinscription |
 | **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, modes sénégalais (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi et Sedad si le pays est réglé sur la Mauritanie), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, envoi du reçu par WhatsApp, annulation tracée |
@@ -66,7 +66,7 @@ sauvegardes.
 1. **Paramètres → École** : logo, adresse, téléphone, devise (FCFA par défaut) et pays (Sénégal +221 par défaut).
 2. **Paramètres → Tarifs** : frais d'inscription et mensualité de chaque niveau.
 3. **Personnel** : ajoutez les enseignants ; **Classes** : désignez les titulaires et créez les groupes (CE1 B…).
-4. **Utilisateurs** : créez les comptes des enseignants (chacun lié à sa fiche du personnel et titulaire de sa classe).
+4. **Comptes des enseignants** : chaque enseignant clique sur « Espace Enseignants » puis « Créer mon compte » et choisit sa classe ; la directrice valide la demande dans **Utilisateurs** (il devient alors titulaire de la classe).
 5. **Rappels WhatsApp** : jour du rappel, date limite, second rappel, texte des messages.
 6. **Année scolaire** : vérifiez les dates (octobre → juillet par défaut).
 

@@ -13,7 +13,7 @@
 </head>
 <body>
   <main class="connexion">
-    <form class="boite" id="form" autocomplete="on">
+    <div class="boite">
       <img class="logo-connexion" src="/img/logo.png" alt="Logo de l'école Keur Xalayi" width="170" height="168">
       <h1 class="cache">Keur Xalayi</h1>
 
@@ -30,35 +30,103 @@
       </div>
 
       <div id="msg"></div>
-      <div class="champ">
-        <label for="identifiant">Identifiant</label>
-        <input id="identifiant" name="identifiant" autocomplete="username" autocapitalize="none" required>
-      </div>
-      <div class="champ">
-        <label for="mdp">Mot de passe</label>
-        <input id="mdp" name="mot_de_passe" type="password" autocomplete="current-password" required>
-        <label class="case petit" style="margin-top:.4rem"><input type="checkbox" id="voir"> Afficher le mot de passe</label>
-      </div>
-      <button class="btn bloc" id="ok">Entrer dans l'Espace Directrice</button>
-      <p class="centre petit muted" style="margin-top:1.2rem" id="aide">Mot de passe oublié ? Seule la directrice peut le réinitialiser.</p>
-    </form>
+
+      <!-- Connexion -->
+      <form id="form" autocomplete="on">
+        <div class="champ">
+          <label for="identifiant">Identifiant</label>
+          <input id="identifiant" name="identifiant" autocomplete="username" autocapitalize="none" required>
+        </div>
+        <div class="champ">
+          <label for="mdp">Mot de passe</label>
+          <input id="mdp" name="mot_de_passe" type="password" autocomplete="current-password" required>
+          <label class="case petit" style="margin-top:.4rem"><input type="checkbox" id="voir"> Afficher le mot de passe</label>
+        </div>
+        <button class="btn bloc" id="ok">Entrer dans l'Espace Directrice</button>
+        <div id="lien-inscription" class="cache" style="margin-top:1rem">
+          <button type="button" class="btn clair bloc" id="vers-inscription">🆕 Nouvel enseignant ? Créer mon compte</button>
+        </div>
+        <p class="centre petit muted" style="margin-top:1rem">Mot de passe oublié ? Demandez à la directrice de le réinitialiser.</p>
+      </form>
+
+      <!-- Inscription d'un enseignant (validée ensuite par la directrice) -->
+      <form id="inscription" class="cache" autocomplete="off" novalidate>
+        <h2 style="text-align:center;color:var(--primaire)">Créer mon compte enseignant</h2>
+        <p class="centre petit muted" style="margin-top:-.2rem">Votre compte sera actif dès que la directrice l'aura validé.</p>
+        <div class="grille g2" style="gap:0 .7rem">
+          <div class="champ"><label class="requis" for="i-prenom">Prénom</label><input id="i-prenom" name="prenom" required autocomplete="given-name"></div>
+          <div class="champ"><label class="requis" for="i-nom">Nom</label><input id="i-nom" name="nom" required autocomplete="family-name" style="text-transform:uppercase"></div>
+        </div>
+        <div class="champ"><label class="requis" for="i-tel">Téléphone (WhatsApp)</label>
+          <input id="i-tel" name="telephone" required inputmode="tel" placeholder="77 123 45 67" autocomplete="tel"></div>
+        <div class="champ"><label class="requis" for="i-classe">Ma classe</label>
+          <select id="i-classe" name="classe_id" required><option value="">— Choisir ma classe —</option></select></div>
+        <div class="champ"><label class="requis" for="i-id">Identifiant de connexion</label>
+          <input id="i-id" name="identifiant" required autocapitalize="none" placeholder="prenom.nom" autocomplete="username">
+          <div class="aide">Lettres sans accent, chiffres, point ou tiret. Vous le taperez à chaque connexion.</div></div>
+        <div class="champ"><label class="requis" for="i-mdp">Mot de passe</label>
+          <input id="i-mdp" name="mot_de_passe" type="password" required minlength="6" autocomplete="new-password">
+          <div class="aide">6 caractères minimum.</div></div>
+        <div class="champ"><label class="requis" for="i-mdp2">Confirmer le mot de passe</label>
+          <input id="i-mdp2" type="password" required minlength="6" autocomplete="new-password"></div>
+        <button class="btn bloc" id="i-ok">Envoyer ma demande</button>
+        <button type="button" class="btn lien bloc" id="vers-connexion" style="margin-top:.6rem">← Retour à la connexion</button>
+      </form>
+    </div>
   </main>
   <script>
-    // Page de connexion : choix de l'espace (mémorisé sur cet appareil), puis connexion.
+    // Page de connexion : choix de l'espace (mémorisé sur cet appareil),
+    // connexion, et création de compte pour les enseignants.
     fetch('/api/auth/moi').then((r) => { if (r.ok) location.replace('/app'); });
-    const form = document.getElementById('form');
-    const btn = document.getElementById('ok');
+    const $ = (id) => document.getElementById(id);
+    const form = $('form');
+    const inscription = $('inscription');
+    const btn = $('ok');
+    const radios = document.querySelectorAll('input[name=espace]');
+    const espaceChoisi = () => document.querySelector('input[name=espace]:checked').value;
     const libelles = { direction: 'Entrer dans l\'Espace Directrice', enseignants: 'Entrer dans l\'Espace Enseignants' };
-    const majEspace = () => { btn.textContent = libelles[form.espace.value]; };
-    try { const m = localStorage.getItem('kx-espace'); if (m && libelles[m]) form.espace.value = m; } catch { /* stockage indisponible */ }
+    const message = (texte, type = 'danger') => { $('msg').innerHTML = `<div class="alerte ${type}"></div>`; $('msg').firstChild.textContent = texte; };
+
+    const majEspace = () => {
+      btn.textContent = libelles[espaceChoisi()];
+      $('lien-inscription').classList.toggle('cache', espaceChoisi() !== 'enseignants');
+      if (espaceChoisi() !== 'enseignants') montrer('connexion');
+    };
+    try { const m = localStorage.getItem('kx-espace'); if (m && libelles[m]) document.querySelector(`input[name=espace][value=${m}]`).checked = true; } catch { /* stockage indisponible */ }
+    radios.forEach((r) => { r.onchange = () => { $('msg').innerHTML = ''; majEspace(); }; });
+
+    function montrer(quoi) {
+      form.classList.toggle('cache', quoi !== 'connexion');
+      inscription.classList.toggle('cache', quoi !== 'inscription');
+    }
+    $('vers-inscription').onclick = async () => {
+      $('msg').innerHTML = '';
+      montrer('inscription');
+      const sel = $('i-classe');
+      if (sel.options.length <= 1) {
+        try {
+          const classes = await (await fetch('/api/auth/classes')).json();
+          classes.forEach((c) => sel.add(new Option(c.nom, c.id)));
+        } catch { message('Impossible de charger la liste des classes. Réessayez.'); }
+      }
+      $('i-prenom').focus();
+    };
+    $('vers-connexion').onclick = () => { $('msg').innerHTML = ''; montrer('connexion'); };
+
+    // Identifiant proposé automatiquement : prenom.nom sans accents.
+    let idModifie = false;
+    const simplifier = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const proposer = () => { if (!idModifie) $('i-id').value = [simplifier($('i-prenom').value), simplifier($('i-nom').value)].filter(Boolean).join('.'); };
+    $('i-prenom').oninput = proposer; $('i-nom').oninput = proposer;
+    $('i-id').oninput = () => { idModifie = true; };
+
+    $('voir').onchange = (e) => { $('mdp').type = e.target.checked ? 'text' : 'password'; };
     majEspace();
-    form.querySelectorAll('input[name=espace]').forEach((r) => { r.onchange = () => { majEspace(); document.getElementById('identifiant').focus(); }; });
-    document.getElementById('voir').onchange = (e) => { document.getElementById('mdp').type = e.target.checked ? 'text' : 'password'; };
+
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const msg = document.getElementById('msg');
-      const espace = form.espace.value;
-      btn.disabled = true; btn.textContent = 'Connexion…'; msg.innerHTML = '';
+      const espace = espaceChoisi();
+      btn.disabled = true; btn.textContent = 'Connexion…'; $('msg').innerHTML = '';
       try {
         const r = await fetch('/api/auth/connexion', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -69,10 +137,30 @@
         try { localStorage.setItem('kx-espace', espace); } catch { /* stockage indisponible */ }
         location.replace('/app');
       } catch (err) {
-        msg.innerHTML = '<div class="alerte danger"></div>';
-        msg.firstChild.textContent = err.message;
+        message(err.message, /attente/.test(err.message) ? 'attention' : 'danger');
         btn.disabled = false; majEspace();
       }
+    };
+
+    inscription.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!inscription.reportValidity()) return;
+      if ($('i-mdp').value !== $('i-mdp2').value) { message('Les deux mots de passe ne sont pas identiques.'); return; }
+      const ok = $('i-ok');
+      ok.disabled = true; ok.textContent = 'Envoi…';
+      try {
+        const donnees = Object.fromEntries(new FormData(inscription));
+        const r = await fetch('/api/auth/inscription-enseignant', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(donnees),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.erreur || 'Envoi impossible.');
+        montrer('connexion');
+        form.identifiant.value = donnees.identifiant;
+        message(`✔ ${d.message} Votre identifiant : ${donnees.identifiant}`, 'succes');
+        inscription.reset(); idModifie = false;
+      } catch (err) { message(err.message); }
+      finally { ok.disabled = false; ok.textContent = 'Envoyer ma demande'; }
     };
   </script>
 </body>
