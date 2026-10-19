@@ -19,6 +19,20 @@
   ];
   const shell = await LV.appShell('agence', 'Espace agence', SECTIONS, (id) => VIEWS[id]());
   if (!shell) return;
+  // Bandeau du centre de contrôle : salutation et horloge en direct.
+  (function opsHero() {
+    const h = new Date().getHours();
+    const first = String(shell.user.name || '').split(' ')[0];
+    document.getElementById('a-hello').textContent = (h < 18 ? 'Bonjour' : 'Bonsoir') + (first ? ', ' + first : '');
+    const clock = document.getElementById('a-clock');
+    const day = document.getElementById('a-date');
+    const tick = () => {
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      day.textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    };
+    tick(); setInterval(tick, 20000);
+  })();
   const info = await LV.info();
   const perItem = Number(info.fee_per_item) || 0;
   let couriers = [];
