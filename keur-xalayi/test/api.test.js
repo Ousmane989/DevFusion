@@ -111,7 +111,8 @@ test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {
   const mois = (await appel('dir', '/api/paiements/mois')).donnees.mois[0];
   const ap = await appel('dir', '/api/whatsapp/rappels/apercu', { methode: 'POST', corps: { mois, impayes_seulement: true } });
   assert.strictEqual(ap.statut, 200);
-  assert.ok(ap.donnees.every((m) => m.texte.includes('Keur Xalayi')));
+  const nomEcole = (await appel('dir', '/api/parametres')).donnees.nom_ecole;
+  assert.ok(ap.donnees.every((m) => m.texte.includes(nomEcole) && !/\{\w+\}/.test(m.texte)), 'nom de l\'école inséré, aucune variable restante');
   assert.ok(!ap.donnees.some((m) => m.eleve_id === eleveId), 'un élève à jour ne reçoit pas de rappel');
   const env = await appel('dir', '/api/whatsapp/rappels/envoyer', { methode: 'POST', corps: { mois, classe_id: classe.id, manuel: true } });
   assert.strictEqual(env.statut, 200);
@@ -235,6 +236,18 @@ test('inscription d\'un enseignant par lui-même, puis validation par la directr
   await query('UPDATE classes SET enseignant_id = $1 WHERE id = $2', [ancienTitulaire, cible.id]);
   await appel('dir', `/api/utilisateurs/${u.id}`, { methode: 'DELETE' });
   await query('DELETE FROM personnel WHERE id = $1', [u.personnel_id]);
+});
+
+test('certificats de scolarité : données préremplies et PDF 2 par page', async () => {
+  const d = (await appel('dir', `/api/certificats/donnees?classe_id=${classe.id}`)).donnees;
+  assert.ok(d.length > 0 && d[0].eleve && d[0].annee && d[0].date);
+  assert.match(d[0].classe, /classe de|la /);
+  const pdfUn = await appel('dir', '/api/certificats/pdf', { methode: 'POST', corps: { certificats: [d[0]], exemplaires: 2 } });
+  assert.strictEqual(pdfUn.statut, 200);
+  assert.strictEqual(pdfUn.donnees.subarray(0, 4).toString(), '%PDF');
+  const vierge = await appel('dir', '/api/certificats/pdf', { methode: 'POST', corps: { certificats: [] } });
+  assert.strictEqual(vierge.statut, 200);
+  assert.strictEqual((await appel('ens', `/api/certificats/donnees?classe_id=${classe.id}`)).statut, 403, 'réservé à la directrice');
 });
 
 test('suppression d\'un compte utilisateur', async () => {

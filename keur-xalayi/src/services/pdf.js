@@ -30,7 +30,7 @@ const EMBLEME_ECOLE = (() => {
 /** Exécute une fonction de dessin et renvoie le PDF en mémoire. */
 function produire(options, dessiner) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 36, ...options, info: { Producer: 'Keur Xalayi', Creator: 'Keur Xalayi' } });
+    const doc = new PDFDocument({ margin: 36, ...options, info: { Producer: 'Keur Xaleyi', Creator: 'Keur Xaleyi' } });
     const morceaux = [];
     doc.on('data', (c) => morceaux.push(c));
     doc.on('end', () => resolve(Buffer.concat(morceaux)));
@@ -401,4 +401,104 @@ async function tableau(titre, sousTitre, colonnes, lignes, { paysage = false, to
   });
 }
 
-module.exports = { recu, bulletins, cartes, tableau, enLettres, COULEURS };
+// ------------------------------------------------------------------
+// Certificats de scolarité : 2 par page A4 (haut / bas), à découper.
+// Chaque certificat : { eleve, naissance, sexe, filiation, classe, annee, date }
+// ou null pour un certificat vierge à remplir à la main.
+// ------------------------------------------------------------------
+const DEMI_PAGE = 841.89 / 2;
+
+function enteteCertificat(p) {
+  const lignes = String(p.entete_certificat || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lignes.length) return lignes;
+  return [p.nom_ecole.toUpperCase(), p.adresse].filter(Boolean);
+}
+
+function dessinerCertificat(doc, p, c, y0) {
+  const x = 48; const xFin = 547;
+  const noir = '#111111';
+  // En-tête : lignes à gauche, logo à droite, téléphone centré.
+  let y = y0 + 26;
+  doc.fillColor(noir).font('Helvetica-Bold').fontSize(9.5);
+  for (const l of enteteCertificat(p)) { doc.text(l, x, y, { width: 330, lineBreak: false, ellipsis: true }); y += 15; }
+  dessinerLogo(doc, p, 445, y0 + 18, 72);
+  if (p.telephone) {
+    doc.font('Helvetica-Bold').fontSize(9.5).text(`Tél : ${p.telephone}`, x, Math.max(y + 2, y0 + 98), { width: xFin - x, align: 'center' });
+  }
+  // Titre souligné
+  const yTitre = y0 + 122;
+  doc.font('Helvetica-Bold').fontSize(17).text('CERTIFICAT DE SCOLARITÉ', x, yTitre, { width: xFin - x, align: 'center', underline: true });
+
+  // Ligne « libellé ..... valeur ..... » : valeur en gras sur pointillés.
+  const ligne = (libelle, valeur, yy, { fin = xFin } = {}) => {
+    doc.font('Helvetica').fontSize(10.5).fillColor(noir);
+    doc.text(libelle, x, yy, { lineBreak: false });
+    let xv = x + doc.widthOfString(libelle) + 5;
+    if (valeur) {
+      let taille = 11;
+      doc.font('Helvetica-Bold').fontSize(taille);
+      while (doc.widthOfString(valeur) > fin - xv - 6 && taille > 7.5) { taille -= 0.5; doc.fontSize(taille); }
+      doc.text(valeur, xv, yy - (taille - 10.5) / 2, { lineBreak: false });
+      xv += doc.widthOfString(valeur) + 6;
+    }
+    if (fin - xv > 8) {
+      doc.save().moveTo(xv, yy + 10).lineTo(fin, yy + 10).dash(1, { space: 2.2 }).lineWidth(0.7).strokeColor('#555555').stroke().restore();
+    }
+  };
+
+  const nomEcole = `« ${p.nom_ecole.toUpperCase()} »`;
+  let yy = y0 + 160;
+  const pas = 25;
+  // Première phrase : la directrice
+  doc.font('Helvetica').fontSize(10.5).fillColor(noir);
+  if (p.directrice_nom) {
+    doc.text(`Je soussignée, ${p.directrice_nom}, Directrice Générale de l'école `, x, yy, { continued: true, lineBreak: false })
+      .font('Helvetica-Bold').text(nomEcole, { lineBreak: false });
+  } else {
+    ligne('Je soussignée,', '', yy, { fin: 300 });
+    doc.font('Helvetica').fontSize(10.5).text(', Directrice Générale de l\'école ', 302, yy, { continued: true, lineBreak: false })
+      .font('Helvetica-Bold').text(nomEcole, { lineBreak: false });
+  }
+  yy += pas;
+  ligne('Certifie que l\'élève', c && c.eleve, yy); yy += pas;
+  ligne('Date et lieu de naissance', c && c.naissance, yy); yy += pas;
+  const fil = !c ? 'Fils ou Fille de' : c.sexe === 'M' ? 'Fils de' : c.sexe === 'F' ? 'Fille de' : 'Fils ou Fille de';
+  ligne(fil, c && c.filiation, yy); yy += pas;
+  ligne('Est inscrit(e) dans mon établissement et fréquente', c && c.classe, yy); yy += pas;
+  ligne('Année scolaire :', c && c.annee, yy, { fin: 330 }); yy += pas + 12;
+
+  // Lieu et date, puis signature
+  doc.font('Helvetica').fontSize(10.5);
+  const ville = p.ville || '';
+  const libFait = ville ? `Fait à ${ville} le` : 'Fait à';
+  const xFait = 230;
+  if (ville) ligne(libFait, c && c.date, yy, { fin: 470 });
+  else {
+    doc.text('Fait à', xFait, yy, { lineBreak: false });
+    doc.save().moveTo(xFait + 32, yy + 10).lineTo(xFait + 130, yy + 10).dash(1, { space: 2.2 }).lineWidth(0.7).strokeColor('#555555').stroke().restore();
+    doc.text('le', xFait + 136, yy, { lineBreak: false });
+    if (c && c.date) doc.font('Helvetica-Bold').text(c.date, xFait + 150, yy, { lineBreak: false });
+    else doc.save().moveTo(xFait + 150, yy + 10).lineTo(470, yy + 10).dash(1, { space: 2.2 }).lineWidth(0.7).strokeColor('#555555').stroke().restore();
+  }
+  doc.font('Helvetica-Bold').fontSize(11.5).fillColor(noir).text('LA DIRECTION', 400, yy + 30, { width: 140, align: 'center', underline: true });
+}
+
+async function certificats(liste) {
+  const p = await parametres();
+  const items = liste.length ? liste : [null, null];
+  return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
+    for (let i = 0; i < items.length; i += 2) {
+      doc.addPage();
+      dessinerCertificat(doc, p, items[i], 0);
+      if (i + 1 < items.length) {
+        // Ligne de découpe au milieu de la page
+        doc.save().moveTo(18, DEMI_PAGE).lineTo(577, DEMI_PAGE).dash(4, { space: 3 }).lineWidth(0.6).strokeColor('#888888').stroke().restore();
+        doc.rect(262, DEMI_PAGE - 6, 72, 12).fill('#FFFFFF');
+        doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, DEMI_PAGE - 3.5, { width: 72, align: 'center', lineBreak: false });
+        dessinerCertificat(doc, p, items[i + 1], DEMI_PAGE);
+      }
+    }
+  });
+}
+
+module.exports = { recu, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

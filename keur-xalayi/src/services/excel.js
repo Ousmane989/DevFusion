@@ -8,7 +8,7 @@ const ExcelJS = require('exceljs');
  * @param {Array<{titre, cle, largeur?, format?}>} colonnes  format : 'montant' | 'date'
  * @param {Array<object>} lignes
  */
-async function classeur(titre, colonnes, lignes, { ecole = 'Keur Xalayi', devise = '' } = {}) {
+async function classeur(titre, colonnes, lignes, { ecole = 'Keur Xaleyi', devise = '' } = {}) {
   const wb = new ExcelJS.Workbook();
   wb.creator = ecole;
   const ws = wb.addWorksheet(titre.slice(0, 31).replace(/[\\/?*[\]:]/g, '-'));

@@ -1,7 +1,7 @@
 // Rappels de paiement WhatsApp : réglages, calendrier, envoi manuel avec aperçu.
 import { get, put, post, e, options, champ, nomMois, dateFr, badge, estRole, toast, erreur, resultatEnvoi, tableau, modale, lireForm, argent, moisCourant } from '../ui.js';
 
-const VARIABLES = ['{nom_parent}', '{nom_eleve}', '{classe}', '{mois}', '{montant}', '{date_limite}'];
+const VARIABLES = ['{nom_parent}', '{nom_eleve}', '{classe}', '{mois}', '{montant}', '{date_limite}', '{ecole}'];
 
 export async function afficher(el) {
   const directeur = estRole('directeur');

@@ -37,6 +37,12 @@ export async function afficher(el, params) {
           ${champ('Devise', `<select name="devise">${options([['FCFA', 'Franc CFA (FCFA) — Sénégal'], ['MRU', 'Ouguiya (MRU) — Mauritanie']], p.devise)}</select>`)}
           ${champ('Pays (indicatif téléphonique)', `<select name="indicatif_defaut">${options([['+221', 'Sénégal (+221)'], ['+222', 'Mauritanie (+222)']], p.indicatif_defaut)}</select>`, { aide: 'Détermine aussi les modes de paiement proposés (Wave, Orange Money…).' })}
         </div>
+        <fieldset id="certificat"><legend>📜 Certificat de scolarité</legend><div class="grille g2">
+          ${champ('Directrice (signataire)', `<input name="directrice_nom" value="${e(p.directrice_nom)}" placeholder="Madame Diodio Faye">`, { aide: '« Je soussignée, …, Directrice Générale de l\'école »' })}
+          ${champ('Ville', `<input name="ville" value="${e(p.ville)}" placeholder="Rufisque">`, { aide: '« Fait à … le »' })}
+        </div>
+        ${champ('En-tête (en haut à gauche, une ligne par information)', `<textarea name="entete_certificat" rows="4" placeholder="INSTITUT KEUR XALEYI&#10;Cité Millionnaire en face ancien dépôt gaz&#10;Aut. N° …&#10;MEN-DEP du …">${e(p.entete_certificat)}</textarea>`, { aide: 'Le téléphone de l\'école est ajouté automatiquement sous l\'en-tête.' })}
+        </fieldset>
         <div class="ligne fin"><button class="btn">💾 Enregistrer</button></div></form>`;
       const apercu = () => { zone.querySelector('#apercu').innerHTML = logo ? `<img src="${e(logo)}" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">` : '<img src="/img/logo.png" alt="" style="width:90px;height:90px;object-fit:contain;border-radius:12px;border:1px solid var(--bord);background:#fff">'; };
       apercu();

@@ -73,6 +73,14 @@ function anneeParDefaut(d = new Date()) {
 
 async function amorcer() {
   await ajouterCI();
+  // Les modèles de messages utilisent le nom réglé dans Paramètres ({ecole}).
+  await query(`UPDATE parametres SET
+      modele_rappel = replace(modele_rappel, 'Keur Xalayi', '{ecole}'),
+      modele_second_rappel = replace(modele_second_rappel, 'Keur Xalayi', '{ecole}'),
+      modele_absence = replace(modele_absence, 'Keur Xalayi', '{ecole}'),
+      modele_recu = replace(modele_recu, 'Keur Xalayi', '{ecole}'),
+      modele_bulletin = replace(modele_bulletin, 'Keur Xalayi', '{ecole}')
+    WHERE id = 1 AND (modele_rappel || modele_second_rappel || modele_absence || modele_recu || modele_bulletin) LIKE '%Keur Xalayi%'`);
   for (const [code, nom, ordre, cycle] of NIVEAUX) {
     await query(
       `INSERT INTO niveaux (code, nom, ordre, cycle) VALUES ($1,$2,$3,$4) ON CONFLICT (code) DO NOTHING`,

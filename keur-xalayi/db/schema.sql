@@ -1,5 +1,5 @@
 -- =====================================================================
---  Keur Xalayi — schéma de la base de données (PostgreSQL / Supabase)
+--  Keur Xaleyi — schéma de la base de données (PostgreSQL / Supabase)
 --  Le script est idempotent : il peut être relancé sans perte de données.
 --  Montants : NUMERIC(12,2) dans la devise choisie (FCFA au Sénégal, MRU en Mauritanie).
 -- =====================================================================
@@ -7,7 +7,7 @@
 -- ---------- Paramètres de l'école (une seule ligne, id = 1) ----------
 CREATE TABLE IF NOT EXISTS parametres (
   id                      INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  nom_ecole               TEXT    NOT NULL DEFAULT 'Keur Xalayi',
+  nom_ecole               TEXT    NOT NULL DEFAULT 'Keur Xaleyi',
   slogan                  TEXT             DEFAULT 'École maternelle et primaire',
   logo                    TEXT,                       -- image en data URL
   adresse                 TEXT,
@@ -23,11 +23,11 @@ CREATE TABLE IF NOT EXISTS parametres (
   date_limite_jour        INTEGER NOT NULL DEFAULT 5  CHECK (date_limite_jour BETWEEN 1 AND 28), -- jour du mois suivant
   second_rappel_actif     BOOLEAN NOT NULL DEFAULT TRUE,
   second_rappel_delai     INTEGER NOT NULL DEFAULT 3  CHECK (second_rappel_delai BETWEEN 1 AND 20), -- jours après la date limite
-  modele_rappel           TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, l''école Keur Xalayi vous rappelle que la mensualité de {mois} pour {nom_eleve} ({classe}) d''un montant de {montant} est à régler avant le {date_limite}. Merci de votre confiance.',
-  modele_second_rappel    TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, sauf erreur de notre part, la mensualité de {mois} pour {nom_eleve} ({classe}) reste à régler (reste dû : {montant}). La date limite était le {date_limite}. Merci de passer au secrétariat. École Keur Xalayi.',
-  modele_absence          TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, nous vous informons que {nom_eleve} ({classe}) a été noté(e) {statut} aujourd''hui, {date}. Merci de nous contacter si besoin. École Keur Xalayi.',
-  modele_recu             TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, nous confirmons la réception de {montant} pour {nom_eleve} ({classe}) — {objet}. Reçu n° {numero}. Merci ! École Keur Xalayi.',
-  modele_bulletin         TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, voici les résultats de {nom_eleve} ({classe}) pour le {periode} : moyenne {moyenne}, rang {rang}/{effectif}. École Keur Xalayi.',
+  modele_rappel           TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, l''école {ecole} vous rappelle que la mensualité de {mois} pour {nom_eleve} ({classe}) d''un montant de {montant} est à régler avant le {date_limite}. Merci de votre confiance.',
+  modele_second_rappel    TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, sauf erreur de notre part, la mensualité de {mois} pour {nom_eleve} ({classe}) reste à régler (reste dû : {montant}). La date limite était le {date_limite}. Merci de passer au secrétariat. École {ecole}.',
+  modele_absence          TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, nous vous informons que {nom_eleve} ({classe}) a été noté(e) {statut} aujourd''hui, {date}. Merci de nous contacter si besoin. École {ecole}.',
+  modele_recu             TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, nous confirmons la réception de {montant} pour {nom_eleve} ({classe}) — {objet}. Reçu n° {numero}. Merci ! École {ecole}.',
+  modele_bulletin         TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, voici les résultats de {nom_eleve} ({classe}) pour le {periode} : moyenne {moyenne}, rang {rang}/{effectif}. École {ecole}.',
   notif_absence_auto      BOOLEAN NOT NULL DEFAULT FALSE,
   nb_periodes             INTEGER NOT NULL DEFAULT 3 CHECK (nb_periodes BETWEEN 1 AND 6),
   libelle_periode         TEXT    NOT NULL DEFAULT 'Trimestre',
@@ -332,3 +332,8 @@ ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
 -- le compte reste « en attente » tant que la directrice ne l'a pas validé.
 ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS en_attente BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS classe_demandee INTEGER REFERENCES classes(id) ON DELETE SET NULL;
+
+-- ---------- Certificats de scolarité ----------
+ALTER TABLE parametres ADD COLUMN IF NOT EXISTS directrice_nom TEXT NOT NULL DEFAULT '';      -- « Madame … »
+ALTER TABLE parametres ADD COLUMN IF NOT EXISTS ville TEXT NOT NULL DEFAULT '';               -- « Fait à … le »
+ALTER TABLE parametres ADD COLUMN IF NOT EXISTS entete_certificat TEXT NOT NULL DEFAULT '';   -- lignes en haut à gauche

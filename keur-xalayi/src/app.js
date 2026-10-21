@@ -45,6 +45,7 @@ api.use('/personnel', require('./routes/personnel'));
 api.use('/finances', require('./routes/finances'));
 api.use('/calendrier', require('./routes/calendrier'));
 api.use('/exports', require('./routes/exports'));
+api.use('/certificats', require('./routes/certificats'));
 app.use('/api', api);
 
 app.use('/api', (req, res) => res.status(404).json({ erreur: 'Route inconnue.' }));

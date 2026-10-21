@@ -275,6 +275,20 @@ export function reduireImage(fichier, { max = 360, qualite = 0.82, type = 'image
 /** Ouvre un PDF/Excel servi par l'API dans un nouvel onglet. */
 export function ouvrir(chemin) { window.open('/api' + chemin, '_blank', 'noopener'); }
 
+/** Demande un PDF par POST et l'ouvre dans un nouvel onglet (ouvert avant l'attente pour ne pas être bloqué). */
+export async function ouvrirPdfPost(chemin, corps) {
+  const fenetre = window.open('', '_blank');
+  try {
+    const r = await api(chemin, { methode: 'POST', corps, brut: true });
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.erreur || `Erreur ${r.status}`); }
+    const url = URL.createObjectURL(await r.blob());
+    if (fenetre) fenetre.location.href = url; else location.href = url;
+  } catch (err) {
+    if (fenetre) fenetre.close();
+    throw err;
+  }
+}
+
 /** Boutons d'export Excel + PDF pour une liste. */
 export function boutonsExport(liste, params = {}) {
   return `<button class="btn clair petit" data-export="${e(liste)}.xlsx" data-params='${e(JSON.stringify(params))}'>⬇ Excel</button>

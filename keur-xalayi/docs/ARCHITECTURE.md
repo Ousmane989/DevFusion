@@ -1,4 +1,4 @@
-# Keur Xalayi — conception de la plateforme
+# Keur Xaleyi — conception de la plateforme
 
 Ce document présente la **structure de la base de données** et
 l'**arborescence des pages** de la plateforme de gestion scolaire.
