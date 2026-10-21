@@ -7,6 +7,11 @@
   <meta name="theme-color" content="#2e3192">
   <link rel="icon" href="/img/favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Keur Xaleyi">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/app.css">
@@ -48,6 +53,7 @@
         </div>
         <p class="centre petit muted" style="margin-top:1rem">Mot de passe oublié ? Demandez à la directrice de le réinitialiser.</p>
       </form>
+      <button type="button" class="btn sec bloc cache" data-installer style="margin-top:.4rem">📲 Installer l'application sur mon téléphone</button>
 
       <!-- Inscription d'un enseignant (validée ensuite par la directrice) -->
       <form id="inscription" class="cache" autocomplete="off" novalidate>
@@ -74,6 +80,7 @@
       </form>
     </div>
   </main>
+  <script src="/js/installer.js"></script>
   <script>
     // Page de connexion : choix de l'espace (mémorisé sur cet appareil),
     // connexion, et création de compte pour les enseignants.
