@@ -33,7 +33,7 @@ export async function afficher(el, params) {
             <button type="button" data-s="retard" class="retard" aria-label="Retard">R</button>
           </div>
         </div>`).join('') || '<div class="carte vide">Aucun élève dans cette classe.</div>'}</div>
-      <div class="barre-action">
+      <div class="barre-action ${d.eleves.length ? '' : 'cache'}">
         <div class="gras" id="compte" style="flex-basis:100%"></div>
         <button class="btn" id="enreg">💾 Enregistrer l'appel</button>
         <button class="btn vert" id="enreg-notif">💾 Enregistrer et prévenir les parents</button>

@@ -2,7 +2,7 @@
 // Point d'entrée de l'application : session, menu selon le rôle, routeur.
 // Chaque page est un module dans /js/pages qui exporte `afficher(el, params)`.
 // =====================================================================
-import { ctx, get, post, e, toast, erreur, formulaire, champ, ESPACES } from './ui.js';
+import { ctx, get, post, e, toast, erreur, formulaire, champ, ESPACES, navigation } from './ui.js';
 
 const D = 'directeur'; const T = 'enseignant'; // deux espaces : directrice et enseignants
 
@@ -84,9 +84,17 @@ function ouvrirMenu() { $('menu').classList.add('ouvert'); $('voile').classList.
 function fermerMenu() { $('menu').classList.remove('ouvert'); $('voile').classList.add('cache'); }
 
 let jeton = 0; // ignore les pages chargées en retard si l'utilisateur a déjà changé de page
+let hashActuel = location.hash;
 async function router() {
+  // Saisie non enregistrée sur la page quittée : on demande confirmation, sinon on reste.
+  if (navigation.garde && location.hash !== hashActuel && navigation.garde() === false) {
+    history.replaceState(null, '', hashActuel || '#/');
+    return;
+  }
+  navigation.garde = null;
+  hashActuel = location.hash;
   fermerMenu();
-  document.querySelectorAll('.modale-fond').forEach((m) => m.remove()); // fenêtres de la page précédente
+  document.querySelectorAll('.modale-fond').forEach((m) => (m.fermer ? m.fermer() : m.remove())); // fenêtres de la page précédente
   const chemin = location.hash.replace(/^#\/?/, '').split('?')[0];
   const params = Object.fromEntries(new URLSearchParams(location.hash.split('?')[1] || ''));
   const route = ROUTES.find(([re]) => re.test(chemin));
@@ -152,7 +160,12 @@ export async function rafraichirContexte() {
 async function demarrer() {
   try {
     await rafraichirContexte();
-  } catch { return; }
+  } catch (err) {
+    if (/Session expirée/.test(err.message)) return; // redirection vers la connexion en cours
+    $('page').innerHTML = `<div class="carte vide"><span class="ico">📡</span>Impossible de joindre le serveur. Vérifiez la connexion internet.
+      <div style="margin-top:1rem"><button class="btn" onclick="location.reload()">↻ Réessayer</button></div></div>`;
+    return;
+  }
   construireMenu();
   $('btn-menu').onclick = ouvrirMenu;
   $('voile').onclick = fermerMenu;

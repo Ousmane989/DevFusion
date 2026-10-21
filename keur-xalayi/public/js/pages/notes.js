@@ -1,5 +1,5 @@
 // Saisie des notes (primaire) ou des appréciations par compétence (maternelle).
-import { get, post, e, options, ctx, toast, erreur } from '../ui.js';
+import { get, post, e, options, ctx, toast, erreur, navigation } from '../ui.js';
 
 export async function afficher(el, params) {
   const classes = await get('/classes');
@@ -14,6 +14,8 @@ export async function afficher(el, params) {
     <div id="zone"></div>`;
 
   let modifie = false;
+  // Quitter la page (menu, retour) avec des notes non enregistrées : confirmation.
+  navigation.garde = (fermeture) => !modifie || (!fermeture && confirm('Des notes ne sont pas enregistrées. Quitter quand même ?'));
   const charger = async () => {
     const d = await get(`/notes/saisie?classe_id=${etat.classe_id}&periode=${etat.periode}`);
     const zone = el.querySelector('#zone');
@@ -62,7 +64,7 @@ export async function afficher(el, params) {
       d.valeurs.forEach((v) => { val[`${v.inscription_id}:${v.competence_id}`] = v.niveau; });
       const domaines = [...new Set(d.competences.map((c) => c.domaine))];
       zone.innerHTML = `
-        <div class="alerte info">Maternelle : pour chaque compétence, choisissez <b>A</b> (acquis), <b>EC</b> (en cours d'acquisition) ou <b>NA</b> (non acquis).</div>
+        <div class="alerte info"><div>Maternelle : pour chaque compétence, choisissez <b>A</b> (acquis), <b>EC</b> (en cours d'acquisition) ou <b>NA</b> (non acquis).</div></div>
         ${d.eleves.map((x) => `<div class="carte" data-eleve="${x.inscription_id}"><h3>${e(x.prenom)} ${e(x.nom)}</h3>
           ${domaines.map((dom) => `<div class="petit gras" style="color:var(--secondaire);margin-top:.5rem">${e(dom)}</div>
             ${d.competences.filter((c) => c.domaine === dom).map((c) => `<div class="ligne" style="justify-content:space-between;padding:.25rem 0;border-bottom:1px dashed var(--bord)">

@@ -21,7 +21,7 @@ export async function afficher(el, params) {
   const charger = async () => {
     const r = await get(`/notes/resultats?classe_id=${etat.classe_id}&periode=${etat.periode}`);
     const s = el.querySelector('#saisie');
-    if (s) s.href = `#/notes?classe_id=${etat.classe_id}&periode=${etat.periode || 1}`;
+    if (s) s.href = `#/notes?classe_id=${etat.classe_id}&periode=${Number(etat.periode) || 1}`;
     const zone = el.querySelector('#zone');
     const lienPdf = (l) => `<button class="btn petit clair" data-pdf="${l.inscription_id}">📄 Bulletin</button>`;
     if (r.cycle === 'maternelle') {

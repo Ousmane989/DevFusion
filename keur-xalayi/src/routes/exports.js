@@ -22,6 +22,14 @@ const LISTES = {
     if (req.query.statut === 'archive') filtre = "WHERE e.statut = 'archive'";
     if (req.query.classe_id) { verifierClasse(req, req.query.classe_id); params.push(req.query.classe_id); filtre += ` AND c.id = $${params.length}`; }
     if (req.user.classes) { params.push(req.user.classes); filtre += ` AND c.id = ANY($${params.length})`; }
+    // Mêmes filtres que la liste à l'écran : sexe et recherche.
+    if (['M', 'F'].includes(req.query.sexe)) { params.push(req.query.sexe); filtre += ` AND e.sexe = $${params.length}`; }
+    if (req.query.q) {
+      params.push(`%${String(req.query.q).trim().toLowerCase()}%`);
+      const k = `$${params.length}`;
+      filtre += ` AND (lower(e.nom || ' ' || e.prenom) LIKE ${k} OR lower(e.prenom || ' ' || e.nom) LIKE ${k} OR lower(e.matricule) LIKE ${k}
+        OR e.whatsapp LIKE ${k} OR lower(COALESCE(e.pere_nom,'') || ' ' || COALESCE(e.mere_nom,'') || ' ' || COALESCE(e.tuteur_nom,'')) LIKE ${k})`;
+    }
     const lignes = await query(
       `SELECT e.*, c.nom AS classe, i.mensualite, i.reduction, i.reduction_motif, i.date_inscription,
               COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent
@@ -168,7 +176,8 @@ const LISTES = {
     if (!gestion.includes(req.user.role)) throw new HttpError(403, 'Accès refusé.');
     const annee = await finance.anneeActiveRequise();
     const mois = req.query.mois || finance.moisEchus(annee).slice(-1)[0] || finance.moisAnnee(annee)[0];
-    const liste = await finance.situationMois(mois, { classeId: req.query.classe_id || undefined });
+    let liste = await finance.situationMois(mois, { classeId: req.query.classe_id || undefined });
+    if (STATUTS[req.query.statut]) liste = liste.filter((l) => l.statut === req.query.statut);
     liste.forEach((l) => { l.eleve = `${l.prenom} ${l.nom}`; l.statut_l = STATUTS[l.statut]; });
     return {
       titre: `Situation des mensualités — ${nomMois(mois)}`,
@@ -187,6 +196,9 @@ const LISTES = {
   },
 
   async presences(req) {
+    // Période choisie à l'écran (du / au), sinon toute l'année.
+    const du = /^\d{4}-\d{2}-\d{2}$/.test(req.query.du || '') ? req.query.du : null;
+    const au = /^\d{4}-\d{2}-\d{2}$/.test(req.query.au || '') ? req.query.au : null;
     const r = await query(
       `SELECT e.prenom || ' ' || e.nom AS eleve, c.nom AS classe,
               COUNT(pr.id) AS jours, COUNT(pr.id) FILTER (WHERE pr.statut='present') AS presents,
@@ -194,6 +206,7 @@ const LISTES = {
          FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id JOIN classes c ON c.id = i.classe_id
          JOIN annees_scolaires a ON a.id = i.annee_id AND a.active JOIN niveaux n ON n.id = c.niveau_id
          LEFT JOIN presences pr ON pr.inscription_id = i.id
+              ${du ? `AND pr.date >= '${du}'` : ''} ${au ? `AND pr.date <= '${au}'` : ''}
         WHERE e.statut = 'actif' ${req.query.classe_id ? 'AND c.id = $1' : ''} ${req.user.classes ? `AND c.id = ANY($${req.query.classe_id ? 2 : 1})` : ''}
         GROUP BY e.id, c.id, n.ordre ORDER BY n.ordre, c.nom, e.nom`,
       [...(req.query.classe_id ? [req.query.classe_id] : []), ...(req.user.classes ? [req.user.classes] : [])]);

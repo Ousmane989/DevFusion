@@ -6,6 +6,15 @@
 /** Contexte global (utilisateur, école, année) rempli au démarrage. */
 export const ctx = { utilisateur: null, ecole: null, annee: null };
 
+/**
+ * Garde de sortie : une page avec une saisie non enregistrée y place une fonction
+ * qui renvoie false pour rester sur la page (le routeur la consulte avant de changer).
+ */
+export const navigation = { garde: null };
+window.addEventListener('beforeunload', (ev) => {
+  if (navigation.garde && navigation.garde(true) === false) { ev.preventDefault(); ev.returnValue = ''; }
+});
+
 // ---------- API ----------
 export async function api(chemin, { methode = 'GET', corps, brut = false } = {}) {
   const r = await fetch('/api' + chemin, {
@@ -58,7 +67,7 @@ export const ESPACES = { directeur: 'Espace Directrice', enseignant: 'Espace Ens
 
 export function argent(n) {
   const v = Math.round(Number(n || 0) * 100) / 100;
-  return `${v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(/ | /g, ' ')} ${ctx.ecole ? ctx.ecole.devise : ''}`.trim();
+  return `${v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(/ | /g, ' ')} ${ctx.ecole ? e(ctx.ecole.devise) : ''}`.trim();
 }
 export function dateFr(iso) {
   if (!iso) return '';
@@ -121,6 +130,7 @@ export function modale(titre, contenu, { actions = '', large = false, auFermer }
   fond.querySelector('.fermer').onclick = fermer;
   fond.addEventListener('mousedown', (ev) => { if (ev.target === fond) fermer(); });
   document.addEventListener('keydown', echap);
+  fond.fermer = fermer; // le routeur ferme proprement les fenêtres restées ouvertes
   document.body.appendChild(fond);
   const premier = fond.querySelector('input:not([type=hidden]), select, textarea');
   if (premier && window.innerWidth > 640) premier.focus();
@@ -149,15 +159,17 @@ export function formulaire(titre, champs, soumettre, { ok = 'Enregistrer', large
     large, actions: `<button class="btn clair" data-annuler>Annuler</button><button class="btn" data-ok>${e(ok)}</button>`,
   });
   const form = m.el.querySelector('form');
+  let enCours = false; // évite les doubles envois (Entrée pressée plusieurs fois, double clic)
   const envoyer = async (ev) => {
     if (ev) ev.preventDefault();
-    if (!form.reportValidity()) return;
+    if (enCours || !form.reportValidity()) return;
+    enCours = true;
     const btn = m.el.querySelector('[data-ok]');
     btn.disabled = true;
     try {
       await soumettre(lireForm(form), form);
       m.fermer();
-    } catch (err) { erreur(err); } finally { btn.disabled = false; }
+    } catch (err) { erreur(err); } finally { enCours = false; btn.disabled = false; }
   };
   form.onsubmit = envoyer;
   m.el.querySelector('[data-ok]').onclick = envoyer;
@@ -297,7 +309,7 @@ export async function imprimer(chemin) {
     }, 250);
     cadreImpression.src = url;
     document.body.appendChild(cadreImpression);
-  } catch (err) { toast(err.message, 'danger'); }
+  } catch (err) { toast(err.message, 'erreur'); }
 }
 
 /** Demande un PDF par POST et l'ouvre dans un nouvel onglet (ouvert avant l'attente pour ne pas être bloqué). */

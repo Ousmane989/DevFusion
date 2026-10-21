@@ -14,6 +14,7 @@ const router = express.Router();
 const limiteur = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
+  skipSuccessfulRequests: true, // une école entière partage souvent la même connexion internet
   standardHeaders: true,
   legacyHeaders: false,
   message: { erreur: 'Trop de tentatives. Réessayez dans quelques minutes.' },

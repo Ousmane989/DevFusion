@@ -44,7 +44,7 @@ export async function afficher(el) {
     { titre: 'Retards', classe: 'num', rendu: (x) => x.retards },
     { titre: 'Assiduité', rendu: (x) => (x.taux === null ? '—' : `<div class="ligne" style="flex-wrap:nowrap"><div class="barre-progres" style="width:80px"><div style="width:${x.taux}%;background:${x.taux < 80 ? 'var(--danger)' : x.taux < 92 ? 'var(--accent)' : 'var(--succes)'}"></div></div>${x.taux} %</div>`) },
   ], d.eleves.sort((a, b) => b.absents - a.absents), { vide: 'Aucune donnée.' })}`;
-    activerExports(zone.querySelector('#exp'), () => ({ classe_id: lire().classe_id }));
+    activerExports(zone.querySelector('#exp'), () => lire());
   };
   el.querySelectorAll('select, input').forEach((s) => { s.onchange = charger; });
   await charger();
