@@ -25,7 +25,7 @@ comme sur téléphone.
 | **Personnel** | Enseignants et employés, salaires versés par mois |
 | **Finances** | Dépenses par catégorie, bilan mensuel recettes / dépenses / solde, graphiques |
 | **Tableau de bord** | Effectifs, répartition par classe et par sexe, encaissé / attendu, taux de recouvrement, impayés, absences du jour, derniers paiements et inscriptions |
-| **Certificats de scolarité** | Préremplis depuis la fiche élève (ou vierges), modifiables par la directrice, **2 certificats par feuille A4** à découper ; en-tête, directrice et ville réglables |
+| **Certificats de scolarité** | Préremplis depuis la fiche élève (ou vierges), modifiables par la directrice, **2 certificats par feuille A4** à découper : en haut celui de l'élève, en bas un certificat vierge à remplir à la main (ou 2 élèves par feuille) ; en-tête, directrice et ville réglables |
 | **Autres** | Emploi du temps, calendrier scolaire, exports Excel et PDF de toutes les listes, liste de classe, cartes d'élève avec photo et QR code, année scolaire et passage automatique en classe supérieure, sauvegarde automatique quotidienne, paramètres (nom, logo, adresse, téléphone, devise FCFA (ou MRU), tarifs) |
 
 ## Installation (5 minutes)

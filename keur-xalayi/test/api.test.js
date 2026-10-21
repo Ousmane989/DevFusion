@@ -257,7 +257,7 @@ test('certificats de scolarité : données préremplies et PDF 2 par page', asyn
   const d = (await appel('dir', `/api/certificats/donnees?classe_id=${classe.id}`)).donnees;
   assert.ok(d.length > 0 && d[0].eleve && d[0].annee && d[0].date);
   assert.match(d[0].classe, /classe de|la /);
-  const pdfUn = await appel('dir', '/api/certificats/pdf', { methode: 'POST', corps: { certificats: [d[0]], exemplaires: 2 } });
+  const pdfUn = await appel('dir', '/api/certificats/pdf', { methode: 'POST', corps: { certificats: [d[0]] } });
   assert.strictEqual(pdfUn.statut, 200);
   assert.strictEqual(pdfUn.donnees.subarray(0, 4).toString(), '%PDF');
   const vierge = await appel('dir', '/api/certificats/pdf', { methode: 'POST', corps: { certificats: [] } });
