@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fusion Studio</title>
-<meta name="description" content="Fusion Studio : du brief au montage final. Un copilote IA qui planifie, génère et monte vos vidéos publicitaires, clips et courts-métrages.">
+<title>Bobine</title>
+<meta name="description" content="Bobine : du brief au montage final. Un copilote IA qui planifie, génère et monte vos vidéos publicitaires, clips et courts-métrages.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -146,16 +146,6 @@ td.y, td.n { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
 td.y { color: var(--tungsten); }
 td.n { color: var(--dim); }
 
-/* Tarifs */
-.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-@media (max-width: 880px) { .plans { grid-template-columns: 1fr; } }
-.plan { border: 1px solid var(--line); border-radius: 18px; padding: 28px; display: grid; gap: 18px; align-content: start; }
-.plan.hot { border-color: var(--tungsten); background: color-mix(in srgb, var(--tungsten) 7%, var(--ink)); }
-.price { font: 800 44px var(--display); letter-spacing: -.03em; }
-.price small { font: 400 15px var(--body); color: var(--dim); letter-spacing: 0; }
-.plan ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; color: var(--dim); font-size: 15px; }
-.plan li::before { content: "▸ "; color: var(--tungsten); }
-
 /* FAQ */
 .faq { display: grid; gap: 0; border-top: 1px solid var(--line); max-width: 860px; }
 details { border-bottom: 1px solid var(--line); }
@@ -177,15 +167,14 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
 <header class="top">
   <div class="wrap">
-    <a class="logo" href="#top"><i aria-hidden="true"></i>Fusion Studio</a>
+    <a class="logo" href="#top"><i aria-hidden="true"></i>Bobine</a>
     <nav class="links" aria-label="Navigation principale">
       <a href="#galerie">Galerie</a>
       <a href="#methode">Méthode</a>
       <a href="#fonctions">Fonctions</a>
-      <a href="#tarifs">Tarifs</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn primary" href="#studio">Essayer gratuitement</a>
+    <a class="btn primary" href="#studio">Ouvrir le studio</a>
   </div>
 </header>
 
@@ -196,7 +185,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <h1>Du brief au <em>montage final</em>, sans quitter l'écran.</h1>
         <div style="display:grid;gap:18px;max-width:38ch">
           <p class="lead">Décrivez votre idée. Le copilote découpe les plans, choisit le bon modèle pour chacun, génère en parallèle et vous rend une vidéo montée, sous-titrée et prête à publier.</p>
-          <p class="tc">7 jours d'accès illimité · sans carte bancaire</p>
+          <p class="tc">Version de test · usage personnel</p>
         </div>
       </div>
 
@@ -321,12 +310,12 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
   <section class="band">
     <div class="wrap">
       <div class="band-head">
-        <h2>Ce qui change<br>avec Fusion Studio.</h2>
+        <h2>Ce qui change<br>avec Bobine.</h2>
         <p class="lead" style="max-width:40ch">Un générateur classique vous rend un clip. Pour le reste du travail, il vous faut d'autres outils.</p>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Fonction</th><th>Fusion Studio</th><th>Générateur classique</th></tr></thead>
+          <thead><tr><th>Fonction</th><th>Bobine</th><th>Générateur classique</th></tr></thead>
           <tbody>
             <tr><td>Copilote qui planifie et lance plusieurs étapes</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
             <tr><td>Storyboard automatique plan par plan</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
@@ -341,42 +330,16 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     </div>
   </section>
 
-  <section class="band" id="tarifs">
-    <div class="wrap">
-      <div class="band-head"><h2>Des tarifs simples.</h2><p class="tc">Prix indicatifs, à adapter</p></div>
-      <div class="plans">
-        <div class="plan">
-          <span class="tc">DÉCOUVERTE</span>
-          <div class="price">0 <small>FCFA / mois</small></div>
-          <ul><li>10 générations par mois</li><li>720p, filigrane</li><li>Vidéos de 15 s maximum</li></ul>
-          <a class="btn" href="#studio">Commencer</a>
-        </div>
-        <div class="plan hot">
-          <span class="tc" style="color:var(--tungsten)">CRÉATEUR · LE PLUS CHOISI</span>
-          <div class="price">9 900 <small>FCFA / mois</small></div>
-          <ul><li>200 générations par mois</li><li>1080p sans filigrane</li><li>Copilote et montage par la conversation</li><li>Sous-titres multilingues</li></ul>
-          <a class="btn primary" href="#studio">Essai de 7 jours</a>
-        </div>
-        <div class="plan">
-          <span class="tc">AGENCE</span>
-          <div class="price">39 900 <small>FCFA / mois</small></div>
-          <ul><li>Générations illimitées</li><li>4K, exports multi-formats</li><li>5 membres d'équipe</li><li>Charte de marque partagée</li></ul>
-          <a class="btn" href="#faq">Nous contacter</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <section class="band" id="faq">
     <div class="wrap" style="display:grid;gap:40px">
       <h2>Questions fréquentes</h2>
       <div class="faq">
-        <details open><summary>Qu'est-ce que Fusion Studio ?</summary><p>Un studio vidéo en ligne piloté par l'IA. Vous donnez un brief, le copilote prépare le storyboard, génère chaque plan, fait le montage et ajoute la voix off et les sous-titres.</p></details>
+        <details open><summary>Qu'est-ce que Bobine ?</summary><p>Un studio vidéo en ligne piloté par l'IA. Vous donnez un brief, le copilote prépare le storyboard, génère chaque plan, fait le montage et ajoute la voix off et les sous-titres.</p></details>
         <details><summary>Faut-il savoir monter une vidéo ?</summary><p>Non. Vous corrigez en écrivant ce que vous voulez, par exemple « rends le plan 2 plus lumineux » ou « coupe la fin ».</p></details>
         <details><summary>Puis-je donner mon script ou un PDF ?</summary><p>Oui. Ajoutez un script, un PDF de présentation, des photos de produit, un fichier de sous-titres ou un son. Le copilote travaille à partir de ces fichiers.</p></details>
         <details><summary>Mes personnages restent-ils les mêmes d'une scène à l'autre ?</summary><p>Oui. Enregistrez un personnage ou un produit comme référence et il garde le même visage, les mêmes vêtements et la même lumière dans tous les plans.</p></details>
-        <details><summary>Comment payer ?</summary><p>Par Wave, Orange Money, Bankily ou carte bancaire. L'abonnement se résilie à tout moment.</p></details>
-        <details><summary>Puis-je essayer gratuitement ?</summary><p>Oui. Le plan Découverte est gratuit et le plan Créateur s'essaie pendant 7 jours sans engagement.</p></details>
+        <details><summary>Est-ce que la page génère de vraies vidéos ?</summary><p>Pas encore. Le bouton « Générer » dessine un storyboard de démonstration dans le navigateur. Pour de vraies vidéos, il faudra brancher une API de génération vidéo côté serveur.</p></details>
       </div>
     </div>
   </section>
@@ -392,8 +355,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
 <footer>
   <div class="wrap">
-    <span class="logo" style="font-size:16px"><i aria-hidden="true"></i>Fusion Studio</span>
-    <span class="tc">© 2026 Fusion Studio · Dakar · Nouakchott</span>
+    <span class="logo" style="font-size:16px"><i aria-hidden="true"></i>Bobine</span>
+    <span class="tc">© 2026 Bobine · projet personnel</span>
   </div>
 </footer>
 
