@@ -106,6 +106,7 @@ app.use('/api/shops', shopsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/formation', formationRoutes);
 app.use('/api/delivery', require('./routes/delivery.routes'));
+app.use('/api/studio', require('./routes/studio.routes'));
 app.use('/api/dev', developerRoutes);
 app.use('/api/v1', publicCors, apiV1Routes);
 app.use('/api/public', publicCors, publicRoutes);
