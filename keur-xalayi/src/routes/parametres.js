@@ -15,7 +15,8 @@ const router = express.Router();
 const CHAMPS = ['nom_ecole', 'slogan', 'logo', 'adresse', 'telephone', 'email', 'devise', 'indicatif_defaut',
   'rappel_auto', 'rappel_jour', 'rappel_heure', 'rappel_impayes_seulement', 'date_limite_jour',
   'second_rappel_actif', 'second_rappel_delai', 'modele_rappel', 'modele_second_rappel', 'modele_absence',
-  'modele_recu', 'modele_bulletin', 'notif_absence_auto', 'nb_periodes', 'libelle_periode'];
+  'modele_recu', 'modele_bulletin', 'notif_absence_auto', 'nb_periodes', 'libelle_periode',
+  'directrice_nom', 'ville', 'entete_certificat'];
 
 router.get('/', ah(async (req, res) => {
   const p = await one('SELECT * FROM parametres WHERE id = 1');

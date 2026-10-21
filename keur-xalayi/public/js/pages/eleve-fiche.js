@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, MODES, modale, aujourdhui, resultatEnvoi } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 export async function afficher(el, { id, nouveau }) {
@@ -36,6 +36,7 @@ export async function afficher(el, { id, nouveau }) {
         ${gestion ? `<a class="btn clair" href="#/eleves/${v.id}/modifier">✏️ Modifier</a>` : ''}
         ${gestion ? '<button class="btn clair" id="message">💬 Message au parent</button>' : ''}
         ${insc ? `<button class="btn clair" id="carte">🪪 Carte d'élève</button>` : ''}
+        ${insc && gestion && v.statut === 'actif' ? `<a class="btn clair" href="#/certificats?eleve_id=${v.id}">📜 Certificat de scolarité</a>` : ''}
         <span class="espace"></span>
         ${gestion && v.statut === 'actif' ? '<button class="btn clair" id="archiver">🗄️ Archiver (départ)</button>' : ''}
         ${gestion && (v.statut === 'archive' || !insc) ? '<button class="btn sec" id="reinscrire">↩️ Réinscrire</button>' : ''}
@@ -93,7 +94,7 @@ export async function afficher(el, { id, nouveau }) {
     { titre: 'Date', rendu: (a) => dateFr(a.date) }, { titre: 'Statut', rendu: (a) => badge(a.statut) }, { titre: 'Remarque', rendu: (a) => e(a.remarque || '') },
   ], d.dernieresAbsences || [], { vide: 'Aucune absence. Bravo !' })}</div>`;
     },
-    historique: () => `<div class="carte"><h2>Scolarité à Keur Xalayi</h2>${tableau([
+    historique: () => `<div class="carte"><h2>Scolarité à ${e(ctx.ecole.nom_ecole)}</h2>${tableau([
       { titre: 'Année', rendu: (i) => e(i.annee) + (i.active ? ' ' + badge('ok', 'En cours') : '') },
       { titre: 'Classe', rendu: (i) => e(i.classe) },
       { titre: 'Mensualité', classe: 'num', rendu: (i) => argent(i.mensualite - i.reduction) },

@@ -2,10 +2,10 @@
 import { get, post, e, qs, options, champ, dateHeure, badge, tableau, erreur, resultatEnvoi, modale, lireForm } from '../ui.js';
 
 const MODELES = {
-  reunion: 'Bonjour {nom_parent}, l\'école Keur Xalayi vous invite à une réunion des parents le [DATE] à [HEURE]. Votre présence est importante. Merci.',
-  fete: 'Bonjour {nom_parent}, l\'école Keur Xalayi organise sa fête de fin d\'année le [DATE]. {nom_eleve} et toute l\'équipe vous y attendent avec plaisir !',
+  reunion: 'Bonjour {nom_parent}, l\'école {ecole} vous invite à une réunion des parents le [DATE] à [HEURE]. Votre présence est importante. Merci.',
+  fete: 'Bonjour {nom_parent}, l\'école {ecole} organise sa fête de fin d\'année le [DATE]. {nom_eleve} et toute l\'équipe vous y attendent avec plaisir !',
   vacances: 'Bonjour {nom_parent}, nous vous informons que les vacances commencent le [DATE]. Reprise des cours le [DATE]. Bonnes vacances à {nom_eleve} !',
-  fermeture: 'Bonjour {nom_parent}, l\'école Keur Xalayi sera exceptionnellement fermée le [DATE] en raison de [MOTIF]. Merci de votre compréhension.',
+  fermeture: 'Bonjour {nom_parent}, l\'école {ecole} sera exceptionnellement fermée le [DATE] en raison de [MOTIF]. Merci de votre compréhension.',
   libre: 'Bonjour {nom_parent}, ',
 };
 const TYPES = { rappel: 'Rappel', second_rappel: '2ᵉ rappel', annonce: 'Annonce', absence: 'Absence', bulletin: 'Bulletin', recu: 'Reçu', test: 'Test' };
@@ -29,7 +29,7 @@ export async function afficher(el, params) {
           <div id="z-numero" class="cache">${champ('Numéro WhatsApp', '<input name="telephone" placeholder="+221 77 123 45 67">')}</div>
         </div>
         ${champ('Modèle', `<select id="modele">${options([['libre', 'Message libre'], ['reunion', 'Réunion des parents'], ['fete', 'Fête de l\'école'], ['vacances', 'Vacances'], ['fermeture', 'Fermeture exceptionnelle']], 'libre')}</select>`)}
-        ${champ('Message', `<textarea name="texte" id="texte" rows="6" required>${e(MODELES.libre)}</textarea>`, { aide: 'Variables : {nom_parent}, {nom_eleve}, {classe}. Remplacez les [CROCHETS].' })}
+        ${champ('Message', `<textarea name="texte" id="texte" rows="6" required>${e(MODELES.libre)}</textarea>`, { aide: 'Variables : {nom_parent}, {nom_eleve}, {classe}, {ecole}. Remplacez les [CROCHETS].' })}
         <label class="case"><input type="checkbox" name="manuel"> Envoyer moi-même depuis mon WhatsApp (liens wa.me)</label>
         <div class="ligne fin" style="margin-top:.8rem"><button class="btn vert">📲 Préparer l'envoi</button></div>
       </form></div>`;
