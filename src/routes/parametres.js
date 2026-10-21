@@ -36,6 +36,9 @@ router.put('/', autoriser('directeur'), ah(async (req, res) => {
     if (c === 'logo' && req.body.logo && !/^data:image\/(png|jpe?g);base64,/.test(req.body.logo)) {
       throw new HttpError(400, 'Le logo doit être une image PNG ou JPEG.');
     }
+    if (c === 'libelle_periode' && !['Trimestre', 'Composition', 'Semestre'].includes(req.body[c])) {
+      throw new HttpError(400, 'Nom de période invalide.');
+    }
     vals.push(c === 'logo' ? vide(req.body[c]) : req.body[c]);
     sets.push(`${c} = $${vals.length}`);
   }

@@ -20,7 +20,9 @@ export async function afficher(el) {
     <div class="grille g2">${champ('Du', `<input type="date" name="date_debut" required value="${e(v.date_debut || aujourdhui())}">`, { requis: true })}
     ${champ('Au', `<input type="date" name="date_fin" value="${e(v.date_fin || '')}">`, { aide: 'Laisser vide pour un seul jour.' })}</div>
     ${champ('Description', `<textarea name="description" rows="2">${e(v.description)}</textarea>`)}`;
-  const enreg = (id) => async (f) => { if (id) await put(`/calendrier/${id}`, f); else await post('/calendrier', f); toast('Enregistré.', 'succes'); charger(); };
+  const enreg = (id) => async (f) => {
+    if (f.date_fin && f.date_fin < f.date_debut) throw new Error('La date de fin est avant la date de début.');
+    if (id) await put(`/calendrier/${id}`, f); else await post('/calendrier', f); toast('Enregistré.', 'succes'); charger(); };
   const ouvrir = (v) => {
     if (!modif) return;
     const m = formulaire(v.titre, fiche(v), enreg(v.id));

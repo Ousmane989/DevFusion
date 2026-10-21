@@ -46,7 +46,7 @@ export async function afficher(el, params) {
 
   const exp = el.querySelector('#exports');
   exp.innerHTML = boutonsExport('eleves');
-  activerExports(exp, () => ({ classe_id: filtres.classe_id, statut: filtres.statut }));
+  activerExports(exp, () => ({ ...filtres }));
   el.querySelector('#cartes').onclick = () => ouvrir('/exports/cartes.pdf' + qs({ classe_id: filtres.classe_id }));
   el.querySelector('#q').oninput = (ev) => { clearTimeout(minuteur); minuteur = setTimeout(() => { filtres.q = ev.target.value; charger(); }, 250); };
   el.querySelector('#classe').onchange = (ev) => { filtres.classe_id = ev.target.value; charger(); };

@@ -51,6 +51,8 @@ export async function afficher(el, params) {
       f.onsubmit = async (ev) => {
         ev.preventDefault();
         const d = lireForm(f);
+        if (d.cible === 'classe' && !d.classe_id) { erreur(new Error('Choisissez la classe.')); return; }
+        if (d.cible === 'parent' && !d.eleve_id) { erreur(new Error('Choisissez l\'élève dans la liste des suggestions.')); return; }
         if (/\[[A-Z]+\]/.test(d.texte) && !confirm('Le message contient encore des [CROCHETS] à remplacer. Envoyer quand même ?')) return;
         try {
           const apercu = await post('/whatsapp/annonce', { ...d, apercu: true });

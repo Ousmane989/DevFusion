@@ -51,7 +51,7 @@ export async function afficher(el, params) {
       const totalDu = d.personnel.reduce((s, p) => s + p.salaire_base, 0);
       const totalVerse = d.personnel.reduce((s, p) => s + p.verse, 0);
       zone.innerHTML = `<div class="filtres"><select id="mois">${options(optMois.map((m) => [m, nomMois(m)]), mois)}</select></div>
-        <div class="alerte info">Salaires de ${e(nomMois(mois))} : <b>${argent(totalVerse)}</b> versés sur ${argent(totalDu)} prévus.</div>
+        <div class="alerte info"><div>Salaires de ${e(nomMois(mois))} : <b>${argent(totalVerse)}</b> versés sur ${argent(totalDu)} prévus.</div></div>
         ${tableau([
     { titre: 'Nom', rendu: (p) => `<b>${e(p.prenom)} ${e(p.nom)}</b><div class="petit muted">${e(p.poste)}</div>` },
     { titre: 'Salaire prévu', classe: 'num', rendu: (p) => argent(p.salaire_base) },
