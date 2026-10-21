@@ -1,6 +1,6 @@
-# 🏫 Keur Xalayi — plateforme de gestion scolaire
+# 🏫 Keur Xaleyi — plateforme de gestion scolaire
 
-Application web de gestion pour l'école maternelle et primaire **Keur Xalayi** (Sénégal) :
+Application web de gestion pour l'école maternelle et primaire **Keur Xaleyi** (Sénégal) :
 inscriptions, paiements, rappels WhatsApp, présences, notes et bulletins,
 personnel, finances. L'interface est en français et s'utilise sur ordinateur
 comme sur téléphone.
@@ -24,6 +24,7 @@ comme sur téléphone.
 | **Personnel** | Enseignants et employés, salaires versés par mois |
 | **Finances** | Dépenses par catégorie, bilan mensuel recettes / dépenses / solde, graphiques |
 | **Tableau de bord** | Effectifs, répartition par classe et par sexe, encaissé / attendu, taux de recouvrement, impayés, absences du jour, derniers paiements et inscriptions |
+| **Certificats de scolarité** | Préremplis depuis la fiche élève (ou vierges), modifiables par la directrice, **2 certificats par feuille A4** à découper ; en-tête, directrice et ville réglables |
 | **Autres** | Emploi du temps, calendrier scolaire, exports Excel et PDF de toutes les listes, liste de classe, cartes d'élève avec photo et QR code, année scolaire et passage automatique en classe supérieure, sauvegarde automatique quotidienne, paramètres (nom, logo, adresse, téléphone, devise FCFA (ou MRU), tarifs) |
 
 ## Installation (5 minutes)
