@@ -163,4 +163,4 @@ Chaque jour (heure configurable, 9 h par défaut) :
    si le serveur redémarre.
 
 Chaque nuit (2 h) : **sauvegarde** complète des données en JSON compressé dans
-`sauvegardes/` (30 dernières conservées), téléchargeable depuis les paramètres.
+la table `sauvegardes` de la base (10 dernières conservées), téléchargeable depuis les paramètres.

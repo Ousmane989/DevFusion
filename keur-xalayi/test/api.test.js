@@ -310,3 +310,14 @@ test('passage en classe supérieure (aperçu) : GS → CI → CP', async () => {
   const ci = ap.plan.find((p) => p.classe === 'CI' && p.action === 'passe');
   if (ci) assert.strictEqual(ci.niveau_cible, 'CP', 'le CI passe au CP');
 });
+
+test('sauvegarde gardée dans la base puis téléchargée', async () => {
+  const s = await appel('dir', '/api/parametres/sauvegardes', { methode: 'POST', corps: {} });
+  assert.strictEqual(s.statut, 201, JSON.stringify(s.donnees));
+  const liste = (await appel('dir', '/api/parametres/sauvegardes')).donnees;
+  assert.ok(liste.length <= 10 && liste[0].id === s.donnees.id && !('donnees' in liste[0]));
+  const f = await appel('dir', `/api/parametres/sauvegardes/${s.donnees.id}/telecharger`);
+  assert.strictEqual(f.statut, 200);
+  const json = JSON.parse(require('zlib').gunzipSync(f.donnees).toString());
+  assert.ok(json.tables.eleves.length > 0 && json.tables.parametres.length === 1);
+});
