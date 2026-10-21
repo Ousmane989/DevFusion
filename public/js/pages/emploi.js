@@ -33,6 +33,7 @@ export async function afficher(el, params) {
       ${champ('Intervenant', '<input name="intervenant" placeholder="Facultatif">')}`,
     async (f) => {
       if (!f.jours.length) throw new Error('Choisissez au moins un jour.');
+      if (f.heure_fin <= f.heure_debut) throw new Error('L\'heure de fin doit être après l\'heure de début.');
       for (const jour of f.jours) await post(`/classes/${classeId}/emploi`, { ...f, jour: Number(jour) });
       toast('Cours ajouté.', 'succes'); charger();
     });
