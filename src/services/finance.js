@@ -85,7 +85,8 @@ async function impayes({ mois, classeId, classes } = {}) {
 /** Détail mois par mois pour une inscription (fiche élève). */
 async function soldeInscription(inscriptionId) {
   const insc = await one(
-    `SELECT i.*, a.date_debut, a.date_fin FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id WHERE i.id = $1`,
+    `SELECT i.*, a.date_debut, a.date_fin, e.date_sortie FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id
+       JOIN eleves e ON e.id = i.eleve_id WHERE i.id = $1`,
     [inscriptionId],
   );
   if (!insc) return null;
@@ -98,10 +99,12 @@ async function soldeInscription(inscriptionId) {
     [inscriptionId]);
   const du = insc.mensualite - insc.reduction;
   const debut = debutMois(insc.date_inscription);
+  // Élève parti : plus rien n'est dû après le mois de son départ.
+  const fin = insc.date_sortie && insc.decision === 'parti' ? debutMois(insc.date_sortie) : null;
   const courant = debutMois(aujourdhui());
   const mois = moisEntre(insc.date_debut, insc.date_fin).map((m) => {
     const verse = parMois[m] || 0;
-    const exigible = m >= debut;
+    const exigible = m >= debut && (!fin || m <= fin);
     return {
       mois: m, du: exigible ? du : 0, verse, exigible, echu: exigible && m <= courant,
       reste: exigible ? Math.max(0, du - verse) : 0,
