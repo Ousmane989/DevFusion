@@ -201,6 +201,11 @@ CREATE TABLE IF NOT EXISTS rappels_executions (
   nb_messages INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (mois, type)
 );
+-- Envoi en plusieurs fois : « termine » passe à vrai quand tous les parents ont reçu
+-- le rappel ; « verrou » empêche deux envois simultanés de la même tâche.
+ALTER TABLE rappels_executions ADD COLUMN IF NOT EXISTS termine BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE rappels_executions ADD COLUMN IF NOT EXISTS verrou TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS messages_rappel_idx ON messages (type, mois, eleve_id);
 
 -- ---------- Présences ----------
 CREATE TABLE IF NOT EXISTS presences (
@@ -341,9 +346,17 @@ CREATE SEQUENCE IF NOT EXISTS seq_matricule;
 CREATE SEQUENCE IF NOT EXISTS seq_recu;
 
 -- ---------- Modes de paiement acceptés (Sénégal et Mauritanie) ----------
-ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_mode_check;
-ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
-  ('especes','wave','orange_money','free_money','virement','cheque','bankily','masrvi','sedad'));
+-- Reconstruite seulement si elle n'accepte pas encore « sedad » (évite de verrouiller
+-- et revérifier la table des paiements à chaque démarrage).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'paiements_mode_check'
+                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%sedad%') THEN
+    ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_mode_check;
+    ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
+      ('especes','wave','orange_money','free_money','virement','cheque','bankily','masrvi','sedad'));
+  END IF;
+END $$;
 
 -- ---------- Comptes enseignants créés par les enseignants eux-mêmes ----------
 -- L'enseignant s'inscrit depuis l'Espace Enseignants en choisissant sa classe ;

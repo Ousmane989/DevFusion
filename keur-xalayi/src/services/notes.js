@@ -18,9 +18,13 @@ const arrondi = (x) => (x === null ? null : Math.round(x * 100) / 100);
 
 /** Attribue un rang (ex æquo gérés) sur la propriété « moyenne ». */
 function classer(liste) {
-  const tri = liste.filter((x) => x.moyenne !== null).sort((a, b) => b.moyenne - a.moyenne);
+  // Seuls les élèves notés dans toutes les matières sont classés (sinon un élève avec
+  // une seule bonne note passerait premier) ; les autres sont « non classés ».
+  const classable = (x) => x.moyenne !== null && !x.notes_manquantes;
+  const tri = liste.filter(classable).sort((a, b) => b.moyenne - a.moyenne);
   tri.forEach((x, i) => { x.rang = i > 0 && tri[i - 1].moyenne === x.moyenne ? tri[i - 1].rang : i + 1; });
-  liste.filter((x) => x.moyenne === null).forEach((x) => { x.rang = null; });
+  liste.filter((x) => !classable(x)).forEach((x) => { x.rang = null; });
+  return tri.length;
 }
 
 async function infosClasse(classeId) {
@@ -54,11 +58,12 @@ async function resultatsPeriode(classe, eleves, periode) {
       if (has) { somme += (note / m.bareme) * 10 * m.coefficient; coefs += m.coefficient; }
       return { matiere_id: m.id, matiere: m.nom, coefficient: m.coefficient, bareme: m.bareme, note: has ? note : null };
     });
-    return { ...e, notes: detail, total_coef: coefs, moyenne: coefs ? arrondi(somme / coefs) : null };
+    const notes_manquantes = detail.filter((d) => d.note === null).length;
+    return { ...e, notes: detail, total_coef: coefs, notes_manquantes, moyenne: coefs ? arrondi(somme / coefs) : null };
   });
-  classer(lignes);
+  const classes = classer(lignes);
   lignes.forEach((l) => { l.appreciation = appreciation(l.moyenne); });
-  return { matieres, lignes };
+  return { matieres, lignes, classes };
 }
 
 /**
@@ -74,10 +79,10 @@ async function resultatsClasse(classeId, periode) {
   if (classe.cycle === 'maternelle') {
     const competences = await query('SELECT * FROM competences ORDER BY ordre, domaine, libelle');
     const app = await query(
-      'SELECT inscription_id, competence_id, periode, niveau FROM appreciations WHERE inscription_id = ANY($1) AND ($2 = 0 OR periode = $2)',
+      'SELECT inscription_id, competence_id, periode, niveau FROM appreciations WHERE inscription_id = ANY($1) AND ($2 = 0 OR periode = $2) ORDER BY periode',
       [eleves.map((e) => e.inscription_id), periode]);
     const idx = {};
-    for (const a of app) idx[`${a.inscription_id}:${a.competence_id}`] = a.niveau; // la dernière période l'emporte (tri non garanti en annuel)
+    for (const a of app) idx[`${a.inscription_id}:${a.competence_id}`] = a.niveau; // tri par période : la dernière évaluation l'emporte
     return {
       classe, periode, cycle: 'maternelle', competences,
       lignes: eleves.map((e) => ({ ...e, appreciations: competences.map((c) => ({ competence_id: c.id, niveau: idx[`${e.inscription_id}:${c.id}`] || null })) })),
@@ -98,12 +103,13 @@ async function resultatsClasse(classeId, periode) {
     });
     classer(lignes);
     lignes.forEach((l) => { l.appreciation = appreciation(l.moyenne); });
-    res = { matieres: parPeriode[0] ? parPeriode[0].matieres : [], lignes };
+    res = { matieres: parPeriode[0] ? parPeriode[0].matieres : [], lignes, classes: lignes.filter((l) => l.rang).length };
   }
   const moys = res.lignes.map((l) => l.moyenne).filter((m) => m !== null);
   const stats = {
     effectif: res.lignes.length,
     evalues: moys.length,
+    classes: res.classes, // élèves classés (notes complètes) : dénominateur du rang
     moyenne_classe: moys.length ? arrondi(moys.reduce((a, b) => a + b, 0) / moys.length) : null,
     plus_forte: moys.length ? Math.max(...moys) : null,
     plus_faible: moys.length ? Math.min(...moys) : null,

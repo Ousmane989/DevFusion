@@ -44,7 +44,8 @@ export async function afficher(el, params) {
           ${kpi('Moyenne ≥ 5', `${st.admis} / ${st.evalues}`, st.evalues ? `${Math.round((st.admis / st.evalues) * 100)} % des élèves` : '', 'var(--primaire)')}
         </div>
         ${tableau([
-    { titre: 'Rang', rendu: (l) => (l.rang ? `<b style="font-size:1.1rem">${l.rang}${l.rang === 1 ? 'er' : 'e'}</b>` : '—') },
+    { titre: 'Rang', rendu: (l) => (l.rang ? `<b style="font-size:1.1rem">${l.rang}${l.rang === 1 ? 'er' : 'e'}</b>`
+      : l.notes_manquantes && l.moyenne !== null ? `<span class="petit muted" title="Notes manquantes">Non classé (${l.notes_manquantes} note(s) manquante(s))</span>` : '—') },
     { titre: 'Élève', rendu: (l) => `<b>${e(l.prenom)} ${e(l.nom)}</b><div class="petit muted">${e(l.matricule)}</div>` },
     ...(Number(etat.periode) === 0
     ? Array.from({ length: nb }, (_, i) => ({ titre: `${lib.slice(0, 4)}. ${i + 1}`, classe: 'num', rendu: (l) => l.moyennes_periodes[i] ?? '—' }))

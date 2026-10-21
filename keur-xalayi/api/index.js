@@ -12,7 +12,10 @@ let pret = null;
 
 module.exports = async (req, res) => {
   if (!pret) {
-    pret = migrer().then(amorcer)
+    // Démarrages simultanés sur une base neuve : une instance peut perdre la course à
+    // l'insertion des données de départ (doublon) ; on recommence alors une fois.
+    const amorcerSur = () => amorcer().catch((e) => (e.code === '23505' ? amorcer() : Promise.reject(e)));
+    pret = migrer().then(amorcerSur)
       // DONNEES_DEMO=true : remplit une base vide avec des élèves fictifs.
       .then(() => (process.env.DONNEES_DEMO === 'true' ? demo() : null))
       .catch((e) => { pret = null; throw e; });

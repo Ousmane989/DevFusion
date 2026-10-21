@@ -6,7 +6,7 @@
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const { one } = require('../db');
-const { dateFr, nomMois, montant, MODES_PAIEMENT } = require('../utils');
+const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT } = require('../utils');
 
 const COULEURS = {
   primaire: '#2E3192', // bleu du logo de l'école
@@ -27,10 +27,42 @@ const EMBLEME_ECOLE = (() => {
   try { return require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'public', 'img', 'embleme.png')); } catch { return null; }
 })();
 
+// Les polices standard des PDF (Helvetica) ne connaissent que l'alphabet latin
+// courant (WinAnsi). Les autres caractères (signe −, emoji, lettres wolof/peules
+// comme ŋ ou ɗ…) sortiraient illisibles : on les remplace par un équivalent proche.
+const WINANSI_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+const EQUIVALENTS = { '−': '-', 'Ŋ': 'N', 'ŋ': 'n', 'Ɓ': 'B', 'ɓ': 'b', 'Ɗ': 'D', 'ɗ': 'd', 'Ƴ': 'Y', 'ƴ': 'y', '\u00a0': ' ', '\u202f': ' ' };
+function texteImprimable(t) {
+  if (typeof t !== 'string') return t;
+  return [...t].map((ch) => {
+    if (EQUIVALENTS[ch]) return EQUIVALENTS[ch];
+    const c = ch.codePointAt(0);
+    if (c === 10 || (c >= 32 && c <= 126) || (c >= 160 && c <= 255) || WINANSI_EXTRA.includes(ch)) return ch;
+    const base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // lettre accentuée rare -> lettre simple
+    return /^[\x20-\x7e]$/.test(base) ? base : '';
+  }).join('');
+}
+
 /** Exécute une fonction de dessin et renvoie le PDF en mémoire. */
 function produire(options, dessiner) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 36, ...options, info: { Producer: 'Keur Xaleyi', Creator: 'Keur Xaleyi' } });
+    // Tout texte passe par ici : caractères remplacés, et texte sur une seule ligne
+    // (lineBreak: false + ellipsis) raccourci avec « … » s'il dépasse la largeur.
+    const texteOrigine = doc.text.bind(doc);
+    doc.text = (t, ...args) => {
+      let texte = texteImprimable(t);
+      const opts = args.find((a) => a && typeof a === 'object');
+      if (typeof texte === 'string' && opts && opts.lineBreak === false && opts.ellipsis && opts.width) {
+        if (doc.widthOfString(texte) > opts.width) {
+          while (texte.length > 1 && doc.widthOfString(texte + '…') > opts.width) texte = texte.slice(0, -1);
+          texte = texte.trimEnd() + '…';
+        }
+      }
+      return texteOrigine(texte, ...args);
+    };
+    const largeurOrigine = doc.widthOfString.bind(doc);
+    doc.widthOfString = (t, ...args) => largeurOrigine(texteImprimable(t), ...args);
     const morceaux = [];
     doc.on('data', (c) => morceaux.push(c));
     doc.on('end', () => resolve(Buffer.concat(morceaux)));
@@ -178,13 +210,16 @@ async function recu(numero) {
     doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
       .text('Désignation', l + 8, yT + 6).text('Montant', l, yT + 6, { width: largeur - 8, align: 'right' });
     let y = yT + 24;
+    const pas = lignes.length > 8 ? 15 : 18; // lignes resserrées quand l'année entière est payée d'un coup
     for (const li of lignes) {
-      const objet = li.type === 'mensualite' ? `Mensualité de ${nomMois(li.mois)}`
+      const objet = li.type === 'mensualite' ? `Mensualité ${deMois(li.mois)}`
         : li.type === 'inscription' ? 'Frais d\'inscription' : (li.remarque || 'Autre paiement');
-      doc.fillColor(li.annule ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(9.5)
-        .text(objet + (li.annule ? ' (annulé)' : ''), l + 8, y, { width: largeur - 120 })
+      const libelle = objet + (li.annule ? ' (annulé)' : '');
+      doc.fillColor(li.annule ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(9.5);
+      const hauteur = doc.heightOfString(texteImprimable(libelle), { width: largeur - 120 });
+      doc.text(libelle, l + 8, y, { width: largeur - 120 })
         .text(montant(li.montant, p.devise), l, y, { width: largeur - 8, align: 'right' });
-      y += 18;
+      y += Math.max(pas, hauteur + pas - 11);
       doc.moveTo(l, y - 4).lineTo(l + largeur, y - 4).lineWidth(0.5).strokeColor(COULEURS.ligne).stroke();
     }
     doc.rect(l, y, largeur, 24).fill(COULEURS.clair);
@@ -282,7 +317,9 @@ async function factureInscription(inscriptionId) {
     const conditions = [
       `Mensualité : ${montant(mensuel, p.devise)} par mois`
         + (insc.reduction > 0 ? ` (au lieu de ${montant(insc.mensualite, p.devise)}, réduction : ${insc.reduction_motif || '—'})` : ''),
-      `À régler au plus tard le ${p.date_limite_jour} de chaque mois, d'octobre à juillet.`,
+      // Même règle que les rappels : la date limite tombe dans le mois suivant si elle précède le jour du rappel.
+      `Chaque mensualité (d'octobre à juillet) est à régler au plus tard le ${p.date_limite_jour === 1 ? '1er' : p.date_limite_jour} `
+        + (p.date_limite_jour > p.rappel_jour ? 'du mois concerné.' : 'du mois suivant.'),
     ];
     doc.roundedRect(l, y, largeur, 40, 6).lineWidth(0.8).strokeColor(COULEURS.accent).stroke();
     doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5).text(conditions.join('\n'), l + 10, y + 8, { width: largeur - 20 });
@@ -330,7 +367,10 @@ async function bulletins(resultats, inscriptionIds, observations = {}) {
         .text(`Matricule : ${el.matricule}   ·   Classe : ${classe.nom}   ·   Enseignant(e) : ${classe.enseignant || '—'}`, l + 12, yB + 26);
       if (resultats.cycle === 'primaire' && el.rang) {
         doc.font('Helvetica-Bold').fontSize(11).fillColor(COULEURS.primaire)
-          .text(`Rang : ${el.rang}${el.rang === 1 ? 'er' : 'e'} / ${resultats.stats.evalues}`, l, yB + 8, { width: largeur - 12, align: 'right' });
+          .text(`Rang : ${el.rang}${el.rang === 1 ? 'er' : 'e'} / ${resultats.stats.classes ?? resultats.stats.evalues}`, l, yB + 8, { width: largeur - 12, align: 'right' });
+      } else if (resultats.cycle === 'primaire' && el.moyenne !== null && el.notes_manquantes) {
+        doc.font('Helvetica-Oblique').fontSize(9).fillColor(COULEURS.gris)
+          .text(`Non classé(e) : ${el.notes_manquantes} note(s) manquante(s)`, l, yB + 10, { width: largeur - 12, align: 'right' });
       }
       doc.y = yB + 58;
 
@@ -397,7 +437,7 @@ async function bulletins(resultats, inscriptionIds, observations = {}) {
       const yO = doc.y + 6;
       doc.roundedRect(l, yO, largeur, 60, 6).lineWidth(0.8).strokeColor(COULEURS.ligne).stroke();
       doc.fillColor(COULEURS.gris).font('Helvetica-Bold').fontSize(9).text('Observation de l\'enseignant(e)', l + 10, yO + 8);
-      doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(9.5).text(obs || '', l + 10, yO + 22, { width: largeur - 20, height: 34 });
+      doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(9.5).text(obs || '', l + 10, yO + 22, { width: largeur - 20, height: 34, ellipsis: true });
       const ySig = yO + 80;
       doc.fillColor(COULEURS.gris).fontSize(9)
         .text('L\'enseignant(e)', l, ySig, { width: largeur / 3, align: 'center' })
@@ -596,4 +636,4 @@ async function certificats(liste) {
   });
 }
 
-module.exports = { recu, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };
+module.exports = { texteImprimable, recu, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

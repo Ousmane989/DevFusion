@@ -54,9 +54,9 @@ export async function afficher(el) {
     <div class="carte" style="margin-top:1rem"><h2>🗓️ Calendrier des rappels de l'année</h2>
       ${tableau([
     { titre: 'Mensualité', rendu: (c) => `<b>${e(nomMois(c.mois))}</b>` },
-    { titre: 'Rappel', rendu: (c) => `${dateFr(c.rappel)} ${c.rappel_fait ? badge('ok', `✔ ${c.rappel_fait.nb_messages} envoyé(s)`) : ''}` },
+    { titre: 'Rappel', rendu: (c) => `${dateFr(c.rappel)} ${c.rappel_fait ? (c.rappel_fait.termine ? badge('ok', `✔ ${c.rappel_fait.nb_messages} envoyé(s)`) : badge('attention', `⏳ ${c.rappel_fait.nb_messages} envoyé(s), suite au prochain passage`)) : ''}` },
     { titre: 'Date limite', rendu: (c) => dateFr(c.date_limite) },
-    { titre: 'Second rappel', rendu: (c) => (c.second_rappel ? `${dateFr(c.second_rappel)} ${c.second_fait ? badge('ok', `✔ ${c.second_fait.nb_messages}`) : ''}` : '—') },
+    { titre: 'Second rappel', rendu: (c) => (c.second_rappel ? `${dateFr(c.second_rappel)} ${c.second_fait ? badge(c.second_fait.termine ? 'ok' : 'attention', `${c.second_fait.termine ? '✔' : '⏳'} ${c.second_fait.nb_messages}`) : ''}` : '—') },
   ], cal)}
     </div>`;
 

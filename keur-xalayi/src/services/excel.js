@@ -30,7 +30,8 @@ async function classeur(titre, colonnes, lignes, { ecole = 'Keur Xaleyi', devise
   }
   colonnes.forEach((c, i) => {
     const col = ws.getColumn(i + 1);
-    col.width = c.largeurXl || Math.max(10, Math.min(45, (c.titre.length + 4), ...lignes.slice(0, 200).map((l) => String(l[c.cle] ?? '').length + 2)));
+    // Largeur adaptée au contenu le plus long (entre 10 et 45 caractères).
+    col.width = c.largeurXl || Math.max(10, Math.min(45, Math.max(c.titre.length + 4, ...lignes.slice(0, 200).map((l) => String(l[c.cle] ?? '').length + 2))));
     if (c.format === 'montant') col.numFmt = `#,##0${devise ? ` "${devise}"` : ''}`;
     if (c.format === 'date') col.numFmt = 'dd/mm/yyyy';
   });

@@ -5,7 +5,7 @@
 // puis rendue au format demandé.
 const express = require('express');
 const { query, one } = require('../db');
-const { ah, HttpError, dateFr, nomMois, montant, MODES_PAIEMENT } = require('../utils');
+const { ah, HttpError, dateFr, nomMois, deMois, montant, MODES_PAIEMENT } = require('../utils');
 const { autoriser, verifierClasse } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
@@ -79,7 +79,7 @@ const LISTES = {
     const total = liste.reduce((s, x) => s + x.reste, 0);
     return {
       titre: 'Liste des impayés',
-      sousTitre: req.query.mois ? `Mois de ${nomMois(req.query.mois)}` : 'Tous les mois échus',
+      sousTitre: req.query.mois ? `Mois ${deMois(req.query.mois)}` : 'Tous les mois échus',
       paysage: true,
       total: `Total restant dû : ${montant(total, p.devise)}`,
       colonnes: [

@@ -22,6 +22,12 @@ function nomMois(iso) {
   return `${MOIS[m - 1]} ${a}`;
 }
 
+/** « de novembre 2026 », « d'octobre 2026 » (élision devant une voyelle). */
+function deMois(iso) {
+  const n = nomMois(iso);
+  return /^[aeiouy]/i.test(n) ? `d'${n}` : `de ${n}`;
+}
+
 /** Date du jour (fuseau du serveur, TZ) au format AAAA-MM-JJ. */
 function aujourdhui(d = new Date()) {
   const p = (n) => String(n).padStart(2, '0');
@@ -75,6 +81,7 @@ function normaliserTel(tel, indicatifDefaut = '+221') {
   if (!tel) return null;
   let t = String(tel).replace(/[\s.\-()]/g, '');
   if (t.startsWith('00')) t = '+' + t.slice(2);
+  if (/^(221\d{9}|222\d{8})$/.test(t)) t = '+' + t; // indicatif tapé sans « + »
   if (!t.startsWith('+')) t = indicatifDefaut + t;
   if (/^\+222\d{8}$/.test(t) || /^\+221\d{9}$/.test(t)) return t;
   return null;
@@ -102,6 +109,6 @@ const MODES_PAIEMENT = {
 };
 
 module.exports = {
-  HttpError, ah, MOIS, nomMois, aujourdhui, debutMois, ajouterMois, moisEntre,
+  HttpError, ah, MOIS, nomMois, deMois, aujourdhui, debutMois, ajouterMois, moisEntre,
   dateFr, montant, normaliserTel, remplir, exiger, vide, MODES_PAIEMENT,
 };

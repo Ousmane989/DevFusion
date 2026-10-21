@@ -130,7 +130,7 @@ router.post('/bulletins/envoyer', autoriser('directeur'), ah(async (req, res) =>
       texte: remplir(p.modele_bulletin, {
         nom_parent: l.parent, nom_eleve: `${l.prenom} ${l.nom}`, classe: r.classe.nom, periode: libPeriode,
         moyenne: l.moyenne === null || l.moyenne === undefined ? '—' : `${l.moyenne}/10`, rang: l.rang || '—',
-        effectif: r.stats ? r.stats.evalues : r.lignes.length, ecole: p.nom_ecole,
+        effectif: r.stats ? (r.stats.classes ?? r.stats.evalues) : r.lignes.length, ecole: p.nom_ecole,
       }),
       document: { link: lien, filename: `bulletin-${l.nom}-${l.prenom}.pdf` },
     };

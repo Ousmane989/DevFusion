@@ -279,6 +279,37 @@ test('suppression d\'un compte utilisateur', async () => {
   assert.strictEqual((await appel('ens', `/api/utilisateurs/${moi.id}`, { methode: 'DELETE' })).statut, 403, 'réservé à la directrice');
 });
 
+test('corrections de la revue : décisions, mois de paiement, données cachées aux enseignants, essais de connexion', async () => {
+  // Décisions de fin d'année (la route était masquée par /:id)
+  const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  const dec = await appel('dir', '/api/annees/decisions', { methode: 'PUT', corps: { decisions: [{ inscription_id: fiche.inscription.id, decision: 'en_cours' }] } });
+  assert.strictEqual(dec.statut, 200, JSON.stringify(dec.donnees));
+  // Mois de paiement : un jour quelconque du mois compte pour ce mois ; hors année refusé
+  const s = fiche.solde.mois.find((m) => m.exigible && m.reste > 0);
+  const jourDuMois = s.mois.slice(0, 8) + '17';
+  const p = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: fiche.inscription.id, mois: [jourDuMois], montant: s.reste, mode: 'especes' } });
+  assert.strictEqual(p.statut, 201, JSON.stringify(p.donnees));
+  const apres = (await appel('dir', `/api/eleves/${eleveId}`)).donnees.solde.mois.find((m) => m.mois === s.mois);
+  assert.strictEqual(apres.statut, 'paye');
+  const hors = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: fiche.inscription.id, mois: ['2031-03-01'], montant: 10, mode: 'especes' } });
+  assert.strictEqual(hors.statut, 400);
+  // Les enseignants ne voient pas les tarifs ni les réductions
+  const liste = (await appel('ens', '/api/eleves')).donnees;
+  assert.ok(liste.length > 0 && liste.every((x) => !('mensualite' in x) && !('reduction' in x)));
+  // Champ obligatoire vidé : 400 et non 500
+  assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { prenom: '  ' } })).statut, 400);
+  // 10 échecs de connexion : blocage (compté en base)
+  const essai = () => fetch(base + '/api/auth/connexion', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifiant: `inconnu-${process.pid}`, mot_de_passe: 'x' }) });
+  const statuts = [];
+  for (let k = 0; k < 11; k++) statuts.push((await essai()).status);
+  assert.strictEqual(statuts[0], 401);
+  assert.strictEqual(statuts[10], 429);
+  const { one } = require('../src/db');
+  const n = await one('SELECT COUNT(*) AS n FROM echecs_connexion WHERE identifiant = $1', [`inconnu-${process.pid}`]);
+  assert.ok(n.n >= 1, 'échecs comptés en base');
+});
+
 test('archivage puis réinscription', async () => {
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/archiver`, { methode: 'POST', corps: { motif: 'Déménagement' } })).statut, 200);
   const archives = (await appel('dir', '/api/eleves?statut=archive')).donnees;
