@@ -4,6 +4,11 @@
 --  Montants : NUMERIC(12,2) dans la devise choisie (FCFA au Sénégal, MRU en Mauritanie).
 -- =====================================================================
 
+-- Le script entier s'exécute en une transaction ; ce verrou fait passer les
+-- démarrages simultanés (plusieurs instances serverless) l'un après l'autre,
+-- au lieu de se bloquer mutuellement (deadlock).
+SELECT pg_advisory_xact_lock(4242);
+
 -- ---------- Paramètres de l'école (une seule ligne, id = 1) ----------
 CREATE TABLE IF NOT EXISTS parametres (
   id                      INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
@@ -320,6 +325,16 @@ CREATE TABLE IF NOT EXISTS sauvegardes (
 -- Contenu de la sauvegarde (JSON compressé) gardé dans la base : sur un hébergement
 -- serverless (Vercel), le disque est effacé à chaque redémarrage.
 ALTER TABLE sauvegardes ADD COLUMN IF NOT EXISTS donnees BYTEA;
+
+-- ---------- Tentatives de connexion échouées (anti-essais en série) ----------
+-- Gardées en base : sur un hébergement serverless, la mémoire du serveur est
+-- perdue à chaque redémarrage et n'est pas partagée entre instances.
+CREATE TABLE IF NOT EXISTS echecs_connexion (
+  identifiant TEXT NOT NULL,
+  ip          TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS echecs_connexion_idx ON echecs_connexion (identifiant, created_at);
 
 -- ---------- Compteurs (matricules et numéros de reçus) ----------
 CREATE SEQUENCE IF NOT EXISTS seq_matricule;

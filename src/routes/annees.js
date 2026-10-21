@@ -22,22 +22,6 @@ router.post('/', autoriser('directeur'), ah(async (req, res) => {
     [libelle, date_debut, date_fin]));
 }));
 
-router.put('/:id', autoriser('directeur'), ah(async (req, res) => {
-  const { libelle, date_debut, date_fin } = req.body;
-  res.json(await one(
-    `UPDATE annees_scolaires SET libelle = COALESCE($1, libelle), date_debut = COALESCE($2, date_debut),
-            date_fin = COALESCE($3, date_fin) WHERE id = $4 RETURNING *`,
-    [libelle || null, date_debut || null, date_fin || null, req.params.id]));
-}));
-
-router.post('/:id/activer', autoriser('directeur'), ah(async (req, res) => {
-  await tx(async (c) => {
-    await c.query('UPDATE annees_scolaires SET active = FALSE WHERE active');
-    await c.query('UPDATE annees_scolaires SET active = TRUE WHERE id = $1', [req.params.id]);
-  });
-  res.json({ ok: true });
-}));
-
 // ---- Décisions de fin d'année (admis / redouble / parti) ----
 router.put('/decisions', autoriser('directeur', 'enseignant'), ah(async (req, res) => {
   const { decisions } = req.body; // [{ inscription_id, decision }]
@@ -49,6 +33,24 @@ router.put('/decisions', autoriser('directeur', 'enseignant'), ah(async (req, re
     verifierClasse(req, i.classe_id);
     await query('UPDATE inscriptions SET decision = $1 WHERE id = $2', [d.decision, d.inscription_id]);
   }
+  res.json({ ok: true });
+}));
+
+router.put('/:id', autoriser('directeur'), ah(async (req, res) => {
+  const { libelle, date_debut, date_fin } = req.body;
+  res.json(await one(
+    `UPDATE annees_scolaires SET libelle = COALESCE($1, libelle), date_debut = COALESCE($2, date_debut),
+            date_fin = COALESCE($3, date_fin) WHERE id = $4 RETURNING *`,
+    [libelle || null, date_debut || null, date_fin || null, req.params.id]));
+}));
+
+router.post('/:id/activer', autoriser('directeur'), ah(async (req, res) => {
+  await tx(async (c) => {
+    const existe = await c.one('SELECT id FROM annees_scolaires WHERE id = $1', [req.params.id]);
+    if (!existe) throw new HttpError(404, 'Année scolaire introuvable.');
+    await c.query('UPDATE annees_scolaires SET active = FALSE WHERE active');
+    await c.query('UPDATE annees_scolaires SET active = TRUE WHERE id = $1', [req.params.id]);
+  });
   res.json({ ok: true });
 }));
 

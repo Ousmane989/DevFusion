@@ -23,9 +23,10 @@ function verifierSecret(req) {
 // GET pour les crons Vercel, POST pour les autres services.
 const quotidien = ah(async (req, res) => {
   verifierSecret(req);
+  // Sauvegarde d'abord : elle reste faite même si l'envoi des rappels dépasse le temps alloué.
+  const sauvegarde = await sauvegardeDuJour();
   const r = await executerQuotidien({ forcer: true });
-  r.sauvegarde = await sauvegardeDuJour();
-  res.json(r);
+  res.json({ ...r, sauvegarde });
 });
 router.get('/quotidien', quotidien);
 router.post('/quotidien', quotidien);

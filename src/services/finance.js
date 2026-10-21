@@ -4,10 +4,17 @@
 // soldes. Une mensualité est due pour chaque mois de l'année scolaire à
 // partir du mois d'inscription. Dû = mensualité − réduction.
 const { query, one } = require('../db');
-const { moisEntre, debutMois, aujourdhui } = require('../utils');
+const { moisEntre, debutMois, aujourdhui, HttpError } = require('../utils');
 
 async function anneeActive() {
   return one('SELECT * FROM annees_scolaires WHERE active');
+}
+
+/** Année active, ou erreur 400 claire s'il n'y en a pas (au lieu d'une erreur 500). */
+async function anneeActiveRequise() {
+  const a = await anneeActive();
+  if (!a) throw new HttpError(400, 'Aucune année scolaire active : activez-en une dans « Année scolaire ».');
+  return a;
 }
 
 /** Mois de l'année scolaire (AAAA-MM-01). */
@@ -122,4 +129,4 @@ async function resumeMois(mois, opts = {}) {
   };
 }
 
-module.exports = { anneeActive, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };
+module.exports = { anneeActive, anneeActiveRequise, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };
