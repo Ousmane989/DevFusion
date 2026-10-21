@@ -44,7 +44,7 @@ router.get('/:id', ah(async (req, res) => {
   const [classe] = (await listeClasses(null, [Number(req.params.id)]));
   if (!classe) throw new HttpError(404, 'Classe introuvable.');
   const eleves = await query(
-    `SELECT e.id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.whatsapp, e.photo IS NOT NULL AS a_photo,
+    `SELECT e.id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.photo IS NOT NULL AS a_photo,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
             e.remarques, i.id AS inscription_id, i.decision
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
