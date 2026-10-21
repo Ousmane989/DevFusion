@@ -46,13 +46,18 @@ router.get('/donnees', ah(async (req, res) => {
   }));
 }));
 
-/** PDF : { certificats: [...], exemplaires: 1|2 } ; liste vide = 2 certificats vierges. */
+/**
+ * PDF, 2 certificats par feuille A4 :
+ *  - mise_en_page « vierge » (par défaut) : en haut le certificat rempli de l'élève,
+ *    en bas un certificat vierge que la directrice remplit à la main ;
+ *  - « suite » : deux élèves différents par feuille.
+ * Liste vide = une feuille de 2 certificats vierges.
+ */
 router.post('/pdf', ah(async (req, res) => {
   const champs = ['eleve', 'naissance', 'sexe', 'filiation', 'classe', 'annee', 'date'];
   const liste = (Array.isArray(req.body.certificats) ? req.body.certificats : []).slice(0, 300).map((c) => (
     c ? Object.fromEntries(champs.map((k) => [k, String(c[k] ?? '').slice(0, 160)])) : null));
-  const exemplaires = Number(req.body.exemplaires) === 2 ? 2 : 1;
-  const pages = exemplaires === 2 ? liste.flatMap((c) => [c, c]) : liste;
+  const pages = req.body.mise_en_page === 'suite' ? liste : liste.flatMap((c) => [c, null]);
   const buf = await pdf.certificats(pages);
   res.type('application/pdf').set('Content-Disposition', 'inline; filename="certificats-scolarite.pdf"').send(buf);
 }));

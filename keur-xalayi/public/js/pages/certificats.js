@@ -1,5 +1,6 @@
 // Certificats de scolarité : la directrice choisit les élèves, vérifie ou
-// complète les informations, puis imprime (2 certificats par page A4).
+// complète les informations, puis imprime (2 certificats par page A4 : celui de
+// l'élève en haut et un vierge en bas, ou deux élèves par feuille).
 import { get, e, qs, options, toast, erreur, ouvrirPdfPost, videHtml } from '../ui.js';
 
 let minuteur;
@@ -27,7 +28,8 @@ export async function afficher(el, params) {
       <div id="liste"></div>
     </div>
     <div class="barre-action">
-      <label class="case"><input type="checkbox" id="deux" checked> 2 exemplaires par élève (haut et bas de la feuille)</label>
+      <label class="champ" style="margin:0">Sur chaque feuille A4
+        <select id="mise">${options([['vierge', 'En haut l\'élève — en bas un certificat vierge à remplir à la main'], ['suite', '2 élèves différents par feuille']], 'vierge')}</select></label>
       <span class="espace"></span>
       <button class="btn" id="pdf">🖨️ Imprimer les certificats</button>
     </div>`;
@@ -35,7 +37,7 @@ export async function afficher(el, params) {
   const zone = el.querySelector('#liste');
   const majCompte = () => {
     const n = liste.length;
-    const feuilles = el.querySelector('#deux').checked ? n : Math.ceil(n / 2);
+    const feuilles = el.querySelector('#mise').value === 'vierge' ? n : Math.ceil(n / 2);
     el.querySelector('#compte').textContent = n ? `— ${n} élève(s), ${feuilles} feuille(s) A4` : '';
     el.querySelector('#pdf').disabled = !n;
   };
@@ -92,11 +94,11 @@ export async function afficher(el, params) {
     }, 250);
   };
   el.querySelector('#classe').onchange = (ev) => { if (ev.target.value) { ajouter({ classe_id: ev.target.value }); ev.target.value = ''; } };
-  el.querySelector('#deux').onchange = majCompte;
+  el.querySelector('#mise').onchange = majCompte;
 
   el.querySelector('#pdf').onclick = async () => {
     try {
-      await ouvrirPdfPost('/certificats/pdf', { certificats: liste, exemplaires: el.querySelector('#deux').checked ? 2 : 1 });
+      await ouvrirPdfPost('/certificats/pdf', { certificats: liste, mise_en_page: el.querySelector('#mise').value });
     } catch (err) { erreur(err); }
   };
   el.querySelector('#vierges').onclick = async () => {
