@@ -47,7 +47,7 @@ export async function afficher(el, params) {
           <select id="classe">${options(optClasses, params.classe_id || '', { vide: 'Toutes les classes' })}</select>
           <select id="statut">${options([['paye', 'Payé'], ['partiel', 'Partiel'], ['impaye', 'Impayé']], '', { vide: 'Tous les statuts' })}</select>
         </div><div id="resume"></div><div class="ligne fin" style="margin-bottom:.6rem" id="exp"></div><div id="tab"></div>`;
-      const lire = () => ({ mois: zone.querySelector('#mois').value, classe_id: zone.querySelector('#classe').value });
+      const lire = () => ({ mois: zone.querySelector('#mois').value, classe_id: zone.querySelector('#classe').value, statut: zone.querySelector('#statut').value });
       const exp = zone.querySelector('#exp');
       exp.innerHTML = boutonsExport('statut');
       activerExports(exp, lire);
