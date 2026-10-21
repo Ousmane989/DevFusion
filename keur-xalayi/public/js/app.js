@@ -100,6 +100,7 @@ async function router() {
     page.innerHTML = '<div class="carte vide"><span class="ico">🔒</span>Cette page n\'existe pas ou ne vous est pas accessible.</div>';
     return;
   }
+  if (await nouvelleVersion()) { location.reload(); return; }
   const [re, module, titre] = route;
   $('titre').textContent = titre;
   document.title = `${titre} — ${ctx.ecole.nom_ecole}`;
@@ -119,6 +120,23 @@ async function router() {
     page.firstChild.textContent = 'Impossible d\'afficher la page : ' + err.message;
   }
 }
+
+// ---- Mises à jour : une application restée ouverte garde les anciens fichiers en
+// mémoire. On compare la version du serveur (au plus une fois par minute, et au
+// retour sur l'application) et on recharge la page si elle a changé.
+let versionChargee = null; let dernierControle = 0;
+async function nouvelleVersion(force = false) {
+  if (!force && Date.now() - dernierControle < 60000) return false;
+  dernierControle = Date.now();
+  try {
+    const { version } = await (await fetch('/api/version', { cache: 'no-store' })).json();
+    if (!versionChargee) { versionChargee = version; return false; }
+    return version !== versionChargee;
+  } catch { return false; } // hors connexion : on continue avec la version actuelle
+}
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && !document.querySelector('.modale-fond') && await nouvelleVersion()) location.reload();
+});
 
 /** Recharge les informations de l'école (après modification des paramètres). */
 export async function rafraichirContexte() {
