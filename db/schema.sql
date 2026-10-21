@@ -317,6 +317,9 @@ CREATE TABLE IF NOT EXISTS sauvegardes (
   auto       BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Contenu de la sauvegarde (JSON compressé) gardé dans la base : sur un hébergement
+-- serverless (Vercel), le disque est effacé à chaque redémarrage.
+ALTER TABLE sauvegardes ADD COLUMN IF NOT EXISTS donnees BYTEA;
 
 -- ---------- Compteurs (matricules et numéros de reçus) ----------
 CREATE SEQUENCE IF NOT EXISTS seq_matricule;

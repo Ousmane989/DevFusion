@@ -59,9 +59,8 @@ npm run db:demo               # compte de test « enseignant » — mot de passe
 Le dossier contient un `Dockerfile`. Sur Render, Railway ou un VPS :
 commande de démarrage `npm start`, variables du fichier `.env.example`.
 Définissez `PUBLIC_URL` (adresse publique du site) pour que les liens de reçus
-et de bulletins envoyés aux parents soient corrects. Montez un disque
-persistant sur `sauvegardes/` (ou `DOSSIER_SAUVEGARDES`) pour conserver les
-sauvegardes.
+et de bulletins envoyés aux parents soient corrects. Les sauvegardes sont
+gardées dans la base de données : aucun disque persistant n'est nécessaire.
 
 ## Premiers réglages (dans l'application)
 
@@ -90,7 +89,7 @@ En cas d'échec d'envoi par l'API, le message reste disponible en envoi manuel.
 
 Avec `CRON_INTERNE=true` (par défaut), le serveur exécute lui-même :
 - **chaque heure** : les rappels de paiement dus (à partir de l'heure réglée) ;
-- **chaque nuit à 2 h** : une sauvegarde complète (JSON compressé, 30 conservées).
+- **chaque nuit à 2 h** : une sauvegarde complète (JSON compressé, gardée dans la base, 10 conservées).
 
 Sur un hébergement qui met le serveur en veille, utilisez un cron externe
 (cron-job.org, Render Cron Job…) une fois par jour :
