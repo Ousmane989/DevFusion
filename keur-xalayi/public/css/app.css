@@ -338,3 +338,4 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .espace input:checked + span { border-color: var(--primaire); background: var(--primaire-clair); }
 .espace input:checked + span b { color: var(--primaire); }
 .espace input:focus-visible + span { box-shadow: 0 0 0 3px var(--primaire-clair); }
+@media (max-width: 480px) { .si-large { display: none; } }

@@ -55,6 +55,13 @@ app.use(require('./routes/public'));
 
 // ---- Interface ----
 const pub = path.join(__dirname, '..', 'public');
+// Service worker : jamais mis en cache, pour que les mises à jour arrivent tout de suite.
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache').set('Service-Worker-Allowed', '/').sendFile(path.join(pub, 'sw.js'));
+});
+app.get('/manifest.webmanifest', (req, res) => {
+  res.type('application/manifest+json').set('Cache-Control', 'no-cache').sendFile(path.join(pub, 'manifest.webmanifest'));
+});
 app.use(express.static(pub, { extensions: ['html'], maxAge: '1h' }));
 app.get('/app', (req, res) => res.sendFile(path.join(pub, 'app.html')));
 
