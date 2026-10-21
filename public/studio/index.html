@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fusion Studio</title>
+<meta name="description" content="Fusion Studio : du brief au montage final. Un copilote IA qui planifie, génère et monte vos vidéos publicitaires, clips et courts-métrages.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : salle de montage — un écran de prévisualisation en tête, puis des bandes qui défilent comme une timeline. */
+:root {
+  --ink: #120F14;        /* fond de salle obscure, légèrement prune */
+  --panel: #1C1820;      /* surfaces des consoles */
+  --line: #332C38;       /* filets, bords */
+  --paper: #EFE8DF;      /* texte principal, blanc pellicule */
+  --dim: #A79FAB;        /* texte secondaire */
+  --tungsten: #F2A541;   /* lumière tungstène : l'unique accent */
+  --rec: #E5484D;        /* voyant REC, usage sémantique */
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --wrap: 1180px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body { background: var(--ink); color: var(--paper); font-family: var(--body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--tungsten); outline-offset: 3px; border-radius: 4px; }
+.wrap { max-width: var(--wrap); margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.tc { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--dim); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.02; text-wrap: balance; margin: 0; letter-spacing: -.02em; }
+h2 { font-size: clamp(32px, 5vw, 56px); font-weight: 800; }
+h3 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0; }
+.lead { color: var(--dim); max-width: 60ch; font-size: 18px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; font: 600 15px var(--body); padding: 13px 22px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--paper); text-decoration: none; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.btn:hover { border-color: var(--paper); }
+.btn.primary { background: var(--tungsten); border-color: var(--tungsten); color: var(--ink); }
+.btn.primary:hover { background: var(--paper); border-color: var(--paper); }
+
+/* En-tête */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--ink) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
+.logo { display: flex; align-items: center; gap: 10px; font: 800 20px var(--display); text-decoration: none; letter-spacing: -.02em; }
+.logo i { width: 12px; height: 12px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 4px color-mix(in srgb, var(--rec) 25%, transparent); animation: rec 1.6s steps(2) infinite; }
+@keyframes rec { 50% { opacity: .25; } }
+nav.links { display: flex; gap: 26px; font-size: 14px; color: var(--dim); }
+nav.links a { text-decoration: none; }
+nav.links a:hover { color: var(--paper); }
+@media (max-width: 780px) { nav.links { display: none; } }
+
+/* Héro */
+.hero { padding-block: clamp(48px, 8vw, 96px) 40px; }
+.hero .wrap { display: grid; gap: 40px; }
+.hero h1 { font-size: clamp(44px, 8.4vw, 112px); font-weight: 800; max-width: 13ch; }
+.hero h1 em { font-style: normal; color: var(--tungsten); }
+.hero-row { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; }
+@media (max-width: 780px) { .hero-row { grid-template-columns: 1fr; } }
+
+/* Console de génération */
+.console { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); border: 1px solid var(--line); border-radius: 18px; background: var(--panel); overflow: hidden; }
+@media (max-width: 880px) { .console { grid-template-columns: 1fr; } }
+.console form { padding: 22px; display: grid; gap: 18px; border-right: 1px solid var(--line); }
+@media (max-width: 880px) { .console form { border-right: 0; border-bottom: 1px solid var(--line); } }
+.field { display: grid; gap: 8px; }
+.field > span { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); }
+textarea { width: 100%; min-height: 120px; resize: vertical; background: var(--ink); color: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px; font: 16px/1.5 var(--body); }
+textarea:focus { outline: none; border-color: var(--tungsten); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label { font: 500 13px var(--mono); padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; color: var(--dim); }
+.chips input:checked + label { border-color: var(--tungsten); color: var(--tungsten); }
+.chips input:focus-visible + label { outline: 2px solid var(--tungsten); outline-offset: 2px; }
+.dur { display: flex; align-items: center; gap: 12px; }
+.dur input { flex: 1; accent-color: var(--tungsten); }
+.dur output { font-family: var(--mono); min-width: 4ch; text-align: right; }
+.upload { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--dim); border: 1px dashed var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+.upload:hover { border-color: var(--dim); }
+.upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+.monitor { padding: 22px; display: grid; gap: 14px; align-content: start; }
+.monitor-bar { display: flex; justify-content: space-between; gap: 12px; }
+.screen { position: relative; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 10px; overflow: hidden; background: #000; transition: aspect-ratio .3s; }
+.screen canvas { width: 100%; height: 100%; display: block; }
+.screen .safe { position: absolute; inset: 7%; border: 1px dashed rgba(239,232,223,.28); border-radius: 4px; pointer-events: none; }
+.screen .hud { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; justify-content: space-between; font: 500 11px var(--mono); color: rgba(239,232,223,.85); text-shadow: 0 1px 2px #000; }
+.screen .hud b { color: var(--rec); font-weight: 500; }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.shot { display: grid; gap: 6px; }
+.shot canvas { width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: #000; display: block; }
+.shot p { font-size: 12px; color: var(--dim); line-height: 1.35; }
+.note { font-size: 13px; color: var(--dim); }
+
+/* Galerie */
+section.band { padding-block: clamp(64px, 9vw, 120px); border-top: 1px solid var(--line); }
+.band-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 40px; }
+.reel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 880px) { .reel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.clip { position: relative; border-radius: 12px; overflow: hidden; background: var(--panel); aspect-ratio: 9 / 16; max-width: 100%; }
+.clip.wide { grid-column: span 2; aspect-ratio: auto; }
+@media (max-width: 880px) { .clip.wide { aspect-ratio: 16 / 10; } }
+.clip canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.clip .cap { position: absolute; inset: auto 0 0 0; padding: 14px; background: linear-gradient(transparent, rgba(0,0,0,.75)); display: grid; gap: 2px; }
+.clip .cap strong { font: 600 15px var(--display); color: #EFE8DF; }
+.clip .cap span { font: 11px var(--mono); color: rgba(239,232,223,.75); }
+.clip button { position: absolute; top: 10px; right: 10px; font: 600 12px var(--body); padding: 6px 12px; border-radius: 999px; border: 0; background: rgba(18,15,20,.7); color: #EFE8DF; cursor: pointer; opacity: 0; transition: opacity .2s; }
+.clip:hover button, .clip button:focus-visible { opacity: 1; }
+@media (hover: none) { .clip button { opacity: 1; } }
+
+/* Pipeline */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+@media (max-width: 980px) { .pipe { grid-template-columns: 1fr; } }
+.step { padding: 26px 22px; display: grid; gap: 12px; align-content: start; border-right: 1px solid var(--line); min-width: 0; }
+.step:last-child { border-right: 0; }
+@media (max-width: 980px) { .step { border-right: 0; border-bottom: 1px solid var(--line); } .step:last-child { border-bottom: 0; } }
+.step .tc { color: var(--tungsten); }
+.step p { color: var(--dim); font-size: 15px; }
+
+/* Fonctions */
+.features { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+@media (max-width: 880px) { .features { grid-template-columns: 1fr; } }
+.feat { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 28px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.feat.big { grid-row: span 2; }
+.feat p { color: var(--dim); }
+.feat a { font-weight: 600; text-decoration: none; color: var(--tungsten); }
+.chat { display: grid; gap: 10px; margin-top: 8px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; }
+.msg.me { justify-self: end; background: var(--tungsten); color: var(--ink); border-bottom-right-radius: 4px; }
+.msg.ai { background: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.ai .tc { display: block; margin-top: 4px; }
+.models { display: flex; flex-wrap: wrap; gap: 8px; }
+.models span { font: 12px var(--mono); padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; }
+
+/* Comparatif */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
+th, td { text-align: left; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--dim); background: var(--panel); }
+td.y, td.n { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+td.y { color: var(--tungsten); }
+td.n { color: var(--dim); }
+
+/* Tarifs */
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 880px) { .plans { grid-template-columns: 1fr; } }
+.plan { border: 1px solid var(--line); border-radius: 18px; padding: 28px; display: grid; gap: 18px; align-content: start; }
+.plan.hot { border-color: var(--tungsten); background: color-mix(in srgb, var(--tungsten) 7%, var(--ink)); }
+.price { font: 800 44px var(--display); letter-spacing: -.03em; }
+.price small { font: 400 15px var(--body); color: var(--dim); letter-spacing: 0; }
+.plan ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; color: var(--dim); font-size: 15px; }
+.plan li::before { content: "▸ "; color: var(--tungsten); }
+
+/* FAQ */
+.faq { display: grid; gap: 0; border-top: 1px solid var(--line); max-width: 860px; }
+details { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; list-style: none; padding: 22px 0; font: 600 19px var(--display); display: flex; justify-content: space-between; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--mono); color: var(--tungsten); }
+details[open] summary::after { content: "−"; }
+details p { padding-bottom: 22px; color: var(--dim); max-width: 65ch; }
+
+/* Appel final */
+.final { text-align: left; display: grid; gap: 24px; }
+.final h2 { font-size: clamp(40px, 7vw, 88px); max-width: 14ch; }
+footer { border-top: 1px solid var(--line); padding-block: 28px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--paper); color: var(--ink); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); }
+</style>
+</head>
+<body style="margin:0">
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top"><i aria-hidden="true"></i>Fusion Studio</a>
+    <nav class="links" aria-label="Navigation principale">
+      <a href="#galerie">Galerie</a>
+      <a href="#methode">Méthode</a>
+      <a href="#fonctions">Fonctions</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn primary" href="#studio">Essayer gratuitement</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-row">
+        <h1>Du brief au <em>montage final</em>, sans quitter l'écran.</h1>
+        <div style="display:grid;gap:18px;max-width:38ch">
+          <p class="lead">Décrivez votre idée. Le copilote découpe les plans, choisit le bon modèle pour chacun, génère en parallèle et vous rend une vidéo montée, sous-titrée et prête à publier.</p>
+          <p class="tc">7 jours d'accès illimité · sans carte bancaire</p>
+        </div>
+      </div>
+
+      <div class="console" id="studio">
+        <form id="gen" autocomplete="off">
+          <label class="field">
+            <span>Votre idée</span>
+            <textarea id="prompt" name="prompt">Publicité de 15 secondes pour un parfum à Dakar : coucher de soleil sur la Corniche, gros plan sur le flacon, la ville s'allume derrière.</textarea>
+          </label>
+
+          <div class="field">
+            <span>Modèle</span>
+            <div class="chips" role="radiogroup" aria-label="Modèle">
+              <input type="radio" name="model" id="m1" value="Cinéma" checked><label for="m1">Cinéma</label>
+              <input type="radio" name="model" id="m2" value="Animation"><label for="m2">Animation</label>
+              <input type="radio" name="model" id="m3" value="Produit"><label for="m3">Produit</label>
+              <input type="radio" name="model" id="m4" value="Réaliste"><label for="m4">Réaliste</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Format</span>
+            <div class="chips" role="radiogroup" aria-label="Format">
+              <input type="radio" name="ratio" id="r1" value="16/9" checked><label for="r1">16:9</label>
+              <input type="radio" name="ratio" id="r2" value="9/16"><label for="r2">9:16</label>
+              <input type="radio" name="ratio" id="r3" value="1/1"><label for="r3">1:1</label>
+              <input type="radio" name="ratio" id="r4" value="21/9"><label for="r4">21:9</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Durée</span>
+            <div class="dur">
+              <span class="tc">4 s</span>
+              <input type="range" id="duration" min="4" max="60" value="15" aria-label="Durée en secondes">
+              <span class="tc">60 s</span>
+              <output id="durOut" for="duration">15 s</output>
+            </div>
+          </div>
+
+          <label class="upload" for="files">
+            <input type="file" id="files" multiple accept="image/*,video/*,audio/*,.pdf,.srt,.txt">
+            <span aria-hidden="true">＋</span>
+            <span id="filesLabel">Ajouter un script, un PDF, des photos ou un son de référence</span>
+          </label>
+
+          <button class="btn primary" type="submit" id="genBtn">Générer le storyboard</button>
+        </form>
+
+        <div class="monitor" aria-live="polite">
+          <div class="monitor-bar">
+            <span class="tc" id="monLabel">PRÉVISUALISATION · CAM A</span>
+            <span class="tc" id="monFps">25 i/s · 1080p</span>
+          </div>
+          <div class="screen" id="screen">
+            <canvas id="main" width="960" height="540"></canvas>
+            <div class="safe" aria-hidden="true"></div>
+            <div class="hud"><span><b>●</b> REC <span id="tcLive">00:00:00:00</span></span><span id="hudShot">PLAN 1/4</span></div>
+          </div>
+          <div class="strip" id="strip"></div>
+          <p class="note">Ceci est une démo : le storyboard est dessiné dans votre navigateur. Pour de vraies vidéos, branchez une API de génération (voir public/studio/README.md).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="galerie">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>Partez d'un style<br>qui marche déjà.</h2>
+        <p class="lead" style="max-width:40ch">Choisissez un modèle de la galerie, cliquez sur « Refaire » et remplacez le sujet par le vôtre. Le cadrage, le rythme et l'étalonnage sont conservés.</p>
+      </div>
+      <div class="reel" id="reel"></div>
+    </div>
+  </section>
+
+  <section class="band" id="methode">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>Une vraie chaîne<br>de production.</h2>
+        <p class="lead" style="max-width:40ch">Le copilote suit les étapes d'un tournage classique. Vous validez chaque étape ou vous le laissez aller jusqu'au bout.</p>
+      </div>
+      <div class="pipe">
+        <div class="step"><span class="tc">01 · BRIEF</span><h3>Vous décrivez</h3><p>Une phrase, un script, un PDF de marque ou une note vocale. Le copilote en tire l'intention et la durée.</p></div>
+        <div class="step"><span class="tc">02 · DÉCOUPAGE</span><h3>Il découpe</h3><p>Storyboard plan par plan : valeur de plan, mouvement de caméra, lumière et réplique.</p></div>
+        <div class="step"><span class="tc">03 · TOURNAGE</span><h3>Il génère</h3><p>Chaque plan part vers le modèle le plus adapté, et tous les plans sont rendus en parallèle.</p></div>
+        <div class="step"><span class="tc">04 · MONTAGE</span><h3>Il monte</h3><p>Raccords, musique, voix off et sous-titres en français, wolof, arabe ou anglais.</p></div>
+        <div class="step"><span class="tc">05 · LIVRAISON</span><h3>Vous publiez</h3><p>Exports 9:16, 1:1 et 16:9 prêts pour TikTok, Instagram, YouTube et WhatsApp.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="fonctions">
+    <div class="wrap">
+      <div class="band-head"><h2>Tout le studio<br>au même endroit.</h2></div>
+      <div class="features">
+        <article class="feat big">
+          <span class="tc">MONTAGE PAR LA CONVERSATION</span>
+          <h3>Dites ce qu'il faut changer.</h3>
+          <p>Remplacez un objet, changez le décor, ralentissez un plan ou demandez un nouveau mouvement de caméra. Pas besoin de logiciel de montage.</p>
+          <div class="chat" aria-label="Exemple de conversation">
+            <div class="msg me">Plan 3 : fais un travelling arrière plus lent, et remplace le ciel par un ciel d'orage.</div>
+            <div class="msg ai">C'est fait. Le travelling passe de 2 s à 3,5 s et le ciel est remplacé ; la lumière du flacon a été réajustée pour rester cohérente.<span class="tc">PLAN 3 · v2 · 00:00:07:12 → 00:00:11:00</span></div>
+            <div class="msg me">Parfait. Ajoute les sous-titres en wolof.</div>
+          </div>
+        </article>
+        <article class="feat">
+          <span class="tc">PERSONNAGES ET MARQUE</span>
+          <h3>Le même visage d'un plan à l'autre.</h3>
+          <p>Enregistrez un personnage, un produit, un logo ou une palette une seule fois. Ils restent identiques sur toutes vos vidéos.</p>
+        </article>
+        <article class="feat">
+          <span class="tc">MODÈLES</span>
+          <h3>Le bon modèle pour chaque plan.</h3>
+          <p>Vidéo, image, voix et musique : les meilleurs modèles du marché, sans changer d'outil.</p>
+          <div class="models"><span>vidéo cinéma</span><span>animation</span><span>image</span><span>voix off</span><span>musique</span><span>sous-titres</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>Ce qui change<br>avec Fusion Studio.</h2>
+        <p class="lead" style="max-width:40ch">Un générateur classique vous rend un clip. Pour le reste du travail, il vous faut d'autres outils.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fonction</th><th>Fusion Studio</th><th>Générateur classique</th></tr></thead>
+          <tbody>
+            <tr><td>Copilote qui planifie et lance plusieurs étapes</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
+            <tr><td>Storyboard automatique plan par plan</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
+            <tr><td>Image, vidéo, voix et sous-titres dans un seul outil</td><td class="y">● Inclus</td><td class="n">○ Partiel</td></tr>
+            <tr><td>Contrôle de la caméra (travelling, panoramique, grue)</td><td class="y">● Inclus</td><td class="n">○ Limité</td></tr>
+            <tr><td>Personnages et produits identiques entre les plans</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
+            <tr><td>Sous-titres en wolof, arabe, français et anglais</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
+            <tr><td>Travail en équipe en temps réel</td><td class="y">● Inclus</td><td class="n">○ Non</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="tarifs">
+    <div class="wrap">
+      <div class="band-head"><h2>Des tarifs simples.</h2><p class="tc">Prix indicatifs, à adapter</p></div>
+      <div class="plans">
+        <div class="plan">
+          <span class="tc">DÉCOUVERTE</span>
+          <div class="price">0 <small>FCFA / mois</small></div>
+          <ul><li>10 générations par mois</li><li>720p, filigrane</li><li>Vidéos de 15 s maximum</li></ul>
+          <a class="btn" href="#studio">Commencer</a>
+        </div>
+        <div class="plan hot">
+          <span class="tc" style="color:var(--tungsten)">CRÉATEUR · LE PLUS CHOISI</span>
+          <div class="price">9 900 <small>FCFA / mois</small></div>
+          <ul><li>200 générations par mois</li><li>1080p sans filigrane</li><li>Copilote et montage par la conversation</li><li>Sous-titres multilingues</li></ul>
+          <a class="btn primary" href="#studio">Essai de 7 jours</a>
+        </div>
+        <div class="plan">
+          <span class="tc">AGENCE</span>
+          <div class="price">39 900 <small>FCFA / mois</small></div>
+          <ul><li>Générations illimitées</li><li>4K, exports multi-formats</li><li>5 membres d'équipe</li><li>Charte de marque partagée</li></ul>
+          <a class="btn" href="#faq">Nous contacter</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="faq">
+    <div class="wrap" style="display:grid;gap:40px">
+      <h2>Questions fréquentes</h2>
+      <div class="faq">
+        <details open><summary>Qu'est-ce que Fusion Studio ?</summary><p>Un studio vidéo en ligne piloté par l'IA. Vous donnez un brief, le copilote prépare le storyboard, génère chaque plan, fait le montage et ajoute la voix off et les sous-titres.</p></details>
+        <details><summary>Faut-il savoir monter une vidéo ?</summary><p>Non. Vous corrigez en écrivant ce que vous voulez, par exemple « rends le plan 2 plus lumineux » ou « coupe la fin ».</p></details>
+        <details><summary>Puis-je donner mon script ou un PDF ?</summary><p>Oui. Ajoutez un script, un PDF de présentation, des photos de produit, un fichier de sous-titres ou un son. Le copilote travaille à partir de ces fichiers.</p></details>
+        <details><summary>Mes personnages restent-ils les mêmes d'une scène à l'autre ?</summary><p>Oui. Enregistrez un personnage ou un produit comme référence et il garde le même visage, les mêmes vêtements et la même lumière dans tous les plans.</p></details>
+        <details><summary>Comment payer ?</summary><p>Par Wave, Orange Money, Bankily ou carte bancaire. L'abonnement se résilie à tout moment.</p></details>
+        <details><summary>Puis-je essayer gratuitement ?</summary><p>Oui. Le plan Découverte est gratuit et le plan Créateur s'essaie pendant 7 jours sans engagement.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap final">
+      <span class="tc">FIN DE BOBINE · 00:00:15:00</span>
+      <h2>Votre prochaine vidéo commence par une phrase.</h2>
+      <div><a class="btn primary" href="#studio">Créer ma première vidéo</a></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="logo" style="font-size:16px"><i aria-hidden="true"></i>Fusion Studio</span>
+    <span class="tc">© 2026 Fusion Studio · Dakar · Nouakchott</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  // Palettes d'étalonnage par modèle : [ciel haut, horizon, sol, lumière]
+  var GRADES = {
+    "Cinéma":    ["#1b1530", "#c8553d", "#2a1a14", "#f6c26b"],
+    "Animation": ["#2b2d6e", "#ef7aa7", "#3d2b5c", "#ffe08a"],
+    "Produit":   ["#151515", "#3a3a3a", "#0d0d0d", "#f2e4c8"],
+    "Réaliste":  ["#3a5a78", "#d9a46b", "#4a3b2a", "#fff1d0"]
+  };
+  var SHOTS = [
+    { name: "Plan large", note: "Établissement, travelling lent", kind: "wide" },
+    { name: "Plan moyen", note: "Sujet au centre, panoramique", kind: "mid" },
+    { name: "Gros plan", note: "Détail, faible profondeur de champ", kind: "close" },
+    { name: "Plan final", note: "Logo et accroche", kind: "end" }
+  ];
+
+  function rand(seed) { return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
+  function hash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100000; return h; }
+
+  // Dessine une image de film stylisée : ciel, soleil, silhouette de ville, sujet.
+  function frame(ctx, w, h, grade, kind, seed, t) {
+    var r = rand(seed);
+    var horizon = kind === "close" ? h * .8 : h * (.58 + r() * .08);
+    var g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, grade[0]); g.addColorStop(horizon / h, grade[1]); g.addColorStop(1, grade[2]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    var sx = w * (.3 + r() * .4) + Math.sin(t / 3000) * w * .02, sy = horizon - h * .08;
+    var sun = ctx.createRadialGradient(sx, sy, 0, sx, sy, h * .5);
+    sun.addColorStop(0, grade[3]); sun.addColorStop(.12, grade[3] + "cc"); sun.addColorStop(1, "transparent");
+    ctx.fillStyle = sun; ctx.fillRect(0, 0, w, h);
+    if (kind !== "close") {
+      ctx.fillStyle = grade[2];
+      var x = -((t / 60) % 40);
+      while (x < w) {
+        var bw = w * (.03 + r() * .06), bh = h * (.04 + r() * (kind === "wide" ? .2 : .32));
+        ctx.fillRect(x, horizon - bh, bw, bh + 2);
+        if (r() > .55) { ctx.fillStyle = grade[3] + "88"; ctx.fillRect(x + bw * .3, horizon - bh * .7, Math.max(2, w * .004), Math.max(2, h * .006)); ctx.fillStyle = grade[2]; }
+        x += bw + w * .004;
+      }
+      ctx.fillRect(0, horizon, w, h - horizon);
+    }
+    if (kind === "mid" || kind === "close") {
+      var cx = w * .5, scale = kind === "close" ? 1.9 : 1, bh2 = h * .34 * scale, bw2 = h * .12 * scale;
+      var base = kind === "close" ? h * 1.02 : horizon + h * .06;
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.beginPath(); ctx.ellipse(cx, base, bw2 * .9, h * .02, 0, 0, 7); ctx.fill();
+      var bottle = ctx.createLinearGradient(cx - bw2 / 2, 0, cx + bw2 / 2, 0);
+      bottle.addColorStop(0, "rgba(255,255,255,.08)"); bottle.addColorStop(.35, grade[3] + "dd"); bottle.addColorStop(1, "rgba(0,0,0,.4)");
+      ctx.fillStyle = bottle; ctx.fillRect(cx - bw2 / 2, base - bh2, bw2, bh2);
+      ctx.fillStyle = grade[0]; ctx.fillRect(cx - bw2 * .2, base - bh2 - bh2 * .18, bw2 * .4, bh2 * .18);
+    }
+    if (kind === "end") {
+      ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = grade[3]; ctx.textAlign = "center";
+      ctx.font = "800 " + Math.round(h * .14) + "px 'Bricolage Grotesque', sans-serif";
+      ctx.fillText("CORNICHE", w / 2, h * .52);
+      ctx.font = "400 " + Math.round(h * .05) + "px 'JetBrains Mono', monospace";
+      ctx.fillText("L'ÉCLAT DU SOIR", w / 2, h * .66);
+    }
+    // grain et vignettage
+    var v = ctx.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, w * .75);
+    v.addColorStop(0, "transparent"); v.addColorStop(1, "rgba(0,0,0,.55)");
+    ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+  }
+
+  var main = document.getElementById("main"), mctx = main.getContext("2d");
+  var screen = document.getElementById("screen"), strip = document.getElementById("strip");
+  var state = { grade: GRADES["Cinéma"], seed: 1, shot: 0, start: performance.now(), duration: 15, kinds: SHOTS };
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function tc(ms) {
+    var f = Math.floor(ms / 40), s = Math.floor(f / 25), m = Math.floor(s / 60);
+    function p(n) { return String(n).padStart(2, "0"); }
+    return "00:" + p(m % 60) + ":" + p(s % 60) + ":" + p(f % 25);
+  }
+
+  function sizeMain(ratio) {
+    var parts = ratio.split("/").map(Number);
+    screen.style.aspectRatio = parts[0] + " / " + parts[1];
+    var w = 960, h = Math.round(w * parts[1] / parts[0]);
+    if (h > 960) { h = 960; w = Math.round(h * parts[0] / parts[1]); }
+    main.width = w; main.height = h;
+    if (parts[0] < parts[1]) { screen.style.maxWidth = "320px"; screen.style.marginInline = "auto"; }
+    else { screen.style.maxWidth = "100%"; screen.style.marginInline = "0"; }
+  }
+
+  function buildStrip() {
+    strip.innerHTML = "";
+    var per = state.duration / SHOTS.length;
+    SHOTS.forEach(function (s, i) {
+      var d = document.createElement("div"); d.className = "shot";
+      var c = document.createElement("canvas"); c.width = 320; c.height = 180;
+      frame(c.getContext("2d"), 320, 180, state.grade, s.kind, state.seed + i * 17, 0);
+      var p = document.createElement("p");
+      p.innerHTML = "<strong>" + (i + 1) + ". " + s.name + "</strong><br>" + s.note + " · " + per.toFixed(1).replace(".", ",") + " s";
+      d.appendChild(c); d.appendChild(p); strip.appendChild(d);
+    });
+  }
+
+  function tick(now) {
+    var el = now - state.start, per = (state.duration * 1000) / SHOTS.length;
+    var loop = el % (state.duration * 1000);
+    state.shot = Math.floor(loop / per);
+    frame(mctx, main.width, main.height, state.grade, SHOTS[state.shot].kind, state.seed + state.shot * 17, reduce ? 0 : el);
+    document.getElementById("tcLive").textContent = tc(loop);
+    document.getElementById("hudShot").textContent = "PLAN " + (state.shot + 1) + "/" + SHOTS.length;
+    if (!reduce) requestAnimationFrame(tick);
+  }
+
+  function toast(msg) {
+    var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  var form = document.getElementById("gen"), dur = document.getElementById("duration"), out = document.getElementById("durOut");
+  dur.addEventListener("input", function () { out.textContent = dur.value + " s"; });
+  document.getElementById("files").addEventListener("change", function (e) {
+    var n = e.target.files.length;
+    document.getElementById("filesLabel").textContent = n ? n + " fichier" + (n > 1 ? "s" : "") + " ajouté" + (n > 1 ? "s" : "") + " comme référence" : "Ajouter un script, un PDF, des photos ou un son de référence";
+  });
+
+  function render(announce) {
+    var model = form.querySelector("input[name=model]:checked").value;
+    var ratio = form.querySelector("input[name=ratio]:checked").value;
+    state.grade = GRADES[model];
+    state.seed = hash(document.getElementById("prompt").value + model);
+    state.duration = Number(dur.value);
+    state.start = performance.now();
+    sizeMain(ratio);
+    document.getElementById("monLabel").textContent = "PRÉVISUALISATION · " + model.toUpperCase() + " · " + ratio.replace("/", ":");
+    buildStrip();
+    if (reduce) tick(performance.now());
+    if (announce) toast("Storyboard prêt : 4 plans, " + state.duration + " s au total.");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!document.getElementById("prompt").value.trim()) { toast("Décrivez votre idée avant de générer."); document.getElementById("prompt").focus(); return; }
+    var b = document.getElementById("genBtn"); b.disabled = true; b.textContent = "Découpage en cours…";
+    setTimeout(function () { b.disabled = false; b.textContent = "Générer le storyboard"; render(true); }, 900);
+  });
+  form.addEventListener("change", function (e) { if (e.target.name === "model" || e.target.name === "ratio") render(false); });
+
+  // Galerie de styles
+  var REEL = [
+    { t: "Publicité parfum", m: "Cinéma", k: "mid", fmt: "9:16 · 15 s" },
+    { t: "Clip musical", m: "Animation", k: "wide", fmt: "9:16 · 30 s" },
+    { t: "Lancement produit", m: "Produit", k: "close", fmt: "9:16 · 10 s" },
+    { t: "Visite immobilière", m: "Réaliste", k: "wide", fmt: "9:16 · 20 s" },
+    { t: "Court-métrage", m: "Cinéma", k: "wide", fmt: "21:9 · 60 s", wide: true },
+    { t: "Dessin animé enfant", m: "Animation", k: "mid", fmt: "9:16 · 30 s" },
+    { t: "Restaurant", m: "Réaliste", k: "close", fmt: "9:16 · 12 s" }
+  ];
+  var reel = document.getElementById("reel");
+  REEL.forEach(function (c, i) {
+    var d = document.createElement("div"); d.className = "clip" + (c.wide ? " wide" : "");
+    var cv = document.createElement("canvas"); cv.width = c.wide ? 640 : 360; cv.height = c.wide ? 500 : 640;
+    d.appendChild(cv);
+    d.insertAdjacentHTML("beforeend", '<div class="cap"><strong>' + c.t + '</strong><span>' + c.m.toUpperCase() + ' · ' + c.fmt + '</span></div><button type="button">Refaire</button>');
+    d.querySelector("button").addEventListener("click", function () {
+      document.getElementById("prompt").value = c.t + " : remplacez cette phrase par votre sujet.";
+      form.querySelector("input[name=model][value='" + c.m + "']").checked = true;
+      render(false);
+      document.getElementById("studio").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      document.getElementById("prompt").focus({ preventScroll: true });
+      toast("Style « " + c.t + " » chargé dans le studio.");
+    });
+    reel.appendChild(d);
+    frame(cv.getContext("2d"), cv.width, cv.height, GRADES[c.m], c.k, 40 + i * 13, 0);
+  });
+
+  render(false);
+  if (!reduce) requestAnimationFrame(tick);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { buildStrip(); });
+})();
+</script>
+</body>
+</html>
