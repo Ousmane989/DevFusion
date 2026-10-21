@@ -24,6 +24,24 @@ app.use((req, res, next) => {
 
 app.get('/healthz', (req, res) => res.json({ ok: true }));
 
+// Version de l'interface : empreinte des fichiers de public/ (identique sur
+// toutes les instances). L'application ouverte la compare pour se recharger
+// d'elle-même après une mise à jour.
+const VERSION = (() => {
+  const fs = require('fs');
+  const h = require('crypto').createHash('sha1');
+  const parcourir = (dossier) => fs.readdirSync(dossier, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((f) => {
+      const chemin = path.join(dossier, f.name);
+      if (f.isDirectory()) parcourir(chemin);
+      else if (/\.(js|css|html)$/.test(f.name)) h.update(f.name).update(fs.readFileSync(chemin));
+    });
+  try { parcourir(path.join(__dirname, '..', 'public')); } catch { /* dossier absent */ }
+  return h.digest('hex').slice(0, 12);
+})();
+app.get('/api/version', (req, res) => res.set('Cache-Control', 'no-store').json({ version: VERSION }));
+
 // ---- Routes publiques ----
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/cron', require('./routes/cron'));
@@ -62,8 +80,13 @@ app.get('/sw.js', (req, res) => {
 app.get('/manifest.webmanifest', (req, res) => {
   res.type('application/manifest+json').set('Cache-Control', 'no-cache').sendFile(path.join(pub, 'manifest.webmanifest'));
 });
-app.use(express.static(pub, { extensions: ['html'], maxAge: '1h' }));
-app.get('/app', (req, res) => res.sendFile(path.join(pub, 'app.html')));
+// Pages HTML, scripts et styles toujours revalidés (les mises à jour arrivent tout de suite) ;
+// images gardées 1 h.
+app.use(express.static(pub, {
+  extensions: ['html'],
+  setHeaders: (res, f) => res.set('Cache-Control', /\.(png|jpe?g|svg|ico)$/.test(f) ? 'public, max-age=3600' : 'no-cache'),
+}));
+app.get('/app', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(pub, 'app.html')));
 
 // ---- Gestion des erreurs ----
 // eslint-disable-next-line no-unused-vars
