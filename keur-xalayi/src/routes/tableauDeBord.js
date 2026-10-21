@@ -48,6 +48,18 @@ router.get('/', ah(async (req, res) => {
     const encaisseMois = await one(
       `SELECT COALESCE(SUM(montant),0) AS total FROM paiements WHERE NOT annule AND date_trunc('month', date_paiement)::date = $1`, [mois]);
     const impayes = await finance.impayes();
+    // Frais d'inscription de l'année : attendus, encaissés, reste, et encaissés ce mois.
+    const ins = await one(
+      `SELECT COALESCE(SUM(i.frais_inscription),0) AS attendu,
+              COALESCE(SUM(LEAST(v.verse, i.frais_inscription)),0) AS encaisse,
+              COUNT(*) FILTER (WHERE v.verse < i.frais_inscription) AS nb_a_regler
+         FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
+         CROSS JOIN LATERAL (SELECT COALESCE(SUM(montant),0) AS verse FROM paiements p
+                              WHERE p.inscription_id = i.id AND p.type = 'inscription' AND NOT p.annule) v
+        WHERE i.annee_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti'`, [annee.id]);
+    const insMois = await one(
+      `SELECT COALESCE(SUM(montant),0) AS total FROM paiements
+        WHERE NOT annule AND type = 'inscription' AND date_trunc('month', date_paiement)::date = $1`, [mois]);
     const evolution = [];
     for (const m of finance.moisEchus(annee)) {
       const r = await finance.resumeMois(m);
@@ -60,6 +72,10 @@ router.get('/', ah(async (req, res) => {
       encaisse_mensualites: resume.encaisse,
       taux_recouvrement: resume.taux,
       statuts: { payes: resume.nbPayes, partiels: resume.nbPartiels, impayes: resume.nbImpayes },
+      inscriptions: {
+        attendu: ins.attendu, encaisse: ins.encaisse, reste: ins.attendu - ins.encaisse,
+        nb_a_regler: ins.nb_a_regler, encaisse_mois: insMois.total,
+      },
       total_impayes: impayes.reduce((s, x) => s + x.reste, 0),
       nb_eleves_impayes: new Set(impayes.map((x) => x.eleve_id)).size,
       evolution,

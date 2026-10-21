@@ -23,7 +23,9 @@ export async function afficher(el) {
 
     <div class="kpis">
       ${kpi('Élèves inscrits', eff.total, `${eff.garcons} garçons · ${eff.filles} filles (${pctF} %)`, 'var(--secondaire)')}
-      ${f ? kpi(`Encaissé en ${nomMois(f.mois)}`, argent(f.encaisse_mois), `Mensualités attendues : ${argent(f.attendu_mois)}`, 'var(--succes)') : ''}
+      ${f ? kpi(`Encaissé en ${nomMois(f.mois)}`, argent(f.encaisse_mois), `dont inscriptions : ${argent(f.inscriptions.encaisse_mois)}<br>Mensualités attendues : ${argent(f.attendu_mois)}`, 'var(--succes)') : ''}
+      ${f ? kpi('Frais d\'inscription encaissés', argent(f.inscriptions.encaisse), `sur ${argent(f.inscriptions.attendu)} attendus${f.inscriptions.reste > 0
+    ? ` · reste <b>${argent(f.inscriptions.reste)}</b> (${f.inscriptions.nb_a_regler} élève(s))` : f.inscriptions.attendu > 0 ? ' · tout est réglé ✔' : ''}`, 'var(--accent)') : ''}
       ${f ? kpi('Taux de recouvrement', f.taux_recouvrement === null ? '—' : `${f.taux_recouvrement} %`, `<div class="barre-progres" style="margin-top:.4rem"><div style="width:${Math.min(100, f.taux_recouvrement)}%"></div></div>
         ${f.statuts.payes} payés · ${f.statuts.partiels} partiels · ${f.statuts.impayes} impayés`, 'var(--primaire)') : ''}
       ${f ? kpi('Total des impayés', argent(f.total_impayes), `${f.nb_eleves_impayes} élève(s) concerné(s) · <a href="#/impayes">voir</a>`, 'var(--danger)') : ''}

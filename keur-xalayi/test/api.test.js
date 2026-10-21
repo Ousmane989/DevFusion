@@ -91,6 +91,9 @@ test('facture d\'inscription PDF, puis tamponnée une fois les frais réglés', 
     methode: 'POST', corps: { inscription_id: inscriptionId, type: 'inscription', montant: fiche.solde.inscriptionFrais.reste, mode: 'especes' },
   });
   assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
+  const tdb = (await appel('dir', '/api/tableau-de-bord')).donnees.finances.inscriptions;
+  assert.ok(tdb.attendu >= tdb.encaisse && tdb.encaisse >= fiche.solde.inscriptionFrais.reste, JSON.stringify(tdb));
+  assert.strictEqual(tdb.reste, tdb.attendu - tdb.encaisse);
   const ref = await appel('dir', `/api/eleves/${eleveId}/facture-inscription.pdf?inscription_id=${inscriptionId}`);
   assert.strictEqual(ref.statut, 200);
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/facture-inscription.pdf?inscription_id=999999`)).statut, 404);
