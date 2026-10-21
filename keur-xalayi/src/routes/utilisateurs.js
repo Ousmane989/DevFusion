@@ -48,8 +48,9 @@ router.put('/:id', ah(async (req, res) => {
   }
   await query(
     `UPDATE utilisateurs SET nom_complet = COALESCE($1, nom_complet), role = COALESCE($2, role),
-            personnel_id = $3, actif = COALESCE($4, actif) WHERE id = $5`,
-    [vide(nom_complet), vide(role), vide(personnel_id), actif ?? null, req.params.id]);
+            personnel_id = CASE WHEN $6 THEN $3::int ELSE personnel_id END, actif = COALESCE($4, actif) WHERE id = $5`,
+    // personnel_id n'est changé que s'il est envoyé (sinon l'enseignant perdrait sa classe).
+    [vide(nom_complet), vide(role), vide(personnel_id), actif ?? null, req.params.id, 'personnel_id' in req.body]);
   if (mot_de_passe) {
     if (String(mot_de_passe).length < 6) throw new HttpError(400, 'Mot de passe : 6 caractères minimum.');
     await query('UPDATE utilisateurs SET mot_de_passe = $1 WHERE id = $2', [await bcrypt.hash(String(mot_de_passe), 10), req.params.id]);

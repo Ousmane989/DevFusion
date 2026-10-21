@@ -73,12 +73,22 @@ router.put('/:id', autoriser('directeur'), ah(async (req, res) => {
   const c = await one('SELECT c.*, n.nom AS niveau_nom FROM classes c JOIN niveaux n ON n.id = c.niveau_id WHERE c.id = $1', [req.params.id]);
   if (!c) throw new HttpError(404, 'Classe introuvable.');
   const g = groupe !== undefined ? String(groupe).trim().toUpperCase() : c.groupe;
+  // Seuls les champs envoyés sont modifiés ; montants vides = tarif du niveau.
+  const garder = (cle, valeur) => (cle in req.body ? valeur : c[cle]);
+  const tarif = (cle, v) => {
+    if (vide(v) === null) return null;
+    const x = Number(v);
+    if (!Number.isFinite(x) || x < 0) throw new HttpError(400, 'Montant invalide.');
+    return x;
+  };
   await query(
     `UPDATE classes SET enseignant_id = $1, salle = $2, frais_inscription = $3, mensualite = $4, groupe = $5, nom = $6 WHERE id = $7`,
-    [vide(enseignant_id), vide(salle), vide(frais_inscription), vide(mensualite), g, g ? `${c.niveau_nom} ${g}` : c.niveau_nom, c.id]);
+    [garder('enseignant_id', vide(enseignant_id)), garder('salle', vide(salle)),
+      garder('frais_inscription', tarif('frais_inscription', frais_inscription)), garder('mensualite', tarif('mensualite', mensualite)),
+      g, g ? `${c.niveau_nom} ${g}` : c.niveau_nom, c.id]);
   // Option : appliquer la nouvelle mensualité aux élèves déjà inscrits.
   if (req.body.appliquer_inscriptions && vide(mensualite) !== null) {
-    await query('UPDATE inscriptions SET mensualite = $1, reduction = LEAST(reduction, $1) WHERE classe_id = $2', [mensualite, c.id]);
+    await query('UPDATE inscriptions SET mensualite = $1, reduction = LEAST(reduction, $1) WHERE classe_id = $2', [tarif('mensualite', mensualite), c.id]);
   }
   res.json({ ok: true });
 }));
@@ -92,6 +102,7 @@ router.delete('/:id', autoriser('directeur'), ah(async (req, res) => {
 
 // ---- Emploi du temps ----
 router.get('/:id/emploi', ah(async (req, res) => {
+  verifierClasse(req, req.params.id);
   res.json(await query('SELECT * FROM emploi_du_temps WHERE classe_id = $1 ORDER BY jour, heure_debut', [req.params.id]));
 }));
 

@@ -99,7 +99,7 @@ export async function afficher(el, { id, nouveau }) {
     historique: () => `<div class="carte"><h2>Scolarité à ${e(ctx.ecole.nom_ecole)}</h2>${tableau([
       { titre: 'Année', rendu: (i) => e(i.annee) + (i.active ? ' ' + badge('ok', 'En cours') : '') },
       { titre: 'Classe', rendu: (i) => e(i.classe) },
-      { titre: 'Mensualité', classe: 'num', rendu: (i) => argent(i.mensualite - i.reduction) },
+      ...(gestion ? [{ titre: 'Mensualité', classe: 'num', rendu: (i) => argent(i.mensualite - i.reduction) }] : []),
       { titre: 'Décision', rendu: (i) => ({ en_cours: 'En cours', admis: 'Admis(e)', redouble: 'Redouble', parti: 'Parti(e)' }[i.decision]) },
     ], d.inscriptions, { vide: 'Aucune inscription.' })}</div>`,
   };

@@ -22,8 +22,10 @@ async function nettoyer(body) {
   const p = await one('SELECT indicatif_defaut FROM parametres WHERE id = 1');
   const tel = vide(body.telephone) ? normaliserTel(body.telephone, p.indicatif_defaut) : null;
   if (vide(body.telephone) && !tel) throw new HttpError(400, 'Numéro de téléphone invalide.');
+  const salaire = Number(body.salaire_base || 0);
+  if (!Number.isFinite(salaire) || salaire < 0) throw new HttpError(400, 'Salaire invalide.');
   return [String(body.nom || '').trim().toUpperCase(), String(body.prenom || '').trim(), vide(body.sexe), tel,
-    vide(body.poste) || 'Enseignant', Number(body.salaire_base || 0), vide(body.date_embauche), vide(body.remarques)];
+    vide(body.poste) || 'Enseignant', salaire, vide(body.date_embauche), vide(body.remarques)];
 }
 
 router.post('/', autoriser('directeur'), ah(async (req, res) => {

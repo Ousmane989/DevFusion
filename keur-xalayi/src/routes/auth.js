@@ -21,8 +21,19 @@ const limiteur = rateLimit({
 
 router.post('/connexion', limiteur, ah(async (req, res) => {
   exiger(req.body, ['identifiant', 'mot_de_passe']);
-  const user = await one('SELECT * FROM utilisateurs WHERE lower(identifiant) = lower($1)', [String(req.body.identifiant).trim()]);
+  const identifiant = String(req.body.identifiant).trim().toLowerCase();
+  // 10 échecs en 15 minutes sur un même identifiant : blocage temporaire (compté en base).
+  const echecs = await one(
+    `SELECT COUNT(*) AS n FROM echecs_connexion WHERE identifiant = $1 AND created_at > now() - interval '15 minutes'`, [identifiant]);
+  if (echecs.n >= 10) throw new HttpError(429, 'Trop de tentatives. Réessayez dans 15 minutes.');
+  const user = await one('SELECT * FROM utilisateurs WHERE lower(identifiant) = $1', [identifiant]);
   const mdpOk = user && (await bcrypt.compare(String(req.body.mot_de_passe), user.mot_de_passe));
+  if (!mdpOk) {
+    await query('INSERT INTO echecs_connexion (identifiant, ip) VALUES ($1, $2)', [identifiant, req.ip]);
+    await query(`DELETE FROM echecs_connexion WHERE created_at < now() - interval '1 day'`);
+  } else {
+    await query('DELETE FROM echecs_connexion WHERE identifiant = $1', [identifiant]);
+  }
   if (mdpOk && user.en_attente) {
     throw new HttpError(403, 'Votre compte est en attente de validation par la directrice. Vous pourrez vous connecter dès qu\'elle l\'aura validé.');
   }

@@ -20,6 +20,9 @@ async function nettoyer(body, partiel = false) {
   const d = {};
   for (const c of CHAMPS) if (body[c] !== undefined) d[c] = vide(typeof body[c] === 'string' ? body[c].trim() : body[c]);
   if (!partiel) exiger(d, ['nom', 'prenom', 'sexe', 'whatsapp']);
+  for (const c of ['nom', 'prenom', 'sexe', 'whatsapp']) {
+    if (c in d && d[c] === null) throw new HttpError(400, 'Le nom, le prénom, le sexe et le WhatsApp sont obligatoires.');
+  }
   if (d.nom) d.nom = d.nom.toUpperCase();
   if (d.sexe && !['M', 'F'].includes(d.sexe)) throw new HttpError(400, 'Sexe invalide.');
   if (d.whatsapp !== undefined) {
@@ -71,8 +74,13 @@ router.get('/', ah(async (req, res) => {
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY n.ordre NULLS LAST, c.nom, e.nom, e.prenom
       LIMIT 2000`, params);
+  if (req.user.role === 'enseignant') rows.forEach(masquerTarifs);
   res.json(rows);
 }));
+
+/** Les enseignants ne voient ni les tarifs ni les réductions (et leur motif) des élèves. */
+const TARIFS = ['frais_inscription', 'mensualite', 'reduction', 'reduction_motif'];
+function masquerTarifs(ligne) { TARIFS.forEach((k) => delete ligne[k]); return ligne; }
 
 // ---- Fiche complète ----
 router.get('/:id', ah(async (req, res) => {
@@ -87,6 +95,7 @@ router.get('/:id', ah(async (req, res) => {
     if (!courante) throw new HttpError(403, 'Élève hors de votre classe.');
     verifierClasse(req, courante.classe_id);
   }
+  if (req.user.role === 'enseignant') inscriptions.forEach(masquerTarifs);
   const resultat = { eleve: e, inscriptions, inscription: courante };
   if (courante && req.user.role !== 'enseignant') {
     resultat.solde = await soldeInscription(courante.id);
@@ -108,6 +117,13 @@ router.get('/:id', ah(async (req, res) => {
 
 // Photo servie comme image (évite de charger les photos dans les listes).
 router.get('/:id/photo', ah(async (req, res) => {
+  if (req.user.classes) { // enseignant : seulement les élèves de sa classe
+    const i = await one(
+      `SELECT i.classe_id FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id WHERE i.eleve_id = $1 AND a.active`,
+      [req.params.id]);
+    if (!i) throw new HttpError(403, 'Élève hors de votre classe.');
+    verifierClasse(req, i.classe_id);
+  }
   const e = await one('SELECT photo FROM eleves WHERE id = $1', [req.params.id]);
   if (!e || !e.photo) return res.status(404).end();
   const [, mime, b64] = e.photo.match(/^data:(image\/[a-z]+);base64,(.*)$/) || [];

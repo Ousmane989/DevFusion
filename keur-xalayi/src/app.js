@@ -96,6 +96,8 @@ app.use((err, req, res, next) => {
   if (err.code === '23505') return res.status(409).json({ erreur: 'Cette valeur existe déjà (doublon).' });
   if (err.code === '23514') return res.status(400).json({ erreur: 'Une valeur saisie n\'est pas valide.' });
   if (err.code === '23503') return res.status(409).json({ erreur: 'Opération impossible : cet élément est utilisé ailleurs.' });
+  if (err.code === '23502') return res.status(400).json({ erreur: 'Un champ obligatoire est vide.' });
+  if (err.code === '22003') return res.status(400).json({ erreur: 'Nombre trop grand.' });
   if (err.code === '22P02' || err.code === '22007' || err.code === '22008') return res.status(400).json({ erreur: 'Format de donnée invalide.' });
   if (err.type === 'entity.too.large') return res.status(413).json({ erreur: 'Fichier trop volumineux.' });
   console.error(err);
