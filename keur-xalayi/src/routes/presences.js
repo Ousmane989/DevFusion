@@ -28,6 +28,7 @@ router.get('/appel', ah(async (req, res) => {
 // ---- Enregistrement de l'appel ----
 router.post('/appel', autoriser('directeur', 'enseignant'), ah(async (req, res) => {
   exiger(req.body, ['classe_id', 'presences']);
+  if (!Array.isArray(req.body.presences)) throw new HttpError(400, 'Liste des présences attendue.');
   verifierClasse(req, req.body.classe_id);
   const date = req.body.date || aujourdhui();
   if (date > aujourdhui()) throw new HttpError(400, 'Impossible de faire l\'appel pour une date future.');
@@ -92,7 +93,8 @@ router.get('/jour', ah(async (req, res) => {
 
 // ---- Statistiques d'assiduité ----
 router.get('/stats', ah(async (req, res) => {
-  const du = req.query.du || (await one('SELECT date_debut FROM annees_scolaires WHERE active')).date_debut;
+  const active = await one('SELECT date_debut FROM annees_scolaires WHERE active');
+  const du = req.query.du || (active ? active.date_debut : aujourdhui());
   const au = req.query.au || aujourdhui();
   const params = [du, au];
   let filtre = '';

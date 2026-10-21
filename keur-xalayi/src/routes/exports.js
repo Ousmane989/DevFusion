@@ -166,7 +166,7 @@ const LISTES = {
 
   async statut(req, p) {
     if (!gestion.includes(req.user.role)) throw new HttpError(403, 'Accès refusé.');
-    const annee = await finance.anneeActive();
+    const annee = await finance.anneeActiveRequise();
     const mois = req.query.mois || finance.moisEchus(annee).slice(-1)[0] || finance.moisAnnee(annee)[0];
     const liste = await finance.situationMois(mois, { classeId: req.query.classe_id || undefined });
     liste.forEach((l) => { l.eleve = `${l.prenom} ${l.nom}`; l.statut_l = STATUTS[l.statut]; });

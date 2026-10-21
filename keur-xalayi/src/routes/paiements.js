@@ -3,7 +3,7 @@
 // Paiements : encaissement, journal, statut par mois, impayés, reçus.
 const express = require('express');
 const { query, one, tx } = require('../db');
-const { ah, HttpError, exiger, vide, aujourdhui, nomMois, montant, remplir, MODES_PAIEMENT } = require('../utils');
+const { ah, HttpError, exiger, vide, aujourdhui, debutMois, nomMois, montant, remplir, MODES_PAIEMENT } = require('../utils');
 const { autoriser } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
@@ -38,7 +38,7 @@ router.get('/', ah(async (req, res) => {
 
 // ---- Statut de tous les élèves pour un mois ----
 router.get('/statut', ah(async (req, res) => {
-  const annee = await finance.anneeActive();
+  const annee = await finance.anneeActiveRequise();
   const mois = req.query.mois || finance.moisEchus(annee).slice(-1)[0] || finance.moisAnnee(annee)[0];
   const liste = await finance.situationMois(mois, { classeId: req.query.classe_id });
   res.json({ mois, liste, resume: await finance.resumeMois(mois, { classeId: req.query.classe_id }) });
@@ -47,7 +47,7 @@ router.get('/statut', ah(async (req, res) => {
 // ---- Grille élèves × mois d'une classe ----
 router.get('/grille', ah(async (req, res) => {
   exiger(req.query, ['classe_id']);
-  const annee = await finance.anneeActive();
+  const annee = await finance.anneeActiveRequise();
   const mois = finance.moisAnnee(annee);
   const parEleve = {};
   for (const m of mois) {
@@ -67,7 +67,7 @@ router.get('/impayes', ah(async (req, res) => {
 
 // ---- Mois disponibles de l'année active ----
 router.get('/mois', ah(async (req, res) => {
-  const annee = await finance.anneeActive();
+  const annee = await finance.anneeActiveRequise();
   res.json({ mois: finance.moisAnnee(annee), echus: finance.moisEchus(annee) });
 }));
 
@@ -82,11 +82,15 @@ router.post('/', ah(async (req, res) => {
   exiger(req.body, ['inscription_id', 'montant', 'mode']);
   const { inscription_id, type = 'mensualite', mode, reference, remarque } = req.body;
   const total = Number(req.body.montant);
-  if (!(total > 0)) throw new HttpError(400, 'Le montant doit être supérieur à zéro.');
+  if (!(total > 0) || !Number.isFinite(total) || total > 1e9) throw new HttpError(400, 'Montant invalide.');
   if (!MODES_PAIEMENT[mode]) throw new HttpError(400, 'Mode de paiement invalide.');
   if (!['mensualite', 'inscription', 'autre'].includes(type)) throw new HttpError(400, 'Type de paiement invalide.');
   const datePaiement = vide(req.body.date_paiement) || aujourdhui();
-  const moisListe = (Array.isArray(req.body.mois) ? req.body.mois : [req.body.mois]).filter(Boolean).sort();
+  if (typeof datePaiement !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(datePaiement)) throw new HttpError(400, 'Date de paiement invalide.');
+  // Mois ramenés au 1er du mois, sans doublon (« 2026-11-15 » = novembre 2026).
+  const moisListe = [...new Set((Array.isArray(req.body.mois) ? req.body.mois : [req.body.mois])
+    .filter((m) => typeof m === 'string' && /^\d{4}-\d{2}/.test(m)).map(debutMois))].sort();
+  const centimes = (x) => Math.round(Number(x) * 100); // calculs en centimes : pas d'erreur d'arrondi
 
   const numero = await tx(async (c) => {
     const insc = await c.one('SELECT * FROM inscriptions WHERE id = $1 FOR UPDATE', [inscription_id]);
@@ -100,21 +104,25 @@ router.post('/', ah(async (req, res) => {
 
     if (type === 'mensualite') {
       if (!moisListe.length) throw new HttpError(400, 'Choisissez le ou les mois payés.');
-      const du = insc.mensualite - insc.reduction;
-      let restant = total;
+      const annee = await c.one('SELECT date_debut, date_fin FROM annees_scolaires WHERE id = $1', [insc.annee_id]);
+      const moisValides = finance.moisAnnee(annee);
+      const horsAnnee = moisListe.find((m) => !moisValides.includes(m));
+      if (horsAnnee) throw new HttpError(400, `${nomMois(horsAnnee)} ne fait pas partie de l'année scolaire de cette inscription.`);
+      const du = centimes(insc.mensualite - insc.reduction);
+      let restant = centimes(total);
       for (let k = 0; k < moisListe.length; k++) {
         const m = moisListe[k];
         const deja = await c.one(
           `SELECT COALESCE(SUM(montant),0) AS v FROM paiements WHERE inscription_id = $1 AND type = 'mensualite' AND mois = $2 AND NOT annule`,
           [insc.id, m]);
-        const reste = Math.max(0, du - deja.v);
+        const reste = Math.max(0, du - centimes(deja.v));
         const derniere = k === moisListe.length - 1;
         if (reste === 0 && !derniere) continue;
         const part = derniere ? restant : Math.min(restant, reste);
         if (derniere && part > reste) {
-          throw new HttpError(400, `Le montant dépasse le reste dû (${montant(reste)} pour ${nomMois(m)}). Ajoutez un mois ou corrigez le montant.`);
+          throw new HttpError(400, `Le montant dépasse le reste dû (${montant(reste / 100)} pour ${nomMois(m)}). Ajoutez un mois ou corrigez le montant.`);
         }
-        if (part > 0) await inserer('mensualite', m, part);
+        if (part > 0) await inserer('mensualite', m, part / 100);
         restant -= part;
         if (restant <= 0) break;
       }
@@ -130,7 +138,9 @@ router.post('/', ah(async (req, res) => {
 // ---- Annulation (directeur) ----
 router.post('/:id/annuler', autoriser('directeur'), ah(async (req, res) => {
   exiger(req.body, ['motif']);
-  await query('UPDATE paiements SET annule = TRUE, motif_annulation = $1 WHERE id = $2', [req.body.motif, req.params.id]);
+  const p = await one('UPDATE paiements SET annule = TRUE, motif_annulation = $1 WHERE id = $2 AND NOT annule RETURNING id',
+    [req.body.motif, req.params.id]);
+  if (!p) throw new HttpError(404, 'Paiement introuvable ou déjà annulé.');
   res.json({ ok: true });
 }));
 
