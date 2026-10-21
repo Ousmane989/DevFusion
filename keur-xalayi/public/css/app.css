@@ -339,3 +339,5 @@ tfoot td { font-weight: 800; background: var(--fond); }
 .espace input:checked + span b { color: var(--primaire); }
 .espace input:focus-visible + span { box-shadow: 0 0 0 3px var(--primaire-clair); }
 @media (max-width: 480px) { .si-large { display: none; } }
+.kx-aide ol { padding-left: 1.2rem; line-height: 1.9; margin: .4rem 0; }
+.kx-touche { display: inline-block; min-width: 1.6rem; text-align: center; border: 1px solid var(--bord); border-radius: 6px; padding: 0 .3rem; background: var(--fond); font-weight: 800; }
