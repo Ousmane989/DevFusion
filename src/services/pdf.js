@@ -211,6 +211,101 @@ async function recu(numero) {
 }
 
 // ------------------------------------------------------------------
+// Facture d'inscription (format A5), remise au parent à l'inscription
+// ------------------------------------------------------------------
+/** Numéro de facture : FI + 2 chiffres de l'année scolaire + n° de l'inscription. */
+function numeroFacture(insc) {
+  return `FI${String(insc.date_debut).slice(2, 4)}-${String(insc.id).padStart(4, '0')}`;
+}
+
+async function factureInscription(inscriptionId) {
+  const p = await parametres();
+  const insc = await one(
+    `SELECT i.*, e.matricule, e.nom, e.prenom, e.whatsapp, c.nom AS classe, a.libelle AS annee, a.date_debut,
+            COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
+            (SELECT COALESCE(SUM(montant),0) FROM paiements pa
+              WHERE pa.inscription_id = i.id AND pa.type = 'inscription' AND NOT pa.annule) AS verse
+       FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id JOIN classes c ON c.id = i.classe_id
+       JOIN annees_scolaires a ON a.id = i.annee_id WHERE i.id = $1`, [inscriptionId]);
+  if (!insc) return null;
+  const numero = numeroFacture(insc);
+  const total = insc.frais_inscription;
+  const verse = Math.min(insc.verse, total);
+  const reste = Math.max(0, total - verse);
+  const mensuel = insc.mensualite - insc.reduction;
+  const devise = p.devise === 'FCFA' ? 'francs CFA' : 'ouguiyas';
+
+  const buf = await produire({ size: 'A5', margin: 30 }, (doc) => {
+    entete(doc, p, 'FACTURE D\'INSCRIPTION', `N° ${numero} — Année scolaire ${insc.annee}`);
+    const l = doc.page.margins.left;
+    const largeur = doc.page.width - l * 2;
+
+    // Bloc élève
+    const yBloc = doc.y;
+    doc.roundedRect(l, yBloc, largeur, 70, 6).fill(COULEURS.clair);
+    const info = [
+      ['Élève', `${insc.prenom} ${insc.nom}`], ['Matricule', insc.matricule], ['Classe', insc.classe],
+      ['Parent', insc.parent || '—'], ['Date d\'inscription', dateFr(insc.date_inscription)], ['WhatsApp', insc.whatsapp || '—'],
+    ];
+    info.forEach(([k, v], i) => {
+      const col = i % 2; const lig = Math.floor(i / 2);
+      const x = l + 10 + col * (largeur / 2); const y = yBloc + 8 + lig * 20;
+      doc.font('Helvetica').fillColor(COULEURS.gris).fontSize(8).text(k, x, y);
+      doc.font('Helvetica-Bold').fillColor(COULEURS.texte).fontSize(9.5).text(v, x, y + 9, { width: largeur / 2 - 16, lineBreak: false, ellipsis: true });
+    });
+    doc.y = yBloc + 82;
+
+    // Détail
+    const yT = doc.y;
+    doc.rect(l, yT, largeur, 20).fill(COULEURS.secondaire);
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
+      .text('Désignation', l + 8, yT + 6).text('Montant', l, yT + 6, { width: largeur - 8, align: 'right' });
+    let y = yT + 24;
+    const ligne = (objet, valeur, { gras = false, couleur = COULEURS.texte } = {}) => {
+      doc.fillColor(couleur).font(gras ? 'Helvetica-Bold' : 'Helvetica').fontSize(9.5)
+        .text(objet, l + 8, y, { width: largeur - 120 })
+        .text(valeur, l, y, { width: largeur - 8, align: 'right' });
+      y += 18;
+      doc.moveTo(l, y - 4).lineTo(l + largeur, y - 4).lineWidth(0.5).strokeColor(COULEURS.ligne).stroke();
+    };
+    ligne(`Frais d'inscription — ${insc.classe}`, montant(total, p.devise));
+    ligne('Déjà versé', verse ? `- ${montant(verse, p.devise)}` : montant(0, p.devise), { couleur: COULEURS.gris });
+    doc.rect(l, y, largeur, 24).fill(COULEURS.clair);
+    doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(12)
+      .text('RESTE À PAYER', l + 8, y + 7).text(montant(reste, p.devise), l, y + 7, { width: largeur - 8, align: 'right' });
+    y += 32;
+    doc.fillColor(COULEURS.texte).font('Helvetica-Oblique').fontSize(9)
+      .text(`Arrêtée la présente facture à la somme de : ${enLettres(total)} ${devise}.`, l, y, { width: largeur });
+    y = doc.y + 10;
+
+    // Rappel des conditions de la scolarité
+    const conditions = [
+      `Mensualité : ${montant(mensuel, p.devise)} par mois`
+        + (insc.reduction > 0 ? ` (au lieu de ${montant(insc.mensualite, p.devise)}, réduction : ${insc.reduction_motif || '—'})` : ''),
+      `À régler au plus tard le ${p.date_limite_jour} de chaque mois, d'octobre à juillet.`,
+    ];
+    doc.roundedRect(l, y, largeur, 40, 6).lineWidth(0.8).strokeColor(COULEURS.accent).stroke();
+    doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5).text(conditions.join('\n'), l + 10, y + 8, { width: largeur - 20 });
+
+    // Tampon « PAYÉE » quand les frais sont entièrement réglés
+    if (total > 0 && reste === 0) {
+      doc.save().rotate(-18, { origin: [doc.page.width / 2, doc.page.height / 2] })
+        .font('Helvetica-Bold').fontSize(54).fillColor('#1E8E5A').opacity(0.22)
+        .text('PAYÉE', 0, doc.page.height / 2 - 30, { width: doc.page.width, align: 'center' }).restore();
+    }
+
+    // Signatures
+    const ySig = doc.page.height - doc.page.margins.bottom - 70;
+    doc.opacity(1).font('Helvetica').fontSize(8.5).fillColor(COULEURS.gris)
+      .text(`Fait le ${dateFr(new Date().toISOString())}`, l, ySig)
+      .text('La Directrice — cachet et signature', l, ySig, { width: largeur, align: 'right' });
+    doc.fontSize(7.5).text('Chaque versement donne lieu à un reçu. Merci de conserver vos reçus.', l, ySig + 40, { width: largeur, align: 'center' });
+    piedDePage(doc, p);
+  });
+  return { numero, buf };
+}
+
+// ------------------------------------------------------------------
 // Bulletin scolaire (une page A4 par élève)
 // ------------------------------------------------------------------
 const NIVEAUX_APP = { A: 'Acquis', EC: 'En cours', NA: 'Non acquis' };
@@ -501,4 +596,4 @@ async function certificats(liste) {
   });
 }
 
-module.exports = { recu, bulletins, cartes, tableau, certificats, enLettres, COULEURS };
+module.exports = { recu, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

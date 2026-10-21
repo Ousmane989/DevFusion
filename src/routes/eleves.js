@@ -6,6 +6,7 @@ const { query, one, tx } = require('../db');
 const { ah, HttpError, exiger, vide, normaliserTel, aujourdhui } = require('../utils');
 const { autoriser, verifierClasse } = require('../auth');
 const { soldeInscription } = require('../services/finance');
+const pdf = require('../services/pdf');
 
 const router = express.Router();
 const gestion = autoriser('directeur'); // inscriptions et modifications : espace directrice
@@ -133,6 +134,17 @@ function montantsInscription(body, cl) {
   if (red > 0 && !vide(body.reduction_motif)) throw new HttpError(400, 'Indiquez le motif de la réduction (fratrie, cas social…).');
   return { frais, mens, red, motif: red > 0 ? body.reduction_motif : null };
 }
+
+// ---- Facture d'inscription (PDF) : inscription de l'année active, ou ?inscription_id= ----
+router.get('/:id/facture-inscription.pdf', gestion, ah(async (req, res) => {
+  const insc = req.query.inscription_id
+    ? await one('SELECT id FROM inscriptions WHERE id = $1 AND eleve_id = $2', [req.query.inscription_id, req.params.id])
+    : await one(`SELECT i.id FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id
+                  WHERE i.eleve_id = $1 ORDER BY a.active DESC, a.date_debut DESC LIMIT 1`, [req.params.id]);
+  const f = insc && await pdf.factureInscription(insc.id);
+  if (!f) throw new HttpError(404, 'Aucune inscription pour cet élève.');
+  res.type('application/pdf').set('Content-Disposition', `inline; filename="facture-${f.numero}.pdf"`).send(f.buf);
+}));
 
 // ---- Nouvelle inscription ----
 router.post('/', gestion, ah(async (req, res) => {
