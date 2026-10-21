@@ -275,6 +275,31 @@ export function reduireImage(fichier, { max = 360, qualite = 0.82, type = 'image
 /** Ouvre un PDF/Excel servi par l'API dans un nouvel onglet. */
 export function ouvrir(chemin) { window.open('/api' + chemin, '_blank', 'noopener'); }
 
+/**
+ * Imprime un PDF directement (fenêtre d'impression du navigateur) sans quitter la page.
+ * Sur téléphone et sur Safari, où l'impression d'un PDF intégré ne marche pas, le PDF s'ouvre
+ * dans un nouvel onglet (bouton Imprimer / Partager du lecteur de PDF).
+ */
+let cadreImpression = null;
+export async function imprimer(chemin) {
+  const ua = navigator.userAgent;
+  if (/android|iphone|ipad|ipod|mobile/i.test(ua) || (/safari/i.test(ua) && !/chrome|chromium|edg\//i.test(ua))) { ouvrir(chemin); return; }
+  try {
+    const r = await api(chemin, { brut: true });
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.erreur || `Erreur ${r.status}`); }
+    const url = URL.createObjectURL(await r.blob());
+    if (cadreImpression) cadreImpression.remove();
+    cadreImpression = document.createElement('iframe');
+    cadreImpression.setAttribute('aria-hidden', 'true');
+    cadreImpression.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+    cadreImpression.onload = () => setTimeout(() => {
+      try { cadreImpression.contentWindow.focus(); cadreImpression.contentWindow.print(); } catch { window.open(url, '_blank'); }
+    }, 250);
+    cadreImpression.src = url;
+    document.body.appendChild(cadreImpression);
+  } catch (err) { toast(err.message, 'danger'); }
+}
+
 /** Demande un PDF par POST et l'ouvre dans un nouvel onglet (ouvert avant l'attente pour ne pas être bloqué). */
 export async function ouvrirPdfPost(chemin, corps) {
   const fenetre = window.open('', '_blank');

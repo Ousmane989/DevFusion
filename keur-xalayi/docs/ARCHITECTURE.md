@@ -79,6 +79,7 @@ Ainsi :
   **rang** calculé dans la classe (ex æquo gérés).
 - **Matricule** : `KX` + 2 chiffres de l'année d'inscription + numéro, ex. `KX26-0007`.
 - **Reçu** : `R` + année/mois + numéro, ex. `R2610-00042`.
+- **Facture d'inscription** : `FI` + année scolaire + n° de l'inscription, ex. `FI26-0012` (`GET /api/eleves/:id/facture-inscription.pdf`).
 
 ## 3. Les deux espaces
 

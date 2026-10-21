@@ -82,6 +82,21 @@ test('inscription d\'un élève avec matricule automatique et contrôle du Whats
   assert.ok(recherche.some((e) => e.id === eleveId));
 });
 
+test('facture d\'inscription PDF, puis tamponnée une fois les frais réglés', async () => {
+  const f = await appel('dir', `/api/eleves/${eleveId}/facture-inscription.pdf`);
+  assert.strictEqual(f.statut, 200);
+  assert.strictEqual(f.donnees.subarray(0, 4).toString(), '%PDF');
+  const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  const r = await appel('dir', '/api/paiements', {
+    methode: 'POST', corps: { inscription_id: inscriptionId, type: 'inscription', montant: fiche.solde.inscriptionFrais.reste, mode: 'especes' },
+  });
+  assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
+  const ref = await appel('dir', `/api/eleves/${eleveId}/facture-inscription.pdf?inscription_id=${inscriptionId}`);
+  assert.strictEqual(ref.statut, 200);
+  assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/facture-inscription.pdf?inscription_id=999999`)).statut, 404);
+  assert.strictEqual((await appel(null, `/api/eleves/${eleveId}/facture-inscription.pdf`)).statut, 401);
+});
+
 test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async () => {
   const mois = (await appel('dir', '/api/paiements/mois')).donnees.mois;
   const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;

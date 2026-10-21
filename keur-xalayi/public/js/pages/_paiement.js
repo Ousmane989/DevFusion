@@ -1,6 +1,6 @@
 // Fenêtre d'encaissement d'un paiement (partagée par la fiche élève,
 // la page Paiements et la page Impayés), puis reçu PDF / WhatsApp.
-import { get, post, e, champ, options, formulaire, modale, argent, nomMois, aujourdhui, MODES, modesDuPays, toast, erreur, ouvrir, resultatEnvoi } from '../ui.js';
+import { get, post, e, champ, options, formulaire, modale, argent, nomMois, aujourdhui, MODES, modesDuPays, toast, erreur, ouvrir, imprimer, resultatEnvoi } from '../ui.js';
 
 /**
  * @param {number} eleveId
@@ -36,7 +36,7 @@ export async function encaisser(eleveId, apres, moisPreselection = []) {
     if (d.type !== 'mensualite') delete corps.mois;
     const r = await post('/paiements', corps);
     toast(`Paiement enregistré — reçu ${r.numero_recu}`, 'succes');
-    apresPaiement(r.numero_recu);
+    apresPaiement(r.numero_recu, { montant: Number(d.montant), eleveId: d.type === 'inscription' ? eleveId : null });
     if (apres) apres();
   }, { ok: '💾 Enregistrer le paiement', large: true });
 
@@ -56,14 +56,28 @@ export async function encaisser(eleveId, apres, moisPreselection = []) {
   calc();
 }
 
-/** Fenêtre proposée après chaque paiement : imprimer ou envoyer le reçu. */
-export function apresPaiement(numero) {
-  const md = modale('Reçu de paiement', `<p class="centre" style="font-size:1.1rem">Reçu <b>${e(numero)}</b> prêt.</p>
-    <div class="grille g2"><button class="btn" data-pdf>🖨️ Imprimer / PDF</button><button class="btn vert" data-wa>📲 Envoyer par WhatsApp</button></div>`,
+/**
+ * Fenêtre affichée après chaque paiement : le reçu s'imprime en un clic
+ * (ou s'envoie par WhatsApp). Après les frais d'inscription, la facture
+ * d'inscription acquittée est aussi proposée.
+ */
+export function apresPaiement(numero, { montant, eleveId } = {}) {
+  const chemin = `/paiements/recu/${encodeURIComponent(numero)}.pdf`;
+  const md = modale('✔ Paiement enregistré', `
+    <p class="centre" style="font-size:1.05rem;margin-top:0">Reçu n° <b>${e(numero)}</b>${montant ? ` — <b>${argent(montant)}</b>` : ''}</p>
+    <button class="btn bloc" data-imprimer style="font-size:1.1rem;padding:.9rem">🖨️ Imprimer le reçu</button>
+    <div class="grille g2" style="margin-top:.6rem">
+      <button class="btn clair" data-pdf>📄 Voir / télécharger le PDF</button>
+      <button class="btn vert" data-wa>📲 Envoyer par WhatsApp</button>
+    </div>
+    ${eleveId ? '<button class="btn sec bloc" data-facture style="margin-top:.6rem">🧾 Imprimer la facture d\'inscription (acquittée)</button>' : ''}`,
   { actions: '<button class="btn clair" data-f>Fermer</button>' });
   md.el.querySelector('[data-f]').onclick = md.fermer;
-  md.el.querySelector('[data-pdf]').onclick = () => ouvrir(`/paiements/recu/${encodeURIComponent(numero)}.pdf`);
+  md.el.querySelector('[data-imprimer]').onclick = () => imprimer(chemin);
+  md.el.querySelector('[data-pdf]').onclick = () => ouvrir(chemin);
   md.el.querySelector('[data-wa]').onclick = () => envoyerRecu(numero);
+  if (eleveId) md.el.querySelector('[data-facture]').onclick = () => imprimer(`/eleves/${eleveId}/facture-inscription.pdf`);
+  md.el.querySelector('[data-imprimer]').focus();
 }
 
 export async function envoyerRecu(numero) {
