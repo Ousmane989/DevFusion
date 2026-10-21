@@ -45,6 +45,11 @@ services:
       #   sync: false
       # - key: MAIL_FROM
       #   value: "Karat <no-reply@votre-domaine>"
+      #
+      # Bobine (/studio/) : clé secrète Pollinations pour générer les images
+      # sans la limite anonyme (https://enter.pollinations.ai/keys) :
+      # - key: POLLINATIONS_KEY
+      #   sync: false
     disk:
       name: karat-data
       mountPath: /opt/render/project/src/data

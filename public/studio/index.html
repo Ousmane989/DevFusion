@@ -25,6 +25,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 body { background: var(--ink); color: var(--paper); font-family: var(--body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -95,6 +96,36 @@ textarea:focus { outline: none; border-color: var(--tungsten); }
 .shot canvas { width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: #000; display: block; }
 .shot p { font-size: 12px; color: var(--dim); line-height: 1.35; }
 .note { font-size: 13px; color: var(--dim); }
+
+/* Personnage sélectionné dans la console */
+.char { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 8px; border: 1px solid var(--tungsten); border-radius: 999px; width: fit-content; max-width: 100%; }
+.char img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--ink); }
+.char span { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.char button { border: 0; background: transparent; color: var(--dim); font: 16px var(--mono); cursor: pointer; padding: 0 4px; }
+.char button:hover { color: var(--paper); }
+
+/* Avatars */
+.avatar-lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; align-items: start; }
+@media (max-width: 880px) { .avatar-lab { grid-template-columns: 1fr; } }
+.avatar-lab form { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: grid; gap: 18px; }
+input[type=text] { width: 100%; background: var(--ink); color: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: 16px var(--body); }
+input[type=text]:focus { outline: none; border-color: var(--tungsten); }
+.av-results { display: grid; gap: 14px; }
+.av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.av-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); display: grid; }
+.av-card .pic { position: relative; aspect-ratio: 1; max-width: 100%; background: var(--ink); display: grid; place-items: center; }
+.av-card .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.av-card .pic.loading { background: linear-gradient(110deg, var(--ink) 30%, var(--line) 50%, var(--ink) 70%) 0 0 / 300% 100%; animation: shimmer 1.6s linear infinite; }
+@keyframes shimmer { to { background-position: -300% 0; } }
+.av-card .pic .state { position: relative; font: 12px var(--mono); color: var(--dim); text-align: center; padding: 12px; }
+.av-card .meta { padding: 12px; display: grid; gap: 10px; }
+.av-card .meta strong { font: 600 15px var(--display); }
+.av-card .meta .tc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.av-card .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.sm { padding: 7px 12px; font-size: 13px; }
+.empty { border: 1px dashed var(--line); border-radius: 14px; padding: 28px; color: var(--dim); font-size: 15px; }
+.saved-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 18px; }
+.av-saved { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 
 /* Galerie */
 section.band { padding-block: clamp(64px, 9vw, 120px); border-top: 1px solid var(--line); }
@@ -169,6 +200,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
   <div class="wrap">
     <a class="logo" href="#top"><i aria-hidden="true"></i>Bobine</a>
     <nav class="links" aria-label="Navigation principale">
+      <a href="#avatars">Avatars</a>
       <a href="#galerie">Galerie</a>
       <a href="#methode">Méthode</a>
       <a href="#fonctions">Fonctions</a>
@@ -191,6 +223,11 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
       <div class="console" id="studio">
         <form id="gen" autocomplete="off">
+          <div class="char" id="charChip" hidden>
+            <img id="charImg" alt="">
+            <span>Personnage : <strong id="charName"></strong></span>
+            <button type="button" id="charClear" aria-label="Retirer le personnage">✕</button>
+          </div>
           <label class="field">
             <span>Votre idée</span>
             <textarea id="prompt" name="prompt">Publicité de 15 secondes pour un parfum à Dakar : coucher de soleil sur la Corniche, gros plan sur le flacon, la ville s'allume derrière.</textarea>
@@ -246,7 +283,69 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
             <div class="hud"><span><b>●</b> REC <span id="tcLive">00:00:00:00</span></span><span id="hudShot">PLAN 1/4</span></div>
           </div>
           <div class="strip" id="strip"></div>
-          <p class="note">Ceci est une démo : le storyboard est dessiné dans votre navigateur. Pour de vraies vidéos, branchez une API de génération (voir public/studio/README.md).</p>
+          <p class="note" id="genNote">Cliquez sur « Générer » : chaque plan est créé en image par l'IA, puis animé dans l'aperçu. Si l'IA ne répond pas, le plan est dessiné par le navigateur.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="avatars">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>Créez vos<br>avatars.</h2>
+        <p class="lead" style="max-width:42ch">Décrivez une personne, choisissez un style et un décor. L'IA crée quatre variantes ; gardez celle qui vous plaît et faites-la jouer dans vos vidéos.</p>
+      </div>
+      <div class="avatar-lab">
+        <form id="avForm" autocomplete="off">
+          <label class="field">
+            <span>Nom de l'avatar</span>
+            <input type="text" id="avName" value="Awa" maxlength="40">
+          </label>
+          <label class="field">
+            <span>Description</span>
+            <textarea id="avDesc" style="min-height:96px">Femme sénégalaise de 28 ans, tresses longues, sourire confiant, boucles d'oreilles dorées</textarea>
+          </label>
+          <label class="field">
+            <span>Tenue</span>
+            <input type="text" id="avOutfit" value="robe en wax orange et bleu">
+          </label>
+          <div class="field">
+            <span>Style</span>
+            <div class="chips" role="radiogroup" aria-label="Style de l'avatar">
+              <input type="radio" name="avStyle" id="s1" value="photo" checked><label for="s1">Photo réaliste</label>
+              <input type="radio" name="avStyle" id="s2" value="cinema"><label for="s2">Portrait cinéma</label>
+              <input type="radio" name="avStyle" id="s3" value="3d"><label for="s3">3D</label>
+              <input type="radio" name="avStyle" id="s4" value="anime"><label for="s4">Animé</label>
+              <input type="radio" name="avStyle" id="s5" value="illu"><label for="s5">Illustration</label>
+            </div>
+          </div>
+          <div class="field">
+            <span>Décor</span>
+            <div class="chips" role="radiogroup" aria-label="Décor">
+              <input type="radio" name="avBg" id="b1" value="studio" checked><label for="b1">Studio</label>
+              <input type="radio" name="avBg" id="b2" value="city"><label for="b2">Ville la nuit</label>
+              <input type="radio" name="avBg" id="b3" value="beach"><label for="b3">Plage</label>
+              <input type="radio" name="avBg" id="b4" value="office"><label for="b4">Bureau</label>
+              <input type="radio" name="avBg" id="b5" value="desert"><label for="b5">Désert</label>
+            </div>
+          </div>
+          <div class="field" id="engineField">
+            <span>Moteur</span>
+            <div class="chips" role="radiogroup" aria-label="Moteur de génération">
+              <input type="radio" name="avEngine" id="e1" value="photo" checked><label for="e1">Image IA</label>
+              <input type="radio" name="avEngine" id="e2" value="claude"><label for="e2">Dessin vectoriel (Claude)</label>
+            </div>
+          </div>
+          <button class="btn primary" type="submit" id="avBtn">Créer 4 variantes</button>
+          <p class="note" id="avNote"></p>
+        </form>
+
+        <div class="av-results">
+          <div class="av-grid" id="avGrid">
+            <div class="empty" style="grid-column:1/-1">Vos variantes apparaîtront ici. Les images arrivent l'une après l'autre, environ 5 à 15 secondes chacune.</div>
+          </div>
+          <div class="saved-head"><h3>Mes avatars</h3><span class="tc" id="savedCount">0 enregistré</span></div>
+          <div class="av-saved" id="avSaved"></div>
         </div>
       </div>
     </div>
@@ -371,55 +470,136 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     "Produit":   ["#151515", "#3a3a3a", "#0d0d0d", "#f2e4c8"],
     "Réaliste":  ["#3a5a78", "#d9a46b", "#4a3b2a", "#fff1d0"]
   };
+  // Indications de style envoyées au modèle d'image
+  var MODEL_PROMPT = {
+    "Cinéma": "cinematic film still, anamorphic lens, dramatic color grading, 35mm film grain",
+    "Animation": "3D animated movie still, Pixar style, vibrant colors, soft lighting",
+    "Produit": "premium product commercial, studio lighting, high-end advertising photography",
+    "Réaliste": "realistic documentary photo, natural light, high detail"
+  };
   var SHOTS = [
-    { name: "Plan large", note: "Établissement, travelling lent", kind: "wide" },
-    { name: "Plan moyen", note: "Sujet au centre, panoramique", kind: "mid" },
-    { name: "Gros plan", note: "Détail, faible profondeur de champ", kind: "close" },
-    { name: "Plan final", note: "Logo et accroche", kind: "end" }
+    { name: "Plan large", note: "Établissement, travelling lent", kind: "wide", prompt: "wide establishing shot" },
+    { name: "Plan moyen", note: "Sujet au centre, panoramique", kind: "mid", prompt: "medium shot, subject centered" },
+    { name: "Gros plan", note: "Détail, faible profondeur de champ", kind: "close", prompt: "close-up shot, shallow depth of field" },
+    { name: "Plan final", note: "Dernière image, place pour l'accroche", kind: "end", prompt: "final hero shot, wide, negative space for a title" }
   ];
+  var AV_STYLE = {
+    photo: "ultra realistic photo portrait, 85mm lens, natural skin texture",
+    cinema: "cinematic portrait, film still, dramatic rim light, color graded",
+    "3d": "3D rendered character portrait, Pixar style, soft global illumination",
+    anime: "anime style character portrait, clean line art, cel shading",
+    illu: "flat vector illustration portrait, bold shapes, limited palette"
+  };
+  var AV_BG = {
+    studio: "plain studio background", city: "city street at night with bokeh lights",
+    beach: "Atlantic beach at golden hour", office: "modern office background", desert: "Sahara desert dunes at sunset"
+  };
+  var AV_BG_FR = { studio: "Studio", city: "Ville la nuit", beach: "Plage", office: "Bureau", desert: "Désert" };
+  var AV_STYLE_FR = { photo: "Photo réaliste", cinema: "Portrait cinéma", "3d": "3D", anime: "Animé", illu: "Illustration" };
 
+  function $(id) { return document.getElementById(id); }
   function rand(seed) { return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
   function hash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100000; return h; }
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // --- Génération d'images (Pollinations, gratuit, sans clé) ---
+  // L'aperçu claude.ai bloque les images externes : on le détecte à la première erreur
+  // et on repasse sur le dessin dans le navigateur.
+  var photoBlocked = false;
+  var inPreview = !!window.claude; // aperçu claude.ai : images externes bloquées
+  // Sur le site Karat, les images passent par /api/studio/image (clé gardée côté serveur).
+  var server = { ok: false, key: false };
+  function photoUrl(prompt, w, h, seed) {
+    if (server.ok) return "/api/studio/image?prompt=" + encodeURIComponent(prompt) + "&width=" + w + "&height=" + h + "&seed=" + seed;
+    return "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
+      "?width=" + w + "&height=" + h + "&seed=" + seed + "&nologo=true";
+  }
+  if (!inPreview && window.fetch) {
+    fetch("/api/studio/status").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.ok) return;
+      server.ok = true; server.key = !!j.key;
+      if (!server.key) $("avNote").textContent = "Mode gratuit sans clé : environ une image toutes les 45 secondes. Ajoutez POLLINATIONS_KEY sur le serveur pour aller plus vite.";
+    }).catch(function () {});
+  }
+  function loadImg(src) {
+    return new Promise(function (ok, ko) {
+      var img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function () { ok(img); };
+      img.onerror = function () { ko(new Error("image")); };
+      img.src = src;
+    });
+  }
+
+  // Le service gratuit limite les demandes simultanées : une image à la fois,
+  // avec deux nouvelles tentatives espacées en cas de refus.
+  var queue = Promise.resolve();
+  function aiImg(src) {
+    function attempt(n) {
+      return loadImg(src + (n ? "&retry=" + n : "")).catch(function (e) {
+        if (n >= 2 || photoBlocked || inPreview) throw e;
+        return new Promise(function (ok) { setTimeout(ok, 3000 * (n + 1)); }).then(function () { return attempt(n + 1); });
+      });
+    }
+    var job = queue.then(function () { return attempt(0); });
+    queue = job.catch(function () {});
+    return job;
+  }
+
+  function drawCover(ctx, img, w, h, zoom) {
+    var s = Math.max(w / img.naturalWidth, h / img.naturalHeight) * zoom;
+    var iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+    ctx.drawImage(img, (w - iw) / 2, (h - ih) / 2, iw, ih);
+  }
 
   // Dessine une image de film stylisée : ciel, soleil, silhouette de ville, sujet.
-  function frame(ctx, w, h, grade, kind, seed, t) {
-    var r = rand(seed);
-    var horizon = kind === "close" ? h * .8 : h * (.58 + r() * .08);
-    var g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, grade[0]); g.addColorStop(horizon / h, grade[1]); g.addColorStop(1, grade[2]);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    var sx = w * (.3 + r() * .4) + Math.sin(t / 3000) * w * .02, sy = horizon - h * .08;
-    var sun = ctx.createRadialGradient(sx, sy, 0, sx, sy, h * .5);
-    sun.addColorStop(0, grade[3]); sun.addColorStop(.12, grade[3] + "cc"); sun.addColorStop(1, "transparent");
-    ctx.fillStyle = sun; ctx.fillRect(0, 0, w, h);
-    if (kind !== "close") {
-      ctx.fillStyle = grade[2];
-      var x = -((t / 60) % 40);
-      while (x < w) {
-        var bw = w * (.03 + r() * .06), bh = h * (.04 + r() * (kind === "wide" ? .2 : .32));
-        ctx.fillRect(x, horizon - bh, bw, bh + 2);
-        if (r() > .55) { ctx.fillStyle = grade[3] + "88"; ctx.fillRect(x + bw * .3, horizon - bh * .7, Math.max(2, w * .004), Math.max(2, h * .006)); ctx.fillStyle = grade[2]; }
-        x += bw + w * .004;
+  function frame(ctx, w, h, grade, kind, seed, t, opts) {
+    opts = opts || {};
+    if (opts.img) {
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
+      drawCover(ctx, opts.img, w, h, 1 + ((t % 6000) / 6000) * 0.08);
+    } else {
+      var r = rand(seed);
+      var horizon = kind === "close" ? h * .8 : h * (.58 + r() * .08);
+      var g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, grade[0]); g.addColorStop(horizon / h, grade[1]); g.addColorStop(1, grade[2]);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      var sx = w * (.3 + r() * .4) + Math.sin(t / 3000) * w * .02, sy = horizon - h * .08;
+      var sun = ctx.createRadialGradient(sx, sy, 0, sx, sy, h * .5);
+      sun.addColorStop(0, grade[3]); sun.addColorStop(.12, grade[3] + "cc"); sun.addColorStop(1, "transparent");
+      ctx.fillStyle = sun; ctx.fillRect(0, 0, w, h);
+      if (kind !== "close") {
+        ctx.fillStyle = grade[2];
+        var x = -((t / 60) % 40);
+        while (x < w) {
+          var bw = w * (.03 + r() * .06), bh = h * (.04 + r() * (kind === "wide" ? .2 : .32));
+          ctx.fillRect(x, horizon - bh, bw, bh + 2);
+          if (r() > .55) { ctx.fillStyle = grade[3] + "88"; ctx.fillRect(x + bw * .3, horizon - bh * .7, Math.max(2, w * .004), Math.max(2, h * .006)); ctx.fillStyle = grade[2]; }
+          x += bw + w * .004;
+        }
+        ctx.fillRect(0, horizon, w, h - horizon);
       }
-      ctx.fillRect(0, horizon, w, h - horizon);
+      if ((kind === "mid" || kind === "close") && opts.char) {
+        // Le personnage choisi prend la place du sujet
+        var size = kind === "close" ? h * .9 : h * .5, cx2 = w / 2 - size / 2, top = (kind === "close" ? h : horizon + h * .06) - size;
+        ctx.save(); ctx.beginPath(); ctx.arc(w / 2, top + size / 2, size / 2, 0, 7); ctx.clip();
+        ctx.drawImage(opts.char, cx2, top, size, size); ctx.restore();
+      } else if (kind === "mid" || kind === "close") {
+        var cx = w * .5, scale = kind === "close" ? 1.9 : 1, bh2 = h * .34 * scale, bw2 = h * .12 * scale;
+        var base = kind === "close" ? h * 1.02 : horizon + h * .06;
+        ctx.fillStyle = "rgba(0,0,0,.55)";
+        ctx.beginPath(); ctx.ellipse(cx, base, bw2 * .9, h * .02, 0, 0, 7); ctx.fill();
+        var bottle = ctx.createLinearGradient(cx - bw2 / 2, 0, cx + bw2 / 2, 0);
+        bottle.addColorStop(0, "rgba(255,255,255,.08)"); bottle.addColorStop(.35, grade[3] + "dd"); bottle.addColorStop(1, "rgba(0,0,0,.4)");
+        ctx.fillStyle = bottle; ctx.fillRect(cx - bw2 / 2, base - bh2, bw2, bh2);
+        ctx.fillStyle = grade[0]; ctx.fillRect(cx - bw2 * .2, base - bh2 - bh2 * .18, bw2 * .4, bh2 * .18);
+      }
     }
-    if (kind === "mid" || kind === "close") {
-      var cx = w * .5, scale = kind === "close" ? 1.9 : 1, bh2 = h * .34 * scale, bw2 = h * .12 * scale;
-      var base = kind === "close" ? h * 1.02 : horizon + h * .06;
-      ctx.fillStyle = "rgba(0,0,0,.55)";
-      ctx.beginPath(); ctx.ellipse(cx, base, bw2 * .9, h * .02, 0, 0, 7); ctx.fill();
-      var bottle = ctx.createLinearGradient(cx - bw2 / 2, 0, cx + bw2 / 2, 0);
-      bottle.addColorStop(0, "rgba(255,255,255,.08)"); bottle.addColorStop(.35, grade[3] + "dd"); bottle.addColorStop(1, "rgba(0,0,0,.4)");
-      ctx.fillStyle = bottle; ctx.fillRect(cx - bw2 / 2, base - bh2, bw2, bh2);
-      ctx.fillStyle = grade[0]; ctx.fillRect(cx - bw2 * .2, base - bh2 - bh2 * .18, bw2 * .4, bh2 * .18);
-    }
-    if (kind === "end") {
+    if (kind === "end" && opts.title) {
       ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = grade[3]; ctx.textAlign = "center";
-      ctx.font = "800 " + Math.round(h * .14) + "px 'Bricolage Grotesque', sans-serif";
-      ctx.fillText("CORNICHE", w / 2, h * .52);
-      ctx.font = "400 " + Math.round(h * .05) + "px 'JetBrains Mono', monospace";
-      ctx.fillText("L'ÉCLAT DU SOIR", w / 2, h * .66);
+      ctx.font = "800 " + Math.round(h * .12) + "px 'Bricolage Grotesque', sans-serif";
+      ctx.fillText(opts.title, w / 2, h * .54, w * .86);
     }
     // grain et vignettage
     var v = ctx.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, w * .75);
@@ -427,10 +607,9 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
   }
 
-  var main = document.getElementById("main"), mctx = main.getContext("2d");
-  var screen = document.getElementById("screen"), strip = document.getElementById("strip");
-  var state = { grade: GRADES["Cinéma"], seed: 1, shot: 0, start: performance.now(), duration: 15, kinds: SHOTS };
-  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var main = $("main"), mctx = main.getContext("2d");
+  var screen = $("screen"), strip = $("strip");
+  var state = { grade: GRADES["Cinéma"], seed: 1, shot: 0, start: performance.now(), duration: 15, images: [], character: null, run: 0, title: "" };
 
   function tc(ms) {
     var f = Math.floor(ms / 40), s = Math.floor(f / 25), m = Math.floor(s / 60);
@@ -438,8 +617,9 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     return "00:" + p(m % 60) + ":" + p(s % 60) + ":" + p(f % 25);
   }
 
-  function sizeMain(ratio) {
-    var parts = ratio.split("/").map(Number);
+  function ratioParts() { return form.querySelector("input[name=ratio]:checked").value.split("/").map(Number); }
+  function sizeMain() {
+    var parts = ratioParts();
     screen.style.aspectRatio = parts[0] + " / " + parts[1];
     var w = 960, h = Math.round(w * parts[1] / parts[0]);
     if (h > 960) { h = 960; w = Math.round(h * parts[0] / parts[1]); }
@@ -448,64 +628,292 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     else { screen.style.maxWidth = "100%"; screen.style.marginInline = "0"; }
   }
 
+  function shotOpts(i) {
+    return { img: state.images[i] || null, char: state.character && state.character.img, title: SHOTS[i].kind === "end" ? state.title : "" };
+  }
+  function drawThumb(i) {
+    var c = strip.querySelectorAll("canvas")[i];
+    if (c) frame(c.getContext("2d"), c.width, c.height, state.grade, SHOTS[i].kind, state.seed + i * 17, 0, shotOpts(i));
+  }
   function buildStrip() {
     strip.innerHTML = "";
     var per = state.duration / SHOTS.length;
     SHOTS.forEach(function (s, i) {
       var d = document.createElement("div"); d.className = "shot";
       var c = document.createElement("canvas"); c.width = 320; c.height = 180;
-      frame(c.getContext("2d"), 320, 180, state.grade, s.kind, state.seed + i * 17, 0);
-      var p = document.createElement("p");
-      p.innerHTML = "<strong>" + (i + 1) + ". " + s.name + "</strong><br>" + s.note + " · " + per.toFixed(1).replace(".", ",") + " s";
+      var p = document.createElement("p"), b = document.createElement("strong");
+      b.textContent = (i + 1) + ". " + s.name;
+      p.appendChild(b); p.appendChild(document.createElement("br"));
+      p.appendChild(document.createTextNode(s.note + " · " + per.toFixed(1).replace(".", ",") + " s"));
       d.appendChild(c); d.appendChild(p); strip.appendChild(d);
+      drawThumb(i);
     });
   }
 
   function tick(now) {
-    var el = now - state.start, per = (state.duration * 1000) / SHOTS.length;
+    var el = Math.max(0, now - state.start), per = (state.duration * 1000) / SHOTS.length;
     var loop = el % (state.duration * 1000);
     state.shot = Math.floor(loop / per);
-    frame(mctx, main.width, main.height, state.grade, SHOTS[state.shot].kind, state.seed + state.shot * 17, reduce ? 0 : el);
-    document.getElementById("tcLive").textContent = tc(loop);
-    document.getElementById("hudShot").textContent = "PLAN " + (state.shot + 1) + "/" + SHOTS.length;
+    frame(mctx, main.width, main.height, state.grade, SHOTS[state.shot].kind, state.seed + state.shot * 17, reduce ? 0 : loop % per, shotOpts(state.shot));
+    $("tcLive").textContent = tc(loop);
+    $("hudShot").textContent = "PLAN " + (state.shot + 1) + "/" + SHOTS.length;
     if (!reduce) requestAnimationFrame(tick);
   }
 
   function toast(msg) {
-    var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, 3200);
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, 3600);
   }
 
-  var form = document.getElementById("gen"), dur = document.getElementById("duration"), out = document.getElementById("durOut");
+  var form = $("gen"), dur = $("duration"), out = $("durOut");
   dur.addEventListener("input", function () { out.textContent = dur.value + " s"; });
-  document.getElementById("files").addEventListener("change", function (e) {
+  $("files").addEventListener("change", function (e) {
     var n = e.target.files.length;
-    document.getElementById("filesLabel").textContent = n ? n + " fichier" + (n > 1 ? "s" : "") + " ajouté" + (n > 1 ? "s" : "") + " comme référence" : "Ajouter un script, un PDF, des photos ou un son de référence";
+    $("filesLabel").textContent = n ? n + " fichier" + (n > 1 ? "s" : "") + " ajouté" + (n > 1 ? "s" : "") + " comme référence" : "Ajouter un script, un PDF, des photos ou un son de référence";
   });
 
   function render(announce) {
     var model = form.querySelector("input[name=model]:checked").value;
-    var ratio = form.querySelector("input[name=ratio]:checked").value;
     state.grade = GRADES[model];
-    state.seed = hash(document.getElementById("prompt").value + model);
+    state.seed = hash($("prompt").value + model);
     state.duration = Number(dur.value);
     state.start = performance.now();
-    sizeMain(ratio);
-    document.getElementById("monLabel").textContent = "PRÉVISUALISATION · " + model.toUpperCase() + " · " + ratio.replace("/", ":");
+    sizeMain();
+    $("monLabel").textContent = "PRÉVISUALISATION · " + model.toUpperCase() + " · " + ratioParts().join(":");
     buildStrip();
     if (reduce) tick(performance.now());
     if (announce) toast("Storyboard prêt : 4 plans, " + state.duration + " s au total.");
   }
 
+  // Génère une vraie image IA pour chaque plan
+  function generateShots() {
+    var run = ++state.run, model = form.querySelector("input[name=model]:checked").value;
+    var parts = ratioParts(), w = 768, h = Math.round(768 * parts[1] / parts[0]);
+    if (h > 768) { h = 768; w = Math.round(768 * parts[0] / parts[1]); }
+    var who = state.character ? ", featuring " + state.character.desc : "";
+    var done = 0, failed = 0;
+    state.images = [];
+    $("genNote").textContent = "L'IA crée les 4 plans… (0/4)";
+    var b = $("genBtn"); b.disabled = true; b.textContent = "Création des plans…";
+    return Promise.all(SHOTS.map(function (s, i) {
+      var p = s.prompt + ", " + hint($("prompt").value) + who + ", " + MODEL_PROMPT[model];
+      return aiImg(photoUrl(p, w, h, state.seed + i * 101)).then(function (img) {
+        if (run !== state.run) return;
+        state.images[i] = img; drawThumb(i);
+      }, function () { failed++; }).then(function () {
+        if (run !== state.run) return;
+        done++; $("genNote").textContent = "L'IA crée les 4 plans… (" + done + "/4)";
+      });
+    })).then(function () {
+      if (run !== state.run) return;
+      b.disabled = false; b.textContent = "Générer le storyboard";
+      if (failed === SHOTS.length) {
+        photoBlocked = true;
+        $("genNote").textContent = "L'IA d'images n'est pas joignable ici (l'aperçu claude.ai bloque les images externes). Les plans sont dessinés par le navigateur ; ouvrez votre site sur /studio/ pour de vraies images.";
+      } else {
+        $("genNote").textContent = (SHOTS.length - failed) + " plan" + (SHOTS.length - failed > 1 ? "s" : "") + " créé" + (SHOTS.length - failed > 1 ? "s" : "") + " par l'IA" + (failed ? ", " + failed + " dessiné" + (failed > 1 ? "s" : "") + " par le navigateur." : ".") + " Clic droit sur l'aperçu pour l'enregistrer.";
+        toast("Storyboard IA prêt.");
+      }
+    });
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (!document.getElementById("prompt").value.trim()) { toast("Décrivez votre idée avant de générer."); document.getElementById("prompt").focus(); return; }
-    var b = document.getElementById("genBtn"); b.disabled = true; b.textContent = "Découpage en cours…";
-    setTimeout(function () { b.disabled = false; b.textContent = "Générer le storyboard"; render(true); }, 900);
+    if (!$("prompt").value.trim()) { toast("Décrivez votre idée avant de générer."); $("prompt").focus(); return; }
+    state.title = state.character ? state.character.name : "";
+    render(false);
+    generateShots();
   });
-  form.addEventListener("change", function (e) { if (e.target.name === "model" || e.target.name === "ratio") render(false); });
+  form.addEventListener("change", function (e) {
+    if (e.target.name === "model" || e.target.name === "ratio") { state.images = []; state.run++; render(false); }
+  });
 
-  // Galerie de styles
+  // --- Personnage ---
+  function setCharacter(av) {
+    var src = avatarSrc(av);
+    loadImg(src).then(function (img) {
+      state.character = { name: av.name, desc: hint(av.desc + (av.outfit ? ", wearing " + av.outfit : "")), img: img };
+      $("charImg").src = src; $("charName").textContent = av.name; $("charChip").hidden = false;
+      state.images = []; state.run++; render(false);
+      $("studio").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      toast(av.name + " jouera dans votre prochaine vidéo.");
+    }, function () { toast("Impossible de charger cet avatar."); });
+  }
+  $("charClear").addEventListener("click", function () {
+    state.character = null; $("charChip").hidden = true; state.images = []; state.run++; render(false);
+  });
+
+  // --- Avatars ---
+  var STORE = "bobine.avatars";
+  function readSaved() { try { return JSON.parse(localStorage.getItem(STORE) || "[]"); } catch (e) { return []; } }
+  function writeSaved(list) { try { localStorage.setItem(STORE, JSON.stringify(list)); return true; } catch (e) { return false; } }
+  function avatarSrc(av) {
+    if (av.svg) return URL.createObjectURL(new Blob([av.svg], { type: "image/svg+xml" }));
+    return av.url;
+  }
+
+  // N'accepte qu'un SVG autonome : pas de script, de lien externe ni d'événement.
+  function cleanSvg(str) {
+    var m = String(str).match(/<svg[\s\S]*<\/svg>/i);
+    if (!m) return null;
+    var doc = new DOMParser().parseFromString(m[0], "image/svg+xml");
+    if (doc.querySelector("parsererror")) return null;
+    doc.querySelectorAll("script, foreignObject, iframe, image, a").forEach(function (n) { n.remove(); });
+    doc.querySelectorAll("*").forEach(function (n) {
+      Array.prototype.slice.call(n.attributes).forEach(function (a) {
+        var v = a.value.trim().toLowerCase();
+        if (/^on/i.test(a.name) || (/href$/i.test(a.name) && v.charAt(0) !== "#") || v.indexOf("javascript:") > -1 || /url\(\s*['"]?(?!#)/.test(v)) n.removeAttribute(a.name);
+      });
+    });
+    var root = doc.documentElement;
+    if (!root.getAttribute("viewBox")) root.setAttribute("viewBox", "0 0 512 512");
+    root.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    return new XMLSerializer().serializeToString(root);
+  }
+
+  function readAvForm() {
+    return {
+      name: $("avName").value.trim() || "Avatar",
+      desc: $("avDesc").value.trim(),
+      outfit: $("avOutfit").value.trim(),
+      style: document.querySelector("input[name=avStyle]:checked").value,
+      bg: document.querySelector("input[name=avBg]:checked").value,
+      engine: document.querySelector("input[name=avEngine]:checked").value
+    };
+  }
+
+  function avCard(av, opts) {
+    var card = document.createElement("article"); card.className = "av-card";
+    var pic = document.createElement("div"); pic.className = "pic";
+    var meta = document.createElement("div"); meta.className = "meta";
+    var name = document.createElement("strong"); name.textContent = av.name;
+    var info = document.createElement("span"); info.className = "tc"; info.textContent = AV_STYLE_FR[av.style] + " · " + AV_BG_FR[av.bg];
+    var acts = document.createElement("div"); acts.className = "acts";
+    meta.appendChild(name); meta.appendChild(info); meta.appendChild(acts);
+    card.appendChild(pic); card.appendChild(meta);
+    function btn(label, cls, fn) { var b = document.createElement("button"); b.type = "button"; b.className = "btn sm " + (cls || ""); b.textContent = label; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    card.setImage = function (src) {
+      pic.classList.remove("loading"); pic.innerHTML = "";
+      var img = typeof src === "string" ? document.createElement("img") : src;
+      img.alt = "Avatar " + av.name;
+      if (typeof src === "string") { img.crossOrigin = "anonymous"; img.src = src; }
+      pic.appendChild(img);
+      btn("Utiliser dans une vidéo", "primary", function () { setCharacter(av); });
+      if (opts.saved) {
+        var del = btn("Supprimer", "", function () {
+          if (del.dataset.armed) { writeSaved(readSaved().filter(function (x) { return x.id !== av.id; })); renderSaved(); return; }
+          del.dataset.armed = "1"; del.textContent = "Confirmer";
+          setTimeout(function () { del.dataset.armed = ""; del.textContent = "Supprimer"; }, 3000);
+        });
+      } else {
+        var keep = btn("Garder", "", function () {
+          var list = readSaved(); list.unshift(av);
+          if (!writeSaved(list.slice(0, 40))) { toast("Impossible d'enregistrer dans ce navigateur."); return; }
+          keep.disabled = true; keep.textContent = "Gardé"; renderSaved(); toast(av.name + " ajouté à vos avatars.");
+        });
+      }
+    };
+    card.setState = function (msg, loading) {
+      pic.classList.toggle("loading", !!loading); pic.innerHTML = "";
+      var s = document.createElement("span"); s.className = "state"; s.textContent = msg; pic.appendChild(s);
+    };
+    return card;
+  }
+
+  function renderSaved() {
+    var list = readSaved(), box = $("avSaved"); box.innerHTML = "";
+    $("savedCount").textContent = list.length + " enregistré" + (list.length > 1 ? "s" : "");
+    if (!list.length) { var e = document.createElement("div"); e.className = "empty"; e.style.gridColumn = "1/-1"; e.textContent = "Cliquez sur « Garder » sous une variante pour la retrouver ici, même après avoir fermé la page."; box.appendChild(e); return; }
+    list.forEach(function (av) { var c = avCard(av, { saved: true }); box.appendChild(c); c.setImage(avatarSrc(av)); });
+  }
+
+  var sample = null;
+  var avForm = $("avForm"), avGrid = $("avGrid"), avBtn = $("avBtn");
+  $("e2").parentNode.querySelector("label[for=e2]").hidden = true;
+
+  // Les modèles d'image comprennent mal certains mots français : on les précise en anglais.
+  var WORDS = [
+    [/s[ée]n[ée]galais(e|es)?/gi, "Senegalese Black African"], [/mauritanien(ne|nes|s)?/gi, "Mauritanian"],
+    [/malien(ne|nes|s)?/gi, "Malian Black African"], [/ivoirien(ne|nes|s)?/gi, "Ivorian Black African"],
+    [/guin[ée]en(ne|nes|s)?/gi, "Guinean Black African"], [/camerounais(e|es)?/gi, "Cameroonian Black African"],
+    [/marocain(e|es|s)?/gi, "Moroccan"], [/alg[ée]rien(ne|nes|s)?/gi, "Algerian"], [/africain(e|es|s)?/gi, "African"],
+    [/\bnoire?s?\b/gi, "Black"], [/peule?s?/gi, "Fulani"], [/wolof/gi, "Wolof Senegalese"],
+    [/\bfemme\b/gi, "woman"], [/\bhomme\b/gi, "man"], [/\bfille\b/gi, "girl"], [/\bgar[çc]on\b/gi, "boy"],
+    [/\btresses\b/gi, "braids"], [/\bboubou\b/gi, "boubou robe"], [/\bvoile\b/gi, "headscarf"], [/\bmelhfa\b/gi, "Mauritanian melhfa veil"]
+  ];
+  function hint(text) { var out = text; WORDS.forEach(function (w) { out = out.replace(w[0], function (m) { return m + " (" + w[1] + ")"; }); }); return out; }
+
+  function photoPrompt(f) {
+    return "head and shoulders portrait of " + hint(f.desc) + (f.outfit ? ", wearing " + hint(f.outfit) : "") + ", " + AV_BG[f.bg] + ", looking at the camera, " + AV_STYLE[f.style];
+  }
+
+  function generatePhotos(f) {
+    var base = Math.floor(Math.random() * 90000);
+    var cards = [0, 1, 2, 3].map(function () { var c = avCard({ name: f.name, style: f.style, bg: f.bg }, {}); avGrid.appendChild(c); c.setState("Création en cours…", true); return c; });
+    var failed = 0;
+    return Promise.all(cards.map(function (card, i) {
+      var av = { id: "a" + Date.now() + i, name: f.name, desc: f.desc, outfit: f.outfit, style: f.style, bg: f.bg, engine: "photo", url: photoUrl(photoPrompt(f), 512, 512, base + i * 7) };
+      var real = avCard(av, {});
+      return aiImg(av.url).then(function (img) { av.url = img.getAttribute("src"); avGrid.replaceChild(real, card); real.setImage(img); },
+        function () { failed++; card.setState(server.ok && !server.key ? "Limite gratuite atteinte, réessayez dans une minute." : "L'IA n'a pas répondu.", false); });
+    })).then(function () {
+      if (failed === 4) {
+        photoBlocked = true;
+        $("avNote").textContent = sample
+          ? "Les images externes sont bloquées dans cet aperçu. Choisissez « Dessin vectoriel (Claude) », ou ouvrez votre site sur /studio/ pour les photos."
+          : "L'IA d'images n'a pas répondu. Vérifiez votre connexion et réessayez.";
+      }
+    });
+  }
+
+  function generateSvgs(f) {
+    var cards = [0, 1].map(function () { var c = avCard({ name: f.name, style: f.style, bg: f.bg }, {}); avGrid.appendChild(c); c.setState("Claude dessine…", true); return c; });
+    var prompt = "Dessine 2 variantes d'un avatar en SVG autonome.\n" +
+      "Personne : " + f.desc + (f.outfit ? "\nTenue : " + f.outfit : "") +
+      "\nStyle : " + AV_STYLE_FR[f.style] + " (rendu vectoriel, formes douces, dégradés autorisés)" +
+      "\nDécor : " + AV_BG_FR[f.bg] +
+      "\nCadrage : tête et épaules, centré, regard vers la caméra." +
+      "\nRègles : viewBox=\"0 0 512 512\", aucun texte, aucun <script>, aucune image ni lien externe, moins de 7000 caractères par SVG." +
+      "\nRéponds uniquement en JSON : {\"svgs\": [\"<svg ...>...</svg>\", \"<svg ...>...</svg>\"]}";
+    return sample.json(prompt, { cache: false }).then(function (res) {
+      var list = (res && Array.isArray(res.svgs)) ? res.svgs : [];
+      cards.forEach(function (card, i) {
+        var svg = list[i] ? cleanSvg(list[i]) : null;
+        if (!svg) { card.setState("Dessin illisible, réessayez.", false); return; }
+        var av = { id: "s" + Date.now() + i, name: f.name, desc: f.desc, outfit: f.outfit, style: f.style, bg: f.bg, engine: "claude", svg: svg };
+        var real = avCard(av, {}); avGrid.replaceChild(real, card); real.setImage(avatarSrc(av));
+      });
+    }, function (e) {
+      var msg = { not_granted: "Accès à Claude refusé pour cette page.", rate_limited: "Trop de demandes, réessayez dans un moment.", refused: "Claude a refusé cette description ; modifiez-la." }[e && e.code] || "Claude n'a pas pu dessiner, réessayez.";
+      cards.forEach(function (c) { c.setState(msg, false); });
+    });
+  }
+
+  avForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = readAvForm();
+    if (!f.desc) { toast("Décrivez la personne avant de créer l'avatar."); $("avDesc").focus(); return; }
+    avGrid.innerHTML = ""; $("avNote").textContent = "";
+    avBtn.disabled = true; avBtn.textContent = "Création…";
+    var job = f.engine === "claude" && sample ? generateSvgs(f) : generatePhotos(f);
+    job.then(function () { avBtn.disabled = false; avBtn.textContent = f.engine === "claude" ? "Créer 2 variantes" : "Créer 4 variantes"; });
+  });
+  avForm.addEventListener("change", function (e) {
+    if (e.target.name === "avEngine") avBtn.textContent = e.target.value === "claude" ? "Créer 2 variantes" : "Créer 4 variantes";
+  });
+
+  // Dans l'aperçu claude.ai, Claude peut dessiner les avatars en SVG.
+  if (window.claude && window.claude.use) {
+    window.claude.use("sample").then(function (s) {
+      if (!s) return;
+      sample = s;
+      $("e2").parentNode.querySelector("label[for=e2]").hidden = false;
+      $("e2").checked = true; avBtn.textContent = "Créer 2 variantes";
+    }, function () {});
+  }
+  $("e2").addEventListener("focus", function () { if (!sample) $("e1").checked = true; });
+
+  // --- Galerie de styles ---
   var REEL = [
     { t: "Publicité parfum", m: "Cinéma", k: "mid", fmt: "9:16 · 15 s" },
     { t: "Clip musical", m: "Animation", k: "wide", fmt: "9:16 · 30 s" },
@@ -515,24 +923,25 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     { t: "Dessin animé enfant", m: "Animation", k: "mid", fmt: "9:16 · 30 s" },
     { t: "Restaurant", m: "Réaliste", k: "close", fmt: "9:16 · 12 s" }
   ];
-  var reel = document.getElementById("reel");
+  var reel = $("reel");
   REEL.forEach(function (c, i) {
     var d = document.createElement("div"); d.className = "clip" + (c.wide ? " wide" : "");
     var cv = document.createElement("canvas"); cv.width = c.wide ? 640 : 360; cv.height = c.wide ? 500 : 640;
     d.appendChild(cv);
     d.insertAdjacentHTML("beforeend", '<div class="cap"><strong>' + c.t + '</strong><span>' + c.m.toUpperCase() + ' · ' + c.fmt + '</span></div><button type="button">Refaire</button>');
     d.querySelector("button").addEventListener("click", function () {
-      document.getElementById("prompt").value = c.t + " : remplacez cette phrase par votre sujet.";
+      $("prompt").value = c.t + " : remplacez cette phrase par votre sujet.";
       form.querySelector("input[name=model][value='" + c.m + "']").checked = true;
-      render(false);
-      document.getElementById("studio").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-      document.getElementById("prompt").focus({ preventScroll: true });
+      state.images = []; state.run++; render(false);
+      $("studio").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      $("prompt").focus({ preventScroll: true });
       toast("Style « " + c.t + " » chargé dans le studio.");
     });
     reel.appendChild(d);
     frame(cv.getContext("2d"), cv.width, cv.height, GRADES[c.m], c.k, 40 + i * 13, 0);
   });
 
+  renderSaved();
   render(false);
   if (!reduce) requestAnimationFrame(tick);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { buildStrip(); });

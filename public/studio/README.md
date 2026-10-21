@@ -1,19 +1,25 @@
-# Bobine — page vitrine
+# Bobine — studio vidéo IA (usage personnel)
 
-Page d'accueil d'un studio vidéo IA, servie par Karat à l'adresse `/studio/`
-(fichier statique dans `public/`, aucune dépendance).
+Page servie par Karat à l'adresse `/studio/` (`public/studio/index.html`).
 
-## Ce qui fonctionne déjà
-- Console de génération : idée, modèle, format, durée, fichiers de référence.
-  Le bouton « Générer » dessine un storyboard de démonstration dans le
-  navigateur (canvas). Aucune vraie vidéo n'est produite.
-- Galerie de styles (bouton « Refaire » qui recharge le style dans la console),
-  méthode, fonctions, comparatif, FAQ.
+## Fonctionnalités
+- **Avatars** : description, tenue, style (photo, cinéma, 3D, animé,
+  illustration) et décor → 4 variantes générées par IA. « Garder » les
+  enregistre dans le navigateur (localStorage) ; « Utiliser dans une vidéo »
+  en fait le personnage du storyboard.
+- **Storyboard** : idée, modèle visuel, format et durée → 4 plans générés en
+  image par IA (le personnage choisi y apparaît), animés dans l'aperçu. Si
+  l'IA ne répond pas, le plan est dessiné par le navigateur.
+- Galerie de styles (« Refaire »), méthode, fonctions, comparatif, FAQ.
 
-## Pour en faire un vrai service
-1. Choisir une API de génération vidéo et ajouter une route serveur
-   (ex. `POST /api/studio/generate`) qui garde la clé API côté serveur.
-2. Dans le `submit` du formulaire `#gen`, appeler cette route et afficher la
-   vidéo renvoyée dans `.screen` à la place du canvas.
+Ce ne sont pas encore de vraies vidéos : ce sont des images animées.
 
-Les textes sont provisoires : remplacez-les.
+## Génération d'images
+Les images passent par `GET /api/studio/image` (`src/routes/studio.routes.js`),
+qui appelle Pollinations côté serveur :
+- **sans clé** : accès anonyme gratuit, environ une image toutes les 45 s ;
+- **avec `POLLINATIONS_KEY`** (clé secrète `sk_…`, créée sur
+  https://enter.pollinations.ai/keys) : beaucoup plus rapide. À ajouter dans
+  `.env` en local ou dans les variables d'environnement de Render.
+
+La route est limitée à 60 images par tranche de 10 minutes et par adresse IP.
