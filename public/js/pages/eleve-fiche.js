@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 export async function afficher(el, { id, nouveau }) {
@@ -11,7 +11,8 @@ export async function afficher(el, { id, nouveau }) {
   const info = (lib, val) => (val ? `<div><div class="petit muted">${e(lib)}</div><div class="gras">${val}</div></div>` : '');
 
   el.innerHTML = `
-    ${nouveau ? `<div class="alerte succes">✔ Inscription enregistrée. ${gestion && insc ? '<button class="btn petit vert" id="payer-insc">Encaisser les frais d\'inscription</button>' : ''}</div>` : ''}
+    ${nouveau ? `<div class="alerte succes">✔ Inscription enregistrée. ${gestion && insc ? `<button class="btn petit" id="facture-nouveau">🖨️ Facture d'inscription</button>
+      ${d.solde && d.solde.inscriptionFrais.reste > 0 ? '<button class="btn petit vert" id="payer-insc">Encaisser les frais d\'inscription</button>' : ''}` : ''}</div>` : ''}
     ${v.statut === 'archive' ? `<div class="alerte attention">🗄️ Élève archivé le ${dateFr(v.date_sortie)} — ${e(v.motif_sortie || '')}</div>` : ''}
     ${v.remarques ? `<div class="alerte danger">⚠️ <div><b>À savoir :</b> ${e(v.remarques)}</div></div>` : ''}
     <div class="carte">
@@ -33,6 +34,7 @@ export async function afficher(el, { id, nouveau }) {
       </div>
       <div class="ligne" style="margin-top:1rem">
         ${gestion && insc && v.statut === 'actif' ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
+        ${gestion && insc ? '<button class="btn clair" id="facture">🧾 Facture d\'inscription</button>' : ''}
         ${gestion ? `<a class="btn clair" href="#/eleves/${v.id}/modifier">✏️ Modifier</a>` : ''}
         ${gestion ? '<button class="btn clair" id="message">💬 Message au parent</button>' : ''}
         ${insc ? `<button class="btn clair" id="carte">🪪 Carte d'élève</button>` : ''}
@@ -116,7 +118,34 @@ export async function afficher(el, { id, nouveau }) {
   const recharger = () => afficher(el, { id });
   const $ = (s) => el.querySelector(s);
   if ($('#payer')) $('#payer').onclick = () => encaisser(v.id, recharger);
-  if ($('#payer-insc')) $('#payer-insc').onclick = () => encaisser(v.id, recharger).then(() => { const t = document.querySelector('.modale #type'); if (t) { t.value = 'inscription'; t.dispatchEvent(new Event('change')); } });
+  const payerInscription = () => encaisser(v.id, recharger).then(() => { const t = document.querySelector('.modale #type'); if (t) { t.value = 'inscription'; t.dispatchEvent(new Event('change')); } });
+  const facture = () => imprimer(`/eleves/${v.id}/facture-inscription.pdf`);
+  if ($('#payer-insc')) $('#payer-insc').onclick = payerInscription;
+  if ($('#facture')) $('#facture').onclick = facture;
+  if ($('#facture-nouveau')) $('#facture-nouveau').onclick = facture;
+
+  // Juste après une inscription : la facture est proposée tout de suite (une seule fois).
+  if (nouveau && gestion && insc) {
+    history.replaceState(null, '', `#/eleves/${v.id}`);
+    const fi = d.solde ? d.solde.inscriptionFrais : { du: insc.frais_inscription, reste: insc.frais_inscription };
+    const md = modale('✔ Inscription enregistrée', `
+      <p class="centre" style="margin-top:0"><b>${e(v.prenom)} ${e(v.nom)}</b> — ${e(insc.classe)}<br>
+        <span class="muted">Matricule ${e(v.matricule)}</span></p>
+      <div class="grille g2" style="margin-bottom:.8rem">
+        <div class="kpi" style="--couleur:var(--primaire)"><div class="lib">Frais d'inscription</div><div class="val">${argent(fi.du)}</div></div>
+        <div class="kpi" style="--couleur:var(--secondaire)"><div class="lib">Mensualité</div><div class="val">${argent(insc.mensualite - insc.reduction)}</div></div>
+      </div>
+      <button class="btn bloc" data-facture style="font-size:1.1rem;padding:.9rem">🖨️ Imprimer la facture d'inscription</button>
+      <div class="grille g2" style="margin-top:.6rem">
+        <button class="btn clair" data-pdf>📄 Voir / télécharger le PDF</button>
+        ${fi.reste > 0 ? '<button class="btn vert" data-payer>💰 Encaisser les frais maintenant</button>' : ''}
+      </div>`, { actions: '<button class="btn clair" data-f>Plus tard</button>' });
+    md.el.querySelector('[data-f]').onclick = md.fermer;
+    md.el.querySelector('[data-facture]').onclick = facture;
+    md.el.querySelector('[data-pdf]').onclick = () => ouvrir(`/eleves/${v.id}/facture-inscription.pdf`);
+    const p = md.el.querySelector('[data-payer]');
+    if (p) p.onclick = () => { md.fermer(); payerInscription(); };
+  }
   if ($('#carte')) $('#carte').onclick = () => ouvrir(`/exports/cartes.pdf?eleve_ids=${v.id}`);
   if ($('#message')) {
     $('#message').onclick = () => formulaire(`Message au parent de ${v.prenom}`,
