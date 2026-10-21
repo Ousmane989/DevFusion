@@ -9,7 +9,7 @@
 // Les exécutions automatiques sont tracées dans `rappels_executions` pour ne
 // jamais envoyer deux fois le même rappel, même après un redémarrage.
 const { query, one } = require('../db');
-const { nomMois, montant, remplir, dateFr, aujourdhui, debutMois, ajouterMois } = require('../utils');
+const { nomMois, deMois, montant, remplir, dateFr, aujourdhui, debutMois, ajouterMois } = require('../utils');
 const finance = require('./finance');
 const { envoyerMessages } = require('./whatsapp');
 
@@ -55,8 +55,9 @@ async function preparer(mois, type, { impayesSeulement, classeId } = {}) {
       eleve: `${s.prenom} ${s.nom}`,
       statut: s.statut,
       montant: s.reste > 0 ? s.reste : s.du,
-      texte: remplir(modele, {
-        nom_parent: s.parent, mois: nomMois(mois), nom_eleve: `${s.prenom} ${s.nom}`, prenom_eleve: s.prenom,
+      // « de {mois} » devient « d'octobre » / « de novembre » selon le mois.
+      texte: remplir(modele.replace(/\bde \{mois\}/g, '{de_mois}'), {
+        de_mois: deMois(mois), nom_parent: s.parent, mois: nomMois(mois), nom_eleve: `${s.prenom} ${s.nom}`, prenom_eleve: s.prenom,
         classe: s.classe, montant: montant(s.reste > 0 ? s.reste : s.du, p.devise), date_limite: limite, ecole: p.nom_ecole,
       }),
     }));
@@ -64,23 +65,32 @@ async function preparer(mois, type, { impayesSeulement, classeId } = {}) {
 
 /** Envoie les rappels préparés et renvoie les messages enregistrés. */
 async function envoyer(mois, type, opts = {}) {
-  const liste = await preparer(mois, type, opts);
-  const messages = await envoyerMessages(liste, { type, mois, userId: opts.userId, canal: opts.canal });
-  return messages;
+  let liste = await preparer(mois, type, opts);
+  if (opts.sansDoublon) {
+    // Envoi automatique : on saute les familles déjà prévenues pour ce mois (envoi
+    // manuel de la directrice, ou passage précédent interrompu).
+    const deja = await query('SELECT DISTINCT eleve_id FROM messages WHERE type = $1 AND mois = $2 AND eleve_id IS NOT NULL', [type, mois]);
+    const prevenus = new Set(deja.map((d) => d.eleve_id));
+    liste = liste.filter((m) => !prevenus.has(m.eleve_id));
+  }
+  return envoyerMessages(liste, { type, mois, userId: opts.userId, canal: opts.canal, avant: opts.avant });
 }
 
 /**
  * Tâche quotidienne : envoie les rappels dus aujourd'hui (avec rattrapage
  * si le serveur était arrêté le jour prévu, dans la limite de 5 jours).
- * @returns {Promise<Array<{mois, type, nb}>>}
+ * Un envoi interrompu (limite de temps de l'hébergeur) reprend au passage suivant,
+ * sans renvoyer aux familles déjà prévenues.
+ * @returns {Promise<Array<{mois, type, nb, termine}>>}
  */
-async function tacheQuotidienne(jour = aujourdhui()) {
+async function tacheQuotidienne(jour = aujourdhui(), { dureeMax = 40000 } = {}) {
   const p = await one('SELECT * FROM parametres WHERE id = 1');
   if (!p.rappel_auto) return [];
   const annee = await finance.anneeActive();
   if (!annee) return [];
   const moisAnnee = finance.moisAnnee(annee);
   const faits = [];
+  const avant = Date.now() + dureeMax;
   const ecart = (a, b) => Math.round((new Date(`${a}T12:00:00`) - new Date(`${b}T12:00:00`)) / 86400000);
 
   const candidats = [debutMois(jour), ajouterMois(debutMois(jour), -1), ajouterMois(debutMois(jour), -2)];
@@ -90,16 +100,22 @@ async function tacheQuotidienne(jour = aujourdhui()) {
     if (p.second_rappel_actif) taches.push(['second_rappel', dateSecondRappel(mois, p)]);
     for (const [type, date] of taches) {
       const retard = ecart(jour, date);
-      if (retard < 0 || retard > 5) continue;
-      const deja = await one('SELECT 1 FROM rappels_executions WHERE mois = $1 AND type = $2', [mois, type]);
-      if (deja) continue;
-      // On réserve l'exécution avant l'envoi pour éviter tout doublon concurrent.
-      const res = await query(
-        'INSERT INTO rappels_executions (mois, type) VALUES ($1,$2) ON CONFLICT DO NOTHING RETURNING mois', [mois, type]);
-      if (!res.length) continue;
-      const msgs = await envoyer(mois, type);
-      await query('UPDATE rappels_executions SET nb_messages = $1 WHERE mois = $2 AND type = $3', [msgs.length, mois, type]);
-      faits.push({ mois, type, nb: msgs.length });
+      if (retard < 0 || retard > 10) continue;
+      const exec = await one('SELECT termine FROM rappels_executions WHERE mois = $1 AND type = $2', [mois, type]);
+      if (exec ? exec.termine : retard > 5) continue; // rattrapage : 5 jours ; reprise d'un envoi inachevé : 10 jours
+      // Réservation (nouvelle tâche, ou reprise d'une tâche inachevée dont le verrou a expiré).
+      await query(
+        'INSERT INTO rappels_executions (mois, type, termine) VALUES ($1,$2,FALSE) ON CONFLICT DO NOTHING', [mois, type]);
+      const prise = await query(
+        `UPDATE rappels_executions SET verrou = now() WHERE mois = $1 AND type = $2 AND NOT termine
+            AND (verrou IS NULL OR verrou < now() - interval '3 minutes') RETURNING mois`, [mois, type]);
+      if (!prise.length) continue;
+      const msgs = await envoyer(mois, type, { sansDoublon: true, avant });
+      const termine = !msgs.incomplet;
+      await query(
+        `UPDATE rappels_executions SET nb_messages = nb_messages + $1, termine = $2, verrou = NULL, execute_le = now()
+          WHERE mois = $3 AND type = $4`, [msgs.length, termine, mois, type]);
+      faits.push({ mois, type, nb: msgs.length, termine });
     }
   }
   return faits;

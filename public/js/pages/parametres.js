@@ -149,7 +149,7 @@ export async function afficher(el, params) {
 
     async sauvegardes() {
       const liste = await get('/parametres/sauvegardes');
-      zone.innerHTML = `<div class="alerte info">Une sauvegarde complète est faite automatiquement chaque nuit (les 10 dernières sont conservées, dans la base de données).
+      zone.innerHTML = `<div class="alerte info">Une sauvegarde complète est faite automatiquement chaque nuit (les 10 dernières sont conservées, dans la base de données ; les photos des élèves et le logo n'y sont pas inclus).
           Téléchargez-en une régulièrement et gardez-la sur une clé USB ou un autre ordinateur.</div>
         <div class="ligne" style="margin-bottom:.8rem"><button class="btn" id="maintenant">💾 Sauvegarder maintenant</button></div>
         ${tableau([
