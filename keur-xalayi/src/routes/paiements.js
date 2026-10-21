@@ -3,7 +3,7 @@
 // Paiements : encaissement, journal, statut par mois, impayés, reçus.
 const express = require('express');
 const { query, one, tx } = require('../db');
-const { ah, HttpError, exiger, vide, aujourdhui, debutMois, nomMois, montant, remplir, MODES_PAIEMENT } = require('../utils');
+const { ah, HttpError, exiger, vide, aujourdhui, debutMois, nomMois, deMois, montant, remplir, MODES_PAIEMENT } = require('../utils');
 const { autoriser } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
@@ -161,7 +161,7 @@ async function messageRecu(req, numero) {
        JOIN classes c ON c.id = i.classe_id WHERE pa.numero_recu = $1 AND NOT pa.annule ORDER BY pa.mois`, [numero]);
   if (!lignes.length) throw new HttpError(404, 'Reçu introuvable.');
   const l = lignes[0];
-  const objet = lignes.map((x) => (x.type === 'mensualite' ? `mensualité de ${nomMois(x.mois)}` : x.type === 'inscription' ? 'frais d\'inscription' : 'paiement')).join(', ');
+  const objet = lignes.map((x) => (x.type === 'mensualite' ? `mensualité ${deMois(x.mois)}` : x.type === 'inscription' ? 'frais d\'inscription' : 'paiement')).join(', ');
   const texte = remplir(p.modele_recu, {
     nom_parent: l.parent, nom_eleve: `${l.prenom} ${l.nom}`, classe: l.classe,
     montant: montant(lignes.reduce((s, x) => s + x.montant, 0), p.devise), objet, numero, ecole: p.nom_ecole,

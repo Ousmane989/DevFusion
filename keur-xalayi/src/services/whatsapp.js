@@ -61,7 +61,8 @@ async function envoyerTwilio(telephone, texte, document) {
 /**
  * Envoie (ou prépare) une liste de messages et les enregistre.
  * @param {Array<{telephone, texte, destinataire, eleve_id, document?}>} liste
- * @param {{type, mois?, userId?, canal?}} opts  canal 'manuel' force les liens wa.me
+ * @param {{type, mois?, userId?, canal?, avant?}} opts  canal 'manuel' force les liens wa.me ;
+ *        avant = heure limite (ms) au-delà de laquelle on arrête (résultat marqué « incomplet »)
  * @returns {Promise<Array>} messages enregistrés (+ lien wa.me)
  */
 async function envoyerMessages(liste, opts) {
@@ -69,6 +70,8 @@ async function envoyerMessages(liste, opts) {
   const lot = crypto.randomUUID();
   const resultats = [];
   for (const msg of liste) {
+    // Limite de temps (hébergement serverless) : on s'arrête proprement, la suite partira au prochain passage.
+    if (opts.avant && Date.now() > opts.avant) { resultats.incomplet = true; break; }
     let statut = 'a_envoyer';
     let erreur = null;
     let idExterne = null;
