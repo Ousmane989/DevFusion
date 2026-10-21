@@ -2,7 +2,6 @@
 
 // Paramètres de l'école, tarifs par niveau, matières/compétences, sauvegardes.
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const { query, one } = require('../db');
 const { ah, HttpError, vide } = require('../utils');
@@ -111,7 +110,8 @@ router.delete('/competences/:id', autoriser('directeur'), ah(async (req, res) =>
 
 // ---- Sauvegardes ----
 router.get('/sauvegardes', autoriser('directeur'), ah(async (req, res) => {
-  res.json(await query('SELECT * FROM sauvegardes ORDER BY created_at DESC LIMIT 30'));
+  res.json(await query(
+    'SELECT id, fichier, taille, auto, created_at FROM sauvegardes WHERE donnees IS NOT NULL ORDER BY created_at DESC LIMIT 30'));
 }));
 
 router.post('/sauvegardes', autoriser('directeur'), ah(async (req, res) => {
@@ -119,10 +119,9 @@ router.post('/sauvegardes', autoriser('directeur'), ah(async (req, res) => {
 }));
 
 router.get('/sauvegardes/:id/telecharger', autoriser('directeur'), ah(async (req, res) => {
-  const s = await one('SELECT * FROM sauvegardes WHERE id = $1', [req.params.id]);
-  const fichier = s && path.join(config.dossierSauvegardes, path.basename(s.fichier));
-  if (!fichier || !fs.existsSync(fichier)) throw new HttpError(404, 'Fichier de sauvegarde introuvable.');
-  res.download(fichier);
+  const s = await one('SELECT fichier, donnees FROM sauvegardes WHERE id = $1 AND donnees IS NOT NULL', [req.params.id]);
+  if (!s) throw new HttpError(404, 'Sauvegarde introuvable.');
+  res.type('application/gzip').set('Content-Disposition', `attachment; filename="${path.basename(s.fichier)}"`).send(s.donnees);
 }));
 
 module.exports = router;
