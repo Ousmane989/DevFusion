@@ -1,5 +1,5 @@
 // Liste des élèves : recherche, filtres, export, archivés.
-import { get, e, tableau, lignesCliquables, options, avatar, dateFr, estRole, boutonsExport, activerExports, qs, ouvrir } from '../ui.js';
+import { get, e, tableau, lignesCliquables, options, avatar, dateFr, estRole, boutonsExport, activerExports, qs, ouvrir, imprimer } from '../ui.js';
 
 let minuteur;
 
@@ -35,8 +35,12 @@ export async function afficher(el, params) {
     ];
     if (filtres.statut === 'archive') cols.push({ titre: 'Sortie', rendu: (l) => `${dateFr(l.date_sortie)}<div class="petit muted">${e(l.motif_sortie || '')}</div>` });
     else cols.push({ titre: 'Remarques', rendu: (l) => (l.remarques ? `<span class="badge attention" title="${e(l.remarques)}">⚠ ${e(l.remarques.slice(0, 28))}</span>` : '') });
+    if (estRole('directeur') && filtres.statut === 'actif') {
+      cols.push({ titre: '', rendu: (l) => (l.classe ? `<button class="btn petit clair" style="white-space:nowrap" data-facture="${l.id}" title="Imprimer la facture d'inscription">🧾 Facture</button>` : '') });
+    }
     const zone = el.querySelector('#liste');
     zone.innerHTML = tableau(cols, lignes, { clic: true, vide: 'Aucun élève ne correspond à la recherche.' });
+    zone.querySelectorAll('[data-facture]').forEach((b) => { b.onclick = () => imprimer(`/eleves/${b.dataset.facture}/facture-inscription.pdf`); });
     lignesCliquables(zone, lignes, (l) => { location.hash = `#/eleves/${l.id}`; });
   };
 
