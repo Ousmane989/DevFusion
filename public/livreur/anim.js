@@ -1,4 +1,4 @@
-/* Karat Livreur — animations : révélations au défilement, compteurs, titres
+/* Karat Logistique — animations : révélations au défilement, compteurs, titres
    mot par mot, inclinaison 3D, onde des boutons, barre de progression, transitions
    de page. Le contenu chargé plus tard (listes, tableaux, carte) est pris en
    charge automatiquement. Tout est désactivé si l'utilisateur préfère moins

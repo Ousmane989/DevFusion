@@ -1,7 +1,7 @@
 'use strict';
 
 // ------------------------------------------------------------------
-// Karat Livreur — schéma et données de référence.
+// Karat Logistique — schéma et données de référence.
 // Tables préfixées « lv_ » (indépendantes des boutiques Karat). Le schéma est
 // créé au premier appel, pour SQLite comme pour PostgreSQL. Les horodatages
 // sont fournis par l'application (now()) pour rester identiques sur les deux
@@ -186,14 +186,14 @@ async function seed() {
     const ex = await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(adminPhone);
     if (!ex) {
       await db.prepare('INSERT INTO lv_users (role, name, phone, password_hash, status, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-        .run('agence', 'Agence Karat Livreur', adminPhone, await hashPassword(adminPassword), 'active', now());
+        .run('agence', 'Agence Karat Logistique', adminPhone, await hashPassword(adminPassword), 'active', now());
     }
   }
 
   // Comptes de démonstration — uniquement hors production.
   if (!config.isProd) {
     const demo = [
-      ['agence', 'Agence (démo)', '22200000001', 'Karat Livreur'],
+      ['agence', 'Agence (démo)', '22200000001', 'Karat Logistique'],
       ['partenaire', 'Boutique Démo', '22200000002', 'Boutique Démo'],
       ['coursier', 'Sidi (démo)', '22200000003', ''],
     ];
