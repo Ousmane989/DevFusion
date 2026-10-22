@@ -60,8 +60,7 @@ const LISTES = {
     verifierClasse(req, req.query.classe_id);
     const c = await one('SELECT c.*, p.nom || \' \' || p.prenom AS enseignant FROM classes c LEFT JOIN personnel p ON p.id = c.enseignant_id WHERE c.id = $1', [req.query.classe_id]);
     const lignes = await query(
-      `SELECT e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.remarques,
-              COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent
+      `SELECT e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.remarques
          FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
         WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti' ORDER BY e.nom, e.prenom`, [req.query.classe_id]);
     lignes.forEach((l, k) => { l.n = k + 1; l.sexe_l = l.sexe === 'M' ? 'G' : 'F'; l.naissance = dateFr(l.date_naissance); });
@@ -73,8 +72,7 @@ const LISTES = {
         { titre: 'N°', cle: 'n', largeur: 0.4 }, { titre: 'Matricule', cle: 'matricule', largeur: 1 },
         { titre: 'Nom', cle: 'nom', largeur: 1.3 }, { titre: 'Prénom', cle: 'prenom', largeur: 1.4 },
         { titre: 'Sexe', cle: 'sexe_l', largeur: 0.5 }, { titre: 'Né(e) le', cle: 'naissance', largeur: 0.9 },
-        { titre: 'Parent', cle: 'parent', largeur: 1.6 }, // sans numéro de téléphone
-        { titre: 'Remarques', cle: 'remarques', largeur: 1.8 },
+        { titre: 'Remarques', cle: 'remarques', largeur: 3.4 }, // ni parent ni téléphone sur la liste de classe
       ],
       lignes,
     };
