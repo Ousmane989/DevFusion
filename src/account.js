@@ -14,7 +14,7 @@ const PLANS = {
   pro: {
     id: 'pro', name: 'Pro', mru: 1500, fcfa: 9000, maxProducts: 300, maxShops: 3, api: false, popular: true,
     tagline: 'Pour les commerçants qui vendent chaque jour',
-    features: ["Jusqu'à 3 boutiques", "Jusqu'à 300 produits", 'Livraison avec Karat Livreur', 'Marketing : Pixel Meta, catalogue Facebook', 'Finances & statistiques avancées'],
+    features: ["Jusqu'à 3 boutiques", "Jusqu'à 300 produits", 'Livraison avec Karat Logistique', 'Marketing : Pixel Meta, catalogue Facebook', 'Finances & statistiques avancées'],
   },
   business: {
     id: 'business', name: 'Business', mru: 3500, fcfa: 21000, maxProducts: null, maxShops: 10, api: true,
