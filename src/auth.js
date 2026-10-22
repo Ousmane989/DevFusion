@@ -4,12 +4,19 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'karat-dev-secret-change-me';
-// Session longue durée : le commerçant reste connecté sur son appareil et ne
-// se déconnecte qu'en cliquant sur « Déconnexion ». 400 jours est le maximum
-// autorisé par les navigateurs (Chrome) pour la durée de vie d'un cookie.
-const TOKEN_TTL = '400d';
-const COOKIE_MAX_AGE = 400 * 24 * 60 * 60 * 1000;
+const { config } = require('./config');
+
+// Clé de signature des sessions commerçant : dérivée du secret robuste de la
+// configuration (variable JWT_SECRET, ou secret privé généré / dérivé de la
+// base — jamais une valeur par défaut connue). Dérivation dédiée pour que le
+// jeton d'un autre espace (Karat Livreur) ne soit jamais accepté ici.
+const JWT_SECRET = crypto.createHmac('sha256', config.jwtSecret).update('karat-merchant-session').digest('hex');
+// Session glissante : le commerçant reste connecté tant qu'il utilise
+// l'application (le jeton est renouvelé à l'usage), mais un appareil oublié
+// ou un jeton volé expire au bout de 60 jours d'inactivité.
+const TOKEN_TTL = '60d';
+const COOKIE_MAX_AGE = 60 * 24 * 60 * 60 * 1000;
+const REFRESH_AFTER_S = 12 * 60 * 60; // renouvellement au plus toutes les 12 h
 const COOKIE_NAME = 'karat_session';
 
 // ------------------------------------------------------------------
@@ -36,8 +43,13 @@ function hashCode(code) {
 // ------------------------------------------------------------------
 // Jetons de session (JWT dans un cookie httpOnly)
 // ------------------------------------------------------------------
+// Empreinte du mot de passe, embarquée dans le jeton : changer ou réinitialiser
+// le mot de passe invalide aussitôt toutes les sessions ouvertes ailleurs.
+function passwordFingerprint(passwordHash) {
+  return crypto.createHmac('sha256', JWT_SECRET).update(String(passwordHash || '')).digest('base64url').slice(0, 16);
+}
 function signSession(user) {
-  return jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  return jwt.sign({ uid: user.id, pv: passwordFingerprint(user.password_hash) }, JWT_SECRET, { expiresIn: TOKEN_TTL });
 }
 function verifySession(token) {
   try {
@@ -61,6 +73,8 @@ function clearSessionCookie(res) {
 
 module.exports = {
   COOKIE_NAME,
+  REFRESH_AFTER_S,
+  passwordFingerprint,
   hashPassword,
   verifyPassword,
   generateCode,

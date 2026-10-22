@@ -10,6 +10,17 @@
   node_bundler = "nft"
   included_files = ["public/**", "src/**"]
 
+# En-têtes de sécurité aussi sur les fichiers servis directement par le CDN
+# (pages HTML statiques) — ils ne passent pas par Express.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Content-Security-Policy = "frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://wa.me https://api.whatsapp.com"
+
 # Le service worker ne doit pas être mis en cache longtemps (mises à jour).
 [[headers]]
   for = "/sw.js"

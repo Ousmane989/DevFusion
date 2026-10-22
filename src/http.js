@@ -8,6 +8,9 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // Politique prudente : interdit l'intégration dans un site tiers (clickjacking),
+  // les plugins et la réécriture de l'URL de base des liens.
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://wa.me https://api.whatsapp.com");
   if (config.isProd) {
     res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   }

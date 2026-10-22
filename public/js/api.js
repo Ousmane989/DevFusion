@@ -11,6 +11,10 @@ window.Karat = (function () {
     });
     let data = {};
     try { data = await res.json(); } catch (_) {}
+    // Essai ou abonnement terminé : direction la page d'activation.
+    if (res.status === 402 && data && data.code === 'locked' && location.pathname !== '/paiement') {
+      location.href = '/paiement';
+    }
     return { ok: res.ok, status: res.status, data };
   }
 

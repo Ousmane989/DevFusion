@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 
 const { config, isAdminUser } = require('./config');
 const { securityHeaders, publicCors } = require('./http');
-const { loadUser } = require('./middleware');
+const { loadUser, requireActive } = require('./middleware');
 const authRoutes = require('./routes/auth.routes');
 const billingRoutes = require('./routes/billing.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
@@ -93,21 +93,21 @@ app.get('/api', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/billing', billingRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/products', productsRoutes);
-app.use('/api/store', storeRoutes);
-app.use('/api/orders', ordersRoutes);
+app.use('/api/dashboard', requireActive, dashboardRoutes);
+app.use('/api/products', requireActive, productsRoutes);
+app.use('/api/store', requireActive, storeRoutes);
+app.use('/api/orders', requireActive, ordersRoutes);
 app.use('/api/account', accountRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/push', pushRoutes);
-app.use('/api/marketing', marketingRoutes);
-app.use('/api/shops', shopsRoutes);
+app.use('/api/analytics', requireActive, analyticsRoutes);
+app.use('/api/finance', requireActive, financeRoutes);
+app.use('/api/push', requireActive, pushRoutes);
+app.use('/api/marketing', requireActive, marketingRoutes);
+app.use('/api/shops', requireActive, shopsRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/formation', formationRoutes);
-app.use('/api/delivery', require('./routes/delivery.routes'));
-app.use('/api/dev', developerRoutes);
-app.use('/api/v1', publicCors, apiV1Routes);
+app.use('/api/formation', requireActive, formationRoutes);
+app.use('/api/delivery', requireActive, require('./routes/delivery.routes'));
+app.use('/api/dev', requireActive, developerRoutes);
+app.use('/api/v1', publicCors, apiV1Routes); // clé d'API : blocage géré dans apiKeyAuth
 app.use('/api/public', publicCors, publicRoutes);
 app.use('/api/livreur', livreurApi);
 

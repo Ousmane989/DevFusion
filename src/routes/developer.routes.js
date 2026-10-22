@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { listOrders } = require('../ordersStore');
+const { getUserById } = require('../account');
 const { publicProduct } = require('../catalog');
 const { listWebhooks, deliver } = require('../webhooks');
 
@@ -86,6 +87,10 @@ async function apiKeyAuth(req, res, next) {
     const row = await db.prepare('SELECT * FROM api_keys WHERE key_hash = ?').get(sha256(key));
     if (!row) return res.status(401).json({ error: 'Clé API invalide.' });
     await db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?").run(row.id);
+    // Boutique dont l'essai ou l'abonnement (porté par le compte) a expiré.
+    const shop = await getUserById(row.user_id);
+    const acct = shop && shop.owner_id ? await getUserById(shop.owner_id) : shop;
+    if (!acct || acct.status === 'locked') return res.status(402).json({ error: 'Abonnement Karat expiré.', code: 'locked' });
     req.apiUserId = row.user_id;
     next();
   } catch (err) { next(err); }
