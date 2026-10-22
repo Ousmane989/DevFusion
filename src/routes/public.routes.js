@@ -8,6 +8,7 @@ const { themeById, defaultShipping, publicProduct, slugify, isoCurrency } = requ
 const { createOrder } = require('../ordersStore');
 const { config } = require('../config');
 const { findStore } = require('../storefront');
+const { getUserById } = require('../account');
 const LV = require('../livreur/store');
 
 const router = express.Router();
@@ -66,6 +67,12 @@ async function findUserBySlug(slug) {
   return s ? s.user : null;
 }
 
+// Vitrine en pause : l'essai ou l'abonnement du compte propriétaire a expiré.
+async function isPaused(user) {
+  const acct = await getUserById(user.owner_id || user.id);
+  return !acct || acct.status === 'locked';
+}
+
 async function shippingFor(userId) {
   const row = await db.prepare('SELECT shipping_json FROM store_settings WHERE user_id = ?').get(userId);
   let sh = defaultShipping();
@@ -77,6 +84,7 @@ async function shippingFor(userId) {
 router.get('/store/:slug', async (req, res) => {
   const user = await findUserBySlug(req.params.slug);
   if (!user) return res.status(404).json({ error: 'Boutique introuvable.' });
+  if (await isPaused(user)) return res.json({ paused: true, shopName: user.shop_name });
 
   const settings = await db.prepare('SELECT * FROM store_settings WHERE user_id = ?').get(user.id);
   const theme = themeById(settings ? settings.theme : 'or-noir');
@@ -193,6 +201,7 @@ router.post('/store/:slug/event', eventLimiter, async (req, res) => {
 router.post('/store/:slug/order', orderLimiter, async (req, res) => {
   const user = await findUserBySlug(req.params.slug);
   if (!user) return res.status(404).json({ error: 'Boutique introuvable.' });
+  if (await isPaused(user)) return res.status(403).json({ error: 'Cette boutique est temporairement indisponible.' });
 
   const b = req.body || {};
   const errors = {};

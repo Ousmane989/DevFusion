@@ -2,10 +2,25 @@
 
 const db = require('./db');
 
+// Formules mensuelles — SOURCE UNIQUE des prix, limites et avantages (site
+// vitrine, inscription, page de paiement, espace admin). maxProducts /
+// maxShops : null = illimité.
 const PLANS = {
-  decouverte: { id: 'decouverte', name: 'Decouverte', mru: 500, fcfa: 3000 },
-  pro: { id: 'pro', name: 'Pro', mru: 1500, fcfa: 9000 },
-  business: { id: 'business', name: 'Business', mru: 3500, fcfa: 21000 },
+  decouverte: {
+    id: 'decouverte', name: 'Découverte', mru: 500, fcfa: 3000, maxProducts: 30, maxShops: 1, api: false,
+    tagline: 'Pour lancer votre première boutique',
+    features: ['1 boutique en ligne', "Jusqu'à 30 produits", 'Commandes & paiement à la livraison', 'Tableau de bord des ventes'],
+  },
+  pro: {
+    id: 'pro', name: 'Pro', mru: 1500, fcfa: 9000, maxProducts: 300, maxShops: 3, api: false, popular: true,
+    tagline: 'Pour les commerçants qui vendent chaque jour',
+    features: ["Jusqu'à 3 boutiques", "Jusqu'à 300 produits", 'Livraison avec Karat Livreur', 'Marketing : Pixel Meta, catalogue Facebook', 'Finances & statistiques avancées'],
+  },
+  business: {
+    id: 'business', name: 'Business', mru: 3500, fcfa: 21000, maxProducts: null, maxShops: 10, api: true,
+    tagline: 'Pour les marques et les grands catalogues',
+    features: ["Jusqu'à 10 boutiques", 'Produits illimités', 'Tout le contenu Pro', 'API & webhooks', 'Support prioritaire WhatsApp'],
+  },
 };
 
 const TRIAL_DAYS = Number(process.env.TRIAL_DAYS || 3);

@@ -592,7 +592,15 @@
     try {
       const res = await fetch('/api/public/store/' + encodeURIComponent(slug), { credentials: 'same-origin' });
       if (!res.ok) throw new Error('404');
-      render(await res.json());
+      const data = await res.json();
+      // Boutique en pause (essai ou abonnement du commerçant terminé).
+      if (data.paused) {
+        const name = String(data.shopName || 'Cette boutique').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        root.className = 'storefront lay-luxe';
+        root.innerHTML = '<div class="sf-empty" style="min-height:80vh;display:grid;place-content:center;text-align:center;gap:10px;padding:24px"><p style="font-size:1.4rem;font-weight:600">' + name + '</p><p>Boutique temporairement indisponible.</p><p class="sf-muted">Revenez bientôt : le commerçant réactive sa boutique.</p></div>';
+        return;
+      }
+      render(data);
     } catch (e) {
       root.className = 'storefront lay-luxe';
       root.innerHTML = '<div class="sf-empty" style="min-height:80vh;display:grid;place-content:center;text-align:center"><p>Boutique introuvable.</p><p class="sf-muted"><a href="/" style="color:inherit">Retour à Karat</a></p></div>';

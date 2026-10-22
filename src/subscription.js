@@ -1,17 +1,18 @@
 'use strict';
 
 // ------------------------------------------------------------------
-// Abonnement Karat — essai gratuit + activation manuelle.
+// Abonnement Karat — essai gratuit de 3 jours, puis formule mensuelle.
 // Le paiement se fait hors ligne (Wave / Orange Money / Bankily) : le
-// commerçant contacte l'administrateur sur WhatsApp, qui réactive le
-// compte manuellement depuis l'espace admin.
+// commerçant paie, envoie la capture à l'administrateur sur WhatsApp, et
+// l'administrateur active la formule depuis l'espace admin.
 // ------------------------------------------------------------------
 const { config } = require('./config');
+const { PLANS } = require('./account');
 
-// Prix mensuel affiché selon le pays d'inscription.
-const PRICING = {
-  SN: { amount: 5000, currency: 'FCFA', methods: ['wave', 'orange-money'] },
-  MR: { amount: 350, currency: 'MRU', methods: ['bankily'] },
+// Devise et moyens de paiement selon le pays d'inscription.
+const COUNTRY_BILLING = {
+  SN: { currency: 'FCFA', key: 'fcfa', methods: ['wave', 'orange-money'] },
+  MR: { currency: 'MRU', key: 'mru', methods: ['bankily'] },
 };
 
 // Libellés/visuels des moyens de paiement.
@@ -21,17 +22,31 @@ const METHODS = {
   bankily: { id: 'bankily', name: 'Bankily', desc: 'Mauritanie · portefeuille mobile', color: '#e8f0ff', text: '#1a3a7a' },
 };
 
-function priceFor(country) {
-  return PRICING[country] || PRICING.MR;
+const billingOf = (country) => COUNTRY_BILLING[country] || COUNTRY_BILLING.MR;
+const planOf = (planId) => PLANS[planId] || PLANS.pro;
+
+// Prix mensuel d'une formule pour un pays.
+function priceFor(country, planId) {
+  const b = billingOf(country);
+  return { amount: planOf(planId)[b.key], currency: b.currency };
 }
 
 function methodsFor(country) {
-  return priceFor(country).methods.map((id) => METHODS[id]).filter(Boolean);
+  return billingOf(country).methods.map((id) => METHODS[id]).filter(Boolean);
 }
 
-function formatPrice(country) {
-  const p = priceFor(country);
-  return p.amount.toLocaleString('fr-FR') + ' ' + p.currency;
+function formatPrice(country, planId) {
+  const p = priceFor(country, planId);
+  return p.amount.toLocaleString('fr-FR').replace(/ | /g, ' ') + ' ' + p.currency;
+}
+
+// Les 3 formules avec le prix du pays (pour le site, l'inscription, le paiement).
+function plansFor(country) {
+  return Object.values(PLANS).map((p) => ({
+    id: p.id, name: p.name, tagline: p.tagline, features: p.features, popular: Boolean(p.popular),
+    maxProducts: p.maxProducts, maxShops: p.maxShops,
+    price: { ...priceFor(country, p.id), label: formatPrice(country, p.id) },
+  }));
 }
 
 // Nombre de jours d'essai restants (ou null si pas en essai).
@@ -42,11 +57,12 @@ function trialDaysLeft(user) {
 
 // Lien WhatsApp pré-rempli vers l'administrateur pour activer l'abonnement.
 // `number` permet de surcharger le numéro (réglage admin) ; sinon config.
-function whatsappUrl(user, methodId, number) {
-  const price = formatPrice(user.country);
+function whatsappUrl(user, methodId, number, planId) {
+  const plan = planOf(planId || user.plan);
   const m = METHODS[methodId];
   const lines = [
-    'Bonjour, je souhaite activer mon abonnement Karat (' + price + ' / mois).',
+    'Bonjour, je souhaite activer mon abonnement Karat.',
+    'Formule : ' + plan.name + ' — ' + formatPrice(user.country, plan.id) + ' / mois',
     'Boutique : ' + (user.shop_name || ''),
     'E-mail : ' + (user.email || ''),
   ];
@@ -54,4 +70,15 @@ function whatsappUrl(user, methodId, number) {
   return 'https://wa.me/' + (number || config.adminWhatsapp) + '?text=' + encodeURIComponent(lines.join('\n'));
 }
 
-module.exports = { PRICING, METHODS, priceFor, methodsFor, formatPrice, trialDaysLeft, whatsappUrl };
+// Lien de paiement Wave réglé sur le montant de la formule (si le lien
+// configuré par l'admin porte un paramètre « amount »).
+function waveLinkFor(link, country, planId) {
+  if (!link) return '';
+  try {
+    const u = new URL(link);
+    if (u.searchParams.has('amount')) u.searchParams.set('amount', String(priceFor(country, planId).amount));
+    return u.toString();
+  } catch (_) { return link; }
+}
+
+module.exports = { METHODS, priceFor, methodsFor, formatPrice, plansFor, trialDaysLeft, whatsappUrl, waveLinkFor };

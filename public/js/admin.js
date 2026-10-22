@@ -100,6 +100,14 @@
       <div class="adm-actions">
         <div class="adm-act-msg" id="adm-act-msg"></div>
         <div class="adm-act-row">
+          <label style="flex:1 0 100%;display:flex;gap:10px;align-items:center;font-size:.85rem">Formule payée
+            <select id="adm-plan" style="flex:1;padding:8px;border-radius:8px;background:#141414;color:#fff;border:1px solid #333">
+              <option value="decouverte"${u.plan === 'decouverte' ? ' selected' : ''}>Découverte</option>
+              <option value="pro"${u.plan === 'pro' ? ' selected' : ''}>Pro</option>
+              <option value="business"${u.plan === 'business' ? ' selected' : ''}>Business</option>
+            </select></label>
+        </div>
+        <div class="adm-act-row">
           <button class="btn-adm gold" data-act="activate" data-days="30">Activer 30 jours</button>
           <button class="btn-adm gold" data-act="activate" data-days="90">Activer 90 jours</button>
           <button class="btn-adm gold" data-act="activate" data-days="365">Activer 1 an</button>
@@ -123,14 +131,16 @@
     if (act === 'delete') return deleteAccount(id);
     if (act === 'lock' && !window.confirm('Bloquer ce compte maintenant ? Le commerçant ne pourra plus accéder à son tableau de bord.')) return;
     if (m) { m.textContent = 'Traitement…'; m.className = 'adm-act-msg'; }
-    const r = await api(`/api/admin/users/${id}/${act}`, days ? { days } : {});
+    const body = days ? { days } : {};
+    if (act === 'activate') { const sel = q('#adm-plan'); if (sel) body.plan = sel.value; }
+    const r = await api(`/api/admin/users/${id}/${act}`, body);
     if (!r.ok) { if (m) { m.textContent = (r.data && r.data.error) || 'Erreur.'; m.className = 'adm-act-msg err'; } return; }
     await load();
     openDetail(id);
     const m2 = q('#adm-act-msg');
     if (m2) {
       m2.className = 'adm-act-msg ok';
-      m2.textContent = act === 'lock' ? 'Compte bloqué.' : act === 'trial' ? `Essai remis à ${days} jour(s).` : `Abonnement activé pour ${days} jours.`;
+      m2.textContent = act === 'lock' ? 'Compte bloqué.' : act === 'trial' ? `Essai remis à ${days} jour(s).` : `Formule ${r.data.planName || ''} activée pour ${days} jours.`;
     }
   }
 

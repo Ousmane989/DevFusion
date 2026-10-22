@@ -13,6 +13,16 @@
   <meta name="apple-mobile-web-app-title" content="Karat" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .plan-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .plan-opt { position: relative; cursor: pointer; }
+    .plan-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .plan-opt span { display: flex; flex-direction: column; gap: 2px; padding: 12px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); text-align: center; transition: border-color .2s, box-shadow .2s; }
+    .plan-opt b { font-size: .95rem; } .plan-opt em { font-style: normal; font-size: .8rem; color: var(--text-mute); }
+    .plan-opt i { font-style: normal; font-size: .68rem; color: var(--gold, #d4af37); letter-spacing: .04em; text-transform: uppercase; }
+    .plan-opt input:checked + span { border-color: var(--gold, #d4af37); box-shadow: 0 0 0 1px var(--gold, #d4af37) inset; }
+    .plan-opt input:focus-visible + span { outline: 2px solid var(--gold, #d4af37); outline-offset: 2px; }
+  </style>
 </head>
 <body>
   <div class="auth-wrap">
@@ -24,7 +34,7 @@
         <h2>Lancez votre boutique <span class="gold-text">premium</span> en quelques minutes.</h2>
         <p>Rejoignez les commerçants de Mauritanie et du Sénégal qui vendent en ligne avec élégance.</p>
         <ul class="aside-points">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Gratuit, sans engagement ni carte</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> 3 jours d'essai gratuit, sans carte bancaire</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Paiements locaux Bankily, Wave, Orange Money</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Tableau de bord et statistiques en temps réel</li>
         </ul>
@@ -78,6 +88,16 @@
             </div>
           </div>
 
+          <div class="field" data-field="plan">
+            <label>Formule (après les 3 jours gratuits)</label>
+            <div class="plan-pick" id="plan-pick" role="radiogroup">
+              <label class="plan-opt"><input type="radio" name="plan" value="decouverte" /><span><b>Découverte</b><em data-price="decouverte">—</em></span></label>
+              <label class="plan-opt"><input type="radio" name="plan" value="pro" checked /><span><b>Pro</b><em data-price="pro">—</em><i>Populaire</i></span></label>
+              <label class="plan-opt"><input type="radio" name="plan" value="business" /><span><b>Business</b><em data-price="business">—</em></span></label>
+            </div>
+            <div class="hint">Essai gratuit de 3 jours, puis paiement mensuel par Bankily, Wave ou Orange Money. Modifiable à tout moment.</div>
+          </div>
+
           <div class="field" data-field="password">
             <label for="password">Mot de passe</label>
             <div class="pw-wrap">
@@ -91,7 +111,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">Créer mon compte</button>
-          <p class="hint" style="text-align:center;margin-top:14px">Gratuit · Sans engagement ni carte bancaire</p>
+          <p class="hint" style="text-align:center;margin-top:14px">3 jours gratuits · Sans engagement · Sans carte bancaire</p>
         </form>
       </div>
     </main>
@@ -108,8 +128,16 @@
       // Devise selon le pays choisi.
       const countrySel = document.getElementById('country');
       const hint = document.getElementById('country-hint');
-      const updCur = () => { hint.textContent = 'Devise : ' + (countrySel.value === 'SN' ? 'FCFA' : 'MRU'); };
+      // Prix des formules selon le pays (source unique : /api/billing/plans).
+      async function loadPrices() {
+        const r = await Karat.api('/api/billing/plans?country=' + countrySel.value);
+        (r.data.plans || []).forEach((p) => { const el = document.querySelector('[data-price="' + p.id + '"]'); if (el) el.textContent = p.price.label + ' / mois'; });
+      }
+      const updCur = () => { hint.textContent = 'Devise : ' + (countrySel.value === 'SN' ? 'FCFA' : 'MRU'); loadPrices(); };
       countrySel.addEventListener('change', updCur); updCur();
+      // Formule choisie sur le site vitrine (?formule=pro).
+      const pre = Karat.qs('formule');
+      if (pre) { const r = form.querySelector('input[name="plan"][value="' + pre + '"]'); if (r) r.checked = true; }
 
       function setInvalid(fieldName, on, text) {
         const el = document.querySelector('[data-field="' + fieldName + '"]');
@@ -130,6 +158,7 @@
           shopName: form.shopName.value.trim(),
           country: form.country.value,
           password: form.password.value,
+          plan: (form.querySelector('input[name="plan"]:checked') || {}).value || 'pro',
         };
 
         btn.disabled = true;

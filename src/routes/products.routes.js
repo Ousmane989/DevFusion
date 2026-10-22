@@ -4,6 +4,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { publicProduct, productImages, CATEGORIES } = require('../catalog');
+const { PLANS } = require('../account');
 
 const router = express.Router();
 
@@ -50,6 +51,15 @@ router.post('/', requireAuth, async (req, res) => {
   const b = req.body || {};
   const errors = validate(b);
   if (Object.keys(errors).length) return res.status(400).json({ errors });
+
+  // Limite de produits de la formule (portée par le compte).
+  const plan = PLANS[(req.account || req.user).plan] || PLANS.pro;
+  if (plan.maxProducts != null) {
+    const n = await db.prepare('SELECT COUNT(*) AS n FROM products WHERE user_id = ?').get(req.user.id);
+    if (Number(n.n) >= plan.maxProducts) {
+      return res.status(403).json({ code: 'plan_limit', error: `Votre formule ${plan.name} est limitée à ${plan.maxProducts} produits. Passez à une formule supérieure pour en ajouter.` });
+    }
+  }
 
   // Galerie : liste d'images (1 à 3). Rétro-compat : accepte aussi `image` seul.
   const imgs = sanitizeImages(b.images !== undefined ? b.images : b.image);

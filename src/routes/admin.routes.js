@@ -206,11 +206,13 @@ router.post('/users/:id/activate', async (req, res, next) => {
     const u = await loadAccount(Number(req.params.id));
     if (!u) return res.status(404).json({ error: 'Compte introuvable.' });
     const days = Math.min(3650, Math.max(1, Number(req.body?.days) || 30));
+    // Formule payée (sinon on garde celle choisie par le commerçant).
+    const plan = PLANS[req.body?.plan] ? req.body.plan : (PLANS[u.plan] ? u.plan : 'pro');
     await db.prepare(
-      "UPDATE users SET status = 'active', subscription_ends_at = ? WHERE id = ?"
-    ).run(isoIn(days), u.id);
+      "UPDATE users SET status = 'active', plan = ?, subscription_ends_at = ? WHERE id = ?"
+    ).run(plan, isoIn(days), u.id);
     const fresh = await getUserById(u.id);
-    res.json({ ok: true, days, status: fresh.status, subscriptionEndsAt: fresh.subscription_ends_at });
+    res.json({ ok: true, days, plan, planName: PLANS[plan].name, status: fresh.status, subscriptionEndsAt: fresh.subscription_ends_at });
   } catch (err) { next(err); }
 });
 
