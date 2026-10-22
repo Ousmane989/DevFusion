@@ -32,8 +32,8 @@ export async function afficher(el, { id }) {
     { titre: 'N°', rendu: (l) => c.eleves.indexOf(l) + 1 },
     { titre: 'Élève', rendu: (l) => `<div class="qui">${avatar({ ...l, eleve_id: l.id })}<div><b>${e(l.prenom)} ${e(l.nom)}</b><div class="petit muted">${e(l.matricule)}</div></div></div>` },
     { titre: 'Sexe', rendu: (l) => (l.sexe === 'M' ? 'G' : 'F') },
-    { titre: 'Naissance', rendu: (l) => dateFr(l.date_naissance) || '—' },
-    { titre: 'Remarques', rendu: (l) => (l.remarques ? `<span class="badge attention">⚠ ${e(l.remarques.slice(0, 40))}</span>` : '') },
+    { titre: 'Date de naissance', rendu: (l) => dateFr(l.date_naissance) || '—' },
+    { titre: 'Lieu de naissance', rendu: (l) => e(l.lieu_naissance || '—') },
   ], c.eleves, { clic: true, vide: 'Aucun élève dans cette classe.' });
   lignesCliquables(zone, c.eleves, (l) => { location.hash = `#/eleves/${l.id}`; });
 
