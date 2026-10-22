@@ -296,6 +296,13 @@ test('corrections de la revue : décisions, mois de paiement, données cachées 
   // Les enseignants ne voient pas les tarifs ni les réductions
   const liste = (await appel('ens', '/api/eleves')).donnees;
   assert.ok(liste.length > 0 && liste.every((x) => !('mensualite' in x) && !('reduction' in x)));
+  // Numéros de tous les pays (France, Côte d'Ivoire), puis retour au numéro sénégalais
+  for (const [saisi, attendu] of [['+33 6 12 34 56 78', '+33612345678'], ['00225 07 07 12 34 56', '+2250707123456'], ['77 123 45 67', '+221771234567']]) {
+    const r = await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { whatsapp: saisi } });
+    assert.strictEqual(r.statut, 200, `${saisi} : ${JSON.stringify(r.donnees)}`);
+    assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve.whatsapp, attendu);
+  }
+  assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { whatsapp: '+33 6 12' } })).statut, 400);
   // Champ obligatoire vidé : 400 et non 500
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { prenom: '  ' } })).statut, 400);
   // 10 échecs de connexion : blocage (compté en base)

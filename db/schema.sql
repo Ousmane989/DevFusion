@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS parametres (
   telephone               TEXT,
   email                   TEXT,
   devise                  TEXT    NOT NULL DEFAULT 'FCFA' CHECK (devise IN ('MRU','FCFA')),
-  indicatif_defaut        TEXT    NOT NULL DEFAULT '+221' CHECK (indicatif_defaut IN ('+221','+222')),
+  indicatif_defaut        TEXT    NOT NULL DEFAULT '+221' CHECK (indicatif_defaut ~ '^\+[1-9][0-9]{0,3}$'), -- indicatif de n'importe quel pays
   -- Rappels WhatsApp
   rappel_auto             BOOLEAN NOT NULL DEFAULT TRUE,
   rappel_jour             INTEGER NOT NULL DEFAULT 25 CHECK (rappel_jour BETWEEN 1 AND 28),
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS eleves (
   pere_nom         TEXT,
   mere_nom         TEXT,
   tuteur_nom       TEXT,
-  whatsapp         TEXT NOT NULL CHECK (whatsapp ~ '^\+(222|221)[0-9]{8,9}$'),
+  whatsapp         TEXT NOT NULL CHECK (whatsapp ~ '^\+[1-9][0-9]{6,14}$'), -- format international, tous pays
   telephone2       TEXT,
   adresse          TEXT,
   remarques        TEXT,                                 -- allergies, infos importantes
@@ -346,15 +346,30 @@ CREATE SEQUENCE IF NOT EXISTS seq_matricule;
 CREATE SEQUENCE IF NOT EXISTS seq_recu;
 
 -- ---------- Modes de paiement acceptés (Sénégal et Mauritanie) ----------
--- Reconstruite seulement si elle n'accepte pas encore « sedad » (évite de verrouiller
+-- Reconstruite seulement si elle n'accepte pas encore « carte » (évite de verrouiller
 -- et revérifier la table des paiements à chaque démarrage).
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'paiements_mode_check'
-                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%sedad%') THEN
+                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%carte%') THEN
     ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_mode_check;
     ALTER TABLE paiements ADD CONSTRAINT paiements_mode_check CHECK (mode IN
-      ('especes','wave','orange_money','free_money','virement','cheque','bankily','masrvi','sedad'));
+      ('especes','wave','orange_money','free_money','mobile_money','carte','virement','cheque','bankily','masrvi','sedad'));
+  END IF;
+END $$;
+
+-- ---------- Indicatifs de tous les pays (plus seulement Sénégal / Mauritanie) ----------
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'parametres_indicatif_defaut_check'
+               AND pg_get_constraintdef(oid) LIKE '%+222%') THEN
+    ALTER TABLE parametres DROP CONSTRAINT parametres_indicatif_defaut_check;
+    ALTER TABLE parametres ADD CONSTRAINT parametres_indicatif_defaut_check CHECK (indicatif_defaut ~ '^\+[1-9][0-9]{0,3}$');
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'eleves_whatsapp_check'
+               AND pg_get_constraintdef(oid) LIKE '%222|221%') THEN
+    ALTER TABLE eleves DROP CONSTRAINT eleves_whatsapp_check;
+    ALTER TABLE eleves ADD CONSTRAINT eleves_whatsapp_check CHECK (whatsapp ~ '^\+[1-9][0-9]{6,14}$');
   END IF;
 END $$;
 
