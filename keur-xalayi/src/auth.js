@@ -14,7 +14,8 @@ function creerSession(res, user) {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.isProd,
-    maxAge: config.sessionHeures * 3600 * 1000,
+    // Cookie de session (sans durée) : effacé à la fermeture du navigateur ; le jeton
+    // expire de toute façon après sessionHeures.
   });
 }
 

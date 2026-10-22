@@ -146,6 +146,35 @@ document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible' && !document.querySelector('.modale-fond') && await nouvelleVersion()) location.reload();
 });
 
+// ---- Sécurité : retour à la page de connexion quand on quitte l'application ----
+// • Application fermée (onglet, fenêtre ou appli installée) : la marque « kx-ouverte »,
+//   gardée en sessionStorage, disparaît ; au prochain lancement on se reconnecte.
+// • Application quittée plus de 2 minutes (autre appli, écran verrouillé, autre onglet) :
+//   déconnexion au retour. Ce délai laisse le temps d'envoyer un reçu sur WhatsApp
+//   ou d'imprimer un PDF ouvert dans un autre onglet.
+const ABSENCE_MAX = 2 * 60 * 1000;
+// Navigateur qui refuse sessionStorage (certains modes privés) : pas de contrôle, sinon on
+// renverrait sans fin vers la page de connexion.
+const STOCKAGE_DISPO = (() => { try { sessionStorage.setItem('kx-test', '1'); sessionStorage.removeItem('kx-test'); return true; } catch { return false; } })();
+const stockage = {
+  lire: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
+  ecrire: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* stockage indisponible */ } },
+  effacer: (k) => { try { sessionStorage.removeItem(k); } catch { /* stockage indisponible */ } },
+};
+async function deconnecter() {
+  stockage.effacer('kx-ouverte'); stockage.effacer('kx-quittee');
+  try { await post('/auth/deconnexion'); } catch { /* hors connexion : le cookie sera refusé plus tard */ }
+  location.replace('/');
+}
+const quitter = () => stockage.ecrire('kx-quittee', String(Date.now()));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { quitter(); return; }
+  const depuis = Number(stockage.lire('kx-quittee'));
+  stockage.effacer('kx-quittee');
+  if (depuis && Date.now() - depuis > ABSENCE_MAX) deconnecter();
+});
+window.addEventListener('pagehide', quitter);
+
 /** Recharge les informations de l'école (après modification des paramètres). */
 export async function rafraichirContexte() {
   const moi = await get('/auth/moi');
@@ -158,6 +187,10 @@ export async function rafraichirContexte() {
 }
 
 async function demarrer() {
+  // Ouverture sans passer par la page de connexion (application relancée) : reconnexion.
+  const depuis = Number(stockage.lire('kx-quittee'));
+  if (STOCKAGE_DISPO && (stockage.lire('kx-ouverte') !== '1' || (depuis && Date.now() - depuis > ABSENCE_MAX))) { deconnecter(); return; }
+  stockage.effacer('kx-quittee');
   try {
     await Promise.all([rafraichirContexte(), chargerPays()]);
   } catch (err) {
@@ -169,7 +202,7 @@ async function demarrer() {
   construireMenu();
   $('btn-menu').onclick = ouvrirMenu;
   $('voile').onclick = fermerMenu;
-  $('btn-deco').onclick = async () => { await post('/auth/deconnexion'); location.replace('/'); };
+  $('btn-deco').onclick = deconnecter;
   $('btn-mdp').onclick = () => formulaire('Changer mon mot de passe',
     champ('Mot de passe actuel', '<input type="password" name="actuel" required autocomplete="current-password">', { requis: true })
     + champ('Nouveau mot de passe', '<input type="password" name="nouveau" required minlength="6" autocomplete="new-password">', { requis: true, aide: '6 caractères minimum.' }),
