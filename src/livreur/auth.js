@@ -1,6 +1,6 @@
 'use strict';
 
-// Sessions Karat Livreur : cookie dédié, distinct de la session des boutiques.
+// Sessions Karat Logistique : cookie dédié, distinct de la session des boutiques.
 const jwt = require('jsonwebtoken');
 const { config } = require('../config');
 const { db } = require('./store');
@@ -28,7 +28,7 @@ function publicUser(u) {
   return rest;
 }
 
-/** Attache req.lv (utilisateur Karat Livreur connecté). */
+/** Attache req.lv (utilisateur Karat Logistique connecté). */
 async function loadLv(req, _res, next) {
   try {
     const token = req.cookies && req.cookies[COOKIE];

@@ -1,6 +1,6 @@
 'use strict';
 
-// Pages Karat Livreur (/livreur/…) : fichiers de public/livreur, avec
+// Pages Karat Logistique (/livreur/…) : fichiers de public/livreur, avec
 // redirection vers la connexion pour les espaces protégés.
 const path = require('path');
 const express = require('express');

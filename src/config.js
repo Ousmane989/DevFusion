@@ -73,7 +73,7 @@ const config = {
   // Numéro WhatsApp de l'administrateur (format international sans « + »).
   // Sert au lien d'activation manuelle de l'abonnement.
   adminWhatsapp: (process.env.ADMIN_WHATSAPP || '221787489776').replace(/[^0-9]/g, ''),
-  // Karat Livreur (agence de livraison, Mauritanie) : coordonnées affichées
+  // Karat Logistique (agence de livraison, Mauritanie) : coordonnées affichées
   // sur le site et compte agence d'amorçage.
   // Valeurs par défaut dans public/livreur/defaults.json (partagé avec le site).
   livreur: {
