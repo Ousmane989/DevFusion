@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { listOrders } = require('../ordersStore');
-const { getUserById } = require('../account');
+const { PLANS, getUserById } = require('../account');
 const { publicProduct } = require('../catalog');
 const { listWebhooks, deliver } = require('../webhooks');
 
@@ -31,7 +31,14 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // POST /api/dev/key { label } — genere une cle (renvoyee EN CLAIR une seule fois)
-router.post('/key', requireAuth, async (req, res) => {
+// API & webhooks : réservés à la formule Business.
+function requireApiPlan(req, res, next) {
+  const plan = PLANS[(req.account || req.user).plan] || PLANS.pro;
+  if (!plan.api) return res.status(403).json({ code: 'plan_limit', error: "L'API et les webhooks sont inclus dans la formule Business." });
+  next();
+}
+
+router.post('/key', requireAuth, requireApiPlan, async (req, res) => {
   const label = String((req.body && req.body.label) || 'Ma clé').trim().slice(0, 60) || 'Ma clé';
   const secret = crypto.randomBytes(24).toString('hex');
   const key = 'karat_live_' + secret;
@@ -49,7 +56,7 @@ router.delete('/key/:id', requireAuth, async (req, res) => {
 });
 
 // POST /api/dev/webhook { url, events }
-router.post('/webhook', requireAuth, async (req, res) => {
+router.post('/webhook', requireAuth, requireApiPlan, async (req, res) => {
   const b = req.body || {};
   const url = String(b.url || '').trim();
   if (!/^https?:\/\/.+/i.test(url)) return res.status(400).json({ errors: { url: 'URL invalide (http/https).' } });

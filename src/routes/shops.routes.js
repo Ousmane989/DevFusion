@@ -7,7 +7,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { signSession, setSessionCookie } = require('../auth');
-const { isoIn, getUserById, publicUser } = require('../account');
+const { PLANS, isoIn, getUserById, publicUser } = require('../account');
 const { COUNTRIES, currencyOf, slugify } = require('../catalog');
 
 const router = express.Router();
@@ -44,6 +44,12 @@ router.post('/', requireAuth, async (req, res) => {
   const b = req.body || {};
   const name = String(b.name || '').trim();
   if (name.length < 2) return res.status(400).json({ errors: { name: 'Nom de la boutique requis.' } });
+  // Nombre de boutiques de la formule (boutique principale comprise).
+  const plan = PLANS[req.account.plan] || PLANS.pro;
+  const owned = await db.prepare('SELECT COUNT(*) AS n FROM users WHERE id = ? OR owner_id = ?').get(req.account.id, req.account.id);
+  if (Number(owned.n) >= plan.maxShops) {
+    return res.status(403).json({ code: 'plan_limit', error: `Votre formule ${plan.name} permet ${plan.maxShops} boutique${plan.maxShops > 1 ? 's' : ''}. Passez à une formule supérieure pour en créer une autre.` });
+  }
   const country = COUNTRIES[b.country] ? b.country : req.account.country || 'MR';
   const currency = currencyOf(country);
   // E-mail synthétique unique (les boutiques secondaires ne se connectent pas

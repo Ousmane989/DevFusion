@@ -28,6 +28,7 @@
           <li><a href="#accueil">Accueil</a></li>
           <li><a href="#fonctionnalites">Fonctionnalités</a></li>
           <li><a href="#modeles">Modèles</a></li>
+          <li><a href="#tarifs">Tarifs</a></li>
           <li><a href="#faq">FAQ</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
@@ -54,6 +55,7 @@
     <a href="#accueil">Accueil</a>
     <a href="#fonctionnalites">Fonctionnalités</a>
     <a href="#modeles">Modèles</a>
+    <a href="#tarifs">Tarifs</a>
     <a href="#faq">FAQ</a>
     <a href="#contact">Contact</a>
     <div class="m-cta">
@@ -72,10 +74,10 @@
         <h1 class="reveal d1">Votre boutique en ligne,<br /><span class="gold-text">pure comme l'or.</span></h1>
         <p class="hero-sub reveal d2">Karat permet aux commerçants d'ouvrir une boutique en ligne élégante, d'ajouter leurs produits et d'encaisser des paiements locaux — sans écrire une seule ligne de code.</p>
         <div class="hero-actions reveal d3">
-          <a href="/inscription" class="btn btn-primary btn-lg">Créer ma boutique gratuitement</a>
+          <a href="/inscription" class="btn btn-primary btn-lg">Essayer gratuitement 3 jours</a>
           <a href="#modeles" class="btn btn-ghost btn-lg">Voir les modèles</a>
         </div>
-        <p class="hero-note reveal d3">Gratuit · Sans engagement · Sans carte bancaire</p>
+        <p class="hero-note reveal d3">3 jours gratuits · Sans engagement · Sans carte bancaire</p>
 
         <!-- Aperçu maquette + décorations animées -->
         <div class="hero-visual reveal d4">
@@ -347,6 +349,22 @@
     </section>
 
     <!-- ==================== FAQ ==================== -->
+    <section class="section" id="tarifs">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Tarifs</span>
+          <h2>Une formule pour chaque étape</h2>
+          <p>Commencez par <b>3 jours gratuits</b>, sans carte bancaire. Ensuite, un abonnement mensuel sans engagement.</p>
+          <div class="price-toggle" role="tablist" aria-label="Pays">
+            <button type="button" class="on" data-country="MR">🇲🇷 Mauritanie · MRU</button>
+            <button type="button" data-country="SN">🇸🇳 Sénégal · FCFA</button>
+          </div>
+        </div>
+        <div class="price-grid" id="price-grid"></div>
+        <p class="price-foot reveal">Paiement par Bankily, Wave ou Orange Money · Activation sur WhatsApp à réception de la capture · Changez de formule quand vous voulez</p>
+      </div>
+    </section>
+
     <section class="section" id="faq">
       <div class="container">
         <div class="section-head reveal">
@@ -356,11 +374,11 @@
         <div class="faq reveal">
           <div class="faq-item">
             <button class="faq-q">Combien coûte Karat ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-            <div class="faq-a"><div class="faq-a-inner">Karat est actuellement gratuit : créez votre compte, ouvrez votre boutique et vendez, sans abonnement ni carte bancaire. Vous profitez de toutes les fonctionnalités librement.</div></div>
+            <div class="faq-a"><div class="faq-a-inner">Vous commencez par 3 jours d'essai gratuit, sans carte bancaire. Ensuite, choisissez votre formule mensuelle : Découverte, Pro ou Business (voir la section Tarifs). Sans engagement : vous arrêtez quand vous voulez.</div></div>
           </div>
           <div class="faq-item">
-            <button class="faq-q">Combien de temps puis-je l'utiliser ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-            <div class="faq-a"><div class="faq-a-inner">Aussi longtemps que vous le souhaitez pendant cette phase. Votre boutique et vos données restent disponibles, sans limite de durée ni interruption.</div></div>
+            <button class="faq-q">Comment payer mon abonnement ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+            <div class="faq-a"><div class="faq-a-inner">Payez avec Bankily (Mauritanie), Wave ou Orange Money (Sénégal), puis envoyez la capture de paiement sur WhatsApp depuis votre espace : votre formule est activée dès vérification. Si vous ne renouvelez pas, votre boutique est mise en pause et vos données sont conservées.</div></div>
           </div>
           <div class="faq-item">
             <button class="faq-q">Quels moyens de paiement sont acceptés ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -388,7 +406,7 @@
         <div class="cta-inner reveal">
           <p class="eyebrow">Prêt à vendre ?</p>
           <h2>Ouvrez votre boutique <span class="gold-text">dès aujourd'hui</span></h2>
-          <p>Rejoignez les commerçants qui font grandir leur activité avec Karat. Gratuit, sans engagement ni carte bancaire.</p>
+          <p>Rejoignez les commerçants qui font grandir leur activité avec Karat. 3 jours d'essai gratuit, sans engagement ni carte bancaire.</p>
           <a href="/inscription" class="btn btn-primary btn-lg">Créer ma boutique</a>
         </div>
       </div>
@@ -468,5 +486,33 @@
 
   <script src="/js/main.js"></script>
   <script src="/js/i18n.js"></script>
+  <script>
+    // Tarifs : source unique /api/billing/plans (mêmes prix que l'inscription et le paiement).
+    (function () {
+      const grid = document.getElementById('price-grid');
+      if (!grid) return;
+      const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      async function load(country) {
+        try {
+          const r = await fetch('/api/billing/plans?country=' + country);
+          const d = await r.json();
+          grid.innerHTML = d.plans.map((p) => `
+            <article class="price-card${p.popular ? ' popular' : ''}">
+              ${p.popular ? '<span class="price-badge">Le plus choisi</span>' : ''}
+              <h3>${esc(p.name)}</h3>
+              <p class="price-tag">${esc(p.tagline)}</p>
+              <div class="price-num">${esc(p.price.label)}<span> / mois</span></div>
+              <ul>${p.features.map((f) => '<li>' + esc(f) + '</li>').join('')}</ul>
+              <a href="/inscription?formule=${esc(p.id)}" class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block">Essayer 3 jours gratuits</a>
+            </article>`).join('');
+        } catch (_) { grid.innerHTML = ''; }
+      }
+      document.querySelectorAll('.price-toggle button').forEach((b) => b.addEventListener('click', () => {
+        document.querySelectorAll('.price-toggle button').forEach((x) => x.classList.toggle('on', x === b));
+        load(b.dataset.country);
+      }));
+      load('MR');
+    })();
+  </script>
 </body>
 </html>
