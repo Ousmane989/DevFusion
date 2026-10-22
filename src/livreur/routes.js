@@ -1,7 +1,7 @@
 'use strict';
 
 // ------------------------------------------------------------------
-// API Karat Livreur — /api/livreur
+// API Karat Logistique — /api/livreur
 //   public      : infos, suivi de colis, contact, inscription partenaire
 //   partenaire  : commandes, stock, reversements, relevés
 //   coursier    : tournée du jour, statuts, caisse
@@ -216,7 +216,7 @@ router.post('/setup', loginLimiter, wrap(async (req, res) => {
   if (password !== String(b.password2 || '')) return bad(res, 'Les deux mots de passe ne correspondent pas.');
   if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Ce numéro est déjà utilisé par un autre compte.', 409);
   await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, created_at)
-    VALUES ('agence', ?, ?, ?, 'active', 'Karat Livreur', ?)`).run(name, phone, await hashPassword(password), S.now());
+    VALUES ('agence', ?, ?, ?, 'active', 'Karat Logistique', ?)`).run(name, phone, await hashPassword(password), S.now());
   const u = await db.prepare('SELECT * FROM lv_users WHERE phone = ?').get(phone);
   setLvSession(res, u);
   res.status(201).json({ user: publicUser(u), redirect: HOME.agence });
@@ -289,7 +289,7 @@ partner.post('/orders', wrap(async (req, res) => {
     ...b,
     sender_name: req.lv.business_name || req.lv.name,
     sender_phone: req.lv.phone,
-    pickup_address: str(b.pickup_address) || (int(b.stock_id) ? 'Entrepôt Karat Livreur' : req.lv.address),
+    pickup_address: str(b.pickup_address) || (int(b.stock_id) ? 'Entrepôt Karat Logistique' : req.lv.address),
   }, { source: 'partenaire', partnerId: req.lv.id });
   if (o.error) return bad(res, o.error);
   const saved = await insertOrder(o, req.lv.business_name || req.lv.name);
@@ -331,7 +331,7 @@ partner.get('/payouts', wrap(async (req, res) => {
 
 partner.get('/export.csv', wrap(async (req, res) => {
   const rows = await db.prepare('SELECT * FROM lv_orders WHERE partner_id = ? ORDER BY id DESC').all(req.lv.id);
-  res.set('Content-Disposition', 'attachment; filename="releve-karat-livreur.csv"');
+  res.set('Content-Disposition', 'attachment; filename="releve-karat-logistique.csv"');
   res.type('text/csv; charset=utf-8').send(toCsv(rows));
 }));
 
@@ -654,7 +654,7 @@ agency.put('/messages/:id', wrap(async (req, res) => {
 
 agency.get('/export.csv', wrap(async (_req, res) => {
   const rows = await db.prepare('SELECT * FROM lv_orders ORDER BY id DESC').all();
-  res.set('Content-Disposition', 'attachment; filename="commandes-karat-livreur.csv"');
+  res.set('Content-Disposition', 'attachment; filename="commandes-karat-logistique.csv"');
   res.type('text/csv; charset=utf-8').send(toCsv(rows));
 }));
 

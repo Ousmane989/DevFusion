@@ -1,4 +1,4 @@
-/* Karat Livreur — mode jour / nuit.
+/* Karat Logistique — mode jour / nuit.
    Chargé dans <head> (avant la feuille de style) pour appliquer le thème avant
    le premier affichage, sans clignotement.
    - Choix enregistré par le visiteur (bouton soleil / lune) : il est conservé.

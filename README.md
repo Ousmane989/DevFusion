@@ -61,7 +61,7 @@ sont **désactivées si `prefers-reduced-motion`** est actif.
 
 ---
 
-## 🚚 Karat Livreur — agence de livraison (Mauritanie)
+## 🚚 Karat Logistique — agence de livraison (Mauritanie)
 
 Agence de livraison **dédiée aux e-commerçants** (boutiques Instagram, Facebook,
 TikTok, sites web), intégrée à l'application et accessible sur **`/livreur`**.
@@ -82,7 +82,7 @@ Une connexion refuse les comptes de l'autre espace.
 
 **Premier compte agence** : tant qu'aucun compte agence n'existe, la page
 `/livreur/agence/connexion` propose de le créer (une seule fois). Ensuite,
-l'agence ajoute ses agents (Équipe) et ses livreurs (Livreurs). Karat Livreur
+l'agence ajoute ses agents (Équipe) et ses livreurs (Livreurs). Karat Logistique
 est indépendant des comptes du site Karat.
 Données séparées des boutiques (tables `lv_*`, créées automatiquement en SQLite
 comme en PostgreSQL) et session dédiée.

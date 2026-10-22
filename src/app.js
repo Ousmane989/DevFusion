@@ -146,7 +146,7 @@ app.get('/admin/connexion', (req, res, next) => {
   res.sendFile(path.join(PUBLIC_DIR, 'admin-connexion.html'));
 });
 
-// Karat Livreur : agence de livraison (vitrine, suivi, espaces).
+// Karat Logistique : agence de livraison (vitrine, suivi, espaces).
 app.use('/livreur', livreurPages);
 
 app.get('/boutique/:slug', (req, res) => {

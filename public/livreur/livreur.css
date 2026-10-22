@@ -1,5 +1,5 @@
 /* ==================================================================
-   KARAT LIVREUR — design system
+   KARAT LOGISTIQUE — design system
    Thème blanc, palette sobre : un seul vert + neutres. Le rouge est
    réservé aux alertes (erreurs, compteurs, échecs).
    Animations partout : intro, révélations au défilement, compteurs,
@@ -195,7 +195,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 11px; font-family: var(--head); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
 .brand-mark {
   width: 42px; height: 42px; border-radius: 13px; background: var(--brand);
-  display: grid; place-items: center; color: var(--accent); flex: none; position: relative; overflow: hidden;
+  display: grid; place-items: center; color: #fff; flex: none; position: relative; overflow: hidden;
   box-shadow: 0 8px 18px -8px rgba(11,107,67,.7);
 }
 .brand-mark::after { content: none; }

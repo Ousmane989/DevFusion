@@ -1,4 +1,4 @@
-/* Karat Livreur — utilitaires partagés (pages publiques et espaces). */
+/* Karat Logistique — utilitaires partagés (pages publiques et espaces). */
 window.LV = (function () {
   'use strict';
 
@@ -39,7 +39,7 @@ window.LV = (function () {
 
   // Logo : camion stylisé + barre rouge (couleurs du drapeau).
   function brand(sub) {
-    return '<a href="/livreur" class="brand"><span class="brand-mark">' + icon('truck') + '</span><span><span class="brand-name">Karat <b>Livreur</b></span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
+    return '<a href="/livreur" class="brand"><span class="brand-mark">' + icon('truck') + '</span><span><span class="brand-name">Karat <b>Logistique</b></span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
   }
 
   // ----- Carte de la Mauritanie (SVG, projection équirectangulaire) -----
@@ -253,7 +253,7 @@ window.LV = (function () {
         '<div><h4>Partenaires</h4><ul><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
         '<div><h4>Contact</h4><ul><li><a data-contact="phone" href="#"><span>…</span></a></li><li><a data-contact="email" href="#"><span>…</span></a></li><li><a data-contact="address"><span>…</span></a></li>' +
         '<li style="margin-top:6px"><a href="/livreur/agence/connexion">' + icon('headset', 'ico') + ' Espace agence</a></li></ul></div>' +
-        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Livreur — Nouakchott, République Islamique de Mauritanie</span><span>Vous vendez, on livre</span></div></div></footer>' +
+        '</div><div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Karat Logistique — Nouakchott, République Islamique de Mauritanie</span><span>Vous vendez, on livre</span></div></div></footer>' +
         '<a class="wa-float" data-contact="wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">' + WA_SVG + '</a>';
     }
     fillContacts();
