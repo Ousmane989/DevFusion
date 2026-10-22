@@ -55,11 +55,46 @@ export const MODES = {
   especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Mixx by Yas (Free Money)',
   virement: 'Virement bancaire', cheque: 'Chèque', bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad',
 };
-/** Modes proposés dans les formulaires selon le pays de l'école (indicatif +221 = Sénégal). */
+/** Modes proposés dans les formulaires selon le pays de l'école (indicatif téléphonique). */
 export function modesDuPays() {
-  const senegal = !ctx.ecole || ctx.ecole.indicatif_defaut !== '+222';
-  const codes = senegal ? ['especes', 'wave', 'orange_money', 'free_money', 'virement', 'cheque'] : ['especes', 'bankily', 'masrvi', 'sedad', 'virement', 'cheque'];
+  const ind = ctx.ecole ? ctx.ecole.indicatif_defaut : '+221';
+  const codes = ind === '+221' ? ['especes', 'wave', 'orange_money', 'free_money', 'virement', 'cheque'] // Sénégal
+    : ind === '+222' ? ['especes', 'bankily', 'masrvi', 'sedad', 'virement', 'cheque'] // Mauritanie
+      : ['especes', 'wave', 'orange_money', 'mobile_money', 'carte', 'virement', 'cheque']; // autres pays
   return codes.map((c) => [c, MODES[c]]);
+}
+
+// ---- Pays et indicatifs téléphoniques (liste complète dans /pays.json) ----
+// [code ISO, nom, indicatif, longueur min, longueur max]
+export let PAYS = [['SN', 'Sénégal', '221', 9, 9], ['MR', 'Mauritanie', '222', 8, 8]]; // remplacée au démarrage
+export async function chargerPays() {
+  try { PAYS = await (await fetch('/pays.json')).json(); } catch { /* liste minimale si hors connexion */ }
+}
+/** Drapeau emoji à partir du code ISO (SN -> 🇸🇳). */
+export const drapeau = (iso) => String.fromCodePoint(...[...iso].map((c) => 0x1F1A5 + c.charCodeAt(0)));
+// Pays proposés en premier dans les listes (région de l'école).
+const FAVORIS = ['SN', 'MR', 'ML', 'GM', 'GN', 'GW', 'CI', 'BF', 'MA', 'FR'];
+/**
+ * Options <select> des indicatifs : favoris puis tous les pays (ordre alphabétique).
+ * codeDabord : « 🇸🇳 +221 Sénégal » (champ étroit, l'indicatif reste visible) ;
+ * sinon « 🇸🇳 Sénégal (+221) ».
+ */
+export function optionsIndicatifs(choisi, { codeDabord = false } = {}) {
+  let fait = false; // un indicatif partagé (+1, +7…) : seul le premier pays est présélectionné
+  const opt = ([iso, nom, ind]) => {
+    const sel = '+' + ind === choisi && !fait ? (fait = true) : false;
+    const texte = codeDabord ? `${drapeau(iso)} +${ind} ${e(nom)}` : `${drapeau(iso)} ${e(nom)} (+${ind})`;
+    return `<option value="+${ind}" ${sel ? 'selected' : ''}>${texte}</option>`;
+  };
+  const fav = FAVORIS.map((iso) => PAYS.find((p) => p[0] === iso)).filter(Boolean);
+  const autres = PAYS.filter((p) => !FAVORIS.includes(p[0])).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+  return `<optgroup label="Pays de la région">${fav.map(opt).join('')}</optgroup><optgroup label="Tous les pays">${autres.map(opt).join('')}</optgroup>`;
+}
+/** Indicatif d'un numéro international (+…), le plus long qui correspond. */
+export function indicatifDe(numero) {
+  const chiffres = String(numero || '').replace(/^\+/, '');
+  const ind = PAYS.map((p) => p[2]).sort((a, b) => b.length - a.length).find((i) => chiffres.startsWith(i));
+  return ind ? '+' + ind : null;
 }
 export const STATUTS = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé', non_concerne: '—', present: 'Présent', absent: 'Absent', retard: 'Retard' };
 export const ROLES = { directeur: 'Directrice', enseignant: 'Enseignant(e)' };
@@ -363,20 +398,26 @@ export function resultatEnvoi(messages, titre = 'Messages WhatsApp') {
   }));
 }
 
-/** Champ numéro de téléphone avec choix de l'indicatif (+221 / +222). */
+/** Champ numéro de téléphone avec choix de l'indicatif (tous les pays). */
 export function champTel(nom, valeur, { requis = false } = {}) {
   const v = String(valeur || '');
-  const ind = v.startsWith('+221') ? '+221' : v.startsWith('+222') ? '+222' : (ctx.ecole ? ctx.ecole.indicatif_defaut : '+221');
-  const num = v.replace(/^\+22[12]/, '');
-  return `<div class="tel" data-tel="${e(nom)}"><select aria-label="Indicatif">${options([['+221', '🇸🇳 +221'], ['+222', '🇲🇷 +222']], ind)}</select>
-    <input inputmode="tel" placeholder="${ind === '+221' ? '77 123 45 67' : '22 12 34 56'}" value="${e(num)}" ${requis ? 'required' : ''}>
+  const ind = (v.startsWith('+') && indicatifDe(v)) || (ctx.ecole ? ctx.ecole.indicatif_defaut : '+221');
+  const num = v.startsWith(ind) ? v.slice(ind.length) : v;
+  const exemple = { '+221': '77 123 45 67', '+222': '22 12 34 56', '+33': '6 12 34 56 78' }[ind] || 'Numéro';
+  return `<div class="tel" data-tel="${e(nom)}"><select aria-label="Indicatif du pays">${optionsIndicatifs(ind, { codeDabord: true })}</select>
+    <input inputmode="tel" placeholder="${exemple}" value="${e(num)}" ${requis ? 'required' : ''}>
     <input type="hidden" name="${e(nom)}" value="${e(v)}"></div>`;
 }
 /** Synchronise les champs téléphone (indicatif + numéro) vers le champ caché. */
 export function activerTels(conteneur) {
   conteneur.querySelectorAll('[data-tel]').forEach((w) => {
     const [sel, inp, cache] = [w.querySelector('select'), w.querySelector('input:not([type=hidden])'), w.querySelector('input[type=hidden]')];
-    const maj = () => { const n = inp.value.replace(/\D/g, ''); cache.value = n ? sel.value + n : ''; };
+    // Numéro collé au format international (+33…, 0033…) : l'indicatif tapé l'emporte sur la liste.
+    const maj = () => {
+      const brut = inp.value.trim();
+      const n = brut.replace(/\D/g, '');
+      cache.value = !n ? '' : brut.startsWith('+') || brut.startsWith('00') ? '+' + n.replace(/^00/, '') : sel.value + n;
+    };
     sel.onchange = maj; inp.oninput = maj; maj();
   });
 }
