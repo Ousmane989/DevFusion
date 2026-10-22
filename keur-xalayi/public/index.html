@@ -84,7 +84,10 @@
   <script>
     // Page de connexion : choix de l'espace (mémorisé sur cet appareil),
     // connexion, et création de compte pour les enseignants.
-    fetch('/api/auth/moi').then((r) => { if (r.ok) location.replace('/app'); });
+    // Session encore ouverte dans cet onglet (simple rechargement) : retour direct à l'application.
+    // Sinon (application fermée puis rouverte), il faut se reconnecter : c'est voulu, par sécurité.
+    let ouverte = null; try { ouverte = sessionStorage.getItem('kx-ouverte'); } catch { /* indisponible */ }
+    if (ouverte === '1') fetch('/api/auth/moi').then((r) => { if (r.ok) location.replace('/app'); });
     const $ = (id) => document.getElementById(id);
     const form = $('form');
     const inscription = $('inscription');
@@ -141,7 +144,7 @@
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.erreur || 'Connexion impossible.');
-        try { localStorage.setItem('kx-espace', espace); } catch { /* stockage indisponible */ }
+        try { localStorage.setItem('kx-espace', espace); sessionStorage.setItem('kx-ouverte', '1'); sessionStorage.removeItem('kx-quittee'); } catch { /* stockage indisponible */ }
         location.replace('/app');
       } catch (err) {
         message(err.message, /attente/.test(err.message) ? 'attention' : 'danger');
