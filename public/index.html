@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="Karat" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/landing.css" />
 </head>
 <body>
   <div class="scroll-progress" id="scroll-progress"></div>
@@ -25,9 +26,9 @@
       </a>
       <nav aria-label="Navigation principale">
         <ul class="nav-links">
-          <li><a href="#accueil">Accueil</a></li>
-          <li><a href="#fonctionnalites">Fonctionnalités</a></li>
-          <li><a href="#modeles">Modèles</a></li>
+                    <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+          <li><a href="#modeles">Thèmes</a></li>
+          <li><a href="#livreur">Livraison</a></li>
           <li><a href="#tarifs">Tarifs</a></li>
           <li><a href="#faq">FAQ</a></li>
           <li><a href="#contact">Contact</a></li>
@@ -52,9 +53,9 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <a href="#accueil">Accueil</a>
     <a href="#fonctionnalites">Fonctionnalités</a>
-    <a href="#modeles">Modèles</a>
+    <a href="#modeles">Thèmes</a>
+    <a href="#livreur">Livraison</a>
     <a href="#tarifs">Tarifs</a>
     <a href="#faq">FAQ</a>
     <a href="#contact">Contact</a>
@@ -67,183 +68,33 @@
 
   <main id="accueil">
     <!-- ============================ HÉRO ============================ -->
-    <section class="hero">
-      <div class="hero-glow"></div>
-      <div class="container">
-        <span class="hero-badge reveal"><span class="dot"></span> Lancement prioritaire en Mauritanie 🇲🇷 &amp; au Sénégal 🇸🇳</span>
-        <h1 class="reveal d1">Votre boutique en ligne,<br /><span class="gold-text">pure comme l'or.</span></h1>
-        <p class="hero-sub reveal d2">Karat permet aux commerçants d'ouvrir une boutique en ligne élégante, d'ajouter leurs produits et d'encaisser des paiements locaux — sans écrire une seule ligne de code.</p>
-        <div class="hero-actions reveal d3">
-          <a href="/inscription" class="btn btn-primary btn-lg">Essayer gratuitement 3 jours</a>
-          <a href="#modeles" class="btn btn-ghost btn-lg">Voir les modèles</a>
+    <section class="lp-hero">
+      <div class="container lp-hero-grid">
+        <div class="lp-hero-copy">
+          <p class="eyebrow reveal">Lancement en Mauritanie 🇲🇷 &amp; au Sénégal 🇸🇳</p>
+          <h1 class="reveal d1"><span class="lp-nowrap">Votre boutique en ligne,</span><br /><span class="gold-text">pure comme l'or.</span></h1>
+          <p class="lp-lead reveal d2">Créez une boutique élégante, ajoutez vos produits et recevez vos commandes en direct — paiement à la livraison ou par Bankily, Wave et Orange Money. Sans écrire une seule ligne de code.</p>
+          <div class="lp-cta reveal d3">
+            <a href="/inscription" class="btn btn-primary btn-lg">Essayer gratuitement 3 jours</a>
+            <a href="#tarifs" class="btn btn-ghost btn-lg">Voir les tarifs</a>
+          </div>
+          <p class="hero-note reveal d3">3 jours gratuits · Sans engagement · Sans carte bancaire</p>
+          <ul class="lp-trust reveal d3">
+            <li>💵 Paiement à la livraison</li><li>📱 Bankily · Wave · Orange Money</li><li>🛵 Livraison Karat Livreur</li>
+          </ul>
         </div>
-        <p class="hero-note reveal d3">3 jours gratuits · Sans engagement · Sans carte bancaire</p>
-
-        <!-- Aperçu maquette + décorations animées -->
-        <div class="hero-visual reveal d4">
-          <div class="hero-sparkles" aria-hidden="true"><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></div>
-          <div class="float-card fc-order" aria-hidden="true">🔔 Nouvelle commande <b>#KRT-10648</b><span>8 900 FCFA · Dakar</span></div>
-          <div class="float-card fc-sale" aria-hidden="true">💰 Vente encaissée <b>+12 400 MRU</b><span>Aujourd'hui</span></div>
-          <div class="float-card fc-visits" aria-hidden="true">📈 Visiteurs <b>+38%</b><span>Cette semaine</span></div>
-          <div class="float-coin coin-1" aria-hidden="true">MRU</div>
-          <div class="float-coin coin-2" aria-hidden="true">FCFA</div>
-          <div class="hero-mock" data-tilt>
-          <svg viewBox="0 0 900 470" role="img" aria-label="Aperçu du tableau de bord Karat" font-family="Jost, sans-serif">
-            <defs><linearGradient id="g2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#D4AF37"/><stop offset="1" stop-color="#F5D77E"/></linearGradient></defs>
-            <rect width="900" height="470" rx="12" fill="#0f0f0f"/>
-            <!-- barre supérieure -->
-            <rect x="0" y="0" width="900" height="52" fill="#141414"/>
-            <circle cx="26" cy="26" r="5" fill="#3a3a3a"/><circle cx="46" cy="26" r="5" fill="#3a3a3a"/><circle cx="66" cy="26" r="5" fill="#3a3a3a"/>
-            <text x="450" y="31" text-anchor="middle" font-size="14" fill="#837e72">Tableau de bord · Novenza</text>
-            <!-- menu latéral -->
-            <rect x="24" y="80" width="210" height="360" rx="10" fill="#151515"/>
-            <text x="44" y="118" font-family="Cormorant Garamond, serif" font-size="23" font-weight="700" fill="#F5D77E">Karat</text>
-            <rect x="40" y="140" width="178" height="30" rx="8" fill="#D4AF37" opacity=".14"/>
-            <text x="58" y="160" font-size="13" fill="#F5D77E">Vue d’ensemble</text>
-            <text x="58" y="196" font-size="13" fill="#8f897d">Commandes</text>
-            <text x="58" y="228" font-size="13" fill="#8f897d">Produits</text>
-            <text x="58" y="260" font-size="13" fill="#8f897d">Analyses</text>
-            <text x="58" y="292" font-size="13" fill="#8f897d">Marketing</text>
-            <text x="58" y="324" font-size="13" fill="#8f897d">Livraison</text>
-            <!-- KPI 1 : chiffre d'affaires -->
-            <rect x="262" y="80" width="196" height="96" rx="10" fill="#151515"/>
-            <text x="282" y="108" font-size="11" letter-spacing="1" fill="#837e72">CHIFFRE D’AFFAIRES</text>
-            <text x="282" y="144" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#F5D77E">1 240 000</text>
-            <text x="282" y="164" font-size="12" fill="#837e72">FCFA</text>
-            <text x="438" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 18%</text>
-            <!-- KPI 2 : commandes -->
-            <rect x="474" y="80" width="196" height="96" rx="10" fill="#151515"/>
-            <text x="494" y="108" font-size="11" letter-spacing="1" fill="#837e72">COMMANDES</text>
-            <text x="494" y="146" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#f4f1ea">86</text>
-            <text x="650" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 12%</text>
-            <text x="494" y="164" font-size="12" fill="#837e72">Sur 30 jours</text>
-            <!-- KPI 3 : visiteurs -->
-            <rect x="686" y="80" width="190" height="96" rx="10" fill="#151515"/>
-            <text x="706" y="108" font-size="11" letter-spacing="1" fill="#837e72">VISITEURS</text>
-            <text x="706" y="146" font-family="Cormorant Garamond, serif" font-size="30" font-weight="700" fill="#f4f1ea">1 204</text>
-            <text x="856" y="164" text-anchor="end" font-size="12" fill="#6fbf8b">▲ 38%</text>
-            <text x="706" y="164" font-size="12" fill="#837e72">Sur 30 jours</text>
-            <!-- graphique -->
-            <rect x="262" y="196" width="614" height="244" rx="10" fill="#151515"/>
-            <text x="284" y="228" font-size="14" fill="#f4f1ea">Évolution du chiffre d’affaires</text>
-            <text x="858" y="228" text-anchor="end" font-size="12" fill="#F5D77E">7 mois · FCFA</text>
-            <line x1="284" y1="300" x2="854" y2="300" stroke="#242424" stroke-width="1"/>
-            <line x1="284" y1="360" x2="854" y2="360" stroke="#242424" stroke-width="1"/>
-            <line x1="284" y1="420" x2="854" y2="420" stroke="#2a2a2a" stroke-width="1"/>
-            <g fill="url(#g2)">
-              <rect x="300" y="360" width="42" height="60" rx="5"/>
-              <rect x="380" y="330" width="42" height="90" rx="5"/>
-              <rect x="460" y="296" width="42" height="124" rx="5"/>
-              <rect x="540" y="258" width="42" height="162" rx="5"/>
-              <rect x="620" y="300" width="42" height="120" rx="5"/>
-              <rect x="700" y="238" width="42" height="182" rx="5"/>
-              <rect x="780" y="214" width="42" height="206" rx="5"/>
-            </g>
-            <g font-size="11" fill="#837e72" text-anchor="middle">
-              <text x="321" y="434">Fév</text><text x="401" y="434">Mar</text><text x="481" y="434">Avr</text>
-              <text x="561" y="434">Mai</text><text x="641" y="434">Juin</text><text x="721" y="434">Juil</text><text x="801" y="434">Aoû</text>
-            </g>
-          </svg>
-          </div><!-- /.hero-mock -->
-        </div><!-- /.hero-visual -->
-      </div>
-    </section>
-
-    <!-- ==================== COMMENT ÇA MARCHE ==================== -->
-    <section class="section" id="etapes">
-      <div class="container">
-        <div class="section-head reveal">
-          <p class="eyebrow">Comment ça marche</p>
-          <h2>Votre boutique en 4 étapes</h2>
-          <p>De l'inscription à la première vente, tout est pensé pour aller vite et bien.</p>
-        </div>
-        <div class="steps">
-          <div class="step reveal d1">
-            <div class="step-num gold-text">01</div>
-            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-            <h3>S'inscrire</h3>
-            <p>Créez votre compte en 2 minutes et vérifiez votre e-mail par un code sécurisé.</p>
-            <svg class="step-line" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <div class="lp-hero-media reveal d2">
+          <div class="lp-video">
+            <video autoplay muted loop playsinline preload="metadata" poster="/media/karat-tour-poster.jpg" aria-label="Visite guidée de la plateforme Karat">
+              <source src="/media/karat-tour.webm" type="video/webm" />
+              <source src="/media/karat-tour.mp4" type="video/mp4" />
+            </video>
           </div>
-          <div class="step reveal d2">
-            <div class="step-num gold-text">02</div>
-            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <h3>Choisir un modèle</h3>
-            <p>Sélectionnez un design premium et personnalisez couleurs, logo et bannières.</p>
-            <svg class="step-line" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </div>
-          <div class="step reveal d3">
-            <div class="step-num gold-text">03</div>
-            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
-            <h3>Ajouter ses produits</h3>
-            <p>Importez vos articles, fixez vos prix en MRU ou FCFA et gérez vos stocks.</p>
-            <svg class="step-line" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </div>
-          <div class="step reveal d4">
-            <div class="step-num gold-text">04</div>
-            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-            <h3>Vendre</h3>
-            <p>Encaissez via les paiements mobiles locaux et suivez vos ventes en temps réel.</p>
-          </div>
+          <p class="lp-caption">Captures réelles de la plateforme — boutique de démonstration « Maison Awa ».</p>
         </div>
       </div>
     </section>
 
-    <!-- ==================== FONCTIONNALITÉS ==================== -->
-    <section class="section" id="fonctionnalites">
-      <div class="container">
-        <div class="section-head reveal">
-          <p class="eyebrow">Fonctionnalités</p>
-          <h2>Tout pour vendre, rien de superflu</h2>
-          <p>Des outils professionnels, pensés pour les commerçants d'Afrique de l'Ouest.</p>
-        </div>
-        <div class="feature-grid">
-          <article class="feature-card reveal d1">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7l1.5 12.5A2 2 0 0 0 5.5 21h13a2 2 0 0 0 2-1.5L22 7"/><path d="M2 7h20l-3-4H5L2 7zM9 11v6M15 11v6"/></svg></div>
-            <h3>Boutique personnalisable</h3>
-            <p>Un design premium à vos couleurs : logo, thème, bannières et pages sur mesure.</p>
-          </article>
-          <article class="feature-card reveal d2">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7 12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg></div>
-            <h3>Gestion des produits</h3>
-            <p>Ajoutez, organisez et mettez à jour vos articles, variantes et stocks en un clic.</p>
-          </article>
-          <article class="feature-card reveal d3">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-5M12 17V7M16 17v-8"/></svg></div>
-            <h3>Tableau de bord &amp; statistiques</h3>
-            <p>Visualisez ventes, commandes et visiteurs dans un tableau de bord clair et complet.</p>
-          </article>
-          <article class="feature-card reveal d1">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <h3>Chiffre d'affaires en temps réel</h3>
-            <p>Suivez vos revenus MRU et FCFA en direct, avec l'évolution jour après jour.</p>
-          </article>
-          <article class="feature-card reveal d2">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
-            <h3>Nom de domaine</h3>
-            <p>Un lien professionnel <em>votreboutique.karat.shop</em> ou votre propre domaine.</p>
-          </article>
-          <article class="feature-card reveal d3">
-            <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div>
-            <h3>Paiements locaux</h3>
-            <p>Bankily, Wave et Orange Money : encaissez comme vos clients ont l'habitude de payer.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== CHIFFRES ==================== -->
-    <section class="section stats">
-      <div class="container">
-        <div class="stats-grid">
-          <div class="stat reveal d1"><div class="num gold-text" data-count="1200" data-suffix="+">0</div><div class="label">Boutiques créées</div></div>
-          <div class="stat reveal d2"><div class="num gold-text" data-count="86000" data-suffix="+">0</div><div class="label">Ventes réalisées</div></div>
-          <div class="stat reveal d3"><div class="num gold-text" data-count="2">0</div><div class="label">Pays couverts</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== BANDEAU PAIEMENTS ==================== -->
     <section class="pay-strip" aria-label="Moyens de paiement acceptés">
       <div class="container"><p class="eyebrow">Paiements mobiles locaux acceptés</p></div>
       <div class="marquee">
@@ -265,90 +116,144 @@
       </div>
     </section>
 
-    <!-- ==================== MODÈLES ==================== -->
+    <!-- ============================ ÉTAPES ============================ -->
+    <section class="section" id="etapes">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Comment ça marche</span>
+          <h2>Votre boutique en 4 étapes</h2>
+          <p>De l'inscription à la première vente. Chaque image ci-dessous est une vraie capture de Karat.</p>
+        </div>
+        <div class="lp-steps">
+          <article class="lp-step reveal d1">
+            <div class="lp-phone"><img src="/media/captures/m_dash_overview.webp" alt="Tableau de bord Karat sur mobile" loading="lazy" width="600" height="1299" /></div>
+            <span class="lp-num">01</span><h3>Créez votre compte</h3><p>Inscription en 2 minutes, e-mail vérifié par un code. 3 jours d'essai gratuit.</p>
+          </article>
+          <article class="lp-step reveal d2">
+            <div class="lp-phone"><img src="/media/captures/m_store_or-noir.webp" alt="Vitrine Karat, thème Or Noir" loading="lazy" width="600" height="1299" /></div>
+            <span class="lp-num">02</span><h3>Choisissez votre thème</h3><p>6 thèmes premium, votre logo, vos couleurs et vos bannières.</p>
+          </article>
+          <article class="lp-step reveal d3">
+            <div class="lp-phone"><img src="/media/captures/m_product.webp" alt="Fiche produit dans une boutique Karat" loading="lazy" width="600" height="1299" /></div>
+            <span class="lp-num">03</span><h3>Ajoutez vos produits</h3><p>Photos, prix en MRU ou FCFA, variantes et stock.</p>
+          </article>
+          <article class="lp-step reveal d1">
+            <div class="lp-phone"><img src="/media/captures/m_dash_orders.webp" alt="Liste des commandes sur mobile" loading="lazy" width="600" height="1299" /></div>
+            <span class="lp-num">04</span><h3>Vendez et suivez</h3><p>Commandes en direct, statuts, statistiques et comptabilité.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ FONCTIONNALITÉS ============================ -->
+    <section class="section" id="fonctionnalites">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Fonctionnalités</span>
+          <h2>Tout pour vendre, rien de superflu</h2>
+          <p>Un seul espace pour votre boutique, vos commandes, vos produits et vos chiffres.</p>
+        </div>
+        <div class="lp-tabs reveal" role="tablist">
+          <button type="button" role="tab" class="lp-tab on" data-tab="vitrine" aria-selected="true">Vitrine</button>
+          <button type="button" role="tab" class="lp-tab" data-tab="commandes" aria-selected="false">Commandes</button>
+          <button type="button" role="tab" class="lp-tab" data-tab="produits" aria-selected="false">Produits</button>
+          <button type="button" role="tab" class="lp-tab" data-tab="stats" aria-selected="false">Statistiques</button>
+          <button type="button" role="tab" class="lp-tab" data-tab="compta" aria-selected="false">Comptabilité</button>
+        </div>
+        <div class="lp-panel on" data-panel="vitrine" role="tabpanel">
+          <div class="lp-panel-copy">
+            <h3>Une boutique qui inspire confiance</h3>
+            <ul><li>Thème premium adapté à votre secteur</li><li>Fiches produits avec photos, variantes et stock</li><li>Commande en quelques secondes, sans compte client</li><li>Lien à partager sur WhatsApp, Facebook, Instagram et TikTok</li></ul>
+            <a href="/inscription" class="btn btn-primary">Essayer gratuitement</a>
+          </div>
+          <div class="lp-browser"><div class="lp-bar"><i></i><i></i><i></i><span>karat.fit/boutique/maison-awa</span></div><img src="/media/captures/store_desktop.webp" alt="La vitrine Maison Awa sur ordinateur" loading="lazy" width="1440" height="900" /></div>
+        </div>
+        <div class="lp-panel" data-panel="commandes" role="tabpanel">
+          <div class="lp-panel-copy">
+            <h3>Chaque commande, suivie de bout en bout</h3>
+            <ul><li>Alerte dès qu'une commande arrive</li><li>Statuts : nouvelle, confirmée, expédiée, livrée</li><li>Coordonnées du client et contenu du panier</li><li>Paiement à la livraison</li></ul>
+            <a href="/inscription" class="btn btn-primary">Essayer gratuitement</a>
+          </div>
+          <div class="lp-browser"><div class="lp-bar"><i></i><i></i><i></i><span>karat.fit/tableau-de-bord</span></div><img src="/media/captures/dash_orders.webp" alt="Gestion des commandes dans Karat" loading="lazy" width="1440" height="900" /></div>
+        </div>
+        <div class="lp-panel" data-panel="produits" role="tabpanel">
+          <div class="lp-panel-copy">
+            <h3>Votre catalogue, simple à gérer</h3>
+            <ul><li>Ajout de produits en quelques secondes</li><li>Prix barrés, catégories et variantes</li><li>Gestion du stock</li><li>Catalogue pour Facebook et Instagram</li></ul>
+            <a href="/inscription" class="btn btn-primary">Essayer gratuitement</a>
+          </div>
+          <div class="lp-browser"><div class="lp-bar"><i></i><i></i><i></i><span>karat.fit/tableau-de-bord</span></div><img src="/media/captures/dash_products.webp" alt="Gestion des produits dans Karat" loading="lazy" width="1440" height="900" /></div>
+        </div>
+        <div class="lp-panel" data-panel="stats" role="tabpanel">
+          <div class="lp-panel-copy">
+            <h3>Des chiffres clairs pour décider</h3>
+            <ul><li>Chiffre d'affaires, commandes, visiteurs</li><li>Taux de conversion et panier moyen</li><li>Meilleures ventes et ventes par ville</li><li>Sources de trafic : WhatsApp, Facebook, Instagram…</li></ul>
+            <a href="/inscription" class="btn btn-primary">Essayer gratuitement</a>
+          </div>
+          <div class="lp-browser"><div class="lp-bar"><i></i><i></i><i></i><span>karat.fit/tableau-de-bord</span></div><img src="/media/captures/dash_analytics.webp" alt="Statistiques de vente dans Karat" loading="lazy" width="1440" height="900" /></div>
+        </div>
+        <div class="lp-panel" data-panel="compta" role="tabpanel">
+          <div class="lp-panel-copy">
+            <h3>Votre bénéfice, sans tableur</h3>
+            <ul><li>Chiffre d'affaires encaissé</li><li>Dépenses et bénéfice</li><li>Graphique sur 12 mois</li><li>Export CSV</li></ul>
+            <a href="/inscription" class="btn btn-primary">Essayer gratuitement</a>
+          </div>
+          <div class="lp-browser"><div class="lp-bar"><i></i><i></i><i></i><span>karat.fit/tableau-de-bord</span></div><img src="/media/captures/dash_finance.webp" alt="Comptabilité dans Karat" loading="lazy" width="1440" height="900" /></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ THÈMES ============================ -->
     <section class="section" id="modeles">
       <div class="container">
         <div class="section-head reveal">
-          <p class="eyebrow">Modèles de boutiques</p>
-          <h2>Des designs prêts à vendre</h2>
-          <p>Choisissez un modèle adapté à votre secteur et lancez-vous immédiatement.</p>
+          <span class="eyebrow">Thèmes</span>
+          <h2>6 thèmes premium, prêts à vendre</h2>
+          <p>La même boutique dans chaque thème — changez-en en un clic depuis votre espace.</p>
         </div>
-        <div class="template-grid" id="template-grid">
-          <!-- Les cartes sont injectées ci-dessous, chacune avec un aperçu SVG -->
-          <article class="template reveal d1" data-cat="Mode" data-name="Élégance" data-desc="Une vitrine épurée pour le prêt-à-porter et les créateurs de mode, avec galeries plein écran et mise en avant des nouveautés.">
-            <div class="template-thumb">
-              <img src="/img/templates/mode.jpg" alt="Aperçu du modèle Élégance" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Mode</span><h3>Élégance</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
-
-          <article class="template reveal d2" data-cat="Électronique" data-name="Voltage" data-desc="Un modèle dynamique pour l'électronique et le high-tech : fiches produits détaillées, comparateur et badges promotions.">
-            <div class="template-thumb">
-              <img src="/img/templates/electronique.jpg" alt="Aperçu du modèle Voltage" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Électronique</span><h3>Voltage</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
-
-          <article class="template reveal d3" data-cat="Alimentation" data-name="Terroir" data-desc="Pensé pour l'épicerie et les produits frais : catégories claires, panier rapide et livraison locale.">
-            <div class="template-thumb">
-              <img src="/img/templates/alimentation.jpg" alt="Aperçu du modèle Terroir" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Alimentation</span><h3>Terroir</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
-
-          <article class="template reveal d1" data-cat="Cosmétique" data-name="Éclat" data-desc="Un design raffiné pour la beauté et les soins : ambiance premium, routines et coffrets mis en valeur.">
-            <div class="template-thumb">
-              <img src="/img/templates/cosmetique.jpg" alt="Aperçu du modèle Éclat" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Cosmétique</span><h3>Éclat</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
-
-          <article class="template reveal d2" data-cat="Artisanat" data-name="Savoir-Faire" data-desc="Met en lumière le travail des artisans : histoires produits, matières nobles et pièces uniques.">
-            <div class="template-thumb">
-              <img src="/img/templates/artisanat.jpg" alt="Aperçu du modèle Savoir-Faire" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Artisanat</span><h3>Savoir-Faire</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
-
-          <article class="template reveal d3" data-cat="Accessoires" data-name="Carat" data-desc="Idéal pour la bijouterie et les accessoires : fond sombre, zoom produit et ambiance luxe assumée.">
-            <div class="template-thumb">
-              <img src="/img/templates/accessoires.jpg" alt="Aperçu du modèle Carat" loading="lazy" />
-            </div>
-            <div class="template-body"><div><span class="cat">Accessoires</span><h3>Carat</h3></div><button class="btn btn-outline-gold" data-preview>Aperçu</button></div>
-          </article>
+        <div class="lp-themes">
+          <figure class="lp-theme reveal d1"><div class="lp-phone"><img src="/media/captures/m_store_or-noir.webp" alt="Boutique Maison Awa avec le thème Or Noir" loading="lazy" width="600" height="1299" /></div><figcaption><b>Or Noir</b><span>Luxe sombre et doré</span></figcaption></figure>
+          <figure class="lp-theme reveal d2"><div class="lp-phone"><img src="/media/captures/m_store_sahel.webp" alt="Boutique Maison Awa avec le thème Sahel" loading="lazy" width="600" height="1299" /></div><figcaption><b>Sahel</b><span>Chaleureux, tons ambrés</span></figcaption></figure>
+          <figure class="lp-theme reveal d3"><div class="lp-phone"><img src="/media/captures/m_store_emeraude.webp" alt="Boutique Maison Awa avec le thème Émeraude" loading="lazy" width="600" height="1299" /></div><figcaption><b>Émeraude</b><span>Frais, idéal alimentation</span></figcaption></figure>
+          <figure class="lp-theme reveal d1"><div class="lp-phone"><img src="/media/captures/m_store_ocean.webp" alt="Boutique Maison Awa avec le thème Océan" loading="lazy" width="600" height="1299" /></div><figcaption><b>Océan</b><span>Moderne, high-tech</span></figcaption></figure>
+          <figure class="lp-theme reveal d2"><div class="lp-phone"><img src="/media/captures/m_store_rubis.webp" alt="Boutique Maison Awa avec le thème Rubis" loading="lazy" width="600" height="1299" /></div><figcaption><b>Rubis</b><span>Audacieux, mode et beauté</span></figcaption></figure>
+          <figure class="lp-theme reveal d3"><div class="lp-phone"><img src="/media/captures/m_store_ivoire.webp" alt="Boutique Maison Awa avec le thème Ivoire" loading="lazy" width="600" height="1299" /></div><figcaption><b>Ivoire</b><span>Clair et minimaliste</span></figcaption></figure>
         </div>
       </div>
     </section>
 
-    <!-- ==================== TÉMOIGNAGES ==================== -->
-    <section class="section" id="temoignages">
-      <div class="container">
-        <div class="section-head reveal">
-          <p class="eyebrow">Ils vendent avec Karat</p>
-          <h2>La confiance des commerçants</h2>
-          <p>Des boutiques réelles, des ambitions concrètes.</p>
-        </div>
-        <div class="testimonial-grid">
-          <div class="testimonial reveal d1">
-            <div class="stars">★★★★★</div>
-            <p>« En trois jours, ma boutique de tissus était en ligne et j'ai reçu ma première commande via Bankily. Karat a changé mon quotidien. »</p>
-            <div class="who"><div class="avatar">FM</div><div><div class="name">Fatimetou Mint Ahmed</div><div class="role">Tissus &amp; couture · Nouakchott</div></div></div>
-          </div>
-          <div class="testimonial reveal d2">
-            <div class="stars">★★★★★</div>
-            <p>« Le tableau de bord est clair : je vois mon chiffre d'affaires en direct. Le design premium inspire confiance à mes clients. »</p>
-            <div class="who"><div class="avatar">OD</div><div><div class="name">Ousmane Diallo</div><div class="role">Électronique · Dakar</div></div></div>
-          </div>
-          <div class="testimonial reveal d3">
-            <div class="stars">★★★★★</div>
-            <p>« J'avais peur de la technique, mais tout est simple et en français. Aujourd'hui je vends mes cosmétiques dans deux pays. »</p>
-            <div class="who"><div class="avatar">AK</div><div><div class="name">Aïssata Kane</div><div class="role">Cosmétique naturelle · Rosso</div></div></div>
-          </div>
+    <!-- ============================ BOUTIQUE RÉELLE ============================ -->
+    <section class="section" id="exemple">
+      <div class="container lp-split">
+        <div class="lp-split-media reveal"><div class="lp-phone"><img src="/media/captures/m_mauri_market.webp" alt="La boutique Mauri Market sur Karat" loading="lazy" width="600" height="1299" /></div></div>
+        <div class="lp-split-copy reveal d1">
+          <span class="eyebrow">Une vraie boutique Karat</span>
+          <h2>Mauri Market vend déjà sur Karat</h2>
+          <p>Boutique de Nouakchott : vitrine à son image, livraison à domicile et paiement à la livraison. Ses commandes arrivent en direct dans son tableau de bord et chez son agence de livraison.</p>
+          <a href="/boutique/mauri-market" class="btn btn-ghost" target="_blank" rel="noopener">Visiter la boutique</a>
         </div>
       </div>
     </section>
 
-    <!-- ==================== FAQ ==================== -->
+    <!-- ============================ KARAT LIVREUR ============================ -->
+    <section class="section lp-livreur" id="livreur">
+      <div class="container lp-split">
+        <div class="lp-split-copy reveal">
+          <span class="eyebrow lp-green">Karat Livreur</span>
+          <h2>Et la livraison ? On s'en occupe.</h2>
+          <p>Reliez votre boutique à l'agence Karat Livreur : chaque commande lui est transmise en temps réel, elle livre vos clients et encaisse à la livraison.</p>
+          <ul class="lp-checks">
+            <li>Commandes transmises automatiquement à l'agence</li>
+            <li>Un code de suivi pour chaque colis, à partager avec le client</li>
+            <li>Encaissement à la livraison et reversement de votre argent</li>
+            <li>Depuis Nouakchott, vers toute la Mauritanie</li>
+          </ul>
+          <a href="/livreur/" class="btn btn-ghost">Découvrir Karat Livreur</a>
+        </div>
+        <div class="lp-split-media reveal d1"><div class="lp-phone"><img src="/media/captures/m_livreur.webp" alt="Le site Karat Livreur" loading="lazy" width="600" height="1299" /></div></div>
+      </div>
+    </section>
+
     <section class="section" id="tarifs">
       <div class="container">
         <div class="section-head reveal">
@@ -400,7 +305,6 @@
       </div>
     </section>
 
-    <!-- ==================== CTA FINAL ==================== -->
     <section class="section cta-band">
       <div class="container">
         <div class="cta-inner reveal">
@@ -424,17 +328,16 @@
           </a>
           <p>La plateforme premium pour créer votre boutique en ligne en Mauritanie et au Sénégal.</p>
           <div class="socials">
-            <a href="#" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2 0-3.5 1.5-3.5 3.5V12H8v3h2.5v7h3v-7H16l.5-3H13.5V9.5c0-.3.2-.5.5-.5z"/></svg></a>
-            <a href="#" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
-            <a href="#" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.4A10 10 0 1 0 12 2zm0 2a8 8 0 0 1 6.8 12.2l-.3.5.6 2.2-2.3-.6-.5.3A8 8 0 1 1 12 4zm-3 4c-.2 0-.5.1-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.7 2.7 4.2 3.7 2 .8 2.5.7 2.9.6.5-.1 1.4-.6 1.6-1.2.2-.6.2-1.1.1-1.2l-.6-.3-1.5-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.1-.3.2-.5.1-.7-.3-1.4-.6-2.1-1.4-.5-.6-.9-1.2-1-1.4-.1-.2 0-.3.1-.4l.4-.5c.1-.2.1-.3.2-.5v-.4c0-.1-.5-1.3-.7-1.8-.2-.4-.4-.4-.5-.4z"/></svg></a>
+            <a href="https://wa.me/22244035152" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.4A10 10 0 1 0 12 2zm0 2a8 8 0 0 1 6.8 12.2l-.3.5.6 2.2-2.3-.6-.5.3A8 8 0 1 1 12 4zm-3 4c-.2 0-.5.1-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.7 2.7 4.2 3.7 2 .8 2.5.7 2.9.6.5-.1 1.4-.6 1.6-1.2.2-.6.2-1.1.1-1.2l-.6-.3-1.5-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.1-.3.2-.5.1-.7-.3-1.4-.6-2.1-1.4-.5-.6-.9-1.2-1-1.4-.1-.2 0-.3.1-.4l.4-.5c.1-.2.1-.3.2-.5v-.4c0-.1-.5-1.3-.7-1.8-.2-.4-.4-.4-.5-.4z"/></svg></a>
           </div>
         </div>
         <div class="footer-col">
           <h4>Produit</h4>
           <ul>
             <li><a href="#fonctionnalites">Fonctionnalités</a></li>
-            <li><a href="#modeles">Modèles</a></li>
-            <li><a href="#faq">Questions fréquentes</a></li>
+            <li><a href="#modeles">Thèmes</a></li>
+            <li><a href="#tarifs">Tarifs</a></li>
+            <li><a href="/livreur/">Karat Livreur</a></li>
             <li><a href="/inscription">Créer ma boutique</a></li>
           </ul>
         </div>
@@ -443,17 +346,8 @@
           <ul>
             <li><a href="#faq">Questions fréquentes</a></li>
             <li><a href="mailto:contact@karat.mr">contact@karat.mr</a></li>
-            <li><a href="tel:+22200000000">+222 00 00 00 00</a></li>
+            <li><a href="https://wa.me/22244035152" target="_blank" rel="noopener">WhatsApp +222 44 03 51 52</a></li>
             <li><a href="/connexion">Se connecter</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Légal</h4>
-          <ul>
-            <li><a href="#">Conditions d'utilisation</a></li>
-            <li><a href="#">Politique de confidentialité</a></li>
-            <li><a href="#">Mentions légales</a></li>
-            <li><a href="#">Cookies</a></li>
           </ul>
         </div>
       </div>
@@ -465,25 +359,6 @@
   </footer>
 
   <!-- ==================== MODALE APERÇU MODÈLE ==================== -->
-  <div class="modal" id="template-modal" role="dialog" aria-modal="true" aria-labelledby="modal-name">
-    <div class="modal-overlay"></div>
-    <div class="modal-box">
-      <button class="modal-close" aria-label="Fermer">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-      <div class="modal-preview"></div>
-      <div class="modal-content">
-        <span class="cat" data-m-cat></span>
-        <h3 id="modal-name" data-m-name></h3>
-        <p data-m-desc></p>
-        <div class="modal-actions">
-          <a href="/inscription" class="btn btn-primary">Utiliser ce modèle</a>
-          <a href="#modeles" class="btn btn-ghost" onclick="document.getElementById('template-modal').classList.remove('open');document.body.style.overflow='';">Voir d'autres modèles</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script src="/js/main.js"></script>
   <script src="/js/i18n.js"></script>
   <script>
@@ -513,6 +388,13 @@
       }));
       load('MR');
     })();
+  </script>
+  <script>
+    // Onglets des fonctionnalités.
+    document.querySelectorAll('.lp-tab').forEach((t) => t.addEventListener('click', () => {
+      document.querySelectorAll('.lp-tab').forEach((x) => { x.classList.toggle('on', x === t); x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+      document.querySelectorAll('.lp-panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === t.dataset.tab));
+    }));
   </script>
 </body>
 </html>
