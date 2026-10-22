@@ -2,7 +2,7 @@
 // Point d'entrée de l'application : session, menu selon le rôle, routeur.
 // Chaque page est un module dans /js/pages qui exporte `afficher(el, params)`.
 // =====================================================================
-import { ctx, get, post, e, toast, erreur, formulaire, champ, ESPACES, navigation } from './ui.js';
+import { ctx, get, post, e, toast, erreur, formulaire, champ, ESPACES, navigation, chargerPays } from './ui.js';
 
 const D = 'directeur'; const T = 'enseignant'; // deux espaces : directrice et enseignants
 
@@ -159,7 +159,7 @@ export async function rafraichirContexte() {
 
 async function demarrer() {
   try {
-    await rafraichirContexte();
+    await Promise.all([rafraichirContexte(), chargerPays()]);
   } catch (err) {
     if (/Session expirée/.test(err.message)) return; // redirection vers la connexion en cours
     $('page').innerHTML = `<div class="carte vide"><span class="ico">📡</span>Impossible de joindre le serveur. Vérifiez la connexion internet.

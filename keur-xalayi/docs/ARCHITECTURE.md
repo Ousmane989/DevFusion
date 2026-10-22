@@ -51,11 +51,11 @@ Ainsi :
 
 | Table | Rôle | Champs principaux |
 |---|---|---|
-| `parametres` | Réglages de l'école | nom, logo, adresse, téléphone, devise (FCFA par défaut, ou MRU), pays / indicatif (+221 par défaut), jour du rappel (25), date limite, délai du 2ᵉ rappel, modèles de messages, nombre de périodes |
+| `parametres` | Réglages de l'école | nom, logo, adresse, téléphone, devise (FCFA par défaut, ou MRU), pays / indicatif (tous les pays, +221 par défaut), jour du rappel (25), date limite, délai du 2ᵉ rappel, modèles de messages, nombre de périodes |
 | `annees_scolaires` | Année d'octobre à juillet (dates libres) | libellé, date_debut, date_fin, active |
 | `niveaux` | PS, MS, GS, CI, CP, CE1, CE2, CM1, CM2 | code, ordre, cycle (maternelle/primaire), tarifs par défaut |
 | `classes` | Groupes d'un niveau (CE1 A, CE1 B) | année, niveau, groupe, enseignant titulaire, tarifs propres (facultatifs) |
-| `eleves` | Fiche élève | matricule auto, nom, prénom, sexe, naissance, photo, père/mère/tuteur, WhatsApp (+221, ou +222), 2ᵉ téléphone, adresse, remarques, statut (actif/archivé) |
+| `eleves` | Fiche élève | matricule auto, nom, prénom, sexe, naissance, photo, père/mère/tuteur, WhatsApp (format international, tous pays), 2ᵉ téléphone, adresse, remarques, statut (actif/archivé) |
 | `inscriptions` | Élève × année × classe | frais d'inscription, mensualité, réduction, motif, décision de fin d'année |
 | `paiements` | Encaissements | type, mois, montant, date, mode (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi, Sedad pour la Mauritanie), n° de reçu |
 | `messages` | Historique WhatsApp | type, destinataire, téléphone, contenu, canal, statut, erreur |

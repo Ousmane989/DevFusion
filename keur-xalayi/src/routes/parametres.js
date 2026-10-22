@@ -4,7 +4,7 @@
 const express = require('express');
 const path = require('path');
 const { query, one } = require('../db');
-const { ah, HttpError, vide } = require('../utils');
+const { ah, HttpError, vide, PAYS } = require('../utils');
 const { autoriser } = require('../auth');
 const config = require('../config');
 const { sauvegarder } = require('../services/sauvegarde');
@@ -35,6 +35,9 @@ router.put('/', autoriser('directeur'), ah(async (req, res) => {
     if (req.body[c] === undefined) continue;
     if (c === 'logo' && req.body.logo && !/^data:image\/(png|jpe?g);base64,/.test(req.body.logo)) {
       throw new HttpError(400, 'Le logo doit être une image PNG ou JPEG.');
+    }
+    if (c === 'indicatif_defaut' && !PAYS.some((x) => '+' + x[2] === req.body[c])) {
+      throw new HttpError(400, 'Indicatif de pays inconnu.');
     }
     if (c === 'libelle_periode' && !['Trimestre', 'Composition', 'Semestre'].includes(req.body[c])) {
       throw new HttpError(400, 'Nom de période invalide.');

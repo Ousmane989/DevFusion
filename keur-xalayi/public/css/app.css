@@ -163,7 +163,7 @@ textarea { min-height: 90px; resize: vertical; }
 input[type=checkbox], input[type=radio] { width: 1.25rem; height: 1.25rem; min-height: 0; accent-color: var(--primaire); vertical-align: middle; }
 .case { display: flex; align-items: center; gap: .55rem; font-weight: 600; cursor: pointer; margin: .3rem 0; }
 .tel { display: flex; gap: .4rem; }
-.tel select { width: 6.5rem; flex: none; }
+.tel select { width: 7.2rem; flex: none; }
 .filtres { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
 .filtres > * { flex: 1 1 170px; }
 .filtres .recherche { flex: 3 1 240px; }

@@ -72,18 +72,43 @@ function montant(n, devise = 'FCFA') {
   return `${s} ${devise}`;
 }
 
+// Indicatifs de tous les pays : [code ISO, nom, indicatif, longueur min, longueur max]
+// (longueur du numéro national sans l'indicatif ; à défaut, 4 à 13 chiffres).
+const PAYS = require('../public/pays.json');
+const INDICATIFS = [...new Set(PAYS.map((p) => p[2]))].sort((x, y) => y.length - x.length); // plus long d'abord (+1876 avant +1)
+
+/** Pays d'un numéro international (+…) : indicatif le plus long qui correspond. */
+function paysDuNumero(t) {
+  const chiffres = String(t).replace(/^\+/, '');
+  const ind = INDICATIFS.find((i) => chiffres.startsWith(i));
+  return ind ? { indicatif: ind, national: chiffres.slice(ind.length), regles: PAYS.filter((p) => p[2] === ind) } : null;
+}
+
+/** Vrai si le numéro international a une longueur plausible pour son pays. */
+function numeroValide(t) {
+  if (!/^\+[1-9]\d{6,14}$/.test(t)) return false;
+  const p = paysDuNumero(t);
+  if (!p) return false;
+  return p.regles.some(([, , , min = 4, max = 13]) => p.national.length >= min && p.national.length <= max);
+}
+
 /**
- * Normalise un numéro WhatsApp : retire espaces/tirets, ajoute l'indicatif
- * par défaut si absent. Renvoie null si invalide.
- * Sénégal (+221) : 9 chiffres ; Mauritanie (+222) : 8 chiffres.
+ * Normalise un numéro de téléphone (WhatsApp) au format international « +indicatif numéro ».
+ * Accepte tous les pays : « +33 6 12 34 56 78 », « 0033… », « 221771234567 » (indicatif sans +),
+ * ou un numéro local auquel on ajoute l'indicatif par défaut de l'école (avec ou sans 0 initial).
+ * Renvoie null si le numéro n'est pas valable.
  */
 function normaliserTel(tel, indicatifDefaut = '+221') {
   if (!tel) return null;
-  let t = String(tel).replace(/[\s.\-()]/g, '');
+  let t = String(tel).replace(/[\s.\-()/]/g, '');
   if (t.startsWith('00')) t = '+' + t.slice(2);
-  if (/^(221\d{9}|222\d{8})$/.test(t)) t = '+' + t; // indicatif tapé sans « + »
-  if (!t.startsWith('+')) t = indicatifDefaut + t;
-  if (/^\+222\d{8}$/.test(t) || /^\+221\d{9}$/.test(t)) return t;
+  if (t.startsWith('+')) return numeroValide(t) ? t : null;
+  if (!/^\d+$/.test(t)) return null;
+  const defaut = '+' + String(indicatifDefaut || '+221').replace(/\D/g, '');
+  // 1) numéro local du pays de l'école (avec ou sans le 0 du préfixe national)
+  for (const n of [t, t.replace(/^0/, '')]) if (numeroValide(defaut + n)) return defaut + n;
+  // 2) indicatif tapé sans « + » (ex. 221771234567)
+  if (numeroValide('+' + t)) return '+' + t;
   return null;
 }
 
@@ -104,11 +129,12 @@ const vide = (v) => (v === undefined || v === null || String(v).trim() === '' ? 
 // Modes de paiement : ceux du Sénégal, puis ceux de la Mauritanie.
 const MODES_PAIEMENT = {
   especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Mixx by Yas (Free Money)',
+  mobile_money: 'Mobile Money (MTN, Moov…)', carte: 'Carte bancaire',
   virement: 'Virement bancaire', cheque: 'Chèque',
   bankily: 'Bankily', masrvi: 'Masrvi', sedad: 'Sedad',
 };
 
 module.exports = {
   HttpError, ah, MOIS, nomMois, deMois, aujourdhui, debutMois, ajouterMois, moisEntre,
-  dateFr, montant, normaliserTel, remplir, exiger, vide, MODES_PAIEMENT,
+  dateFr, montant, normaliserTel, numeroValide, PAYS, remplir, exiger, vide, MODES_PAIEMENT,
 };

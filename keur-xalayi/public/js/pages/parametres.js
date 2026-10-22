@@ -1,6 +1,6 @@
 // Paramètres : école, logo, devise, tarifs par niveau, notes, messages,
 // WhatsApp et sauvegardes.
-import { get, post, put, del, e, options, champ, champTel, activerTels, lireForm, tableau, dateHeure, toast, erreur, reduireImage, formulaire, confirmer, resultatEnvoi } from '../ui.js';
+import { get, post, put, del, e, options, champ, champTel, optionsIndicatifs, activerTels, lireForm, tableau, dateHeure, toast, erreur, reduireImage, formulaire, confirmer, resultatEnvoi } from '../ui.js';
 import { rafraichirContexte } from '../app.js';
 
 const NIVEAUX_CODES = ['CI', 'CP', 'CE1', 'CE2', 'CM1', 'CM2'];
@@ -35,7 +35,7 @@ export async function afficher(el, params) {
           ${champ('Téléphone', `<input name="telephone" value="${e(p.telephone)}" placeholder="+221 33 …">`)}
           ${champ('E-mail', `<input type="email" name="email" value="${e(p.email)}">`)}
           ${champ('Devise', `<select name="devise">${options([['FCFA', 'Franc CFA (FCFA) — Sénégal'], ['MRU', 'Ouguiya (MRU) — Mauritanie']], p.devise)}</select>`)}
-          ${champ('Pays (indicatif téléphonique)', `<select name="indicatif_defaut">${options([['+221', 'Sénégal (+221)'], ['+222', 'Mauritanie (+222)']], p.indicatif_defaut)}</select>`, { aide: 'Détermine aussi les modes de paiement proposés (Wave, Orange Money…).' })}
+          ${champ('Pays (indicatif téléphonique)', `<select name="indicatif_defaut">${optionsIndicatifs(p.indicatif_defaut)}</select>`, { aide: 'Indicatif ajouté aux numéros tapés sans indicatif. Détermine aussi les modes de paiement proposés (Wave, Orange Money…).' })}
         </div>
         <fieldset id="certificat"><legend>📜 Certificat de scolarité</legend><div class="grille g2">
           ${champ('Directrice (signataire)', `<input name="directrice_nom" value="${e(p.directrice_nom)}" placeholder="Madame Diodio Faye">`, { aide: '« Je soussignée, …, Directrice Générale de l\'école »' })}

@@ -14,7 +14,7 @@ comme sur téléphone.
 |---|---|
 | **Deux espaces** | Connexion par identifiant + mot de passe (bcrypt), sessions sécurisées. **Espace Directrice** : gestion complète. **Espace Enseignants** : chaque enseignant crée lui-même son compte en choisissant sa classe (validé ensuite par la directrice), puis ne voit que sa classe (appel, notes, bulletins) |
 | **Classes** | PS, MS, GS, CI, CP → CM2, plusieurs groupes par niveau (CE1 A, CE1 B), titulaire, effectifs garçons/filles, tarifs propres |
-| **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp +221 obligatoire (+222 accepté), recherche, filtres, archivage, réinscription |
+| **Élèves** | Fiche complète avec photo, matricule automatique (`KX26-0001`), WhatsApp du parent obligatoire, indicatif de n'importe quel pays (+221 par défaut), recherche, filtres, archivage, réinscription |
 | **Facture d'inscription** | Proposée dès l'enregistrement d'un élève (PDF A5 avec logo, n° `FI26-0012`) : frais d'inscription, déjà versé, reste à payer, mensualité et réduction ; tamponnée « PAYÉE » une fois les frais réglés ; réimprimable depuis la fiche élève |
 | **Paiements** | Mensualités (un ou plusieurs mois à la fois), frais d'inscription, modes sénégalais (espèces, Wave, Orange Money, Mixx by Yas / Free Money, virement, chèque ; Bankily, Masrvi et Sedad si le pays est réglé sur la Mauritanie), statut Payé/Partiel/Impayé, réductions avec motif, reçu PDF avec logo et montant en lettres, **imprimé en un clic juste après l'encaissement**, envoi du reçu par WhatsApp, annulation tracée |
 | **Impayés** | Par mois et par classe, regroupés par élève, rappel en un clic, export |
@@ -64,7 +64,7 @@ gardées dans la base de données : aucun disque persistant n'est nécessaire.
 
 ## Premiers réglages (dans l'application)
 
-1. **Paramètres → École** : logo, adresse, téléphone, devise (FCFA par défaut) et pays (Sénégal +221 par défaut).
+1. **Paramètres → École** : logo, adresse, téléphone, devise (FCFA par défaut) et pays de l'école, au choix parmi tous les pays (Sénégal +221 par défaut).
 2. **Paramètres → Tarifs** : frais d'inscription et mensualité de chaque niveau.
 3. **Personnel** : ajoutez les enseignants ; **Classes** : désignez les titulaires et créez les groupes (CE1 B…).
 4. **Comptes des enseignants** : chaque enseignant clique sur « Espace Enseignants » puis « Créer mon compte » et choisit sa classe ; la directrice valide la demande dans **Utilisateurs** (il devient alors titulaire de la classe).
