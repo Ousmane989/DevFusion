@@ -9,7 +9,7 @@ const { config } = require('./config');
 // Clé de signature des sessions commerçant : dérivée du secret robuste de la
 // configuration (variable JWT_SECRET, ou secret privé généré / dérivé de la
 // base — jamais une valeur par défaut connue). Dérivation dédiée pour que le
-// jeton d'un autre espace (Karat Livreur) ne soit jamais accepté ici.
+// jeton d'un autre espace (Karat Logistique) ne soit jamais accepté ici.
 const JWT_SECRET = crypto.createHmac('sha256', config.jwtSecret).update('karat-merchant-session').digest('hex');
 // Session glissante : le commerçant reste connecté tant qu'il utilise
 // l'application (le jeton est renouvelé à l'usage), mais un appareil oublié
