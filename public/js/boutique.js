@@ -110,8 +110,8 @@
   }
   function header(d) {
     return `<header class="sf-header" id="sf-top"><div class="sf-header-in">
-      <a class="sf-brand-row" href="#sf-top">${logoMark(d)}<span class="sf-brand-name">${esc(d.shopName)}</span></a>
-      <nav class="sf-nav" id="sf-nav"><a class="sf-nav-l" href="#sf-top">Accueil</a><a class="sf-nav-l" href="#produits">Produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a><span data-lang-switch></span></nav>
+      <a class="sf-brand-row" href="${esc(viewUrl('home'))}" data-view="home">${logoMark(d)}<span class="sf-brand-name">${esc(d.shopName)}</span></a>
+      <nav class="sf-nav" id="sf-nav"><a class="sf-nav-l${view === 'home' ? ' on' : ''}" href="${esc(viewUrl('home'))}" data-view="home">Accueil</a><a class="sf-nav-l${view === 'catalog' ? ' on' : ''}" href="${esc(viewUrl('catalog'))}" data-view="catalog">Tous les produits</a><a class="sf-nav-l" href="#sf-contact">Contact</a><span data-lang-switch></span></nav>
       <div class="sf-head-right">${cartBtn()}<button type="button" class="sf-burger" id="sf-burger" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></div>
     </div></header>`;
   }
@@ -152,14 +152,89 @@
         <div class="sf-card2-actions"><button type="button" class="sf-add" data-detail-open="${p.id}">Commander</button></div>
       </div></article>`;
   }
+  const HOME_MAX = 8; // l'accueil montre une sélection, le reste est sur « Tous les produits »
+  const countLabel = (n) => `${n} article${n > 1 ? 's' : ''}`;
+  function seeAllBtn(d) {
+    return `<div class="sf-see-all"><a class="sf-btn" href="${esc(viewUrl('catalog'))}" data-view="catalog">Voir tous les produits <span class="sf-see-all-n">(${d.products.length})</span> →</a></div>`;
+  }
   function productsSection(d) {
-    return `<section class="sf-shop" id="produits"><div class="sf-shop-head"><h2 class="sf-sec-title">Nos produits</h2><span class="sf-count">${d.products.length} article${d.products.length > 1 ? 's' : ''}</span></div>
-      ${(d.categories && d.categories.length > 1) ? filters(d.categories) : ''}
-      <div class="sf-grid2" id="sf-grid">${d.products.length ? d.products.map(card).join('') : empty()}</div></section>`;
+    const shown = d.products.slice(0, HOME_MAX);
+    const more = d.products.length > HOME_MAX;
+    return `<section class="sf-shop" id="produits"><div class="sf-shop-head"><h2 class="sf-sec-title">Nos produits</h2><a class="sf-count sf-count-link" href="${esc(viewUrl('catalog'))}" data-view="catalog">${countLabel(d.products.length)} · Tout voir →</a></div>
+      ${(!more && d.categories && d.categories.length > 1) ? filters(d.categories) : ''}
+      <div class="sf-grid2" id="sf-grid">${shown.length ? shown.map(card).join('') : empty()}</div>
+      ${d.products.length ? seeAllBtn(d) : ''}</section>`;
+  }
+  // ---------- Page « Tous les produits » (catalogue complet) ----------
+  const SORTS = [['new', 'Nouveautés'], ['price-asc', 'Prix croissant'], ['price-desc', 'Prix décroissant'], ['promo', 'Meilleures promos'], ['name', 'Nom (A → Z)']];
+  let cat = { q: '', cat: '', sort: 'new' };
+  const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function catalogList() {
+    const q = norm(cat.q).trim();
+    let list = data.products.filter((p) => (!cat.cat || p.category === cat.cat)
+      && (!q || norm([p.name, p.category, p.subtitle, p.description, (p.variants || []).join(' ')].join(' ')).includes(q)));
+    const by = {
+      'new': (a, b) => b.id - a.id,
+      'price-asc': (a, b) => a.price - b.price,
+      'price-desc': (a, b) => b.price - a.price,
+      promo: (a, b) => (hasPromo(b) ? discountPct(b) : -1) - (hasPromo(a) ? discountPct(a) : -1) || b.id - a.id,
+      name: (a, b) => String(a.name).localeCompare(String(b.name), 'fr'),
+    }[cat.sort];
+    return list.slice().sort(by);
+  }
+  function catalogPills(d) {
+    const n = (c) => d.products.filter((p) => !c || p.category === c).length;
+    const cats = [''].concat(d.categories || []);
+    return `<div class="sf-filters" id="sf-cat-pills">${cats.map((c) => `<button type="button" class="sf-pill2 ${c === cat.cat ? 'on' : ''}" data-ccat="${esc(c)}">${esc(c || 'Tout')} <span class="sf-pill-n">${n(c)}</span></button>`).join('')}</div>`;
+  }
+  function catalogGrid() {
+    const list = catalogList();
+    const res = root.querySelector('#sf-cat-count'); if (res) res.textContent = countLabel(list.length);
+    return list.length ? list.map(card).join('')
+      : `<div class="sf-empty sf-cat-empty"><p>Aucun produit ne correspond à votre recherche.</p><button type="button" class="sf-btn ghost" data-creset>Réinitialiser</button></div>`;
+  }
+  function catalogMarkup(d) {
+    return header(d) + `<section class="sf-shop sf-catalog" id="produits">
+      <nav class="sf-crumbs"><a href="${esc(viewUrl('home'))}" data-view="home">Accueil</a><span>›</span><span>Tous les produits</span></nav>
+      <div class="sf-shop-head"><h1 class="sf-sec-title">Tous les produits</h1><span class="sf-count" id="sf-cat-count">${countLabel(d.products.length)}</span></div>
+      <div class="sf-cat-tools">
+        <label class="sf-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="sf-cat-q" placeholder="Rechercher un produit…" value="${esc(cat.q)}" autocomplete="off" /></label>
+        <label class="sf-sort"><span>Trier par</span><select id="sf-cat-sort">${SORTS.map(([v, l]) => `<option value="${v}" ${v === cat.sort ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      </div>
+      ${(d.categories && d.categories.length > 1) ? catalogPills(d) : ''}
+      <div class="sf-grid2" id="sf-grid">${d.products.length ? '' : empty()}</div></section>` + trustBand() + footer(d);
+  }
+  function refreshCatalog() {
+    const grid = root.querySelector('#sf-grid'); if (!grid || !data.products.length) return;
+    grid.innerHTML = catalogGrid();
+    bindCards(grid);
+    const r = grid.querySelector('[data-creset]');
+    if (r) r.addEventListener('click', () => { cat = { q: '', cat: '', sort: cat.sort }; const qi = root.querySelector('#sf-cat-q'); if (qi) qi.value = ''; root.querySelectorAll('[data-ccat]').forEach((x) => x.classList.toggle('on', x.dataset.ccat === '')); refreshCatalog(); });
+  }
+  function initCatalog() {
+    const qi = root.querySelector('#sf-cat-q');
+    if (qi) qi.addEventListener('input', () => { cat.q = qi.value; refreshCatalog(); });
+    const so = root.querySelector('#sf-cat-sort');
+    if (so) so.addEventListener('change', () => { cat.sort = so.value; refreshCatalog(); });
+    root.querySelectorAll('[data-ccat]').forEach((b) => b.addEventListener('click', () => {
+      cat.cat = b.dataset.ccat;
+      root.querySelectorAll('[data-ccat]').forEach((x) => x.classList.toggle('on', x === b));
+      refreshCatalog();
+    }));
+    refreshCatalog();
   }
   // Vitrine unifiée, professionnelle, adaptée aux couleurs du thème choisi.
   function shopMarkup(d) {
     return header(d) + hero(d) + trustBand() + productsSection(d) + footer(d);
+  }
+  // Vue courante : accueil ou « Tous les produits » (?page=produits, partageable).
+  let view = 'home';
+  const viewFromUrl = () => (new URLSearchParams(location.search).get('page') === 'produits' ? 'catalog' : 'home');
+  function viewUrl(v) {
+    const u = new URL(location.href);
+    u.searchParams.delete('produit');
+    if (v === 'catalog') u.searchParams.set('page', 'produits'); else u.searchParams.delete('page');
+    return u.pathname + u.search;
   }
 
   // ============================================================
@@ -351,6 +426,7 @@
   // Bouton « retour » du navigateur : ouvre/ferme la page produit selon l'URL.
   window.addEventListener('popstate', () => {
     if (window.__KARAT_SPA__) return;
+    if (data && viewFromUrl() !== view) { view = viewFromUrl(); renderView(); }
     const pid = Number(new URLSearchParams(location.search).get('produit'));
     const openEl = root.querySelector('.sf-detail.open');
     if (pid && byId[pid]) openDetail(pid, true);
@@ -483,6 +559,15 @@
   function openCart() { const dr = root.querySelector('.sf-drawer'); if (dr) { renderCart(); dr.classList.add('open'); if (cart.length) pixel('InitiateCheckout', { value: cartSubtotal(), currency: pixCurrency(), num_items: cartCount() }); } }
   function closeCart() { const dr = root.querySelector('.sf-drawer'); if (dr) dr.classList.remove('open'); }
 
+  function bindCards(scope) {
+    scope.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); addToCart(Number(b.dataset.add)); }));
+    scope.querySelectorAll('[data-detail-open]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openDetail(Number(b.dataset.detailOpen)); }));
+    // Clic sur une carte produit -> fiche detail (sauf sur les boutons d'action)
+    scope.querySelectorAll('[data-detail]').forEach((el) => el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-add]') || e.target.closest('[data-detail-open]')) return;
+      openDetail(Number(el.dataset.detail));
+    }));
+  }
   function mountChrome() {
     const fab = document.createElement('button');
     fab.className = 'sf-fab'; fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Panier <span class="sf-fab-count">0</span>`;
@@ -507,15 +592,14 @@
     det.querySelector('.sf-detail-ov').addEventListener('click', () => closeDetail());
     det.querySelector('.sf-detail-x').addEventListener('click', () => closeDetail());
     det.querySelector('.sf-pd-back').addEventListener('click', () => closeDetail());
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); closeCart(); } });
+    if (!window.__sfKeyBound) { window.__sfKeyBound = true; document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); closeCart(); } }); }
 
     root.querySelectorAll('.sf-cart').forEach((b) => b.addEventListener('click', openCart));
-    root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); addToCart(Number(b.dataset.add)); }));
-    root.querySelectorAll('[data-detail-open]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openDetail(Number(b.dataset.detailOpen)); }));
-    // Clic sur une carte produit -> fiche detail (sauf sur les boutons d'action)
-    root.querySelectorAll('[data-detail]').forEach((el) => el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-add]') || e.target.closest('[data-detail-open]')) return;
-      openDetail(Number(el.dataset.detail));
+    bindCards(root);
+    // Liens Accueil / Tous les produits : changement de page sans rechargement.
+    root.querySelectorAll('[data-view]').forEach((a) => a.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault(); goView(a.dataset.view);
     }));
 
     // Filtres par catégorie (fonctionnels).
@@ -569,15 +653,30 @@
     (d.products || []).forEach((p) => (byId[p.id] = p));
     applyTheme(t);
     root.className = 'storefront pro';
-    root.innerHTML = shopMarkup(d);
-    mountChrome();
-    updateBadges();
-    document.title = d.shopName + ' — Boutique Karat';
+    view = window.__KARAT_SPA__ ? 'home' : viewFromUrl();
+    renderView();
     initPixel(d.marketing && d.marketing.metaPixelId);
     track('visit', detectSource());
     // Lien profond depuis le catalogue Meta / une publicité (?produit=ID).
     const pid = Number(new URLSearchParams(location.search).get('produit'));
     if (pid && byId[pid]) setTimeout(() => openDetail(pid, true), 350);
+  }
+
+  // Dessine la vue courante (le panier est conservé d'une page à l'autre).
+  function renderView() {
+    root.innerHTML = view === 'catalog' ? catalogMarkup(data) : shopMarkup(data);
+    mountChrome();
+    if (view === 'catalog') initCatalog();
+    updateBadges();
+    document.title = (view === 'catalog' ? 'Tous les produits — ' : '') + data.shopName + ' — Boutique Karat';
+  }
+  function goView(v) {
+    if (v !== view) {
+      view = v;
+      if (!window.__KARAT_SPA__) { try { history.pushState({ page: v }, '', viewUrl(v)); } catch (_) {} }
+      renderView();
+    }
+    window.scrollTo({ top: 0 });
   }
 
   async function load() {

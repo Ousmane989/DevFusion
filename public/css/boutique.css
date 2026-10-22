@@ -378,6 +378,30 @@ img { max-width: 100%; display: block; }
 .pro .sf-see { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 9px; padding: 8px 14px; font-family: var(--body); font-size: 0.82rem; cursor: pointer; transition: all .25s; }
 .pro .sf-see:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Accueil : lien vers la page « Tous les produits » */
+.pro .sf-nav-l.on { color: var(--text); } .pro .sf-nav-l.on::after { width: 100%; }
+.pro .sf-count-link { color: var(--accent); text-decoration: none; }
+.pro .sf-count-link:hover { text-decoration: underline; }
+.pro .sf-see-all { display: flex; justify-content: center; margin-top: 34px; }
+.pro .sf-see-all .sf-btn { text-decoration: none; }
+.pro .sf-see-all-n { opacity: .75; font-weight: 500; }
+
+/* Page « Tous les produits » */
+.pro .sf-catalog { padding-top: clamp(24px, 4vw, 40px); }
+.pro .sf-crumbs { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
+.pro .sf-crumbs a { color: var(--muted); text-decoration: none; } .pro .sf-crumbs a:hover { color: var(--accent); }
+.pro .sf-cat-tools { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.pro .sf-search { flex: 1 1 260px; display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 50px; padding: 0 18px; transition: border-color .25s; }
+.pro .sf-search:focus-within { border-color: var(--accent); }
+.pro .sf-search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+.pro .sf-search input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--text); font-family: var(--body); font-size: 0.95rem; padding: 13px 0; }
+.pro .sf-sort { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 50px; padding: 0 8px 0 18px; color: var(--muted); font-size: 0.85rem; }
+.pro .sf-sort select { background: none; border: none; outline: none; color: var(--text); font-family: var(--body); font-size: 0.92rem; padding: 12px 6px; cursor: pointer; }
+.pro .sf-sort select option { background: var(--surface); color: var(--text); }
+.pro .sf-pill-n { opacity: .6; font-size: 0.78rem; margin-inline-start: 4px; }
+.pro .sf-cat-empty { grid-column: 1 / -1; padding: 50px 20px; display: grid; justify-items: center; gap: 14px; }
+@media (max-width: 560px) { .pro .sf-sort { flex: 1 1 100%; justify-content: space-between; } }
+
 /* Moyens de paiement (pied de page) */
 .sf-pay { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
 .sf-pay-chip { font-size: 0.8rem; color: var(--text); background: var(--soft); border: 1px solid var(--line); padding: 6px 14px; border-radius: 50px; }
