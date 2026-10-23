@@ -1324,7 +1324,7 @@ code { font-family: ui-monospace, monospace; }
 .price-toggle { display: inline-flex; gap: 4px; padding: 4px; margin-top: 18px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-soft); }
 .price-toggle button { border: 0; background: transparent; color: var(--text-mute); font: inherit; font-size: .9rem; padding: 8px 16px; border-radius: 999px; cursor: pointer; }
 .price-toggle button.on { background: var(--gold-grad); color: #141414; font-weight: 600; }
-.price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 40px; align-items: stretch; }
+.price-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 380px)); justify-content: center; gap: 22px; margin-top: 40px; align-items: stretch; }
 .price-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 30px 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card, #151515); }
 .price-card.popular { border-color: var(--gold, #d4af37); box-shadow: 0 0 0 1px var(--gold, #d4af37) inset, 0 30px 80px -40px rgba(212,175,55,.45); }
 .price-card h3 { font-family: var(--serif); font-size: 1.7rem; }

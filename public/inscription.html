@@ -93,7 +93,6 @@
             <div class="plan-pick" id="plan-pick" role="radiogroup">
               <label class="plan-opt"><input type="radio" name="plan" value="decouverte" /><span><b>Découverte</b><em data-price="decouverte">—</em></span></label>
               <label class="plan-opt"><input type="radio" name="plan" value="pro" checked /><span><b>Pro</b><em data-price="pro">—</em><i>Populaire</i></span></label>
-              <label class="plan-opt"><input type="radio" name="plan" value="business" /><span><b>Business</b><em data-price="business">—</em></span></label>
             </div>
             <div class="hint">Essai gratuit de 3 jours, puis paiement mensuel par Bankily, Wave ou Orange Money. Modifiable à tout moment.</div>
           </div>
@@ -131,13 +130,20 @@
       // Prix des formules selon le pays (source unique : /api/billing/plans).
       async function loadPrices() {
         const r = await Karat.api('/api/billing/plans?country=' + countrySel.value);
-        (r.data.plans || []).forEach((p) => { const el = document.querySelector('[data-price="' + p.id + '"]'); if (el) el.textContent = p.price.label + ' / mois'; });
+        const plans = r.data.plans || [];
+        plans.forEach((p) => { const el = document.querySelector('[data-price="' + p.id + '"]'); if (el) el.textContent = p.price.label + ' / mois'; });
+        // N'afficher que les formules proposées dans ce pays (Mauritanie : Pro seule).
+        const ids = plans.map((p) => p.id);
+        form.querySelectorAll('input[name="plan"]').forEach((i) => { i.closest('.plan-opt').style.display = (ids.length > 0 && !ids.includes(i.value)) ? 'none' : ''; });
+        const cur = form.querySelector('input[name="plan"]:checked');
+        if (ids.length && (!cur || !ids.includes(cur.value))) { const pro = form.querySelector('input[name="plan"][value="pro"]'); if (pro) pro.checked = true; }
+        document.getElementById('plan-pick').style.gridTemplateColumns = 'repeat(' + Math.max(1, ids.length) + ', 1fr)';
       }
-      const updCur = () => { hint.textContent = 'Devise : ' + (countrySel.value === 'SN' ? 'FCFA' : 'MRU'); loadPrices(); };
-      countrySel.addEventListener('change', updCur); updCur();
-      // Formule choisie sur le site vitrine (?formule=pro).
+      // Formule choisie sur le site vitrine (?formule=pro), avant le filtrage par pays.
       const pre = Karat.qs('formule');
       if (pre) { const r = form.querySelector('input[name="plan"][value="' + pre + '"]'); if (r) r.checked = true; }
+      const updCur = () => { hint.textContent = 'Devise : ' + (countrySel.value === 'SN' ? 'FCFA' : 'MRU'); loadPrices(); };
+      countrySel.addEventListener('change', updCur); updCur();
 
       function setInvalid(fieldName, on, text) {
         const el = document.querySelector('[data-field="' + fieldName + '"]');

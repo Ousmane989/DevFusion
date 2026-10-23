@@ -25,10 +25,19 @@ const METHODS = {
 const billingOf = (country) => COUNTRY_BILLING[country] || COUNTRY_BILLING.MR;
 const planOf = (planId) => PLANS[planId] || PLANS.pro;
 
+// Une formule est-elle proposée dans ce pays (prix défini, non masquée) ?
+function offeredIn(country, planId) {
+  const p = PLANS[planId];
+  return Boolean(p && !p.hidden && p[billingOf(country).key] != null);
+}
+// Formule facturée dans ce pays : la formule demandée si elle y est
+// proposée, sinon Pro (proposée partout).
+const billedPlan = (country, planId) => (offeredIn(country, planId) ? planId : 'pro');
+
 // Prix mensuel d'une formule pour un pays.
 function priceFor(country, planId) {
   const b = billingOf(country);
-  return { amount: planOf(planId)[b.key], currency: b.currency };
+  return { amount: PLANS[billedPlan(country, planId)][b.key], currency: b.currency };
 }
 
 function methodsFor(country) {
@@ -40,9 +49,9 @@ function formatPrice(country, planId) {
   return p.amount.toLocaleString('fr-FR').replace(/ | /g, ' ') + ' ' + p.currency;
 }
 
-// Les 3 formules avec le prix du pays (pour le site, l'inscription, le paiement).
+// Les formules proposées dans le pays, avec leur prix (site, inscription, paiement).
 function plansFor(country) {
-  return Object.values(PLANS).map((p) => ({
+  return Object.values(PLANS).filter((p) => offeredIn(country, p.id)).map((p) => ({
     id: p.id, name: p.name, tagline: p.tagline, features: p.features, popular: Boolean(p.popular),
     maxProducts: p.maxProducts, maxShops: p.maxShops,
     price: { ...priceFor(country, p.id), label: formatPrice(country, p.id) },
@@ -58,7 +67,7 @@ function trialDaysLeft(user) {
 // Lien WhatsApp pré-rempli vers l'administrateur pour activer l'abonnement.
 // `number` permet de surcharger le numéro (réglage admin) ; sinon config.
 function whatsappUrl(user, methodId, number, planId) {
-  const plan = planOf(planId || user.plan);
+  const plan = planOf(billedPlan(user.country, planId || user.plan));
   const m = METHODS[methodId];
   const lines = [
     'Bonjour, je souhaite activer mon abonnement Karat.',
@@ -81,4 +90,4 @@ function waveLinkFor(link, country, planId) {
   } catch (_) { return link; }
 }
 
-module.exports = { METHODS, priceFor, methodsFor, formatPrice, plansFor, trialDaysLeft, whatsappUrl, waveLinkFor };
+module.exports = { METHODS, offeredIn, billedPlan, priceFor, methodsFor, formatPrice, plansFor, trialDaysLeft, whatsappUrl, waveLinkFor };

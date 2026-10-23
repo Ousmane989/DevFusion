@@ -4,7 +4,7 @@ const express = require('express');
 const db = require('../db');
 const { PLANS, getUserById, publicUser } = require('../account');
 const { requireAuth } = require('../middleware');
-const { priceFor, methodsFor, formatPrice, plansFor, trialDaysLeft, whatsappUrl, waveLinkFor } = require('../subscription');
+const { offeredIn, billedPlan, priceFor, methodsFor, formatPrice, plansFor, trialDaysLeft, whatsappUrl, waveLinkFor } = require('../subscription');
 const { config } = require('../config');
 
 const router = express.Router();
@@ -30,7 +30,7 @@ router.get('/plans', (req, res) => {
 router.get('/status', requireAuth, async (req, res) => {
   const u = await getUserById((req.account && req.account.id) || req.user.id);
   const country = u.country || 'MR';
-  const planId = PLANS[u.plan] ? u.plan : 'pro';
+  const planId = billedPlan(country, u.plan);
   const price = priceFor(country, planId);
   const number = await adminNumber();
   const waveRow = await db.prepare("SELECT value FROM app_config WHERE key = 'wave_link'").get();
@@ -56,8 +56,8 @@ router.get('/status', requireAuth, async (req, res) => {
 // ------------------------------------------------------------------
 router.post('/plan', requireAuth, async (req, res) => {
   const plan = String((req.body && req.body.plan) || '');
-  if (!PLANS[plan]) return res.status(400).json({ error: 'Formule inconnue.' });
   const acct = req.account || req.user;
+  if (!offeredIn(acct.country || 'MR', plan)) return res.status(400).json({ error: "Cette formule n'est pas proposée dans votre pays." });
   // Abonnement payé en cours : la formule (donc les limites) ne change qu'à
   // la réception du paiement, par l'administrateur.
   if (acct.status === 'active' && plan !== acct.plan) {

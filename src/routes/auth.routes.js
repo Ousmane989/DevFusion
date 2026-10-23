@@ -14,6 +14,7 @@ const {
   clearSessionCookie,
 } = require('../auth');
 const { PLANS, TRIAL_DAYS, isoIn, getUserByEmail, getUserById, publicUser } = require('../account');
+const { billedPlan } = require('../subscription');
 const { COUNTRIES, currencyOf } = require('../catalog');
 const { sendCode, hasSmtp } = require('../mailer');
 const { requireAuth } = require('../middleware');
@@ -86,7 +87,7 @@ router.post('/signup', authLimiter, async (req, res) => {
   const passwordHash = await hashPassword(String(b.password));
   const country = COUNTRIES[b.country] ? b.country : 'MR';
   const currency = currencyOf(country);
-  const plan = PLANS[b.plan] ? b.plan : 'pro'; // conserve pour un futur retour des tarifs
+  const plan = billedPlan(country, b.plan); // formule proposée dans le pays, sinon Pro
   // Inscription avec vérification de l'e-mail : le compte est créé en essai
   // (TRIAL_DAYS jours) mais NON vérifié. Un code est envoyé par e-mail ;
   // l'utilisateur doit le saisir pour activer et accéder à son tableau de bord.
