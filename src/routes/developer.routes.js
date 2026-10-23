@@ -31,10 +31,10 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // POST /api/dev/key { label } — genere une cle (renvoyee EN CLAIR une seule fois)
-// API & webhooks : réservés à la formule Business.
+// API & webhooks : réservés à la formule Pro.
 function requireApiPlan(req, res, next) {
   const plan = PLANS[(req.account || req.user).plan] || PLANS.pro;
-  if (!plan.api) return res.status(403).json({ code: 'plan_limit', error: "L'API et les webhooks sont inclus dans la formule Business." });
+  if (!plan.api) return res.status(403).json({ code: 'plan_limit', error: "L'API et les webhooks sont inclus dans la formule Pro." });
   next();
 }
 

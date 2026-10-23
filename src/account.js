@@ -5,19 +5,23 @@ const db = require('./db');
 // Formules mensuelles — SOURCE UNIQUE des prix, limites et avantages (site
 // vitrine, inscription, page de paiement, espace admin). maxProducts /
 // maxShops : null = illimité.
+// Prix par pays : `null` = formule non proposée dans ce pays.
+// Mauritanie : une seule formule (Pro, 350 MRU). Sénégal : Découverte 5 000 F
+// et Pro 10 000 F. Business n'est plus proposée ; elle reste définie pour les
+// comptes qui l'avaient déjà (facturés au prix Pro).
 const PLANS = {
   decouverte: {
-    id: 'decouverte', name: 'Découverte', mru: 500, fcfa: 3000, maxProducts: 30, maxShops: 1, api: false,
+    id: 'decouverte', name: 'Découverte', mru: null, fcfa: 5000, maxProducts: 30, maxShops: 1, api: false,
     tagline: 'Pour lancer votre première boutique',
     features: ['1 boutique en ligne', "Jusqu'à 30 produits", 'Commandes & paiement à la livraison', 'Tableau de bord des ventes'],
   },
   pro: {
-    id: 'pro', name: 'Pro', mru: 1500, fcfa: 9000, maxProducts: 300, maxShops: 3, api: false, popular: true,
+    id: 'pro', name: 'Pro', mru: 350, fcfa: 10000, maxProducts: 300, maxShops: 3, api: true, popular: true,
     tagline: 'Pour les commerçants qui vendent chaque jour',
-    features: ["Jusqu'à 3 boutiques", "Jusqu'à 300 produits", 'Livraison avec Karat Logistique', 'Marketing : Pixel Meta, catalogue Facebook', 'Finances & statistiques avancées'],
+    features: ["Jusqu'à 3 boutiques", "Jusqu'à 300 produits", 'Livraison avec Karat Logistique', 'Marketing : Pixel Meta, catalogue Facebook', 'Finances & statistiques avancées', 'API & webhooks'],
   },
   business: {
-    id: 'business', name: 'Business', mru: 3500, fcfa: 21000, maxProducts: null, maxShops: 10, api: true,
+    id: 'business', name: 'Business', mru: null, fcfa: null, maxProducts: null, maxShops: 10, api: true, hidden: true,
     tagline: 'Pour les marques et les grands catalogues',
     features: ["Jusqu'à 10 boutiques", 'Produits illimités', 'Tout le contenu Pro', 'API & webhooks', 'Support prioritaire WhatsApp'],
   },

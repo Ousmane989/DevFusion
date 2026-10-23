@@ -279,7 +279,7 @@
         <div class="faq reveal">
           <div class="faq-item">
             <button class="faq-q">Combien coûte Karat ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-            <div class="faq-a"><div class="faq-a-inner">Vous commencez par 3 jours d'essai gratuit, sans carte bancaire. Ensuite, choisissez votre formule mensuelle : Découverte, Pro ou Business (voir la section Tarifs). Sans engagement : vous arrêtez quand vous voulez.</div></div>
+            <div class="faq-a"><div class="faq-a-inner">Vous commencez par 3 jours d'essai gratuit, sans carte bancaire. Ensuite, choisissez votre formule mensuelle : Pro à 350 MRU en Mauritanie, Découverte à 5 000 F ou Pro à 10 000 F au Sénégal (voir la section Tarifs). Sans engagement : vous arrêtez quand vous voulez.</div></div>
           </div>
           <div class="faq-item">
             <button class="faq-q">Comment payer mon abonnement ?<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -371,6 +371,7 @@
         try {
           const r = await fetch('/api/billing/plans?country=' + country);
           const d = await r.json();
+          grid.style.setProperty('--cols', d.plans.length || 1);
           grid.innerHTML = d.plans.map((p) => `
             <article class="price-card${p.popular ? ' popular' : ''}">
               ${p.popular ? '<span class="price-badge">Le plus choisi</span>' : ''}

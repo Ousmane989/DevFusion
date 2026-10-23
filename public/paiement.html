@@ -101,7 +101,7 @@
       const NAMES = { wave: 'Wave', 'orange-money': 'Orange Money', bankily: 'Bankily' };
 
       function updateLinks() {
-        const p = STATE.plans.find((x) => x.id === STATE.plan) || STATE.plans[1];
+        const p = STATE.plans.find((x) => x.id === STATE.plan) || STATE.plans.find((x) => x.popular) || STATE.plans[0];
         document.getElementById('amount-txt').textContent = p.price.label;
         document.getElementById('method-txt').textContent = NAMES[selectedMethod] || 'votre moyen de paiement';
         const wa = document.getElementById('wa-btn');

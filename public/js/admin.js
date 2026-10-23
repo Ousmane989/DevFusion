@@ -104,7 +104,7 @@
             <select id="adm-plan" style="flex:1;padding:8px;border-radius:8px;background:#141414;color:#fff;border:1px solid #333">
               <option value="decouverte"${u.plan === 'decouverte' ? ' selected' : ''}>Découverte</option>
               <option value="pro"${u.plan === 'pro' ? ' selected' : ''}>Pro</option>
-              <option value="business"${u.plan === 'business' ? ' selected' : ''}>Business</option>
+              ${u.plan === 'business' ? '<option value="business" selected>Business (ancienne formule)</option>' : ''}
             </select></label>
         </div>
         <div class="adm-act-row">
