@@ -692,6 +692,7 @@ img { max-width: 100%; display: block; }
 .side-sub:hover { background: var(--bg-card); color: var(--text); }
 .side-sub-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex: none; }
 .side-badge { margin-left: auto; font-size: 0.72rem; color: var(--text-mute); background: var(--bg-soft); padding: 1px 8px; border-radius: 50px; min-width: 8px; text-align: center; }
+.side-badge:empty { display: none; }
 .side-link.active .side-badge { color: var(--gold-light); background: rgba(212,175,55,.15); }
 .side-badge.alert { color: #1a1400; background: var(--gold-grad); font-weight: 700; animation: badgePulse 1.8s ease-in-out infinite; }
 @keyframes badgePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,.5); } 50% { box-shadow: 0 0 0 5px rgba(212,175,55,0); } }
