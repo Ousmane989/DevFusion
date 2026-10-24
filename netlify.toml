@@ -34,6 +34,22 @@
   [headers.values]
     Content-Type = "application/manifest+json"
 
+# Ancienne adresse karat-boutique.netlify.app : les pages renvoient vers
+# karat.fit (301, même chemin) pour qu'on n'utilise plus que le domaine
+# officiel. L'API y reste servie telle quelle : flux catalogue Meta, clés API
+# et webhooks déjà configurés avec l'ancienne adresse continuent de marcher.
+[[redirects]]
+  from = "https://karat-boutique.netlify.app/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://karat-boutique.netlify.app/*"
+  to = "https://karat.fit/:splat"
+  status = 301
+  force = true
+
 # Les fichiers statiques (css, js, html) sont servis par le CDN ; tout le
 # reste (API, pages rendues côté serveur, vitrine) va vers la fonction.
 [[redirects]]
