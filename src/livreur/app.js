@@ -22,6 +22,14 @@ app.set('trust proxy', config.trustProxy);
 app.use(express.json({ limit: config.jsonLimit }));
 app.use(cookieParser());
 
+// Seuls les scripts du site (dossier /livreur) et les scripts intégrés aux
+// pages peuvent s'exécuter : cela bloque aussi le badge « Powered by Netlify »
+// que l'hébergeur ajoute aux pages des projets gratuits.
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline' ${req.protocol}://${req.get('host')}/livreur/`);
+  next();
+});
+
 app.use('/api/livreur', api);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Route API introuvable.' }));
 
