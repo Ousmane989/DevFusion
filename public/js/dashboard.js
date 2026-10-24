@@ -1285,6 +1285,23 @@
   // ================================================================
   // Init
   // ================================================================
+  // Panneau dépliable : anime l'ouverture puis libère la hauteur (le contenu
+  // peut grandir ensuite : liens de partage, retour à la ligne…) ; à la
+  // fermeture, repart de la hauteur réelle pour garder l'animation.
+  function setCollapse(row, panel, open) {
+    panel.classList.toggle('open', open);
+    row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+      // Fin d'animation (avec filet de sécurité si « transitionend » ne vient pas).
+      clearTimeout(panel._free);
+      panel._free = setTimeout(() => { if (panel.classList.contains('open')) panel.style.maxHeight = 'none'; }, 450);
+    } else {
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+      void panel.offsetHeight; // force le recalcul avant de replier
+      panel.style.maxHeight = '0px';
+    }
+  }
   function wireChrome() {
     qa('.side-link').forEach((l) => l.addEventListener('click', () => switchSection(l.dataset.section)));
     // Sous-élément « Pixels » : ouvre Marketing puis déplie le panneau Pixels.
@@ -1292,10 +1309,7 @@
       switchSection('marketing');
       setTimeout(() => {
         const prow = q('#pixels-row'), ppanel = q('#pixels-panel');
-        if (prow && ppanel && !ppanel.classList.contains('open')) {
-          ppanel.classList.add('open'); prow.setAttribute('aria-expanded', 'true');
-          ppanel.style.maxHeight = ppanel.scrollHeight + 'px';
-        }
+        if (prow && ppanel && !ppanel.classList.contains('open')) setCollapse(prow, ppanel, true);
         if (ppanel) ppanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 140);
     });
@@ -1354,11 +1368,7 @@
     // Période, ligne Pixels dépliable, comptes & campagnes
     qa('#mkt-tabs .mkt-tab').forEach((t) => t.addEventListener('click', () => setMktPeriod(t.dataset.mperiod)));
     const prow = q('#pixels-row'), ppanel = q('#pixels-panel');
-    if (prow && ppanel) prow.addEventListener('click', () => {
-      const open = ppanel.classList.toggle('open');
-      prow.setAttribute('aria-expanded', open ? 'true' : 'false');
-      ppanel.style.maxHeight = open ? ppanel.scrollHeight + 'px' : null;
-    });
+    if (prow && ppanel) prow.addEventListener('click', () => setCollapse(prow, ppanel, !ppanel.classList.contains('open')));
     q('#acc-add-btn') && q('#acc-add-btn').addEventListener('click', () => toggle('#acc-form', true));
     q('#acc-cancel') && q('#acc-cancel').addEventListener('click', () => toggle('#acc-form', false));
     q('#acc-save') && q('#acc-save').addEventListener('click', saveAccount);
