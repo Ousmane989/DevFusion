@@ -1,0 +1,21 @@
+# Karat Logistique — projet Netlify autonome (agence de livraison).
+# Dans Netlify : « Base directory » = logistique. Le site Karat garde son
+# propre projet (netlify.toml à la racine du dépôt).
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  node_bundler = "nft"
+  # Pages HTML, styles et scripts lus par l'application (hors du suivi des require).
+  included_files = ["app/public/**"]
+
+# Tout passe par l'application (pages protégées, API, fichiers de l'agence).
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/api"
+  status = 200

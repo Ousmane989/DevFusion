@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /livreur
+Disallow: /livreur/agence
+Disallow: /livreur/partenaire
+Disallow: /livreur/coursier
