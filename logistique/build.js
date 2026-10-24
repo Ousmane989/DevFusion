@@ -10,6 +10,12 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(__dirname, 'app');
 
+// Déploiement depuis un dossier déjà préparé (sans le reste du dépôt) : rien à copier.
+if (!fs.existsSync(path.join(ROOT, 'src', 'livreur')) && fs.existsSync(path.join(OUT, 'src'))) {
+  console.log('Karat Logistique : dossier app/ déjà prêt.');
+  process.exit(0);
+}
+
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.cpSync(path.join(ROOT, 'src'), path.join(OUT, 'src'), { recursive: true });
 fs.cpSync(path.join(ROOT, 'public', 'livreur'), path.join(OUT, 'public', 'livreur'), { recursive: true });
