@@ -125,6 +125,13 @@ par ville), plan OpenStreetMap de l'agence, carte d'itinéraire sur la page de s
 **Démo (hors production uniquement)** — mot de passe `demo1234` :
 agence `22200000001`, partenaire `22200000002`, livreur `22200000003`.
 
+**Projet Netlify autonome** (dossier `logistique/`) : Karat Logistique peut
+être hébergé seul, sans le reste de Karat (`src/livreur/app.js`). Dans
+Netlify, importer ce dépôt avec **Base directory = `logistique`** et définir
+`DATABASE_URL` (la même base que Karat, pour que les commandes des boutiques
+liées continuent d'arriver). `logistique/build.js` copie `src/` et
+`public/livreur` dans `logistique/app` au déploiement.
+
 ---
 
 ## 🗂 Structure du projet
