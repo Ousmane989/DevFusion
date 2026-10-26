@@ -35,7 +35,7 @@ export async function afficher(el, { id }) {
           ${champ('Nom du père', `<input name="pere_nom" value="${e(v.pere_nom)}">`)}
           ${champ('Nom de la mère', `<input name="mere_nom" value="${e(v.mere_nom)}">`)}
           ${champ('Tuteur (si différent)', `<input name="tuteur_nom" value="${e(v.tuteur_nom)}">`)}
-          ${champ('Numéro WhatsApp du parent', champTel('whatsapp', v.whatsapp, { requis: true }), { requis: true, aide: 'Utilisé pour les rappels et les annonces.' })}
+          ${champ('Numéro WhatsApp du parent', champTel('whatsapp', v.whatsapp, { requis: !id }), { requis: !id, aide: id && !v.whatsapp ? 'À compléter : sans numéro, pas de rappels ni d\'annonces pour cet élève.' : 'Utilisé pour les rappels et les annonces.' })}
           ${champ('Second numéro', champTel('telephone2', v.telephone2))}
           ${champ('Adresse / quartier', `<input name="adresse" value="${e(v.adresse)}">`)}
         </div>
@@ -105,7 +105,7 @@ export async function afficher(el, { id }) {
     ev.preventDefault();
     if (!f.reportValidity()) return;
     const d = lireForm(f);
-    if (!d.whatsapp) return erreur(new Error('Le numéro WhatsApp du parent est obligatoire.'));
+    if (!d.whatsapp && !id) return erreur(new Error('Le numéro WhatsApp du parent est obligatoire.'));
     d.photo = photo;
     d.reduction_motif = d.reduction_motif_choix === 'autre' ? d.reduction_motif_autre : d.reduction_motif_choix;
     delete d.reduction_motif_choix; delete d.reduction_motif_autre;

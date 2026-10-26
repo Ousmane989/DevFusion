@@ -46,7 +46,7 @@ async function preparer(mois, type, { impayesSeulement, classeId } = {}) {
   const modele = type === 'second_rappel' ? p.modele_second_rappel : p.modele_rappel;
   const limite = dateFr(dateLimite(mois, p));
   return situation
-    .filter((s) => s.du > 0 && (!seulementImpayes || s.reste > 0))
+    .filter((s) => s.whatsapp && s.du > 0 && (!seulementImpayes || s.reste > 0)) // sans numéro : pas de rappel possible
     .map((s) => ({
       eleve_id: s.eleve_id,
       destinataire: s.parent,

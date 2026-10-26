@@ -303,6 +303,14 @@ test('corrections de la revue : décisions, mois de paiement, données cachées 
     assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve.whatsapp, attendu);
   }
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { whatsapp: '+33 6 12' } })).statut, 400);
+  // Élève sans numéro WhatsApp (registre papier) : accepté, mais exclu des envois
+  const sansNum = await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom: 'Sansnumero', prenom: 'Test', sexe: 'F', classe_id: classe.id } });
+  assert.strictEqual(sansNum.statut, 201, JSON.stringify(sansNum.donnees));
+  const moisR = (await appel('dir', '/api/paiements/mois')).donnees.mois[0];
+  const apercu = (await appel('dir', '/api/whatsapp/rappels/apercu', { methode: 'POST', corps: { mois: moisR, impayes_seulement: false } })).donnees;
+  assert.ok(!apercu.some((m) => m.eleve_id === sansNum.donnees.id), 'pas de rappel sans numéro');
+  const { query: q2 } = require('../src/db');
+  await q2('DELETE FROM eleves WHERE id = $1', [sansNum.donnees.id]);
   // Champ obligatoire vidé : 400 et non 500
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { prenom: '  ' } })).statut, 400);
   // 10 échecs de connexion : blocage (compté en base)

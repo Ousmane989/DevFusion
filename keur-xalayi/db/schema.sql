@@ -358,6 +358,11 @@ BEGIN
   END IF;
 END $$;
 
+-- ---------- Numéro WhatsApp du parent facultatif ----------
+-- Élèves saisis depuis un registre papier sans numéro : « à compléter » ; les envois
+-- (rappels, annonces, reçus…) passent simplement ces élèves.
+ALTER TABLE eleves ALTER COLUMN whatsapp DROP NOT NULL;
+
 -- ---------- Indicatifs de tous les pays (plus seulement Sénégal / Mauritanie) ----------
 DO $$
 BEGIN

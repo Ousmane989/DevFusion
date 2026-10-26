@@ -61,7 +61,7 @@ router.post('/annonce', ah(async (req, res) => {
               COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,''), 'Parent') AS parent
          FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
          JOIN classes c ON c.id = i.classe_id
-        WHERE e.statut = 'actif' AND i.decision <> 'parti' ${filtre} ORDER BY e.whatsapp, e.prenom`, params);
+        WHERE e.statut = 'actif' AND i.decision <> 'parti' AND e.whatsapp IS NOT NULL ${filtre} ORDER BY e.whatsapp, e.prenom`, params);
     const familles = new Map();
     for (const r of rows) {
       const f = familles.get(r.whatsapp) || { telephone: r.whatsapp, parent: r.parent, eleve_id: r.id, eleves: [], classes: [] };
@@ -71,7 +71,7 @@ router.post('/annonce', ah(async (req, res) => {
     }
     destinataires = [...familles.values()];
   }
-  if (!destinataires.length) throw new HttpError(400, 'Aucun destinataire trouvé.');
+  if (!destinataires.length) throw new HttpError(400, 'Aucun destinataire trouvé (numéro WhatsApp du parent à compléter ?).');
   const liste = destinataires.map((d) => ({
     telephone: d.telephone, destinataire: d.parent, eleve_id: d.eleve_id,
     texte: remplir(texte, { nom_parent: d.parent, nom_eleve: d.eleves.join(' et '), classe: d.classes.join(', '), ecole: p.nom_ecole }),

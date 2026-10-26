@@ -37,7 +37,7 @@ export async function afficher(el, params) {
     const cols = vue === 'eleve'
       ? [
         { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}"><b>${e(x.prenom)} ${e(x.nom)}</b></a><div class="petit muted">${e(x.classe)}</div>` },
-        { titre: 'Parent', rendu: (x) => `${e(x.parent)}<div class="petit"><a href="https://wa.me/${e(x.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${e(x.whatsapp)}</a></div>` },
+        { titre: 'Parent', rendu: (x) => `${e(x.parent)}<div class="petit">${x.whatsapp ? `<a href="https://wa.me/${e(x.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${e(x.whatsapp)}</a>` : 'N° à compléter'}</div>` },
         { titre: 'Mois impayés', rendu: (x) => x.mois_liste.map((m) => `<span class="badge impaye">${e(nomMois(m, true))}</span>`).join(' ') },
         { titre: 'Reste dû', classe: 'num', rendu: (x) => `<b>${argent(x.reste)}</b>` },
         { titre: '', rendu: (x) => `<button class="btn petit" data-payer="${x.eleve_id}" data-mois="${x.mois_liste.join(',')}">Encaisser</button>` },
