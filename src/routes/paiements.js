@@ -171,6 +171,7 @@ async function messageRecu(req, numero) {
 
 router.post('/recu/:numero/whatsapp', ah(async (req, res) => {
   const { l, texte, lien } = await messageRecu(req, req.params.numero);
+  if (!l.whatsapp) throw new HttpError(400, 'Le numéro WhatsApp du parent n\'est pas renseigné : complétez-le sur la fiche de l\'élève.');
   const [m] = await envoyerMessages([{
     telephone: l.whatsapp, destinataire: l.parent, eleve_id: l.eleve_id, texte,
     document: { link: lien, filename: `recu-${req.params.numero}.pdf` },

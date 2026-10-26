@@ -69,7 +69,8 @@ async function envoyerMessages(liste, opts) {
   const canal = opts.canal || config.whatsapp.mode;
   const lot = crypto.randomUUID();
   const resultats = [];
-  for (const msg of liste) {
+  resultats.sansNumero = liste.filter((m) => !m.telephone).length; // élèves dont le numéro est « à compléter »
+  for (const msg of liste.filter((m) => m.telephone)) {
     // Limite de temps (hébergement serverless) : on s'arrête proprement, la suite partira au prochain passage.
     if (opts.avant && Date.now() > opts.avant) { resultats.incomplet = true; break; }
     let statut = 'a_envoyer';

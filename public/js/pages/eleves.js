@@ -31,7 +31,7 @@ export async function afficher(el, params) {
       { titre: 'Classe', rendu: (l) => e(l.classe || '—') },
       { titre: 'Sexe', rendu: (l) => (l.sexe === 'M' ? 'Garçon' : 'Fille') },
       { titre: 'Naissance', rendu: (l) => dateFr(l.date_naissance) || '—' },
-      { titre: 'Parent', rendu: (l) => `${e(l.parent || '—')}<div class="petit muted">${e(l.whatsapp)}</div>` },
+      { titre: 'Parent', rendu: (l) => `${e(l.parent || '—')}<div class="petit muted">${l.whatsapp ? e(l.whatsapp) : 'N° WhatsApp à compléter'}</div>` },
     ];
     if (filtres.statut === 'archive') cols.push({ titre: 'Sortie', rendu: (l) => `${dateFr(l.date_sortie)}<div class="petit muted">${e(l.motif_sortie || '')}</div>` });
     else cols.push({ titre: 'Remarques', rendu: (l) => (l.remarques ? `<span class="badge attention" title="${e(l.remarques)}">⚠ ${e(l.remarques.slice(0, 28))}</span>` : '') });

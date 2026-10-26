@@ -456,7 +456,7 @@ async function cartes(eleves, annee) {
   const p = await parametres();
   const W = 243; const H = 153; // 85,6 × 54 mm (format carte bancaire)
   const qrs = await Promise.all(eleves.map((e) => QRCode.toBuffer(
-    `${p.nom_ecole}|${e.matricule}|${e.prenom} ${e.nom}|${e.classe}|${e.whatsapp}`, { margin: 0, width: 160, errorCorrectionLevel: 'M' })));
+    `${p.nom_ecole}|${e.matricule}|${e.prenom} ${e.nom}|${e.classe}|${e.whatsapp || ''}`, { margin: 0, width: 160, errorCorrectionLevel: 'M' })));
 
   return produire({ size: 'A4', margin: 40 }, (doc) => {
     const x0 = 40 + (doc.page.width - 80 - 2 * W - 20) / 2;
@@ -487,7 +487,7 @@ async function cartes(eleves, annee) {
         .text(`Classe : ${e.classe}`, xi, y + 76)
         .text(`Matricule : ${e.matricule}`, xi, y + 87)
         .text(`Né(e) le : ${dateFr(e.date_naissance) || '—'}`, xi, y + 98)
-        .text(`Urgence : ${e.whatsapp}`, xi, y + 109);
+        .text(`Urgence : ${e.whatsapp || '—'}`, xi, y + 109);
       doc.image(qrs[i], x + W - 58, y + 46, { width: 48 });
       doc.fillColor(COULEURS.gris).fontSize(6).text(p.telephone ? `École : ${p.telephone}` : '', x + 10, y + H - 16, { width: W - 20, align: 'center' });
     });

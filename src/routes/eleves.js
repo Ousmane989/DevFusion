@@ -19,13 +19,15 @@ async function nettoyer(body, partiel = false) {
   const p = await one('SELECT indicatif_defaut FROM parametres WHERE id = 1');
   const d = {};
   for (const c of CHAMPS) if (body[c] !== undefined) d[c] = vide(typeof body[c] === 'string' ? body[c].trim() : body[c]);
-  if (!partiel) exiger(d, ['nom', 'prenom', 'sexe', 'whatsapp']);
-  for (const c of ['nom', 'prenom', 'sexe', 'whatsapp']) {
-    if (c in d && d[c] === null) throw new HttpError(400, 'Le nom, le prénom, le sexe et le WhatsApp sont obligatoires.');
+  // Le numéro WhatsApp du parent est demandé par le formulaire, mais peut rester « à compléter »
+  // (élèves repris d'un registre papier) : ils sont alors exclus des envois WhatsApp.
+  if (!partiel) exiger(d, ['nom', 'prenom', 'sexe']);
+  for (const c of ['nom', 'prenom', 'sexe']) {
+    if (c in d && d[c] === null) throw new HttpError(400, 'Le nom, le prénom et le sexe sont obligatoires.');
   }
   if (d.nom) d.nom = d.nom.toUpperCase();
   if (d.sexe && !['M', 'F'].includes(d.sexe)) throw new HttpError(400, 'Sexe invalide.');
-  if (d.whatsapp !== undefined) {
+  if (d.whatsapp !== undefined && d.whatsapp !== null) {
     const t = normaliserTel(d.whatsapp, p.indicatif_defaut);
     if (!t) throw new HttpError(400, 'Numéro WhatsApp invalide : vérifiez l\'indicatif du pays et le nombre de chiffres (ex. +221 77 123 45 67).');
     d.whatsapp = t;
