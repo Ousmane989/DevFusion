@@ -26,7 +26,7 @@ router.get('/', ah(async (req, res) => {
     `SELECT e.id AS eleve_id, e.prenom, e.nom, c.nom AS classe, pr.statut
        FROM presences pr JOIN inscriptions i ON i.id = pr.inscription_id JOIN eleves e ON e.id = i.eleve_id
        JOIN classes c ON c.id = i.classe_id WHERE pr.date = $1 AND pr.statut <> 'present' ${filtreClasses}
-      ORDER BY c.nom, e.nom`, pAbs);
+      ORDER BY c.nom, i.numero, e.nom`, pAbs);
   const appelsFaits = await query(
     `SELECT DISTINCT i.classe_id FROM presences pr JOIN inscriptions i ON i.id = pr.inscription_id WHERE pr.date = $1 ${filtreClasses}`, pAbs);
 

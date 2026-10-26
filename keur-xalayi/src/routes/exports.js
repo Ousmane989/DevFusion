@@ -37,7 +37,7 @@ const LISTES = {
          LEFT JOIN LATERAL (SELECT i.* FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id
                              WHERE i.eleve_id = e.id ORDER BY a.active DESC, a.date_debut DESC LIMIT 1) i ON TRUE
          LEFT JOIN classes c ON c.id = i.classe_id LEFT JOIN niveaux n ON n.id = c.niveau_id
-        ${filtre} ORDER BY n.ordre, c.nom, e.nom, e.prenom`, params);
+        ${filtre} ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`, params);
     lignes.forEach((l, k) => { l.n = k + 1; l.sexe_l = l.sexe === 'M' ? 'G' : 'F'; l.naissance = [dateFr(l.date_naissance), l.lieu_naissance].filter(Boolean).join(' à '); });
     return {
       titre: req.query.statut === 'archive' ? 'Élèves archivés' : 'Liste des élèves',
@@ -62,7 +62,7 @@ const LISTES = {
     const lignes = await query(
       `SELECT e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.lieu_naissance
          FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
-        WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti' ORDER BY e.nom, e.prenom`, [req.query.classe_id]);
+        WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti' ORDER BY i.numero, e.nom, e.prenom`, [req.query.classe_id]);
     lignes.forEach((l, k) => { l.n = k + 1; l.sexe_l = l.sexe === 'M' ? 'G' : 'F'; l.naissance = dateFr(l.date_naissance); });
     const g = lignes.filter((l) => l.sexe === 'M').length;
     return {
@@ -206,7 +206,7 @@ const LISTES = {
          LEFT JOIN presences pr ON pr.inscription_id = i.id
               ${du ? `AND pr.date >= '${du}'` : ''} ${au ? `AND pr.date <= '${au}'` : ''}
         WHERE e.statut = 'actif' ${req.query.classe_id ? 'AND c.id = $1' : ''} ${req.user.classes ? `AND c.id = ANY($${req.query.classe_id ? 2 : 1})` : ''}
-        GROUP BY e.id, c.id, n.ordre ORDER BY n.ordre, c.nom, e.nom`,
+        GROUP BY e.id, c.id, n.ordre, i.numero ORDER BY n.ordre, c.nom, i.numero, e.nom`,
       [...(req.query.classe_id ? [req.query.classe_id] : []), ...(req.user.classes ? [req.user.classes] : [])]);
     r.forEach((x) => { x.taux = x.jours ? `${Math.round(((x.presents + x.retards) / x.jours) * 100)} %` : '—'; });
     return {
@@ -256,7 +256,7 @@ router.get('/cartes.pdf', ah(async (req, res) => {
   const eleves = await query(
     `SELECT e.*, c.nom AS classe FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id
        JOIN annees_scolaires a ON a.id = i.annee_id AND a.active JOIN classes c ON c.id = i.classe_id JOIN niveaux n ON n.id = c.niveau_id
-      WHERE e.statut = 'actif' ${filtre} ORDER BY n.ordre, c.nom, e.nom, e.prenom`, params);
+      WHERE e.statut = 'actif' ${filtre} ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`, params);
   const annee = await finance.anneeActive();
   const buf = await pdf.cartes(eleves, annee && annee.libelle);
   res.type('application/pdf').set('Content-Disposition', 'inline; filename="cartes-eleves.pdf"').send(buf);

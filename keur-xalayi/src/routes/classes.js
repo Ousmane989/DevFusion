@@ -45,10 +45,10 @@ router.get('/:id', ah(async (req, res) => {
   if (!classe) throw new HttpError(404, 'Classe introuvable.');
   const eleves = await query(
     `SELECT e.id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.photo IS NOT NULL AS a_photo,
-            e.lieu_naissance, i.id AS inscription_id, i.decision
+            e.lieu_naissance, i.id AS inscription_id, i.numero, i.decision
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
       WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti'
-      ORDER BY e.nom, e.prenom`, [req.params.id]);
+      ORDER BY i.numero, e.nom, e.prenom`, [req.params.id]);
   res.json({ ...classe, eleves });
 }));
 

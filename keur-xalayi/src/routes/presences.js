@@ -21,7 +21,7 @@ router.get('/appel', ah(async (req, res) => {
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
        LEFT JOIN presences pr ON pr.inscription_id = i.id AND pr.date = $2
       WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti'
-      ORDER BY e.nom, e.prenom`, [req.query.classe_id, date]);
+      ORDER BY i.numero, e.nom, e.prenom`, [req.query.classe_id, date]);
   res.json({ date, deja_fait: eleves.some((e) => e.statut), eleves });
 }));
 
@@ -87,7 +87,7 @@ router.get('/jour', ah(async (req, res) => {
     `SELECT e.id AS eleve_id, e.prenom, e.nom, e.whatsapp, c.nom AS classe, pr.statut, pr.remarque, pr.notifie
        FROM presences pr JOIN inscriptions i ON i.id = pr.inscription_id JOIN eleves e ON e.id = i.eleve_id
        JOIN classes c ON c.id = i.classe_id
-      WHERE pr.date = $1 AND pr.statut <> 'present' ${filtre} ORDER BY c.nom, e.nom`, params);
+      WHERE pr.date = $1 AND pr.statut <> 'present' ${filtre} ORDER BY c.nom, i.numero, e.nom`, params);
   res.json({ date, classes, absents });
 }));
 
@@ -107,7 +107,7 @@ router.get('/stats', ah(async (req, res) => {
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id JOIN classes c ON c.id = i.classe_id
        JOIN annees_scolaires a ON a.id = i.annee_id AND a.active JOIN niveaux n ON n.id = c.niveau_id
        LEFT JOIN presences pr ON pr.inscription_id = i.id AND pr.date BETWEEN $1 AND $2
-      WHERE e.statut = 'actif' ${filtre} GROUP BY e.id, c.id, n.ordre ORDER BY n.ordre, c.nom, e.nom`, params);
+      WHERE e.statut = 'actif' ${filtre} GROUP BY e.id, c.id, n.ordre, i.numero ORDER BY n.ordre, c.nom, i.numero, e.nom`, params);
   parEleve.forEach((x) => { x.taux = x.jours ? Math.round(((x.presents + x.retards) / x.jours) * 1000) / 10 : null; });
   const parClasse = {};
   for (const x of parEleve) {

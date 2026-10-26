@@ -363,6 +363,26 @@ END $$;
 -- (rappels, annonces, reçus…) passent simplement ces élèves.
 ALTER TABLE eleves ALTER COLUMN whatsapp DROP NOT NULL;
 
+-- ---------- Numéro d'ordre de l'élève dans sa classe (ordre du registre) ----------
+-- Attribué automatiquement (dernier numéro de la classe + 1) à l'inscription et au
+-- changement de classe ; les listes de classe sont triées par ce numéro.
+ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS numero INTEGER;
+CREATE OR REPLACE FUNCTION numeroter_inscription() RETURNS trigger AS $f$
+BEGIN
+  IF NEW.numero IS NULL OR (TG_OP = 'UPDATE' AND NEW.classe_id IS DISTINCT FROM OLD.classe_id AND NEW.numero IS NOT DISTINCT FROM OLD.numero) THEN
+    NEW.numero := COALESCE((SELECT max(numero) FROM inscriptions WHERE classe_id = NEW.classe_id AND id IS DISTINCT FROM NEW.id), 0) + 1;
+  END IF;
+  RETURN NEW;
+END $f$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS inscriptions_numero ON inscriptions;
+CREATE TRIGGER inscriptions_numero BEFORE INSERT OR UPDATE OF classe_id ON inscriptions
+  FOR EACH ROW EXECUTE FUNCTION numeroter_inscription();
+-- Inscriptions existantes sans numéro : ordre d'enregistrement (matricule).
+UPDATE inscriptions i SET numero = x.rang
+  FROM (SELECT i2.id, row_number() OVER (PARTITION BY i2.classe_id ORDER BY e.matricule) AS rang
+          FROM inscriptions i2 JOIN eleves e ON e.id = i2.eleve_id) x
+ WHERE x.id = i.id AND i.numero IS NULL AND NOT EXISTS (SELECT 1 FROM inscriptions i3 WHERE i3.classe_id = i.classe_id AND i3.numero IS NOT NULL);
+
 -- ---------- Indicatifs de tous les pays (plus seulement Sénégal / Mauritanie) ----------
 DO $$
 BEGIN

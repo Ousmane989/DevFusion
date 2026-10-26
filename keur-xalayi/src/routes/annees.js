@@ -69,7 +69,7 @@ async function planPassage(c, cibleId) {
     `SELECT i.*, e.nom, e.prenom, e.matricule, c.groupe, c.nom AS classe, n.ordre, n.id AS niveau_id
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
        JOIN classes c ON c.id = i.classe_id JOIN niveaux n ON n.id = c.niveau_id
-      WHERE i.annee_id = $1 AND e.statut = 'actif' ORDER BY n.ordre, c.nom, e.nom`, [source.id]);
+      WHERE i.annee_id = $1 AND e.statut = 'actif' ORDER BY n.ordre, c.nom, i.numero, e.nom`, [source.id]);
   const deja = new Set((await c.query('SELECT eleve_id FROM inscriptions WHERE annee_id = $1', [cibleId])).map((r) => r.eleve_id));
   const plan = inscrits.map((i) => {
     const decision = i.decision === 'en_cours' ? 'admis' : i.decision;

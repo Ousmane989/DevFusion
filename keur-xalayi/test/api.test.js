@@ -303,6 +303,11 @@ test('corrections de la revue : décisions, mois de paiement, données cachées 
     assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve.whatsapp, attendu);
   }
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { whatsapp: '+33 6 12' } })).statut, 400);
+  // Numéro d'ordre dans la classe : dernier + 1, et la liste de classe suit cet ordre
+  const cl = (await appel('dir', `/api/classes/${classe.id}`)).donnees;
+  const numeros = cl.eleves.map((x) => x.numero);
+  assert.ok(numeros.every((n, k) => k === 0 || n > numeros[k - 1]), 'liste triée par numéro d\'ordre');
+  assert.strictEqual(cl.eleves.find((x) => x.id === eleveId).numero, Math.max(...numeros.filter((n) => n <= cl.eleves.find((x) => x.id === eleveId).numero)));
   // Élève sans numéro WhatsApp (registre papier) : accepté, mais exclu des envois
   const sansNum = await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom: 'Sansnumero', prenom: 'Test', sexe: 'F', classe_id: classe.id } });
   assert.strictEqual(sansNum.statut, 201, JSON.stringify(sansNum.donnees));
