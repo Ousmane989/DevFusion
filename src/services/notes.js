@@ -39,7 +39,7 @@ async function elevesClasse(classeId) {
     `SELECT i.id AS inscription_id, e.id AS eleve_id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.whatsapp,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,''), 'Parent') AS parent
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id
-      WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti' ORDER BY e.nom, e.prenom`, [classeId]);
+      WHERE i.classe_id = $1 AND e.statut = 'actif' AND i.decision <> 'parti' ORDER BY i.numero, e.nom, e.prenom`, [classeId]);
 }
 
 /** Résultats d'une période pour une classe du primaire. */
