@@ -29,7 +29,7 @@ router.get('/donnees', ah(async (req, res) => {
             c.nom AS classe, n.cycle, a.libelle AS annee
        FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
        JOIN classes c ON c.id = i.classe_id JOIN niveaux n ON n.id = c.niveau_id
-      WHERE e.statut = 'actif' ${filtre} ORDER BY n.ordre, c.nom, e.nom, e.prenom`, params);
+      WHERE e.statut = 'actif' ${filtre} ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`, params);
   const date = dateLongue(aujourdhui());
   res.json(rows.map((r) => {
     const parents = [r.pere_nom, r.mere_nom].filter(Boolean);

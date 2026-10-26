@@ -60,7 +60,7 @@ async function situationMois(mois, opts = {}) {
       WHERE i.annee_id = $2 AND e.statut = 'actif' AND i.decision <> 'parti'
         AND date_trunc('month', i.date_inscription)::date <= $1 ${filtre}
       GROUP BY i.id, e.id, c.id, n.ordre
-      ORDER BY n.ordre, c.nom, e.nom, e.prenom`,
+      ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`,
     params,
   );
   return rows.map((r) => {
