@@ -1,5 +1,5 @@
 // Factures de mensualité : la directrice choisit un mois et une classe (ou toute
-// l'école) et imprime toutes les factures d'un coup (3 par feuille A4, à découper).
+// l'école) et imprime toutes les factures d'un coup (2 par feuille A4, à couper en deux).
 // Chaque facture : mensualité du mois, réduction, déjà versé, mois précédents
 // impayés et total à payer.
 import { get, e, qs, options, argent, nomMois, tableau, ouvrir, imprimer, moisCourant, kpi, erreur } from '../ui.js';
@@ -12,7 +12,7 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
-      3 factures par feuille A4, à découper. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures et l'uniforme restant dus.</p>
+      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures et l'uniforme restant dus.</p>
     <div class="filtres">
       <select id="mois">${options(moisInfo.mois.map((m) => [m, nomMois(m)]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
@@ -41,7 +41,7 @@ export async function afficher(el, params) {
             Réglez d'abord les mensualités dans <a href="#/parametres">Paramètres → Tarifs</a> (ou dans chaque classe, avec
             « appliquer aux élèves déjà inscrits »).</div></div>` : '';
       el.querySelector('#resume').innerHTML = `<div class="kpis" style="margin-bottom:1rem">
-          ${kpi('Factures', d.nb, `${Math.ceil(d.nb / 3)} feuille(s) A4`, 'var(--secondaire)')}
+          ${kpi('Factures', d.nb, `${Math.ceil(d.nb / 2)} feuille(s) A4`, 'var(--secondaire)')}
           ${kpi('Total à encaisser', argent(d.total), `mensualité ${e(nomMois(d.mois))}, mois précédents et autres frais`, 'var(--primaire)')}</div>`;
       el.querySelector('#imprimer').disabled = el.querySelector('#pdf').disabled = !d.nb;
       el.querySelector('#liste').innerHTML = `<div class="carte"><h2>Aperçu</h2>${tableau([

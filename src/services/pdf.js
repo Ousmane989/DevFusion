@@ -649,8 +649,8 @@ async function certificats(liste) {
 /** Numéro de facture du mois : FM + année/mois + n° de l'inscription (ex. FM2611-0042). */
 const numeroFactureMois = (mois, inscriptionId) => `FM${mois.slice(2, 4)}${mois.slice(5, 7)}-${String(inscriptionId).padStart(4, '0')}`;
 
-// Mise en page compacte : chaque facture occupe un tiers de feuille A4 (280 pt de haut).
-function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
+// Chaque facture occupe une demi-feuille A4 (hauteur = 421 pt) ; la signature est en bas de sa partie.
+function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
   const l = 36; const largeur = 595.28 - 72;
   // En-tête : logo, école, coordonnées / titre et numéro
   dessinerLogo(doc, p, l, y0 + 16, 38);
@@ -710,7 +710,7 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
       .text('PAYÉE', l, y0 + 122, { width: largeur, align: 'center', lineBreak: false }).restore();
   }
   // Pied : date et signature
-  const yS = y0 + 252;
+  const yS = y0 + hauteur - 30;
   doc.opacity(1).fillColor(COULEURS.gris).font('Helvetica').fontSize(7.5)
     .text(`Fait le ${dateFr(new Date().toISOString())}`, l, yS, { lineBreak: false })
     .text('La Direction', l, yS, { width: largeur, align: 'right', lineBreak: false });
@@ -723,19 +723,21 @@ function ligneDecoupe(doc, y) {
   doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, y - 3.5, { width: 72, align: 'center', lineBreak: false });
 }
 
-/** PDF des factures de mensualité d'un mois : 3 factures par feuille A4, à découper. */
+/** PDF des factures de mensualité d'un mois : 2 factures par feuille A4, à couper en deux. */
+const FACTURES_PAR_FEUILLE = 2;
 async function facturesMensualite(liste, mois) {
   const p = await parametres();
   const a = await one('SELECT libelle FROM annees_scolaires WHERE active');
   const { dateLimite } = require('./rappels');
-  const ctx = { mois, annee: a ? a.libelle : '', limite: dateFr(dateLimite(mois, p)) };
-  const TIERS = 841.89 / 3;
+  const hauteur = 841.89 / FACTURES_PAR_FEUILLE;
+  const ctx = { mois, annee: a ? a.libelle : '', limite: dateFr(dateLimite(mois, p)), hauteur };
   return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
-    for (let i = 0; i < liste.length; i += 3) {
+    for (let i = 0; i < liste.length; i += FACTURES_PAR_FEUILLE) {
       doc.addPage();
-      for (let k = 0; k < 3 && i + k < liste.length; k++) {
-        if (k > 0) ligneDecoupe(doc, TIERS * k);
-        dessinerFactureMois(doc, p, liste[i + k], TIERS * k, ctx);
+      for (let k = 0; k < FACTURES_PAR_FEUILLE && i + k < liste.length; k++) {
+        if (k > 0) ligneDecoupe(doc, hauteur * k);
+        // La facture commence un peu plus bas : marge haute plus confortable sur une demi-feuille.
+        dessinerFactureMois(doc, p, liste[i + k], hauteur * k + 14, { ...ctx, hauteur: hauteur - 14 });
       }
     }
   });
