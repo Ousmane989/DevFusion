@@ -1,5 +1,5 @@
 // Tableau de bord de la direction (vue simplifiée pour les enseignants).
-import { get, e, argent, kpi, nomMois, nomCourt, dateFr, dateLongue, badge, ctx, estRole, graphiqueBarres, videHtml, MODES } from '../ui.js';
+import { get, e, argent, kpi, nomMois, nomCourt, dateFr, dateLongue, badge, ctx, estRole, graphiqueBarres, videHtml, MODES, objetPaiement } from '../ui.js';
 
 const TYPES_EV = { vacances: 'Vacances', examen: 'Examen', evenement: 'Événement', ferie: 'Férié', reunion: 'Réunion' };
 
@@ -53,7 +53,7 @@ export async function afficher(el) {
       ${f ? `<div class="carte"><h2>💰 Derniers paiements</h2>
         ${d.derniers_paiements.length ? `<ul class="liste">${d.derniers_paiements.map((p) => `<li>
           <div class="principal"><b><a href="#/eleves/${p.eleve_id}">${e(p.prenom)} ${e(p.nom)}</a></b>
-          <span class="petit muted">${e(p.classe)} · ${p.type === 'mensualite' ? e(nomMois(p.mois)) : p.type === 'inscription' ? 'Inscription' : 'Autre'} · ${e(MODES[p.mode])} · ${dateFr(p.date_paiement)}</span></div>
+          <span class="petit muted">${e(p.classe)} · ${e(objetPaiement(p))} · ${e(MODES[p.mode])} · ${dateFr(p.date_paiement)}</span></div>
           <b class="nowrap">${argent(p.montant)}</b></li>`).join('')}</ul>` : videHtml('Aucun paiement.')}</div>` : ''}
       ${f ? `<div class="carte"><h2>🆕 Dernières inscriptions</h2>
         ${d.dernieres_inscriptions.length ? `<ul class="liste">${d.dernieres_inscriptions.map((i) => `<li>

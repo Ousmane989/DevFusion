@@ -12,7 +12,7 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
-      3 factures par feuille A4, à découper. Chaque facture reprend aussi les mois précédents non réglés.</p>
+      3 factures par feuille A4, à découper. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures et l'uniforme restant dus.</p>
     <div class="filtres">
       <select id="mois">${options(moisInfo.mois.map((m) => [m, nomMois(m)]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
@@ -42,13 +42,14 @@ export async function afficher(el, params) {
             « appliquer aux élèves déjà inscrits »).</div></div>` : '';
       el.querySelector('#resume').innerHTML = `<div class="kpis" style="margin-bottom:1rem">
           ${kpi('Factures', d.nb, `${Math.ceil(d.nb / 3)} feuille(s) A4`, 'var(--secondaire)')}
-          ${kpi('Total à encaisser', argent(d.total), `mensualité ${e(nomMois(d.mois))} + mois précédents impayés`, 'var(--primaire)')}</div>`;
+          ${kpi('Total à encaisser', argent(d.total), `mensualité ${e(nomMois(d.mois))}, mois précédents et autres frais`, 'var(--primaire)')}</div>`;
       el.querySelector('#imprimer').disabled = el.querySelector('#pdf').disabled = !d.nb;
       el.querySelector('#liste').innerHTML = `<div class="carte"><h2>Aperçu</h2>${tableau([
         { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}">${e(x.prenom)} ${e(x.nom)}</a>` },
         { titre: 'Classe', rendu: (x) => e(x.classe) },
         { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
         { titre: 'Mois précédents', classe: 'num', rendu: (x) => (x.total_arrieres ? argent(x.total_arrieres) : '—') },
+        { titre: 'Reliquat, fournitures, uniforme', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
         { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>` },
       ], d.liste, { vide: 'Aucune facture pour ces critères.' })}</div>`;
     } catch (err) { erreur(err); }
