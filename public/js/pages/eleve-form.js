@@ -30,6 +30,13 @@ export async function afficher(el, { id }) {
         ${champ('Remarques importantes', `<textarea name="remarques" placeholder="Allergies, maladie, traitement, personne autorisée à récupérer l'enfant…">${e(v.remarques)}</textarea>`)}
       </fieldset>
 
+      <fieldset><legend>🤝 Situation sociale <span class="petit muted">(confidentiel : visible par la directrice seulement)</span></legend>
+        <label class="case"><input type="checkbox" name="cas_social" id="cas-social" ${v.cas_social ? 'checked' : ''}> <b>Cet élève est un cas social</b></label>
+        <div id="zone-cas" class="${v.cas_social ? '' : 'cache'}" style="margin-top:.6rem">
+          ${champ('Précision (facultatif)', `<textarea name="cas_social_note" maxlength="500" placeholder="Ex. orphelin, famille en difficulté, prise en charge partielle…">${e(v.cas_social_note)}</textarea>`)}
+        </div>
+      </fieldset>
+
       <fieldset><legend>👨‍👩‍👧 Les parents</legend>
         <div class="grille g3">
           ${champ('Nom du père', `<input name="pere_nom" value="${e(v.pere_nom)}">`)}
@@ -83,6 +90,8 @@ export async function afficher(el, { id }) {
       : '<span class="avatar grand">📷</span>';
   };
   apercu();
+  const cas = el.querySelector('#cas-social');
+  cas.onchange = () => el.querySelector('#zone-cas').classList.toggle('cache', !cas.checked);
   el.querySelector('#photo').onchange = async (ev) => {
     const fichier = ev.target.files[0];
     if (!fichier) return;
