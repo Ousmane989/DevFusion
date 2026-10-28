@@ -12,7 +12,7 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
-      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures et l'uniforme restant dus.</p>
+      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.</p>
     <div class="filtres">
       <select id="mois">${options(moisInfo.mois.map((m) => [m, nomMois(m)]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
@@ -49,7 +49,7 @@ export async function afficher(el, params) {
         { titre: 'Classe', rendu: (x) => e(x.classe) },
         { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
         { titre: 'Mois précédents', classe: 'num', rendu: (x) => (x.total_arrieres ? argent(x.total_arrieres) : '—') },
-        { titre: 'Reliquat, fournitures, uniforme', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
+        { titre: 'Reliquat, fournitures, uniforme, blouson', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
         { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>` },
       ], d.liste, { vide: 'Aucune facture pour ces critères.' })}</div>`;
     } catch (err) { erreur(err); }

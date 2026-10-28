@@ -78,7 +78,7 @@ async function fraisAnnexes(inscriptionIds) {
   if (!inscriptionIds.length) return res;
   const types = Object.keys(FRAIS_ANNEXES);
   const rows = await query(
-    `SELECT i.id, i.reliquat, i.fournitures, i.uniforme,
+    `SELECT i.id, ${types.map((t) => `i.${t}`).join(', ')},
             ${types.map((t) => `COALESCE(SUM(p.montant) FILTER (WHERE p.type = '${t}'), 0) AS verse_${t}`).join(', ')}
        FROM inscriptions i LEFT JOIN paiements p ON p.inscription_id = i.id AND NOT p.annule
       WHERE i.id = ANY($1) GROUP BY i.id`, [inscriptionIds]);
@@ -107,7 +107,7 @@ async function facturesMois(mois, { classeId, eleveId, impayesSeulement } = {}) 
     for (const s of await situationMois(m, { classeId })) {
       if (s.reste <= 0) continue;
       const a = arrieres.get(s.inscription_id) || [];
-      a.push({ mois: m, reste: s.reste });
+      a.push({ mois: m, du: s.du, verse: s.verse, reste: s.reste });
       arrieres.set(s.inscription_id, a);
     }
   }
@@ -117,7 +117,7 @@ async function facturesMois(mois, { classeId, eleveId, impayesSeulement } = {}) 
     const totalArrieres = arr.reduce((t, a) => t + a.reste, 0);
     // Reliquat, fournitures, uniforme encore dus
     const autres = Object.entries(annexes.get(x.inscription_id) || {}).filter(([, a]) => a.reste > 0)
-      .map(([type, a]) => ({ type, libelle: a.libelle, reste: a.reste }));
+      .map(([type, a]) => ({ type, libelle: a.libelle, du: a.du, verse: a.verse, reste: a.reste }));
     const totalAutres = autres.reduce((t, a) => t + a.reste, 0);
     return { ...x, arrieres: arr, total_arrieres: totalArrieres, autres, total_autres: totalAutres, total: x.reste + totalArrieres + totalAutres };
   });

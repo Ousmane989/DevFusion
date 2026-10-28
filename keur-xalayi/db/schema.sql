@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS parametres (
   rappel_jour             INTEGER NOT NULL DEFAULT 25 CHECK (rappel_jour BETWEEN 1 AND 28),
   rappel_heure            INTEGER NOT NULL DEFAULT 9  CHECK (rappel_heure BETWEEN 0 AND 23),
   rappel_impayes_seulement BOOLEAN NOT NULL DEFAULT TRUE,
-  date_limite_jour        INTEGER NOT NULL DEFAULT 5  CHECK (date_limite_jour BETWEEN 1 AND 28), -- jour du mois suivant
+  date_limite_jour        INTEGER NOT NULL DEFAULT 5  CHECK (date_limite_jour BETWEEN 1 AND 28), -- à payer avant ce jour du mois concerné
   second_rappel_actif     BOOLEAN NOT NULL DEFAULT TRUE,
   second_rappel_delai     INTEGER NOT NULL DEFAULT 3  CHECK (second_rappel_delai BETWEEN 1 AND 20), -- jours après la date limite
   modele_rappel           TEXT    NOT NULL DEFAULT 'Bonjour {nom_parent}, l''école {ecole} vous rappelle que la mensualité de {mois} pour {nom_eleve} ({classe}) d''un montant de {montant} est à régler avant le {date_limite}. Merci de votre confiance.',
@@ -383,7 +383,7 @@ UPDATE inscriptions i SET numero = x.rang
           FROM inscriptions i2 JOIN eleves e ON e.id = i2.eleve_id) x
  WHERE x.id = i.id AND i.numero IS NULL AND NOT EXISTS (SELECT 1 FROM inscriptions i3 WHERE i3.classe_id = i.classe_id AND i3.numero IS NOT NULL);
 
--- ---------- Autres frais : reliquat, fournitures, uniforme ----------
+-- ---------- Autres frais : reliquat, fournitures, uniforme, blouson ----------
 -- Tarifs par niveau (fournitures, uniforme) ; montants dus par inscription (modifiables
 -- par élève) ; le reliquat (reste d'une année précédente) se saisit élève par élève.
 ALTER TABLE niveaux ADD COLUMN IF NOT EXISTS fournitures NUMERIC(12,2) NOT NULL DEFAULT 0;
@@ -391,13 +391,15 @@ ALTER TABLE niveaux ADD COLUMN IF NOT EXISTS uniforme NUMERIC(12,2) NOT NULL DEF
 ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS reliquat NUMERIC(12,2) NOT NULL DEFAULT 0;
 ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS fournitures NUMERIC(12,2) NOT NULL DEFAULT 0;
 ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS uniforme NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE niveaux ADD COLUMN IF NOT EXISTS blouson NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS blouson NUMERIC(12,2) NOT NULL DEFAULT 0;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'paiements_type_check'
-                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%uniforme%') THEN
+                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%blouson%') THEN
     ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_type_check;
     ALTER TABLE paiements ADD CONSTRAINT paiements_type_check
-      CHECK (type IN ('mensualite','inscription','reliquat','fournitures','uniforme','autre'));
+      CHECK (type IN ('mensualite','inscription','reliquat','fournitures','uniforme','blouson','autre'));
   END IF;
 END $$;
 

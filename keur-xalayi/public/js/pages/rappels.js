@@ -22,7 +22,7 @@ export async function afficher(el) {
           <div class="grille g2" style="margin-top:.6rem">
             ${champ('Jour du rappel', `<input type="number" name="rappel_jour" min="1" max="28" value="${p.rappel_jour}" ${directeur ? '' : 'disabled'}>`, { aide: 'Chaque mois, ex. le 25.' })}
             ${champ('Heure d\'envoi', `<input type="number" name="rappel_heure" min="0" max="23" value="${p.rappel_heure}" ${directeur ? '' : 'disabled'}>`, { aide: 'Ex. 9 = 9 h du matin.' })}
-            ${champ('Date limite de paiement', `<input type="number" name="date_limite_jour" min="1" max="28" value="${p.date_limite_jour}" ${directeur ? '' : 'disabled'}>`, { aide: 'Jour qui suit le rappel (ex. le 5 du mois suivant).' })}
+            ${champ('Date limite de paiement', `<input type="number" name="date_limite_jour" min="1" max="28" value="${p.date_limite_jour}" ${directeur ? '' : 'disabled'}>`, { aide: 'Chaque mensualité est à payer avant ce jour du mois concerné (ex. avant le 5 novembre pour novembre).' })}
             ${champ('Second rappel après', `<input type="number" name="second_rappel_delai" min="1" max="20" value="${p.second_rappel_delai}" ${directeur ? '' : 'disabled'}>`, { aide: 'jours après la date limite.' })}
           </div>
           <label class="case"><input type="checkbox" name="rappel_impayes_seulement" ${p.rappel_impayes_seulement ? 'checked' : ''} ${directeur ? '' : 'disabled'}> Seulement aux parents qui n'ont pas encore payé</label>

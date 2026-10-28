@@ -324,9 +324,8 @@ async function factureInscription(inscriptionId) {
     const conditions = [
       `Mensualité : ${montant(mensuel, p.devise)} par mois`
         + (insc.reduction > 0 ? ` (au lieu de ${montant(insc.mensualite, p.devise)}, réduction : ${insc.reduction_motif || '—'})` : ''),
-      // Même règle que les rappels : la date limite tombe dans le mois suivant si elle précède le jour du rappel.
-      `Chaque mensualité (d'octobre à juillet) est à régler au plus tard le ${p.date_limite_jour === 1 ? '1er' : p.date_limite_jour} `
-        + (p.date_limite_jour > p.rappel_jour ? 'du mois concerné.' : 'du mois suivant.'),
+      // Même règle que les rappels et les factures du mois : avant le jour limite du mois concerné.
+      `Chaque mensualité (d'octobre à juillet) est à payer avant le ${String(p.date_limite_jour).padStart(2, '0')} de chaque mois.`,
     ];
     doc.roundedRect(l, y, largeur, 40, 6).lineWidth(0.8).strokeColor(COULEURS.accent).stroke();
     doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5).text(conditions.join('\n'), l + 10, y + 8, { width: largeur - 20 });
@@ -675,34 +674,49 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
     x += largeur * part;
   }
 
-  // Détail
+  // Détail : montant, avance déjà versée, reste à payer (les parents paient souvent en plusieurs fois)
   let y = yI + 34;
+  const cM = largeur - 250; const cV = largeur - 165; const cR = largeur - 80; // positions des colonnes chiffrées
   doc.rect(l, y, largeur, 14).fill(COULEURS.secondaire);
   doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8)
-    .text('Désignation', l + 8, y + 3.5, { lineBreak: false }).text('Montant', l, y + 3.5, { width: largeur - 8, align: 'right', lineBreak: false });
+    .text('Désignation', l + 8, y + 3.5, { lineBreak: false })
+    .text('Montant', l + cM, y + 3.5, { width: 78, align: 'right', lineBreak: false })
+    .text('Avance versée', l + cV, y + 3.5, { width: 78, align: 'right', lineBreak: false })
+    .text('Reste à payer', l + cR, y + 3.5, { width: 72, align: 'right', lineBreak: false });
   y += 17;
-  const ligne = (texte, valeur, { gris = false } = {}) => {
-    doc.fillColor(gris ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(8.5)
-      .text(texte, l + 8, y, { width: largeur - 130, lineBreak: false, ellipsis: true })
-      .text(valeur, l, y, { width: largeur - 8, align: 'right', lineBreak: false });
+  const ligne = (texte, du, verse, reste) => {
+    doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5)
+      .text(texte, l + 8, y, { width: cM - 12, lineBreak: false, ellipsis: true })
+      .text(montant(du, p.devise), l + cM, y, { width: 78, align: 'right', lineBreak: false });
+    doc.fillColor(verse > 0 ? '#1E8E5A' : COULEURS.gris).text(verse > 0 ? montant(verse, p.devise) : '—', l + cV, y, { width: 78, align: 'right', lineBreak: false });
+    doc.fillColor(COULEURS.texte).font('Helvetica-Bold').text(montant(reste, p.devise), l + cR, y, { width: 72, align: 'right', lineBreak: false });
     y += 13;
     doc.moveTo(l, y - 2.5).lineTo(l + largeur, y - 2.5).lineWidth(0.4).strokeColor(COULEURS.ligne).stroke();
   };
-  ligne(`Mensualité ${deMois(mois)}`, montant(f.du + f.reduction, p.devise));
-  if (f.reduction > 0) ligne(`Réduction${f.reduction_motif ? ` (${f.reduction_motif})` : ''}`, `- ${montant(f.reduction, p.devise)}`, { gris: true });
-  if (f.verse > 0) ligne('Déjà versé pour ce mois', `- ${montant(Math.min(f.verse, f.du), p.devise)}`, { gris: true });
-  if (f.total_arrieres > 0) {
-    const detail = f.arrieres.map((a) => nomMois(a.mois).split(' ')[0]).join(', ');
-    ligne(`Mois précédents non réglés (${detail})`, montant(f.total_arrieres, p.devise));
-  }
-  for (const a of f.autres || []) ligne(a.libelle, montant(a.reste, p.devise)); // reliquat, fournitures, uniforme
+  // Mois facturé (réduction indiquée dans le libellé)
+  const verseMois = Math.min(f.verse, f.du);
+  ligne(`Mensualité ${deMois(mois)}${f.reduction > 0 ? ` (réduction ${f.reduction_motif || ''} : -${montant(f.reduction, p.devise)})` : ''}`,
+    f.du, verseMois, Math.max(0, f.du - verseMois));
+  // Mois précédents restés impayés ou payés en partie
+  for (const ar of f.arrieres || []) ligne(`Mensualité ${deMois(ar.mois)} (reste)`, ar.du, Math.min(ar.verse, ar.du), ar.reste);
+  // Reliquat, fournitures, uniforme, blouson
+  for (const au of f.autres || []) ligne(au.libelle, au.du, au.verse, au.reste);
+  const totalDu = f.du + (f.arrieres || []).reduce((t, x) => t + x.du, 0) + (f.autres || []).reduce((t, x) => t + x.du, 0);
+  const totalVerse = verseMois + (f.arrieres || []).reduce((t, x) => t + Math.min(x.verse, x.du), 0) + (f.autres || []).reduce((t, x) => t + x.verse, 0);
   doc.rect(l, y, largeur, 19).fill(COULEURS.clair);
-  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(11)
-    .text('TOTAL À PAYER', l + 8, y + 5, { lineBreak: false }).text(montant(f.total, p.devise), l, y + 5, { width: largeur - 8, align: 'right', lineBreak: false });
-  y += 25;
-  doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8)
-    .text(f.total > 0 ? `À régler au plus tard le ${limite}. Un reçu vous sera remis à chaque paiement.`
-      : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !', l, y, { width: largeur, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(9)
+    .text('TOTAL', l + 8, y + 5.5, { lineBreak: false })
+    .text(montant(totalDu, p.devise), l + cM, y + 5.5, { width: 78, align: 'right', lineBreak: false })
+    .text(montant(totalVerse, p.devise), l + cV, y + 5.5, { width: 78, align: 'right', lineBreak: false });
+  doc.fontSize(10.5).text(montant(f.total, p.devise), l + cR - 10, y + 4.5, { width: 82, align: 'right', lineBreak: false });
+  y += 23;
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(10)
+    .text(f.total > 0 ? `RESTE À PAYER : ${montant(f.total, p.devise)}` : '', l, y, { width: largeur, align: 'right', lineBreak: false });
+  doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(9)
+    .text(f.total > 0 ? `À payer avant le ${limite}` : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !',
+      l, y, { width: largeur / 2, lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(COULEURS.gris)
+    .text('Un reçu est remis à chaque versement. Les avances sont déduites du reste à payer.', l, y + 13, { width: largeur, lineBreak: false });
 
   if (f.total === 0 && f.du > 0) {
     doc.save().rotate(-12, { origin: [l + largeur / 2, y0 + 140] })
@@ -730,7 +744,9 @@ async function facturesMensualite(liste, mois) {
   const a = await one('SELECT libelle FROM annees_scolaires WHERE active');
   const { dateLimite } = require('./rappels');
   const hauteur = 841.89 / FACTURES_PAR_FEUILLE;
-  const ctx = { mois, annee: a ? a.libelle : '', limite: dateFr(dateLimite(mois, p)), hauteur };
+  const lim = dateLimite(mois, p); // AAAA-MM-JJ
+  const limite = `${lim.slice(8, 10)} ${nomMois(lim)}`; // « 05 novembre 2026 »
+  const ctx = { mois, annee: a ? a.libelle : '', limite, hauteur };
   return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
     for (let i = 0; i < liste.length; i += FACTURES_PAR_FEUILLE) {
       doc.addPage();

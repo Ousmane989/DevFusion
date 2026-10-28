@@ -3,8 +3,8 @@
 // Rappels de paiement WhatsApp (manuels ou automatiques).
 //
 // Règles (configurables dans Paramètres) :
-//   • le jour J (ex. le 25) du mois M : rappel de la mensualité de M ;
-//   • date limite : premier « jour limite » (ex. le 5) qui suit la date du rappel ;
+//   • la mensualité du mois M est à payer avant le « jour limite » de M (ex. avant le 5 novembre) ;
+//   • rappel le jour J (ex. le 25) qui précède cette date limite (le 25 octobre pour novembre) ;
 //   • second rappel : N jours après la date limite, aux parents encore débiteurs.
 // Les exécutions automatiques sont tracées dans `rappels_executions` pour ne
 // jamais envoyer deux fois le même rappel, même après un redémarrage.
@@ -15,16 +15,15 @@ const { envoyerMessages } = require('./whatsapp');
 
 const p2 = (n) => String(n).padStart(2, '0');
 
-/** Date du premier rappel pour le mois M (AAAA-MM-01). */
-function dateRappel(mois, p) {
-  return `${mois.slice(0, 7)}-${p2(p.rappel_jour)}`;
+/** Date limite de paiement de la mensualité du mois M : le « jour limite » de M (ex. 05/11 pour novembre). */
+function dateLimite(mois, p) {
+  return `${mois.slice(0, 7)}-${p2(p.date_limite_jour)}`;
 }
 
-/** Date limite de paiement de la mensualité du mois M. */
-function dateLimite(mois, p) {
-  const memeMois = p.date_limite_jour > p.rappel_jour;
-  const m = memeMois ? mois : ajouterMois(mois, 1);
-  return `${m.slice(0, 7)}-${p2(p.date_limite_jour)}`;
+/** Date du premier rappel pour le mois M : le jour du rappel qui précède la date limite. */
+function dateRappel(mois, p) {
+  const m = p.rappel_jour < p.date_limite_jour ? mois : ajouterMois(mois, -1);
+  return `${m.slice(0, 7)}-${p2(p.rappel_jour)}`;
 }
 
 /** Date du second rappel. */
@@ -93,7 +92,8 @@ async function tacheQuotidienne(jour = aujourdhui(), { dureeMax = 40000 } = {}) 
   const avant = Date.now() + dureeMax;
   const ecart = (a, b) => Math.round((new Date(`${a}T12:00:00`) - new Date(`${b}T12:00:00`)) / 86400000);
 
-  const candidats = [debutMois(jour), ajouterMois(debutMois(jour), -1), ajouterMois(debutMois(jour), -2)];
+  // Le rappel du mois suivant tombe dans le mois en cours (ex. 25 octobre pour novembre).
+  const candidats = [ajouterMois(debutMois(jour), 1), debutMois(jour), ajouterMois(debutMois(jour), -1), ajouterMois(debutMois(jour), -2)];
   for (const mois of candidats) {
     if (!moisAnnee.includes(mois)) continue;
     const taches = [['rappel', dateRappel(mois, p)]];
