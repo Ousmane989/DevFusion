@@ -58,11 +58,12 @@ router.get('/niveaux', ah(async (req, res) => {
 router.put('/niveaux/:id', autoriser('directeur'), ah(async (req, res) => {
   const { frais_inscription, mensualite } = req.body;
   const fournitures = Number(req.body.fournitures ?? 0); const uniforme = Number(req.body.uniforme ?? 0);
-  if (![frais_inscription, mensualite, fournitures, uniforme].every((x) => Number.isFinite(Number(x)) && Number(x) >= 0)) {
+  const blouson = Number(req.body.blouson ?? 0);
+  if (![frais_inscription, mensualite, fournitures, uniforme, blouson].every((x) => Number.isFinite(Number(x)) && Number(x) >= 0)) {
     throw new HttpError(400, 'Montants invalides.');
   }
-  const r = await one('UPDATE niveaux SET frais_inscription = $1, mensualite = $2, fournitures = $3, uniforme = $4 WHERE id = $5 RETURNING *',
-    [frais_inscription, mensualite, fournitures, uniforme, req.params.id]);
+  const r = await one('UPDATE niveaux SET frais_inscription = $1, mensualite = $2, fournitures = $3, uniforme = $4, blouson = $5 WHERE id = $6 RETURNING *',
+    [frais_inscription, mensualite, fournitures, uniforme, blouson, req.params.id]);
   if (req.body.appliquer_inscriptions) {
     // Met à jour les inscriptions de l'année active des classes sans tarif propre.
     await query(
@@ -70,12 +71,12 @@ router.put('/niveaux/:id', autoriser('directeur'), ah(async (req, res) => {
          FROM classes c, annees_scolaires a
         WHERE c.id = i.classe_id AND a.id = i.annee_id AND a.active AND c.niveau_id = $2 AND c.mensualite IS NULL`,
       [mensualite, req.params.id]);
-    // Fournitures et uniforme : tarif du niveau pour tous les élèves de l'année active.
+    // Fournitures, uniforme et blouson : tarif du niveau pour tous les élèves de l'année active.
     await query(
-      `UPDATE inscriptions i SET fournitures = $1, uniforme = $2
+      `UPDATE inscriptions i SET fournitures = $1, uniforme = $2, blouson = $3
          FROM classes c, annees_scolaires a
-        WHERE c.id = i.classe_id AND a.id = i.annee_id AND a.active AND c.niveau_id = $3`,
-      [fournitures, uniforme, req.params.id]);
+        WHERE c.id = i.classe_id AND a.id = i.annee_id AND a.active AND c.niveau_id = $4`,
+      [fournitures, uniforme, blouson, req.params.id]);
   }
   res.json(r);
 }));

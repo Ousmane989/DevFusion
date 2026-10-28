@@ -128,7 +128,7 @@ const vide = (v) => (v === undefined || v === null || String(v).trim() === '' ? 
 
 // Modes de paiement : ceux du Sénégal, puis ceux de la Mauritanie.
 /** Frais en plus de la mensualité et de l'inscription (montant dû par inscription). */
-const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme' };
+const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme', blouson: 'Blouson' };
 /** Libellé d'un paiement (reçu, journal, message). */
 function objetPaiement(type, mois, remarque) {
   if (type === 'mensualite') return `Mensualité ${deMois(mois)}`;
