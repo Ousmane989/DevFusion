@@ -82,7 +82,15 @@ async function parametres() {
 
 /** Logo choisi dans les Paramètres, sinon logo officiel, sinon pastille « KX ». */
 function dessinerLogo(doc, p, x, y, taille, { petit = false } = {}) {
-  const img = imageDepuisDataUrl(p.logo) || (petit ? EMBLEME_ECOLE : LOGO_ECOLE);
+  const cle = petit ? 'embleme' : 'logo';
+  doc._kxImages = doc._kxImages || {};
+  if (!(cle in doc._kxImages)) {
+    // Image chargée une seule fois par document puis réutilisée sur chaque page
+    // (sinon elle est recopiée à chaque facture/certificat : PDF de plusieurs dizaines de Mo).
+    const brut = imageDepuisDataUrl(p.logo) || (petit ? EMBLEME_ECOLE : LOGO_ECOLE);
+    try { doc._kxImages[cle] = brut ? doc.openImage(brut) : null; } catch { doc._kxImages[cle] = null; } // image illisible
+  }
+  const img = doc._kxImages[cle];
   if (img) {
     try { doc.image(img, x, y, { fit: [taille, taille], align: 'center', valign: 'center' }); return; } catch { /* image illisible */ }
   }
@@ -636,4 +644,93 @@ async function certificats(liste) {
   });
 }
 
-module.exports = { texteImprimable, recu, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };
+// ------------------------------------------------------------------
+// Factures de mensualité : 2 par feuille A4 (à couper en deux)
+// ------------------------------------------------------------------
+/** Numéro de facture du mois : FM + année/mois + n° de l'inscription (ex. FM2611-0042). */
+const numeroFactureMois = (mois, inscriptionId) => `FM${mois.slice(2, 4)}${mois.slice(5, 7)}-${String(inscriptionId).padStart(4, '0')}`;
+
+function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
+  const l = 40; const largeur = 595.28 - 80;
+  // En-tête : logo, école, coordonnées
+  dessinerLogo(doc, p, l, y0 + 22, 46);
+  doc.fillColor(COULEURS.secondaire).font('Helvetica-Bold').fontSize(14).text(p.nom_ecole, l + 56, y0 + 24, { width: 300, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8)
+    .text([p.adresse, p.telephone && `Tél. ${p.telephone}`].filter(Boolean).join(' · '), l + 56, y0 + 42, { width: 300, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(13)
+    .text('FACTURE — MENSUALITÉ', l, y0 + 24, { width: largeur, align: 'right', lineBreak: false });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8.5)
+    .text(`N° ${numeroFactureMois(mois, f.inscription_id)}`, l, y0 + 42, { width: largeur, align: 'right', lineBreak: false })
+    .text(`Année scolaire ${annee}`, l, y0 + 53, { width: largeur, align: 'right', lineBreak: false });
+  doc.rect(l, y0 + 76, largeur, 2.5).fill(COULEURS.primaire);
+
+  // Élève
+  const yI = y0 + 86;
+  doc.roundedRect(l, yI, largeur, 44, 5).fill(COULEURS.clair);
+  [['Élève', `${f.prenom} ${f.nom}`], ['Classe', f.classe], ['Matricule', f.matricule], ['Parent', f.parent || '—']].forEach(([k, v], i) => {
+    const x = l + 10 + (i % 2) * (largeur / 2); const y = yI + 5 + Math.floor(i / 2) * 19;
+    doc.font('Helvetica').fillColor(COULEURS.gris).fontSize(7.5).text(k, x, y, { lineBreak: false });
+    doc.font('Helvetica-Bold').fillColor(COULEURS.texte).fontSize(9.5).text(v, x + 52, y - 1, { width: largeur / 2 - 70, lineBreak: false, ellipsis: true });
+  });
+
+  // Détail
+  let y = yI + 54;
+  doc.rect(l, y, largeur, 17).fill(COULEURS.secondaire);
+  doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5)
+    .text('Désignation', l + 8, y + 5, { lineBreak: false }).text('Montant', l, y + 5, { width: largeur - 8, align: 'right', lineBreak: false });
+  y += 21;
+  const ligne = (texte, valeur, { gris = false } = {}) => {
+    doc.fillColor(gris ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(9)
+      .text(texte, l + 8, y, { width: largeur - 130, lineBreak: false, ellipsis: true })
+      .text(valeur, l, y, { width: largeur - 8, align: 'right', lineBreak: false });
+    y += 15;
+    doc.moveTo(l, y - 3).lineTo(l + largeur, y - 3).lineWidth(0.4).strokeColor(COULEURS.ligne).stroke();
+  };
+  ligne(`Mensualité ${deMois(mois)}`, montant(f.du + f.reduction, p.devise));
+  if (f.reduction > 0) ligne(`Réduction${f.reduction_motif ? ` (${f.reduction_motif})` : ''}`, `- ${montant(f.reduction, p.devise)}`, { gris: true });
+  if (f.verse > 0) ligne('Déjà versé pour ce mois', `- ${montant(Math.min(f.verse, f.du), p.devise)}`, { gris: true });
+  if (f.total_arrieres > 0) {
+    const detail = f.arrieres.map((a) => nomMois(a.mois).split(' ')[0]).join(', ');
+    ligne(`Mois précédents non réglés (${detail})`, montant(f.total_arrieres, p.devise));
+  }
+  doc.rect(l, y, largeur, 22).fill(COULEURS.clair);
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(11.5)
+    .text('TOTAL À PAYER', l + 8, y + 6, { lineBreak: false }).text(montant(f.total, p.devise), l, y + 6, { width: largeur - 8, align: 'right', lineBreak: false });
+  y += 30;
+  doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5)
+    .text(f.total > 0 ? `À régler au plus tard le ${limite}. Un reçu vous sera remis à chaque paiement.`
+      : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !', l, y, { width: largeur });
+
+  if (f.total === 0 && f.du > 0) {
+    doc.save().rotate(-15, { origin: [l + largeur / 2, y0 + 200] })
+      .font('Helvetica-Bold').fontSize(46).fillColor('#1E8E5A').opacity(0.2)
+      .text('PAYÉE', l, y0 + 180, { width: largeur, align: 'center', lineBreak: false }).restore();
+  }
+  // Pied : date et signature
+  const yS = y0 + 365;
+  doc.opacity(1).fillColor(COULEURS.gris).font('Helvetica').fontSize(8)
+    .text(`Fait le ${dateFr(new Date().toISOString())}`, l, yS, { lineBreak: false })
+    .text('La Direction', l, yS, { width: largeur, align: 'right', lineBreak: false });
+}
+
+/** PDF des factures de mensualité d'un mois (liste issue de finance.facturesMois). */
+async function facturesMensualite(liste, mois) {
+  const p = await parametres();
+  const a = await one('SELECT libelle FROM annees_scolaires WHERE active');
+  const { dateLimite } = require('./rappels');
+  const ctx = { mois, annee: a ? a.libelle : '', limite: dateFr(dateLimite(mois, p)) };
+  return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
+    for (let i = 0; i < liste.length; i += 2) {
+      doc.addPage();
+      dessinerFactureMois(doc, p, liste[i], 0, ctx);
+      if (i + 1 < liste.length) {
+        doc.save().moveTo(18, DEMI_PAGE).lineTo(577, DEMI_PAGE).dash(4, { space: 3 }).lineWidth(0.6).strokeColor('#888888').stroke().restore();
+        doc.rect(262, DEMI_PAGE - 6, 72, 12).fill('#FFFFFF');
+        doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, DEMI_PAGE - 3.5, { width: 72, align: 'center', lineBreak: false });
+        dessinerFactureMois(doc, p, liste[i + 1], DEMI_PAGE, ctx);
+      }
+    }
+  });
+}
+
+module.exports = { texteImprimable, recu, facturesMensualite, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

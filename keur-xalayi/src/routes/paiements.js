@@ -144,6 +144,29 @@ router.post('/:id/annuler', autoriser('directeur'), ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---- Factures de mensualité d'un mois (toute l'école, une classe ou un élève) ----
+function filtresFactures(req) {
+  const mois = String(req.query.mois || '');
+  if (!/^\d{4}-\d{2}-01$/.test(mois)) throw new HttpError(400, 'Choisissez le mois.');
+  return [mois, { classeId: vide(req.query.classe_id), eleveId: vide(req.query.eleve_id), impayesSeulement: req.query.impayes === '1' }];
+}
+router.get('/factures', ah(async (req, res) => {
+  const [mois, opts] = filtresFactures(req);
+  const liste = await finance.facturesMois(mois, opts);
+  res.json({
+    mois, nb: liste.length, total: liste.reduce((t, x) => t + x.total, 0),
+    sans_mensualite: liste.filter((x) => x.du + x.reduction <= 0).length, // tarif encore à 0
+    liste: liste.map(({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total }) => ({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total })),
+  });
+}));
+router.get('/factures.pdf', ah(async (req, res) => {
+  const [mois, opts] = filtresFactures(req);
+  const liste = await finance.facturesMois(mois, opts);
+  if (!liste.length) throw new HttpError(404, 'Aucune facture pour ces critères.');
+  const buf = await pdf.facturesMensualite(liste, mois);
+  res.type('application/pdf').set('Content-Disposition', `inline; filename="factures-${mois.slice(0, 7)}.pdf"`).send(buf);
+}));
+
 // ---- Reçu PDF ----
 router.get('/recu/:numero.pdf', ah(async (req, res) => {
   const buf = await pdf.recu(req.params.numero);
