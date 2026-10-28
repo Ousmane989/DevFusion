@@ -194,6 +194,33 @@ export function confirmer(message, { titre = 'Confirmation', ok = 'Confirmer', d
 }
 
 /**
+ * Suppression définitive d'élèves, avec confirmation. Si certains ont des paiements,
+ * une seconde confirmation est demandée (les paiements seraient supprimés aussi).
+ * @returns {Promise<number>} nombre d'élèves supprimés (0 si annulé)
+ */
+export async function supprimerEleves(ids, libelle) {
+  if (!ids.length) return 0;
+  const ok = await confirmer(`Supprimer définitivement ${libelle} ? Sa fiche, son inscription, ses présences et ses notes seront effacées. `
+    + 'Cette action ne peut pas être annulée. (Pour un élève qui quitte l\'école, préférez « Archiver ».)',
+  { titre: 'Supprimer des élèves', ok: 'Supprimer', danger: true });
+  if (!ok) return 0;
+  let r = await api('/eleves/supprimer', { methode: 'POST', corps: { ids }, brut: true });
+  let d = await r.json().catch(() => ({}));
+  if (r.status === 409 && d.avec_paiements) {
+    const liste = d.avec_paiements.map((x) => `${x.nom} (${x.nb} paiement(s), ${argent(x.total)})`).join(', ');
+    const encore = await confirmer(`Attention : ${d.avec_paiements.length} élève(s) ont des paiements enregistrés : ${liste}. `
+      + 'Leurs paiements et reçus seront supprimés aussi, et disparaîtront des finances. Continuer ?',
+    { titre: 'Élèves avec des paiements', ok: 'Supprimer aussi les paiements', danger: true });
+    if (!encore) return 0;
+    r = await api('/eleves/supprimer', { methode: 'POST', corps: { ids, avec_paiements: true }, brut: true });
+    d = await r.json().catch(() => ({}));
+  }
+  if (!r.ok) throw new Error(d.erreur || `Erreur ${r.status}`);
+  toast(`${d.supprimes} élève(s) supprimé(s).`, 'succes');
+  return d.supprimes;
+}
+
+/**
  * Formulaire dans une modale. `champs` : HTML du formulaire.
  * `soumettre(donnees, form)` est appelé à la validation ; s'il réussit, la modale se ferme.
  */
@@ -249,7 +276,7 @@ export function champ(lib, html, { requis = false, aide = '' } = {}) {
  */
 export function tableau(colonnes, lignes, { vide = 'Aucun élément.', clic, pied } = {}) {
   if (!lignes.length) return `<div class="carte vide"><span class="ico">📭</span>${e(vide)}</div>`;
-  return `<div class="table-wrap"><table class="empile"><thead><tr>${colonnes.map((c) => `<th class="${c.classe || ''}">${e(c.titre)}</th>`).join('')}</tr></thead>
+  return `<div class="table-wrap"><table class="empile"><thead><tr>${colonnes.map((c) => `<th class="${c.classe || ''}">${c.entete ?? e(c.titre)}</th>`).join('')}</tr></thead>
     <tbody>${lignes.map((l, i) => `<tr ${clic ? `class="cliquable" data-i="${i}"` : ''}>${colonnes.map((c) => `<td class="${c.classe || ''}" data-label="${e(c.titre)}">${c.rendu(l)}</td>`).join('')}</tr>`).join('')}</tbody>
     ${pied ? `<tfoot><tr>${pied}</tr></tfoot>` : ''}</table></div>`;
 }

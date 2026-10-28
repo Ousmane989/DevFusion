@@ -230,6 +230,28 @@ router.put('/:id', gestion, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---- Suppression définitive d'un ou plusieurs élèves (directrice) ----
+// Supprime l'élève et tout ce qui le concerne (inscriptions, paiements, présences,
+// notes). Si un élève a des paiements, il faut le confirmer (avec_paiements: true) :
+// pour un élève qui part, l'archivage garde son historique.
+router.post('/supprimer', gestion, ah(async (req, res) => {
+  const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(Number).filter((x) => Number.isInteger(x) && x > 0))];
+  if (!ids.length) throw new HttpError(400, 'Aucun élève sélectionné.');
+  if (ids.length > 1000) throw new HttpError(400, 'Trop d\'élèves à la fois.');
+  const avecPaiements = await query(
+    `SELECT e.id, e.prenom, e.nom, COUNT(p.id) AS nb, COALESCE(SUM(p.montant), 0) AS total
+       FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN paiements p ON p.inscription_id = i.id AND NOT p.annule
+      WHERE e.id = ANY($1) GROUP BY e.id ORDER BY e.nom, e.prenom`, [ids]);
+  if (avecPaiements.length && req.body.avec_paiements !== true) {
+    return res.status(409).json({
+      erreur: `${avecPaiements.length} élève(s) ont des paiements enregistrés.`,
+      avec_paiements: avecPaiements.map((x) => ({ id: x.id, nom: `${x.prenom} ${x.nom}`, nb: x.nb, total: x.total })),
+    });
+  }
+  const r = await query('DELETE FROM eleves WHERE id = ANY($1) RETURNING id', [ids]);
+  res.json({ supprimes: r.length });
+}));
+
 // ---- Archivage (élève qui quitte l'école) ----
 router.post('/:id/archiver', gestion, ah(async (req, res) => {
   await tx(async (c) => {
