@@ -137,7 +137,7 @@ router.get('/:id/photo', ah(async (req, res) => {
 async function tarifClasse(c, classeId) {
   const cl = await c.one(
     `SELECT c.*, COALESCE(c.frais_inscription, n.frais_inscription) AS frais, COALESCE(c.mensualite, n.mensualite) AS mens,
-            n.fournitures AS fourn, n.uniforme AS unif, a.active FROM classes c JOIN niveaux n ON n.id = c.niveau_id JOIN annees_scolaires a ON a.id = c.annee_id WHERE c.id = $1`,
+            n.fournitures AS fourn, n.uniforme AS unif, n.blouson AS blous, a.active FROM classes c JOIN niveaux n ON n.id = c.niveau_id JOIN annees_scolaires a ON a.id = c.annee_id WHERE c.id = $1`,
     [classeId]);
   if (!cl) throw new HttpError(404, 'Classe introuvable.');
   return cl;
@@ -158,7 +158,7 @@ function montantsInscription(body, cl) {
   };
   return {
     frais, mens, red, motif: red > 0 ? body.reduction_motif : null,
-    fourn: autre('fournitures', cl.fourn || 0), unif: autre('uniforme', cl.unif || 0), reliquat: autre('reliquat', 0),
+    fourn: autre('fournitures', cl.fourn || 0), unif: autre('uniforme', cl.unif || 0), blous: autre('blouson', cl.blous || 0), reliquat: autre('reliquat', 0),
   };
 }
 
@@ -190,9 +190,9 @@ router.post('/', gestion, ah(async (req, res) => {
       `INSERT INTO eleves (${cols.join(',')}) VALUES (${cols.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING id, matricule`, vals);
     const insc = await c.one(
       `INSERT INTO inscriptions (eleve_id, annee_id, classe_id, date_inscription, frais_inscription, mensualite, reduction, reduction_motif,
-                                 fournitures, uniforme, reliquat)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-      [eleve.id, cl.annee_id, cl.id, dateInsc, m.frais, m.mens, m.red, m.motif, m.fourn, m.unif, m.reliquat]);
+                                 fournitures, uniforme, blouson, reliquat)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+      [eleve.id, cl.annee_id, cl.id, dateInsc, m.frais, m.mens, m.red, m.motif, m.fourn, m.unif, m.blous, m.reliquat]);
     return { ...eleve, inscription_id: insc.id };
   });
   res.status(201).json(r);
@@ -208,7 +208,7 @@ router.put('/:id', gestion, ah(async (req, res) => {
     }
     const insc = await c.one(
       `SELECT i.* FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id WHERE i.eleve_id = $1 AND a.active`, [req.params.id]);
-    const champsInsc = ['classe_id', 'mensualite', 'reduction', 'frais_inscription', 'fournitures', 'uniforme', 'reliquat'];
+    const champsInsc = ['classe_id', 'mensualite', 'reduction', 'frais_inscription', 'fournitures', 'uniforme', 'blouson', 'reliquat'];
     if (insc && champsInsc.some((k) => req.body[k] !== undefined)) {
       const cl = await tarifClasse(c, req.body.classe_id || insc.classe_id);
       if (!cl.active) throw new HttpError(400, 'Cette classe n\'appartient pas à l\'année active.');
@@ -219,12 +219,13 @@ router.put('/:id', gestion, ah(async (req, res) => {
         reduction_motif: req.body.reduction_motif ?? insc.reduction_motif,
         fournitures: req.body.fournitures ?? insc.fournitures,
         uniforme: req.body.uniforme ?? insc.uniforme,
+        blouson: req.body.blouson ?? insc.blouson,
         reliquat: req.body.reliquat ?? insc.reliquat,
       }, cl);
       await c.query(
         `UPDATE inscriptions SET classe_id = $1, frais_inscription = $2, mensualite = $3, reduction = $4, reduction_motif = $5,
-                date_inscription = COALESCE($6, date_inscription), fournitures = $7, uniforme = $8, reliquat = $9 WHERE id = $10`,
-        [cl.id, m.frais, m.mens, m.red, m.motif, vide(req.body.date_inscription), m.fourn, m.unif, m.reliquat, insc.id]);
+                date_inscription = COALESCE($6, date_inscription), fournitures = $7, uniforme = $8, reliquat = $9, blouson = $10 WHERE id = $11`,
+        [cl.id, m.frais, m.mens, m.red, m.motif, vide(req.body.date_inscription), m.fourn, m.unif, m.reliquat, m.blous, insc.id]);
     }
   });
   res.json({ ok: true });
@@ -279,9 +280,9 @@ router.post('/:id/reinscrire', gestion, ah(async (req, res) => {
     } else {
       await c.query(
         `INSERT INTO inscriptions (eleve_id, annee_id, classe_id, date_inscription, frais_inscription, mensualite, reduction, reduction_motif,
-                                   fournitures, uniforme, reliquat)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [req.params.id, cl.annee_id, cl.id, vide(req.body.date_inscription) || aujourdhui(), m.frais, m.mens, m.red, m.motif, m.fourn, m.unif, m.reliquat]);
+                                   fournitures, uniforme, blouson, reliquat)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [req.params.id, cl.annee_id, cl.id, vide(req.body.date_inscription) || aujourdhui(), m.frais, m.mens, m.red, m.motif, m.fourn, m.unif, m.blous, m.reliquat]);
     }
     await c.query(`UPDATE eleves SET statut = 'actif', date_sortie = NULL, motif_sortie = NULL WHERE id = $1`, [req.params.id]);
   });
