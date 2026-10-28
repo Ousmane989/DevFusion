@@ -12,7 +12,7 @@ const router = express.Router();
 const gestion = autoriser('directeur'); // inscriptions et modifications : espace directrice
 
 const CHAMPS = ['nom', 'prenom', 'sexe', 'date_naissance', 'lieu_naissance', 'pere_nom', 'mere_nom',
-  'tuteur_nom', 'whatsapp', 'telephone2', 'adresse', 'remarques'];
+  'tuteur_nom', 'whatsapp', 'telephone2', 'adresse', 'remarques', 'cas_social', 'cas_social_note'];
 
 /** Valide et nettoie les champs d'une fiche élève. */
 async function nettoyer(body, partiel = false) {
@@ -37,6 +37,9 @@ async function nettoyer(body, partiel = false) {
     if (!t) throw new HttpError(400, 'Second numéro de téléphone invalide.');
     d.telephone2 = t;
   }
+  if (d.cas_social !== undefined) d.cas_social = d.cas_social === true || d.cas_social === 'true';
+  if (d.cas_social === false) d.cas_social_note = null;
+  if (d.cas_social_note && d.cas_social_note.length > 500) throw new HttpError(400, 'Note « cas social » trop longue (500 caractères au plus).');
   if (body.photo !== undefined) {
     if (body.photo && !/^data:image\/(png|jpe?g);base64,/.test(body.photo)) throw new HttpError(400, 'La photo doit être une image JPEG ou PNG.');
     if (body.photo && body.photo.length > 700000) throw new HttpError(413, 'Photo trop lourde.');
@@ -47,7 +50,7 @@ async function nettoyer(body, partiel = false) {
 
 // ---- Liste / recherche ----
 router.get('/', ah(async (req, res) => {
-  const { q, classe_id, statut = 'actif', sexe } = req.query;
+  const { q, classe_id, statut = 'actif', sexe, cas_social } = req.query;
   const params = [];
   const where = [];
   // Archivés : on montre leur dernière inscription ; actifs : celle de l'année active.
@@ -61,10 +64,11 @@ router.get('/', ah(async (req, res) => {
   }
   if (classe_id) { params.push(classe_id); where.push(`c.id = $${params.length}`); }
   if (sexe) { params.push(sexe); where.push(`e.sexe = $${params.length}`); }
+  if (cas_social && req.user.role !== 'enseignant') where.push('e.cas_social');
   if (req.user.classes) { params.push(req.user.classes); where.push(`c.id = ANY($${params.length})`); }
   const rows = await query(
     `SELECT e.id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.whatsapp, e.telephone2, e.statut,
-            e.date_sortie, e.motif_sortie, (e.photo IS NOT NULL) AS a_photo, e.remarques,
+            e.date_sortie, e.motif_sortie, (e.photo IS NOT NULL) AS a_photo, e.remarques, e.cas_social,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
             i.id AS inscription_id, c.id AS classe_id, c.nom AS classe, i.date_inscription, i.mensualite, i.reduction
        FROM eleves e
@@ -81,7 +85,7 @@ router.get('/', ah(async (req, res) => {
 }));
 
 /** Les enseignants ne voient ni les tarifs ni les réductions (et leur motif) des élèves. */
-const TARIFS = ['frais_inscription', 'mensualite', 'reduction', 'reduction_motif'];
+const TARIFS = ['frais_inscription', 'mensualite', 'reduction', 'reduction_motif', 'cas_social', 'cas_social_note'];
 function masquerTarifs(ligne) { TARIFS.forEach((k) => delete ligne[k]); return ligne; }
 
 // ---- Fiche complète ----
@@ -97,7 +101,7 @@ router.get('/:id', ah(async (req, res) => {
     if (!courante) throw new HttpError(403, 'Élève hors de votre classe.');
     verifierClasse(req, courante.classe_id);
   }
-  if (req.user.role === 'enseignant') inscriptions.forEach(masquerTarifs);
+  if (req.user.role === 'enseignant') { inscriptions.forEach(masquerTarifs); masquerTarifs(e); }
   const resultat = { eleve: e, inscriptions, inscription: courante };
   if (courante && req.user.role !== 'enseignant') {
     resultat.solde = await soldeInscription(courante.id);
@@ -205,8 +209,9 @@ const LIBELLES = {
   pere_nom: 'Père', mere_nom: 'Mère', tuteur_nom: 'Tuteur', whatsapp: 'WhatsApp', telephone2: 'Téléphone 2', adresse: 'Adresse',
   remarques: 'Remarques', classe: 'Classe', date_inscription: 'Date d\'inscription', frais_inscription: 'Frais d\'inscription',
   mensualite: 'Mensualité', reduction: 'Réduction', reduction_motif: 'Motif de la réduction', fournitures: 'Fournitures',
-  uniforme: 'Uniforme', blouson: 'Blouson', reliquat: 'Reliquat',
+  uniforme: 'Uniforme', blouson: 'Blouson', reliquat: 'Reliquat', cas_social: 'Cas social', cas_social_note: 'Note cas social',
 };
+const lisible = (v) => (typeof v === 'boolean' ? (v ? 'Oui' : 'Non') : v);
 const pareil = (a, b) => String(a ?? '') === String(b ?? '') || (a !== null && b !== null && a !== '' && b !== '' && Number(a) === Number(b));
 
 router.put('/:id', gestion, ah(async (req, res) => {
@@ -251,7 +256,7 @@ router.put('/:id', gestion, ah(async (req, res) => {
       `SELECT i.*, cl.nom AS classe FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
          JOIN classes cl ON cl.id = i.classe_id WHERE i.eleve_id = $1`, [req.params.id]);
     const changements = [];
-    for (const k of CHAMPS) if (!pareil(avantEleve[k], apresEleve[k])) changements.push({ champ: LIBELLES[k] || k, avant: avantEleve[k], apres: apresEleve[k] });
+    for (const k of CHAMPS) if (!pareil(avantEleve[k], apresEleve[k])) changements.push({ champ: LIBELLES[k] || k, avant: lisible(avantEleve[k]), apres: lisible(apresEleve[k]) });
     if (avantEleve.photo !== apresEleve.photo) changements.push({ champ: 'Photo', avant: avantEleve.photo ? 'oui' : 'non', apres: apresEleve.photo ? 'nouvelle' : 'retirée' });
     if (avantInsc && apresInsc) {
       for (const k of ['classe', 'date_inscription', 'frais_inscription', 'mensualite', 'reduction', 'reduction_motif', 'fournitures', 'uniforme', 'blouson', 'reliquat']) {

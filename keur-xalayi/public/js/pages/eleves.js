@@ -5,7 +5,7 @@ let minuteur;
 
 export async function afficher(el, params) {
   const classes = await get('/classes');
-  const filtres = { q: params.q || '', classe_id: params.classe_id || '', statut: params.statut || 'actif', sexe: '' };
+  const filtres = { q: params.q || '', classe_id: params.classe_id || '', statut: params.statut || 'actif', sexe: '', cas_social: params.cas_social || '' };
   el.innerHTML = `
     <div class="entete-page">
       <h1>Élèves</h1>
@@ -15,6 +15,7 @@ export async function afficher(el, params) {
       <input class="recherche" type="search" id="q" placeholder="🔍 Nom, prénom, matricule, parent ou téléphone…" value="${e(filtres.q)}">
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), filtres.classe_id, { vide: 'Toutes les classes' })}</select>
       <select id="sexe">${options([['M', 'Garçons'], ['F', 'Filles']], '', { vide: 'Garçons et filles' })}</select>
+      ${estRole('directeur') ? `<select id="cas">${options([['1', '🤝 Cas sociaux']], filtres.cas_social, { vide: 'Tous les élèves' })}</select>` : ''}
       <select id="statut">${options([['actif', 'Élèves actifs'], ['archive', 'Élèves archivés (partis)']], filtres.statut)}</select>
     </div>
     <div class="ligne" style="margin-bottom:.8rem"><span id="compte" class="muted gras"></span>
@@ -43,7 +44,7 @@ export async function afficher(el, params) {
         titre: 'Sélection', entete: '',
         rendu: (l) => `<input type="checkbox" data-sel="${l.id}" ${selection.has(l.id) ? 'checked' : ''} aria-label="Sélectionner ${e(l.prenom)} ${e(l.nom)}">`,
       }] : []),
-      { titre: 'Élève', rendu: (l) => `<div class="qui">${avatar(l)}<div><b>${e(l.prenom)} ${e(l.nom)}</b><div class="petit muted">${e(l.matricule)}</div></div></div>` },
+      { titre: 'Élève', rendu: (l) => `<div class="qui">${avatar(l)}<div><b>${e(l.prenom)} ${e(l.nom)}</b><div class="petit muted">${e(l.matricule)}${l.cas_social ? ' <span class="badge attention">🤝 Cas social</span>' : ''}</div></div></div>` },
       { titre: 'Classe', rendu: (l) => e(l.classe || '—') },
       { titre: 'Sexe', rendu: (l) => (l.sexe === 'M' ? 'Garçon' : 'Fille') },
       { titre: 'Naissance', rendu: (l) => dateFr(l.date_naissance) || '—' },
@@ -83,6 +84,8 @@ export async function afficher(el, params) {
   el.querySelector('#q').oninput = (ev) => { clearTimeout(minuteur); minuteur = setTimeout(() => { filtres.q = ev.target.value; charger(); }, 250); };
   el.querySelector('#classe').onchange = (ev) => { filtres.classe_id = ev.target.value; charger(); };
   el.querySelector('#sexe').onchange = (ev) => { filtres.sexe = ev.target.value; charger(); };
+  const selCas = el.querySelector('#cas');
+  if (selCas) selCas.onchange = (ev) => { filtres.cas_social = ev.target.value; charger(); };
   el.querySelector('#statut').onchange = (ev) => { filtres.statut = ev.target.value; charger(); };
   await charger();
 }

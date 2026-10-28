@@ -24,6 +24,7 @@ const LISTES = {
     if (req.user.classes) { params.push(req.user.classes); filtre += ` AND c.id = ANY($${params.length})`; }
     // Mêmes filtres que la liste à l'écran : sexe et recherche.
     if (['M', 'F'].includes(req.query.sexe)) { params.push(req.query.sexe); filtre += ` AND e.sexe = $${params.length}`; }
+    if (req.query.cas_social && req.user.role !== 'enseignant') filtre += ' AND e.cas_social';
     if (req.query.q) {
       params.push(`%${String(req.query.q).trim().toLowerCase()}%`);
       const k = `$${params.length}`;

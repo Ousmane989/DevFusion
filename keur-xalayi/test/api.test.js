@@ -377,6 +377,23 @@ test('modification d\'un élève avec motif : historique avant → après', asyn
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/modifications`)).donnees.length, h.length);
 });
 
+test('cas social : coché par la directrice, filtré, caché aux enseignants', async () => {
+  const r = await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { cas_social: true, cas_social_note: 'Orphelin de père' } });
+  assert.strictEqual(r.statut, 200, JSON.stringify(r.donnees));
+  const liste = (await appel('dir', '/api/eleves?cas_social=1')).donnees;
+  assert.ok(liste.length >= 1 && liste.every((l) => l.cas_social), JSON.stringify(liste));
+  const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve;
+  assert.strictEqual(fiche.cas_social_note, 'Orphelin de père');
+  const h = (await appel('dir', `/api/eleves/${eleveId}/modifications`)).donnees;
+  assert.deepStrictEqual(h[0].changements.find((c) => c.champ === 'Cas social'), { champ: 'Cas social', avant: 'Non', apres: 'Oui' });
+  const prof = await appel('ens', `/api/eleves/${eleveId}`);
+  if (prof.statut === 200) assert.ok(!('cas_social' in prof.donnees.eleve) && !('cas_social_note' in prof.donnees.eleve));
+  for (const l of (await appel('ens', '/api/eleves')).donnees) assert.ok(!('cas_social' in l));
+  // Décoché : la note est effacée
+  await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { cas_social: false } });
+  assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve.cas_social_note, null);
+});
+
 test('suppression d\'élèves sélectionnés (avec confirmation s\'ils ont des paiements)', async () => {
   const creer = async (nom) => (await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom, prenom: 'Test', sexe: 'M', classe_id: classe.id } })).donnees;
   const a = await creer('Asupprimer'); const b = await creer('Bsupprimer');

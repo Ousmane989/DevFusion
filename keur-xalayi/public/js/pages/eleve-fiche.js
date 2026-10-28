@@ -21,7 +21,9 @@ export async function afficher(el, { id, nouveau }) {
         <div style="flex:1;min-width:220px">
           <h1 style="margin-bottom:.2rem">${e(v.prenom)} ${e(v.nom)}</h1>
           <div class="ligne"><span class="badge info">${e(v.matricule)}</span>${insc ? `<span class="badge neutre">${e(insc.classe)}</span>` : ''}
-            <span class="muted">${v.sexe === 'M' ? 'Garçon' : 'Fille'}${age !== null ? ` · ${age} ans` : ''}</span></div>
+            <span class="muted">${v.sexe === 'M' ? 'Garçon' : 'Fille'}${age !== null ? ` · ${age} ans` : ''}</span>
+            ${v.cas_social ? '<span class="badge attention">🤝 Cas social</span>' : ''}</div>
+          ${v.cas_social && v.cas_social_note ? `<div class="petit muted" style="margin-top:.3rem">🤝 ${e(v.cas_social_note)}</div>` : ''}
           <div class="grille g3" style="margin-top:.9rem;gap:.7rem">
             ${info('Né(e) le', [dateFr(v.date_naissance), v.lieu_naissance && 'à ' + e(v.lieu_naissance)].filter(Boolean).join(' '))}
             ${info('Père', e(v.pere_nom))}${info('Mère', e(v.mere_nom))}${info('Tuteur', e(v.tuteur_nom))}

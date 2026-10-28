@@ -439,3 +439,7 @@ ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS classe_demandee INTEGER REFERE
 ALTER TABLE parametres ADD COLUMN IF NOT EXISTS directrice_nom TEXT NOT NULL DEFAULT '';      -- « Madame … »
 ALTER TABLE parametres ADD COLUMN IF NOT EXISTS ville TEXT NOT NULL DEFAULT '';               -- « Fait à … le »
 ALTER TABLE parametres ADD COLUMN IF NOT EXISTS entete_certificat TEXT NOT NULL DEFAULT '';   -- lignes en haut à gauche
+
+-- ---------- Cas sociaux (information confidentielle, visible par la directrice seulement) ----------
+ALTER TABLE eleves ADD COLUMN IF NOT EXISTS cas_social BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE eleves ADD COLUMN IF NOT EXISTS cas_social_note TEXT;
