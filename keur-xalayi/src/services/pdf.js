@@ -650,41 +650,44 @@ async function certificats(liste) {
 /** Numéro de facture du mois : FM + année/mois + n° de l'inscription (ex. FM2611-0042). */
 const numeroFactureMois = (mois, inscriptionId) => `FM${mois.slice(2, 4)}${mois.slice(5, 7)}-${String(inscriptionId).padStart(4, '0')}`;
 
+// Mise en page compacte : chaque facture occupe un tiers de feuille A4 (280 pt de haut).
 function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
-  const l = 40; const largeur = 595.28 - 80;
-  // En-tête : logo, école, coordonnées
-  dessinerLogo(doc, p, l, y0 + 22, 46);
-  doc.fillColor(COULEURS.secondaire).font('Helvetica-Bold').fontSize(14).text(p.nom_ecole, l + 56, y0 + 24, { width: 300, lineBreak: false, ellipsis: true });
-  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8)
-    .text([p.adresse, p.telephone && `Tél. ${p.telephone}`].filter(Boolean).join(' · '), l + 56, y0 + 42, { width: 300, lineBreak: false, ellipsis: true });
-  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(13)
-    .text('FACTURE — MENSUALITÉ', l, y0 + 24, { width: largeur, align: 'right', lineBreak: false });
-  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8.5)
-    .text(`N° ${numeroFactureMois(mois, f.inscription_id)}`, l, y0 + 42, { width: largeur, align: 'right', lineBreak: false })
-    .text(`Année scolaire ${annee}`, l, y0 + 53, { width: largeur, align: 'right', lineBreak: false });
-  doc.rect(l, y0 + 76, largeur, 2.5).fill(COULEURS.primaire);
+  const l = 36; const largeur = 595.28 - 72;
+  // En-tête : logo, école, coordonnées / titre et numéro
+  dessinerLogo(doc, p, l, y0 + 16, 38);
+  doc.fillColor(COULEURS.secondaire).font('Helvetica-Bold').fontSize(13).text(p.nom_ecole, l + 46, y0 + 19, { width: 280, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(7.5)
+    .text([p.adresse, p.telephone && `Tél. ${p.telephone}`].filter(Boolean).join(' · '), l + 46, y0 + 35, { width: 280, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(12)
+    .text('FACTURE — MENSUALITÉ', l, y0 + 18, { width: largeur, align: 'right', lineBreak: false });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(7.5)
+    .text(`N° ${numeroFactureMois(mois, f.inscription_id)} · Année ${annee}`, l, y0 + 35, { width: largeur, align: 'right', lineBreak: false });
+  doc.rect(l, y0 + 58, largeur, 2).fill(COULEURS.primaire);
 
-  // Élève
-  const yI = y0 + 86;
-  doc.roundedRect(l, yI, largeur, 44, 5).fill(COULEURS.clair);
-  [['Élève', `${f.prenom} ${f.nom}`], ['Classe', f.classe], ['Matricule', f.matricule], ['Parent', f.parent || '—']].forEach(([k, v], i) => {
-    const x = l + 10 + (i % 2) * (largeur / 2); const y = yI + 5 + Math.floor(i / 2) * 19;
-    doc.font('Helvetica').fillColor(COULEURS.gris).fontSize(7.5).text(k, x, y, { lineBreak: false });
-    doc.font('Helvetica-Bold').fillColor(COULEURS.texte).fontSize(9.5).text(v, x + 52, y - 1, { width: largeur / 2 - 70, lineBreak: false, ellipsis: true });
-  });
+  // Élève (une seule ligne de 4 informations)
+  const yI = y0 + 65;
+  doc.roundedRect(l, yI, largeur, 28, 4).fill(COULEURS.clair);
+  const infos = [['Élève', `${f.prenom} ${f.nom}`, 0.34], ['Classe', f.classe, 0.16], ['Matricule', f.matricule, 0.18], ['Parent', f.parent || '—', 0.32]];
+  let x = l + 8;
+  for (const [k, v, part] of infos) {
+    const w = largeur * part - 8;
+    doc.font('Helvetica').fillColor(COULEURS.gris).fontSize(6.8).text(k, x, yI + 4, { lineBreak: false });
+    doc.font('Helvetica-Bold').fillColor(COULEURS.texte).fontSize(8.8).text(v, x, yI + 14, { width: w, lineBreak: false, ellipsis: true });
+    x += largeur * part;
+  }
 
   // Détail
-  let y = yI + 54;
-  doc.rect(l, y, largeur, 17).fill(COULEURS.secondaire);
-  doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5)
-    .text('Désignation', l + 8, y + 5, { lineBreak: false }).text('Montant', l, y + 5, { width: largeur - 8, align: 'right', lineBreak: false });
-  y += 21;
+  let y = yI + 34;
+  doc.rect(l, y, largeur, 14).fill(COULEURS.secondaire);
+  doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8)
+    .text('Désignation', l + 8, y + 3.5, { lineBreak: false }).text('Montant', l, y + 3.5, { width: largeur - 8, align: 'right', lineBreak: false });
+  y += 17;
   const ligne = (texte, valeur, { gris = false } = {}) => {
-    doc.fillColor(gris ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(9)
+    doc.fillColor(gris ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(8.5)
       .text(texte, l + 8, y, { width: largeur - 130, lineBreak: false, ellipsis: true })
       .text(valeur, l, y, { width: largeur - 8, align: 'right', lineBreak: false });
-    y += 15;
-    doc.moveTo(l, y - 3).lineTo(l + largeur, y - 3).lineWidth(0.4).strokeColor(COULEURS.ligne).stroke();
+    y += 13;
+    doc.moveTo(l, y - 2.5).lineTo(l + largeur, y - 2.5).lineWidth(0.4).strokeColor(COULEURS.ligne).stroke();
   };
   ligne(`Mensualité ${deMois(mois)}`, montant(f.du + f.reduction, p.devise));
   if (f.reduction > 0) ligne(`Réduction${f.reduction_motif ? ` (${f.reduction_motif})` : ''}`, `- ${montant(f.reduction, p.devise)}`, { gris: true });
@@ -693,41 +696,46 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
     const detail = f.arrieres.map((a) => nomMois(a.mois).split(' ')[0]).join(', ');
     ligne(`Mois précédents non réglés (${detail})`, montant(f.total_arrieres, p.devise));
   }
-  doc.rect(l, y, largeur, 22).fill(COULEURS.clair);
-  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(11.5)
-    .text('TOTAL À PAYER', l + 8, y + 6, { lineBreak: false }).text(montant(f.total, p.devise), l, y + 6, { width: largeur - 8, align: 'right', lineBreak: false });
-  y += 30;
-  doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5)
+  doc.rect(l, y, largeur, 19).fill(COULEURS.clair);
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(11)
+    .text('TOTAL À PAYER', l + 8, y + 5, { lineBreak: false }).text(montant(f.total, p.devise), l, y + 5, { width: largeur - 8, align: 'right', lineBreak: false });
+  y += 25;
+  doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8)
     .text(f.total > 0 ? `À régler au plus tard le ${limite}. Un reçu vous sera remis à chaque paiement.`
-      : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !', l, y, { width: largeur });
+      : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !', l, y, { width: largeur, lineBreak: false, ellipsis: true });
 
   if (f.total === 0 && f.du > 0) {
-    doc.save().rotate(-15, { origin: [l + largeur / 2, y0 + 200] })
-      .font('Helvetica-Bold').fontSize(46).fillColor('#1E8E5A').opacity(0.2)
-      .text('PAYÉE', l, y0 + 180, { width: largeur, align: 'center', lineBreak: false }).restore();
+    doc.save().rotate(-12, { origin: [l + largeur / 2, y0 + 140] })
+      .font('Helvetica-Bold').fontSize(40).fillColor('#1E8E5A').opacity(0.2)
+      .text('PAYÉE', l, y0 + 122, { width: largeur, align: 'center', lineBreak: false }).restore();
   }
   // Pied : date et signature
-  const yS = y0 + 365;
-  doc.opacity(1).fillColor(COULEURS.gris).font('Helvetica').fontSize(8)
+  const yS = y0 + 252;
+  doc.opacity(1).fillColor(COULEURS.gris).font('Helvetica').fontSize(7.5)
     .text(`Fait le ${dateFr(new Date().toISOString())}`, l, yS, { lineBreak: false })
     .text('La Direction', l, yS, { width: largeur, align: 'right', lineBreak: false });
 }
 
-/** PDF des factures de mensualité d'un mois (liste issue de finance.facturesMois). */
+/** Ligne pointillée « couper ici » à la hauteur y. */
+function ligneDecoupe(doc, y) {
+  doc.save().moveTo(18, y).lineTo(577, y).dash(4, { space: 3 }).lineWidth(0.6).strokeColor('#888888').stroke().restore();
+  doc.rect(262, y - 6, 72, 12).fill('#FFFFFF');
+  doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, y - 3.5, { width: 72, align: 'center', lineBreak: false });
+}
+
+/** PDF des factures de mensualité d'un mois : 3 factures par feuille A4, à découper. */
 async function facturesMensualite(liste, mois) {
   const p = await parametres();
   const a = await one('SELECT libelle FROM annees_scolaires WHERE active');
   const { dateLimite } = require('./rappels');
   const ctx = { mois, annee: a ? a.libelle : '', limite: dateFr(dateLimite(mois, p)) };
+  const TIERS = 841.89 / 3;
   return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
-    for (let i = 0; i < liste.length; i += 2) {
+    for (let i = 0; i < liste.length; i += 3) {
       doc.addPage();
-      dessinerFactureMois(doc, p, liste[i], 0, ctx);
-      if (i + 1 < liste.length) {
-        doc.save().moveTo(18, DEMI_PAGE).lineTo(577, DEMI_PAGE).dash(4, { space: 3 }).lineWidth(0.6).strokeColor('#888888').stroke().restore();
-        doc.rect(262, DEMI_PAGE - 6, 72, 12).fill('#FFFFFF');
-        doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, DEMI_PAGE - 3.5, { width: 72, align: 'center', lineBreak: false });
-        dessinerFactureMois(doc, p, liste[i + 1], DEMI_PAGE, ctx);
+      for (let k = 0; k < 3 && i + k < liste.length; k++) {
+        if (k > 0) ligneDecoupe(doc, TIERS * k);
+        dessinerFactureMois(doc, p, liste[i + k], TIERS * k, ctx);
       }
     }
   });
