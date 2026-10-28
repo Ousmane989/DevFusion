@@ -5,7 +5,7 @@
 // puis rendue au format demandé.
 const express = require('express');
 const { query, one } = require('../db');
-const { ah, HttpError, dateFr, nomMois, deMois, montant, MODES_PAIEMENT } = require('../utils');
+const { ah, HttpError, dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement } = require('../utils');
 const { autoriser, verifierClasse } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
@@ -114,7 +114,7 @@ const LISTES = {
          JOIN classes c ON c.id = i.classe_id WHERE ${where.join(' AND ')} ORDER BY p.date_paiement, p.id`, params);
     lignes.forEach((l) => {
       l.date_l = dateFr(l.date_paiement); l.mode_l = MODES_PAIEMENT[l.mode];
-      l.objet = l.type === 'mensualite' ? `Mensualité ${nomMois(l.mois)}` : l.type === 'inscription' ? 'Inscription' : (l.remarque || 'Autre');
+      l.objet = objetPaiement(l.type, l.mois, l.remarque);
     });
     const total = lignes.reduce((s, x) => s + x.montant, 0);
     return {

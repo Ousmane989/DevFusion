@@ -1,5 +1,5 @@
 // Paiements : encaisser, journal, situation des mensualités (par mois et par classe).
-import { get, post, e, qs, tableau, options, argent, nomMois, dateFr, badge, MODES, modesDuPays, estRole, ouvrir, formulaire, champ, toast, avatar, boutonsExport, activerExports, aujourdhui, kpi, erreur } from '../ui.js';
+import { get, post, e, qs, tableau, options, argent, nomMois, dateFr, badge, MODES, modesDuPays, estRole, ouvrir, formulaire, champ, toast, avatar, boutonsExport, activerExports, aujourdhui, kpi, erreur, objetPaiement } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 let minuteur;
@@ -117,7 +117,7 @@ export async function afficher(el, params) {
         zone.querySelector('#tab').innerHTML = tableau([
           { titre: 'Date', rendu: (p) => dateFr(p.date_paiement) },
           { titre: 'Élève', rendu: (p) => `<a href="#/eleves/${p.eleve_id}">${e(p.prenom)} ${e(p.nom)}</a><div class="petit muted">${e(p.classe)}</div>` },
-          { titre: 'Objet', rendu: (p) => (p.type === 'mensualite' ? e(nomMois(p.mois)) : p.type === 'inscription' ? 'Inscription' : e(p.remarque || 'Autre')) },
+          { titre: 'Objet', rendu: (p) => e(objetPaiement(p)) },
           { titre: 'Montant', classe: 'num', rendu: (p) => (p.annule ? `<s>${argent(p.montant)}</s> ${badge('ko', 'Annulé')}` : `<b>${argent(p.montant)}</b>`) },
           { titre: 'Mode', rendu: (p) => e(MODES[p.mode]) + (p.reference ? `<div class="petit muted">${e(p.reference)}</div>` : '') },
           { titre: 'Reçu', rendu: (p) => `<button class="btn lien" data-recu="${e(p.numero_recu)}">${e(p.numero_recu)}</button><div class="petit muted">${e(p.encaisse_par_nom || '')}</div>` },

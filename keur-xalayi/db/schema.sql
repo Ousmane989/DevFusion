@@ -383,6 +383,24 @@ UPDATE inscriptions i SET numero = x.rang
           FROM inscriptions i2 JOIN eleves e ON e.id = i2.eleve_id) x
  WHERE x.id = i.id AND i.numero IS NULL AND NOT EXISTS (SELECT 1 FROM inscriptions i3 WHERE i3.classe_id = i.classe_id AND i3.numero IS NOT NULL);
 
+-- ---------- Autres frais : reliquat, fournitures, uniforme ----------
+-- Tarifs par niveau (fournitures, uniforme) ; montants dus par inscription (modifiables
+-- par élève) ; le reliquat (reste d'une année précédente) se saisit élève par élève.
+ALTER TABLE niveaux ADD COLUMN IF NOT EXISTS fournitures NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE niveaux ADD COLUMN IF NOT EXISTS uniforme NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS reliquat NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS fournitures NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE inscriptions ADD COLUMN IF NOT EXISTS uniforme NUMERIC(12,2) NOT NULL DEFAULT 0;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'paiements_type_check'
+                   AND conrelid = 'paiements'::regclass AND pg_get_constraintdef(oid) LIKE '%uniforme%') THEN
+    ALTER TABLE paiements DROP CONSTRAINT IF EXISTS paiements_type_check;
+    ALTER TABLE paiements ADD CONSTRAINT paiements_type_check
+      CHECK (type IN ('mensualite','inscription','reliquat','fournitures','uniforme','autre'));
+  END IF;
+END $$;
+
 -- ---------- Indicatifs de tous les pays (plus seulement Sénégal / Mauritanie) ----------
 DO $$
 BEGIN

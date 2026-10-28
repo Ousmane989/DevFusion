@@ -131,13 +131,31 @@ test('factures de mensualité du mois : aperçu, arriérés et PDF', async () =>
   const ap = await appel('dir', `/api/paiements/factures?mois=${m}&classe_id=${classe.id}`);
   assert.strictEqual(ap.statut, 200, JSON.stringify(ap.donnees));
   assert.ok(ap.donnees.nb > 0);
-  for (const x of ap.donnees.liste) assert.strictEqual(x.total, Math.max(0, x.du - x.verse) + x.total_arrieres);
+  for (const x of ap.donnees.liste) assert.strictEqual(x.total, Math.max(0, x.du - x.verse) + x.total_arrieres + x.total_autres);
   const imp = (await appel('dir', `/api/paiements/factures?mois=${m}&classe_id=${classe.id}&impayes=1`)).donnees;
   assert.ok(imp.liste.every((x) => x.total > 0) && imp.nb <= ap.donnees.nb);
   const f = await appel('dir', `/api/paiements/factures.pdf?mois=${m}&classe_id=${classe.id}`);
   assert.strictEqual(f.statut, 200);
   assert.strictEqual(f.donnees.subarray(0, 4).toString(), '%PDF');
   assert.strictEqual((await appel('dir', '/api/paiements/factures?mois=2031-01-01')).statut, 400);
+});
+
+test('reliquat, fournitures et uniforme : dus, encaissés, sur la facture du mois', async () => {
+  const put = await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { reliquat: 12000, fournitures: 15000, uniforme: 8000 } });
+  assert.strictEqual(put.statut, 200, JSON.stringify(put.donnees));
+  let fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  assert.deepStrictEqual([fiche.solde.annexes.reliquat.reste, fiche.solde.annexes.fournitures.reste, fiche.solde.annexes.uniforme.reste], [12000, 15000, 8000]);
+  const trop = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: fiche.inscription.id, type: 'uniforme', montant: 9000, mode: 'especes' } });
+  assert.strictEqual(trop.statut, 400, 'pas plus que le reste dû');
+  const p = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: fiche.inscription.id, type: 'fournitures', montant: 5000, mode: 'wave' } });
+  assert.strictEqual(p.statut, 201, JSON.stringify(p.donnees));
+  fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  assert.strictEqual(fiche.solde.annexes.fournitures.reste, 10000);
+  const recu = await appel('dir', `/api/paiements/recu/${p.donnees.numero_recu}.pdf`);
+  assert.strictEqual(recu.statut, 200);
+  const { mois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const f = (await appel('dir', `/api/paiements/factures?mois=${mois[0]}&eleve_id=${eleveId}`)).donnees;
+  assert.strictEqual(f.liste[0].total_autres, 12000 + 10000 + 8000);
 });
 
 test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {

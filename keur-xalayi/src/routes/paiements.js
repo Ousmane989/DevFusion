@@ -3,7 +3,7 @@
 // Paiements : encaissement, journal, statut par mois, impayés, reçus.
 const express = require('express');
 const { query, one, tx } = require('../db');
-const { ah, HttpError, exiger, vide, aujourdhui, debutMois, nomMois, deMois, montant, remplir, MODES_PAIEMENT } = require('../utils');
+const { ah, HttpError, exiger, vide, aujourdhui, debutMois, nomMois, deMois, montant, remplir, MODES_PAIEMENT, FRAIS_ANNEXES, objetPaiement } = require('../utils');
 const { autoriser } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
@@ -84,7 +84,7 @@ router.post('/', ah(async (req, res) => {
   const total = Number(req.body.montant);
   if (!(total > 0) || !Number.isFinite(total) || total > 1e9) throw new HttpError(400, 'Montant invalide.');
   if (!MODES_PAIEMENT[mode]) throw new HttpError(400, 'Mode de paiement invalide.');
-  if (!['mensualite', 'inscription', 'autre'].includes(type)) throw new HttpError(400, 'Type de paiement invalide.');
+  if (!['mensualite', 'inscription', 'autre', ...Object.keys(FRAIS_ANNEXES)].includes(type)) throw new HttpError(400, 'Type de paiement invalide.');
   const datePaiement = vide(req.body.date_paiement) || aujourdhui();
   if (typeof datePaiement !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(datePaiement)) throw new HttpError(400, 'Date de paiement invalide.');
   // Mois ramenés au 1er du mois, sans doublon (« 2026-11-15 » = novembre 2026).
@@ -128,6 +128,13 @@ router.post('/', ah(async (req, res) => {
       }
       if (restant > 0) throw new HttpError(400, 'Le montant dépasse le total dû pour les mois choisis.');
     } else {
+      if (FRAIS_ANNEXES[type]) {
+        // Reliquat, fournitures, uniforme : pas plus que ce qui reste dû.
+        const a = (await finance.fraisAnnexes([insc.id])).get(insc.id)[type];
+        if (centimes(total) > centimes(a.reste)) {
+          throw new HttpError(400, `Le montant dépasse ce qui reste dû pour ${a.libelle.toLowerCase()} (${montant(a.reste)}).`);
+        }
+      }
       await inserer(type, null, total);
     }
     return num;
@@ -156,7 +163,7 @@ router.get('/factures', ah(async (req, res) => {
   res.json({
     mois, nb: liste.length, total: liste.reduce((t, x) => t + x.total, 0),
     sans_mensualite: liste.filter((x) => x.du + x.reduction <= 0).length, // tarif encore à 0
-    liste: liste.map(({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total }) => ({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total })),
+    liste: liste.map(({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total }) => ({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total })),
   });
 }));
 router.get('/factures.pdf', ah(async (req, res) => {
@@ -184,7 +191,7 @@ async function messageRecu(req, numero) {
        JOIN classes c ON c.id = i.classe_id WHERE pa.numero_recu = $1 AND NOT pa.annule ORDER BY pa.mois`, [numero]);
   if (!lignes.length) throw new HttpError(404, 'Reçu introuvable.');
   const l = lignes[0];
-  const objet = lignes.map((x) => (x.type === 'mensualite' ? `mensualité ${deMois(x.mois)}` : x.type === 'inscription' ? 'frais d\'inscription' : 'paiement')).join(', ');
+  const objet = lignes.map((x) => objetPaiement(x.type, x.mois, x.remarque).toLowerCase()).join(', ');
   const texte = remplir(p.modele_recu, {
     nom_parent: l.parent, nom_eleve: `${l.prenom} ${l.nom}`, classe: l.classe,
     montant: montant(lignes.reduce((s, x) => s + x.montant, 0), p.devise), objet, numero, ecole: p.nom_ecole,

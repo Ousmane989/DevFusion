@@ -96,6 +96,14 @@ export function indicatifDe(numero) {
   const ind = PAYS.map((p) => p[2]).sort((a, b) => b.length - a.length).find((i) => chiffres.startsWith(i));
   return ind ? '+' + ind : null;
 }
+/** Reliquat, fournitures, uniforme : frais dus en plus de la mensualité. */
+export const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme' };
+/** Libellé court d'un paiement (journal, fiche). */
+export function objetPaiement(p) {
+  if (p.type === 'mensualite') return nomMois(p.mois);
+  if (p.type === 'inscription') return 'Inscription';
+  return FRAIS_ANNEXES[p.type] || p.remarque || 'Autre';
+}
 export const STATUTS = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé', non_concerne: '—', present: 'Présent', absent: 'Absent', retard: 'Retard' };
 export const ROLES = { directeur: 'Directrice', enseignant: 'Enseignant(e)' };
 export const ESPACES = { directeur: 'Espace Directrice', enseignant: 'Espace Enseignants' };
