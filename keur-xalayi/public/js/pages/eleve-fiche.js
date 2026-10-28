@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 export async function afficher(el, { id, nouveau }) {
@@ -63,6 +63,8 @@ export async function afficher(el, { id, nouveau }) {
             <div class="det">${insc.reduction > 0 ? `Réduction de ${argent(insc.reduction)} — ${e(insc.reduction_motif)}` : 'Sans réduction'}</div></div>
           <div class="kpi" style="--couleur:var(--primaire)"><div class="lib">Frais d'inscription</div><div class="val">${argent(s.inscriptionFrais.verse)} / ${argent(s.inscriptionFrais.du)}</div>
             <div class="det">${s.inscriptionFrais.reste > 0 ? `Reste ${argent(s.inscriptionFrais.reste)}` : 'Réglés ✔'}</div></div>
+          ${Object.values(s.annexes || {}).filter((a) => a.du > 0).map((a) => `<div class="kpi" style="--couleur:var(--accent)"><div class="lib">${e(a.libelle)}</div>
+            <div class="val">${argent(a.verse)} / ${argent(a.du)}</div><div class="det">${a.reste > 0 ? `Reste ${argent(a.reste)}` : 'Réglé ✔'}</div></div>`).join('')}
         </div>
         <div class="carte"><h2>Mois par mois</h2>
           ${tableau([
@@ -77,7 +79,7 @@ export async function afficher(el, { id, nouveau }) {
         <div class="carte"><h2>Paiements reçus</h2>
           ${tableau([
     { titre: 'Date', rendu: (p) => dateFr(p.date_paiement) },
-    { titre: 'Objet', rendu: (p) => (p.type === 'mensualite' ? e(nomMois(p.mois)) : p.type === 'inscription' ? 'Inscription' : e(p.remarque || 'Autre')) + (p.annule ? ' ' + badge('ko', 'Annulé') : '') },
+    { titre: 'Objet', rendu: (p) => e(objetPaiement(p)) + (p.annule ? ' ' + badge('ko', 'Annulé') : '') },
     { titre: 'Montant', classe: 'num', rendu: (p) => argent(p.montant) },
     { titre: 'Mode', rendu: (p) => e(MODES[p.mode]) + (p.reference ? `<div class="petit muted">${e(p.reference)}</div>` : '') },
     { titre: 'Reçu', rendu: (p) => `<button class="btn lien" data-recu="${e(p.numero_recu)}">${e(p.numero_recu)}</button>` },

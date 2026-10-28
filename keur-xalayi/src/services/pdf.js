@@ -6,7 +6,7 @@
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const { one } = require('../db');
-const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT } = require('../utils');
+const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement } = require('../utils');
 
 const COULEURS = {
   primaire: '#2E3192', // bleu du logo de l'école
@@ -220,8 +220,7 @@ async function recu(numero) {
     let y = yT + 24;
     const pas = lignes.length > 8 ? 15 : 18; // lignes resserrées quand l'année entière est payée d'un coup
     for (const li of lignes) {
-      const objet = li.type === 'mensualite' ? `Mensualité ${deMois(li.mois)}`
-        : li.type === 'inscription' ? 'Frais d\'inscription' : (li.remarque || 'Autre paiement');
+      const objet = objetPaiement(li.type, li.mois, li.remarque);
       const libelle = objet + (li.annule ? ' (annulé)' : '');
       doc.fillColor(li.annule ? COULEURS.gris : COULEURS.texte).font('Helvetica').fontSize(9.5);
       const hauteur = doc.heightOfString(texteImprimable(libelle), { width: largeur - 120 });
@@ -696,6 +695,7 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite }) {
     const detail = f.arrieres.map((a) => nomMois(a.mois).split(' ')[0]).join(', ');
     ligne(`Mois précédents non réglés (${detail})`, montant(f.total_arrieres, p.devise));
   }
+  for (const a of f.autres || []) ligne(a.libelle, montant(a.reste, p.devise)); // reliquat, fournitures, uniforme
   doc.rect(l, y, largeur, 19).fill(COULEURS.clair);
   doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(11)
     .text('TOTAL À PAYER', l + 8, y + 5, { lineBreak: false }).text(montant(f.total, p.devise), l, y + 5, { width: largeur - 8, align: 'right', lineBreak: false });

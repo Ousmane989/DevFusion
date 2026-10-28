@@ -49,6 +49,9 @@ export async function afficher(el, { id }) {
           ${champ('Frais d\'inscription', `<input type="number" min="0" step="any" name="frais_inscription" id="frais" value="${insc ? insc.frais_inscription : ''}">`, { aide: 'Rempli automatiquement selon la classe, modifiable.' })}
           ${champ('Mensualité', `<input type="number" min="0" step="any" name="mensualite" id="mens" value="${insc ? insc.mensualite : ''}">`, { aide: 'Montant mensuel normal.' })}
           ${champ('Réduction mensuelle', `<input type="number" min="0" step="any" name="reduction" id="red" value="${insc ? insc.reduction : 0}">`, { aide: '<span id="net"></span>' })}
+          ${champ('Fournitures', `<input type="number" min="0" step="any" name="fournitures" id="fourn" value="${insc ? insc.fournitures : ''}">`, { aide: 'Selon le niveau, modifiable.' })}
+          ${champ('Uniforme', `<input type="number" min="0" step="any" name="uniforme" id="unif" value="${insc ? insc.uniforme : ''}">`, { aide: 'Selon le niveau, modifiable.' })}
+          ${champ('Reliquat', `<input type="number" min="0" step="any" name="reliquat" value="${insc ? insc.reliquat : 0}">`, { aide: 'Reste dû d\'une année précédente (0 si rien).' })}
         </div>
         <div id="zone-motif">${champ('Motif de la réduction', `<select name="reduction_motif_choix" id="motif-choix">${options([['Fratrie', 'Fratrie (plusieurs enfants)'], ['Cas social', 'Cas social'], ['Enfant du personnel', 'Enfant du personnel'], ['autre', 'Autre…']], ['Fratrie', 'Cas social', 'Enfant du personnel'].includes(insc && insc.reduction_motif) ? insc.reduction_motif : (insc && insc.reduction_motif ? 'autre' : ''), { vide: '— Choisir —' })}</select>
           <input name="reduction_motif_autre" id="motif-autre" placeholder="Précisez le motif" style="margin-top:.4rem" value="${e(insc && !['Fratrie', 'Cas social', 'Enfant du personnel'].includes(insc.reduction_motif) ? insc.reduction_motif || '' : '')}">`, { requis: true })}</div>`
@@ -94,6 +97,8 @@ export async function afficher(el, { id }) {
       if (c && (!insc || String(insc.classe_id) !== selClasse.value)) {
         el.querySelector('#frais').value = c.frais_effectif;
         el.querySelector('#mens').value = c.mensualite_effective;
+        el.querySelector('#fourn').value = c.fournitures_effectif;
+        el.querySelector('#unif').value = c.uniforme_effectif;
       }
       maj();
     };
