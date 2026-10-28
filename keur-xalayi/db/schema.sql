@@ -403,6 +403,17 @@ BEGIN
   END IF;
 END $$;
 
+-- ---------- Historique des modifications d'un élève (avec motif) ----------
+CREATE TABLE IF NOT EXISTS modifications_eleves (
+  id             SERIAL PRIMARY KEY,
+  eleve_id       INTEGER NOT NULL REFERENCES eleves(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  changements    JSONB NOT NULL,          -- [{ champ, avant, apres }]
+  motif          TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS modifications_eleves_idx ON modifications_eleves (eleve_id, created_at DESC);
+
 -- ---------- Indicatifs de tous les pays (plus seulement Sénégal / Mauritanie) ----------
 DO $$
 BEGIN

@@ -105,7 +105,23 @@ export async function afficher(el, { id, nouveau }) {
       { titre: 'Classe', rendu: (i) => e(i.classe) },
       ...(gestion ? [{ titre: 'Mensualité', classe: 'num', rendu: (i) => argent(i.mensualite - i.reduction) }] : []),
       { titre: 'Décision', rendu: (i) => ({ en_cours: 'En cours', admis: 'Admis(e)', redouble: 'Redouble', parti: 'Parti(e)' }[i.decision]) },
-    ], d.inscriptions, { vide: 'Aucune inscription.' })}</div>`,
+    ], d.inscriptions, { vide: 'Aucune inscription.' })}</div>
+      ${gestion ? '<div class="carte"><h2>✏️ Modifications de la fiche</h2><div id="modifs" class="muted">Chargement…</div></div>' : ''}`,
+  };
+  // Historique des modifications (date, qui, avant → après, motif)
+  const afficherModifs = async () => {
+    const z = el.querySelector('#modifs');
+    if (!z) return;
+    try {
+      const modifs = await get(`/eleves/${v.id}/modifications`);
+      const val = (x) => (x === null || x === undefined || x === '' ? '—' : /^\d{4}-\d{2}-\d{2}$/.test(String(x)) ? dateFr(x) : String(x));
+      z.classList.remove('muted');
+      z.innerHTML = modifs.length ? modifs.map((m) => `<div style="padding:.6rem 0;border-bottom:1px solid var(--bord)">
+          <div class="ligne" style="gap:.5rem"><b>${e(dateFr(m.created_at))}</b><span class="petit muted">par ${e(m.par || '—')}</span>
+            ${m.motif ? `<span class="badge info">Motif : ${e(m.motif)}</span>` : '<span class="badge neutre">Sans motif</span>'}</div>
+          <ul class="petit" style="margin:.3rem 0 0 1.1rem;padding:0">${m.changements.map((c) => `<li>${e(c.champ)} : <s class="muted">${e(val(c.avant))}</s> → <b>${e(val(c.apres))}</b></li>`).join('')}</ul>
+        </div>`).join('') : '<span class="muted">Aucune modification depuis l\'inscription.</span>';
+    } catch (err) { z.textContent = err.message; }
   };
 
   const zone = el.querySelector('#onglet');
@@ -115,6 +131,7 @@ export async function afficher(el, { id, nouveau }) {
     zone.querySelectorAll('[data-payer]').forEach((b) => { b.onclick = () => encaisser(v.id, recharger, [b.dataset.payer]); });
     zone.querySelectorAll('[data-recu]').forEach((b) => { b.onclick = () => ouvrir(`/paiements/recu/${encodeURIComponent(b.dataset.recu)}.pdf`); });
     zone.querySelectorAll('[data-wa]').forEach((b) => { b.onclick = () => envoyerRecu(b.dataset.wa); });
+    if (nom === 'historique') afficherModifs();
   };
   el.querySelectorAll('[data-o]').forEach((b) => { b.onclick = () => montrer(b.dataset.o); });
   montrer(d.solde ? 'paiements' : 'presences');
