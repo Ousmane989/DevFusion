@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 export async function afficher(el, { id, nouveau }) {
@@ -35,6 +35,7 @@ export async function afficher(el, { id, nouveau }) {
       <div class="ligne" style="margin-top:1rem">
         ${gestion && insc && v.statut === 'actif' ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
         ${gestion && insc ? '<button class="btn clair" id="facture">🧾 Facture d\'inscription</button>' : ''}
+        ${gestion && insc && v.statut === 'actif' ? '<button class="btn clair" id="facture-mois">🧾 Facture du mois</button>' : ''}
         ${gestion ? `<a class="btn clair" href="#/eleves/${v.id}/modifier">✏️ Modifier</a>` : ''}
         ${gestion ? '<button class="btn clair" id="message">💬 Message au parent</button>' : ''}
         ${insc ? `<button class="btn clair" id="carte">🪪 Carte d'élève</button>` : ''}
@@ -122,6 +123,7 @@ export async function afficher(el, { id, nouveau }) {
   const facture = () => imprimer(`/eleves/${v.id}/facture-inscription.pdf`);
   if ($('#payer-insc')) $('#payer-insc').onclick = payerInscription;
   if ($('#facture')) $('#facture').onclick = facture;
+  if ($('#facture-mois')) $('#facture-mois').onclick = () => imprimer(`/paiements/factures.pdf?mois=${moisCourant()}&eleve_id=${v.id}`);
   if ($('#facture-nouveau')) $('#facture-nouveau').onclick = facture;
 
   // Juste après une inscription : la facture est proposée tout de suite (une seule fois).

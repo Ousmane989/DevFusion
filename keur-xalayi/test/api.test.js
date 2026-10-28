@@ -125,6 +125,21 @@ test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async 
   assert.match(wa.donnees.lien, /^https:\/\/wa\.me\/221771234567\?text=/);
 });
 
+test('factures de mensualité du mois : aperçu, arriérés et PDF', async () => {
+  const { mois, echus } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const m = echus[echus.length - 1] || mois[0];
+  const ap = await appel('dir', `/api/paiements/factures?mois=${m}&classe_id=${classe.id}`);
+  assert.strictEqual(ap.statut, 200, JSON.stringify(ap.donnees));
+  assert.ok(ap.donnees.nb > 0);
+  for (const x of ap.donnees.liste) assert.strictEqual(x.total, Math.max(0, x.du - x.verse) + x.total_arrieres);
+  const imp = (await appel('dir', `/api/paiements/factures?mois=${m}&classe_id=${classe.id}&impayes=1`)).donnees;
+  assert.ok(imp.liste.every((x) => x.total > 0) && imp.nb <= ap.donnees.nb);
+  const f = await appel('dir', `/api/paiements/factures.pdf?mois=${m}&classe_id=${classe.id}`);
+  assert.strictEqual(f.statut, 200);
+  assert.strictEqual(f.donnees.subarray(0, 4).toString(), '%PDF');
+  assert.strictEqual((await appel('dir', '/api/paiements/factures?mois=2031-01-01')).statut, 400);
+});
+
 test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {
   const mois = (await appel('dir', '/api/paiements/mois')).donnees.mois[0];
   const ap = await appel('dir', '/api/whatsapp/rappels/apercu', { methode: 'POST', corps: { mois, impayes_seulement: true } });
