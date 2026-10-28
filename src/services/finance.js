@@ -69,6 +69,35 @@ async function situationMois(mois, opts = {}) {
   });
 }
 
+/**
+ * Données des factures de mensualité d'un mois : pour chaque élève, le dû du mois,
+ * ce qui est déjà versé, et les mois précédents de l'année restés impayés (arriérés).
+ * @param {string} mois AAAA-MM-01
+ * @param {{classeId?, eleveId?, impayesSeulement?}} opts
+ */
+async function facturesMois(mois, { classeId, eleveId, impayesSeulement } = {}) {
+  const annee = await anneeActiveRequise();
+  if (!moisAnnee(annee).includes(mois)) throw new HttpError(400, 'Ce mois ne fait pas partie de l\'année scolaire.');
+  let liste = await situationMois(mois, { classeId });
+  if (eleveId) liste = liste.filter((x) => x.eleve_id === Number(eleveId));
+  // Arriérés : mois précédents de l'année (depuis l'inscription) non soldés.
+  const arrieres = new Map();
+  for (const m of moisAnnee(annee).filter((x) => x < mois)) {
+    for (const s of await situationMois(m, { classeId })) {
+      if (s.reste <= 0) continue;
+      const a = arrieres.get(s.inscription_id) || [];
+      a.push({ mois: m, reste: s.reste });
+      arrieres.set(s.inscription_id, a);
+    }
+  }
+  liste = liste.map((x) => {
+    const arr = arrieres.get(x.inscription_id) || [];
+    const totalArrieres = arr.reduce((t, a) => t + a.reste, 0);
+    return { ...x, arrieres: arr, total_arrieres: totalArrieres, total: x.reste + totalArrieres };
+  });
+  return impayesSeulement ? liste.filter((x) => x.total > 0) : liste;
+}
+
 /** Impayés (reste > 0) pour un mois, ou pour tous les mois échus si mois est vide. */
 async function impayes({ mois, classeId, classes } = {}) {
   const annee = await anneeActive();
@@ -132,4 +161,4 @@ async function resumeMois(mois, opts = {}) {
   };
 }
 
-module.exports = { anneeActive, anneeActiveRequise, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };
+module.exports = { anneeActive, anneeActiveRequise, facturesMois, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };
