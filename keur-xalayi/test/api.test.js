@@ -363,6 +363,20 @@ test('corrections de la revue : décisions, mois de paiement, données cachées 
   assert.ok(n.n >= 1, 'échecs comptés en base');
 });
 
+test('modification d\'un élève avec motif : historique avant → après', async () => {
+  const avant = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  const r = await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { lieu_naissance: 'Thiès', reliquat: 4000, motif_modification: 'Erreur de saisie — demande du père' } });
+  assert.strictEqual(r.statut, 200, JSON.stringify(r.donnees));
+  const h = (await appel('dir', `/api/eleves/${eleveId}/modifications`)).donnees;
+  assert.strictEqual(h[0].motif, 'Erreur de saisie — demande du père');
+  const champs = h[0].changements.map((c) => c.champ);
+  assert.ok(champs.includes('Lieu de naissance') && champs.includes('Reliquat'), JSON.stringify(h[0]));
+  assert.strictEqual(h[0].changements.find((c) => c.champ === 'Lieu de naissance').avant, avant.eleve.lieu_naissance);
+  // Rien de changé : pas de nouvelle ligne d'historique
+  await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { lieu_naissance: 'Thiès' } });
+  assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/modifications`)).donnees.length, h.length);
+});
+
 test('suppression d\'élèves sélectionnés (avec confirmation s\'ils ont des paiements)', async () => {
   const creer = async (nom) => (await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom, prenom: 'Test', sexe: 'M', classe_id: classe.id } })).donnees;
   const a = await creer('Asupprimer'); const b = await creer('Bsupprimer');

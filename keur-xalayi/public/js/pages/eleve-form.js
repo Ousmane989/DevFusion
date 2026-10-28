@@ -59,6 +59,16 @@ export async function afficher(el, { id }) {
     : '<div class="alerte info">Cet élève n\'est pas inscrit cette année. Utilisez « Réinscrire » depuis sa fiche.</div>'}
       </fieldset>
 
+      ${id ? `<fieldset><legend>✏️ Motif de la modification <span class="petit muted">(facultatif)</span></legend>
+        <div class="grille g2">
+          ${champ('Motif', `<select name="motif_choix" id="motif-modif">${options([['Erreur de saisie', 'Erreur de saisie'], ['Changement de classe', 'Changement de classe'],
+    ['Changement de tarif ou de réduction', 'Changement de tarif ou de réduction'], ['Nouveau numéro du parent', 'Nouveau numéro du parent'],
+    ['Changement de tuteur', 'Changement de tuteur'], ['Document fourni (acte de naissance…)', 'Document fourni (acte de naissance…)'], ['autre', 'Autre…']], '', { vide: '— Aucun —' })}</select>`)}
+          ${champ('Précision', '<input name="motif_detail" id="motif-detail" maxlength="300" placeholder="Ex. demande du père, erreur sur la date de naissance…">')}
+        </div>
+        <p class="petit muted" style="margin:0">Chaque modification est gardée dans l'historique de la fiche (date, qui, avant → après, motif).</p>
+      </fieldset>` : ''}
+
       <div class="barre-action">
         <button class="btn" id="ok">💾 ${id ? 'Enregistrer les modifications' : 'Inscrire l\'élève'}</button>
         <a class="btn clair" href="${id ? `#/eleves/${id}` : '#/eleves'}">Annuler</a>
@@ -117,6 +127,10 @@ export async function afficher(el, { id }) {
     d.reduction_motif = d.reduction_motif_choix === 'autre' ? d.reduction_motif_autre : d.reduction_motif_choix;
     delete d.reduction_motif_choix; delete d.reduction_motif_autre;
     if (!(Number(d.reduction) > 0)) { d.reduction = 0; d.reduction_motif = null; }
+    // Motif de la modification : choix + précision (« Autre » = la précision seule)
+    const choix = d.motif_choix === 'autre' ? '' : (d.motif_choix || '');
+    d.motif_modification = [choix, (d.motif_detail || '').trim()].filter(Boolean).join(' — ') || null;
+    delete d.motif_choix; delete d.motif_detail;
     const btn = el.querySelector('#ok');
     btn.disabled = true;
     try {

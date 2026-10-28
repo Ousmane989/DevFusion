@@ -199,9 +199,27 @@ router.post('/', gestion, ah(async (req, res) => {
 }));
 
 // ---- Modification de la fiche (et de l'inscription courante) ----
+/** Libellés des champs suivis dans l'historique des modifications. */
+const LIBELLES = {
+  nom: 'Nom', prenom: 'Prénom', sexe: 'Sexe', date_naissance: 'Date de naissance', lieu_naissance: 'Lieu de naissance',
+  pere_nom: 'Père', mere_nom: 'Mère', tuteur_nom: 'Tuteur', whatsapp: 'WhatsApp', telephone2: 'Téléphone 2', adresse: 'Adresse',
+  remarques: 'Remarques', classe: 'Classe', date_inscription: 'Date d\'inscription', frais_inscription: 'Frais d\'inscription',
+  mensualite: 'Mensualité', reduction: 'Réduction', reduction_motif: 'Motif de la réduction', fournitures: 'Fournitures',
+  uniforme: 'Uniforme', blouson: 'Blouson', reliquat: 'Reliquat',
+};
+const pareil = (a, b) => String(a ?? '') === String(b ?? '') || (a !== null && b !== null && a !== '' && b !== '' && Number(a) === Number(b));
+
 router.put('/:id', gestion, ah(async (req, res) => {
   const d = await nettoyer(req.body, true);
+  const motif = vide(typeof req.body.motif_modification === 'string' ? req.body.motif_modification.trim() : null);
+  if (motif && motif.length > 500) throw new HttpError(400, 'Motif trop long (500 caractères au plus).');
   await tx(async (c) => {
+    // État avant modification, pour l'historique
+    const avantEleve = await c.one('SELECT * FROM eleves WHERE id = $1', [req.params.id]);
+    if (!avantEleve) throw new HttpError(404, 'Élève introuvable.');
+    const avantInsc = await c.one(
+      `SELECT i.*, cl.nom AS classe FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
+         JOIN classes cl ON cl.id = i.classe_id WHERE i.eleve_id = $1`, [req.params.id]);
     if (Object.keys(d).length) {
       const sets = Object.keys(d).map((k, i) => `${k} = $${i + 1}`);
       await c.query(`UPDATE eleves SET ${sets.join(', ')} WHERE id = $${sets.length + 1}`, [...Object.values(d), req.params.id]);
@@ -227,8 +245,33 @@ router.put('/:id', gestion, ah(async (req, res) => {
                 date_inscription = COALESCE($6, date_inscription), fournitures = $7, uniforme = $8, reliquat = $9, blouson = $10 WHERE id = $11`,
         [cl.id, m.frais, m.mens, m.red, m.motif, vide(req.body.date_inscription), m.fourn, m.unif, m.reliquat, m.blous, insc.id]);
     }
+    // Historique : ce qui a changé (avant → après), qui, quand, et pourquoi.
+    const apresEleve = await c.one('SELECT * FROM eleves WHERE id = $1', [req.params.id]);
+    const apresInsc = await c.one(
+      `SELECT i.*, cl.nom AS classe FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
+         JOIN classes cl ON cl.id = i.classe_id WHERE i.eleve_id = $1`, [req.params.id]);
+    const changements = [];
+    for (const k of CHAMPS) if (!pareil(avantEleve[k], apresEleve[k])) changements.push({ champ: LIBELLES[k] || k, avant: avantEleve[k], apres: apresEleve[k] });
+    if (avantEleve.photo !== apresEleve.photo) changements.push({ champ: 'Photo', avant: avantEleve.photo ? 'oui' : 'non', apres: apresEleve.photo ? 'nouvelle' : 'retirée' });
+    if (avantInsc && apresInsc) {
+      for (const k of ['classe', 'date_inscription', 'frais_inscription', 'mensualite', 'reduction', 'reduction_motif', 'fournitures', 'uniforme', 'blouson', 'reliquat']) {
+        if (!pareil(avantInsc[k], apresInsc[k])) changements.push({ champ: LIBELLES[k], avant: avantInsc[k], apres: apresInsc[k] });
+      }
+    }
+    if (changements.length) {
+      await c.query('INSERT INTO modifications_eleves (eleve_id, utilisateur_id, changements, motif) VALUES ($1,$2,$3,$4)',
+        [req.params.id, req.user.id, JSON.stringify(changements), motif]);
+    }
   });
   res.json({ ok: true });
+}));
+
+// ---- Historique des modifications d'un élève ----
+router.get('/:id/modifications', gestion, ah(async (req, res) => {
+  res.json(await query(
+    `SELECT m.id, m.changements, m.motif, m.created_at, u.nom_complet AS par
+       FROM modifications_eleves m LEFT JOIN utilisateurs u ON u.id = m.utilisateur_id
+      WHERE m.eleve_id = $1 ORDER BY m.created_at DESC LIMIT 100`, [req.params.id]));
 }));
 
 // ---- Suppression définitive d'un ou plusieurs élèves (directrice) ----
