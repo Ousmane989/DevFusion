@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement, supprimerEleves } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 
 export async function afficher(el, { id, nouveau }) {
@@ -42,6 +42,7 @@ export async function afficher(el, { id, nouveau }) {
         ${insc && gestion && v.statut === 'actif' ? `<a class="btn clair" href="#/certificats?eleve_id=${v.id}">📜 Certificat de scolarité</a>` : ''}
         <span class="espace"></span>
         ${gestion && v.statut === 'actif' ? '<button class="btn clair" id="archiver">🗄️ Archiver (départ)</button>' : ''}
+        ${gestion ? '<button class="btn clair" id="supprimer" style="color:var(--danger)">🗑️ Supprimer</button>' : ''}
         ${gestion && (v.statut === 'archive' || !insc) ? '<button class="btn sec" id="reinscrire">↩️ Réinscrire</button>' : ''}
       </div>
     </div>
@@ -156,6 +157,11 @@ export async function afficher(el, { id, nouveau }) {
       champ('Message', `<textarea name="texte" required rows="5">Bonjour {nom_parent}, </textarea>`, { aide: 'Variables possibles : {nom_parent}, {nom_eleve}, {classe}' })
       + '<label class="case"><input type="checkbox" name="manuel"> Envoyer moi-même depuis mon WhatsApp (lien)</label>',
       async (f) => { resultatEnvoi(await post('/whatsapp/annonce', { cible: 'parent', eleve_id: v.id, texte: f.texte, manuel: f.manuel })); }, { ok: 'Envoyer' });
+  }
+  if ($('#supprimer')) {
+    $('#supprimer').onclick = async () => {
+      try { if (await supprimerEleves([v.id], `${v.prenom} ${v.nom}`)) location.hash = '#/eleves'; } catch (err) { erreur(err); }
+    };
   }
   if ($('#archiver')) {
     $('#archiver').onclick = () => formulaire('Archiver l\'élève',

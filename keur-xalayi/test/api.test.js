@@ -363,6 +363,20 @@ test('corrections de la revue : décisions, mois de paiement, données cachées 
   assert.ok(n.n >= 1, 'échecs comptés en base');
 });
 
+test('suppression d\'élèves sélectionnés (avec confirmation s\'ils ont des paiements)', async () => {
+  const creer = async (nom) => (await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom, prenom: 'Test', sexe: 'M', classe_id: classe.id } })).donnees;
+  const a = await creer('Asupprimer'); const b = await creer('Bsupprimer');
+  await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: b.inscription_id, type: 'autre', montant: 500, mode: 'especes' } });
+  const r1 = await appel('dir', '/api/eleves/supprimer', { methode: 'POST', corps: { ids: [a.id, b.id] } });
+  assert.strictEqual(r1.statut, 409, 'demande de confirmation pour l\'élève qui a des paiements');
+  assert.deepStrictEqual(r1.donnees.avec_paiements.map((x) => x.id), [b.id]);
+  assert.strictEqual((await appel('dir', `/api/eleves/${a.id}`)).statut, 200, 'rien supprimé sans confirmation');
+  const r2 = await appel('dir', '/api/eleves/supprimer', { methode: 'POST', corps: { ids: [a.id, b.id], avec_paiements: true } });
+  assert.strictEqual(r2.statut, 200); assert.strictEqual(r2.donnees.supprimes, 2);
+  assert.strictEqual((await appel('dir', `/api/eleves/${b.id}`)).statut, 404);
+  assert.strictEqual((await appel('ens', '/api/eleves/supprimer', { methode: 'POST', corps: { ids: [eleveId] } })).statut, 403);
+});
+
 test('archivage puis réinscription', async () => {
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}/archiver`, { methode: 'POST', corps: { motif: 'Déménagement' } })).statut, 200);
   const archives = (await appel('dir', '/api/eleves?statut=archive')).donnees;
