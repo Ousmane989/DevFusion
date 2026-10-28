@@ -127,6 +127,15 @@ function exiger(obj, champs) {
 const vide = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : v);
 
 // Modes de paiement : ceux du Sénégal, puis ceux de la Mauritanie.
+/** Frais en plus de la mensualité et de l'inscription (montant dû par inscription). */
+const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme' };
+/** Libellé d'un paiement (reçu, journal, message). */
+function objetPaiement(type, mois, remarque) {
+  if (type === 'mensualite') return `Mensualité ${deMois(mois)}`;
+  if (type === 'inscription') return 'Frais d\'inscription';
+  return FRAIS_ANNEXES[type] || remarque || 'Autre paiement';
+}
+
 const MODES_PAIEMENT = {
   especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Mixx by Yas (Free Money)',
   mobile_money: 'Mobile Money (MTN, Moov…)', carte: 'Carte bancaire',
@@ -136,5 +145,5 @@ const MODES_PAIEMENT = {
 
 module.exports = {
   HttpError, ah, MOIS, nomMois, deMois, aujourdhui, debutMois, ajouterMois, moisEntre,
-  dateFr, montant, normaliserTel, numeroValide, PAYS, remplir, exiger, vide, MODES_PAIEMENT,
+  dateFr, montant, normaliserTel, numeroValide, PAYS, FRAIS_ANNEXES, objetPaiement, remplir, exiger, vide, MODES_PAIEMENT,
 };

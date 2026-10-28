@@ -19,7 +19,13 @@ export async function encaisser(eleveId, apres, moisPreselection = []) {
     <div class="alerte info"><div><b>${e(fiche.eleve.prenom)} ${e(fiche.eleve.nom)}</b> — ${e(fiche.inscription.classe)}<br>
       Mensualité : ${argent(fiche.inscription.mensualite - fiche.inscription.reduction)}${fiche.inscription.reduction > 0 ? ` (réduction ${argent(fiche.inscription.reduction)} : ${e(fiche.inscription.reduction_motif)})` : ''}
       · Reste dû à ce jour : <b>${argent(solde.totalReste)}</b></div></div>
-    ${champ('Type de paiement', `<select name="type" id="type">${options([['mensualite', 'Mensualité'], ['inscription', `Frais d'inscription (reste ${argent(solde.inscriptionFrais.reste)})`], ['autre', 'Autre (tenue, cantine, fournitures…)']], 'mensualite')}</select>`)}
+    ${champ('Type de paiement', `<select name="type" id="type">${options([
+    ['mensualite', 'Mensualité'],
+    ['inscription', `Frais d'inscription (reste ${argent(solde.inscriptionFrais.reste)})`],
+    // Reliquat, fournitures, uniforme : proposés seulement s'il reste quelque chose à payer
+    ...Object.entries(solde.annexes || {}).filter(([, a]) => a.reste > 0).map(([t, a]) => [t, `${a.libelle} (reste ${argent(a.reste)})`]),
+    ['autre', 'Autre (cantine, sortie…)'],
+  ], 'mensualite')}</select>`)}
     <div id="zone-mois">${champ('Mois payé(s)', `<div class="grille g3" style="gap:.2rem .8rem">${moisDispo.map((m) => `
       <label class="case petit"><input type="checkbox" name="mois" data-multiple value="${m.mois}" data-reste="${m.reste}" ${presel.includes(m.mois) ? 'checked' : ''} ${m.reste <= 0 ? 'disabled' : ''}>
       ${e(nomMois(m.mois))} ${m.reste <= 0 ? '✔' : m.verse > 0 ? `<span class="muted">(reste ${argent(m.reste)})</span>` : ''}</label>`).join('')}</div>`, { aide: 'Cochez un ou plusieurs mois : le montant est réparti automatiquement.' })}</div>
@@ -49,6 +55,7 @@ export async function encaisser(eleveId, apres, moisPreselection = []) {
       const total = [...f.querySelectorAll('input[name=mois]:checked')].reduce((s, c) => s + Number(c.dataset.reste), 0);
       f.querySelector('#montant').value = total || '';
     } else if (type === 'inscription') f.querySelector('#montant').value = solde.inscriptionFrais.reste || '';
+    else if (solde.annexes && solde.annexes[type]) f.querySelector('#montant').value = solde.annexes[type].reste || '';
     else f.querySelector('#montant').value = '';
   };
   f.querySelector('#type').onchange = calc;
