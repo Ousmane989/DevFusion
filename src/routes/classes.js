@@ -20,7 +20,7 @@ async function listeClasses(anneeId, classesAutorisees) {
     `SELECT c.*, n.code AS niveau_code, n.nom AS niveau_nom, n.ordre, n.cycle,
             COALESCE(c.frais_inscription, n.frais_inscription) AS frais_effectif,
             COALESCE(c.mensualite, n.mensualite) AS mensualite_effective,
-            n.fournitures AS fournitures_effectif, n.uniforme AS uniforme_effectif,
+            n.fournitures AS fournitures_effectif, n.uniforme AS uniforme_effectif, n.blouson AS blouson_effectif,
             p.nom || ' ' || p.prenom AS enseignant, p.telephone AS enseignant_tel,
             COUNT(i.id) FILTER (WHERE e.statut = 'actif' AND i.decision <> 'parti') AS effectif,
             COUNT(i.id) FILTER (WHERE e.statut = 'actif' AND i.decision <> 'parti' AND e.sexe = 'M') AS garcons,

@@ -61,9 +61,10 @@ export async function afficher(el, params) {
     { titre: 'Mensualité', rendu: (n) => `<input type="number" min="0" step="any" data-mens="${n.id}" value="${n.mensualite}" style="max-width:140px">` },
     { titre: 'Fournitures', rendu: (n) => `<input type="number" min="0" step="any" data-fourn="${n.id}" value="${n.fournitures}" style="max-width:140px">` },
     { titre: 'Uniforme', rendu: (n) => `<input type="number" min="0" step="any" data-unif="${n.id}" value="${n.uniforme}" style="max-width:140px">` },
+    { titre: 'Blouson', rendu: (n) => `<input type="number" min="0" step="any" data-blous="${n.id}" value="${n.blouson}" style="max-width:140px">` },
   ], niveaux)}
         <p class="petit muted">Le reliquat (reste d'une année précédente) se saisit élève par élève, dans « Modifier » sur sa fiche.</p>
-        <label class="case" style="margin-top:.8rem"><input type="checkbox" id="appliquer"> Appliquer aussi les mensualités, fournitures et uniforme aux élèves déjà inscrits cette année</label>
+        <label class="case" style="margin-top:.8rem"><input type="checkbox" id="appliquer"> Appliquer aussi les mensualités, fournitures, uniforme et blouson aux élèves déjà inscrits cette année</label>
         <div class="ligne fin"><button class="btn" id="enreg">💾 Enregistrer les tarifs</button></div>`;
       zone.querySelector('#enreg').onclick = async () => {
         try {
@@ -72,9 +73,10 @@ export async function afficher(el, params) {
             const mens = Number(zone.querySelector(`[data-mens="${n.id}"]`).value || 0);
             const fournitures = Number(zone.querySelector(`[data-fourn="${n.id}"]`).value || 0);
             const uniforme = Number(zone.querySelector(`[data-unif="${n.id}"]`).value || 0);
+            const blouson = Number(zone.querySelector(`[data-blous="${n.id}"]`).value || 0);
             const appliquer = zone.querySelector('#appliquer').checked;
-            if (frais !== n.frais_inscription || mens !== n.mensualite || fournitures !== n.fournitures || uniforme !== n.uniforme || appliquer) {
-              await put(`/parametres/niveaux/${n.id}`, { frais_inscription: frais, mensualite: mens, fournitures, uniforme, appliquer_inscriptions: appliquer });
+            if (frais !== n.frais_inscription || mens !== n.mensualite || fournitures !== n.fournitures || uniforme !== n.uniforme || blouson !== n.blouson || appliquer) {
+              await put(`/parametres/niveaux/${n.id}`, { frais_inscription: frais, mensualite: mens, fournitures, uniforme, blouson, appliquer_inscriptions: appliquer });
             }
           }
           toast('Tarifs enregistrés.', 'succes');

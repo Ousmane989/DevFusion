@@ -97,7 +97,7 @@ export function indicatifDe(numero) {
   return ind ? '+' + ind : null;
 }
 /** Reliquat, fournitures, uniforme : frais dus en plus de la mensualité. */
-export const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme' };
+export const FRAIS_ANNEXES = { reliquat: 'Reliquat', fournitures: 'Fournitures', uniforme: 'Uniforme', blouson: 'Blouson' };
 /** Libellé court d'un paiement (journal, fiche). */
 export function objetPaiement(p) {
   if (p.type === 'mensualite') return nomMois(p.mois);
