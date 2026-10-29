@@ -508,6 +508,18 @@ footer{padding-block:0 40px;color:var(--muted);font-size:14px;display:flex;justi
 @keyframes spin{to{transform:rotate(360deg)}}
 
 
+
+/* Téléchargement du CV */
+.navr{display:flex;align-items:center;gap:10px}
+.navcv{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:999px;background:linear-gradient(135deg,var(--gold),var(--brown));color:#fff;font:600 14px var(--body);text-decoration:none;box-shadow:0 8px 22px -10px var(--glow);animation:cvPulse 2.6s ease-in-out infinite}
+.navcv svg{width:16px;height:16px;animation:dlBounce 1.6s ease-in-out infinite}
+.navcv:hover{transform:translateY(-2px)}
+@keyframes cvPulse{0%,100%{box-shadow:0 0 0 0 rgba(31,123,255,.55)}60%{box-shadow:0 0 0 10px rgba(31,123,255,0)}}
+@keyframes dlBounce{0%,100%{transform:none}50%{transform:translateY(3px)}}
+.btn.dl svg{width:17px;height:17px}
+.btn.dl:hover svg{transform:translateY(3px)}
+.dlnote{margin:14px 0 0;font-size:14px;color:var(--muted);max-width:52ch}
+
 /* ===== Surfaces animées ===== */
 /* Fond animé sur toute la page : grille qui défile, halos et étoiles */
 .bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -576,9 +588,10 @@ main,footer,.marquee{position:relative;z-index:1}
       <a href="#cv">CV</a>
       <a href="#contact">Contact</a>
     </nav>
+    <div class="navr"><a class="navcv" href="CV_El_Yonel_Ousmane_Niang.pdf" download="CV_El_Yonel_Ousmane_Niang.pdf" target="_blank" rel="noopener" aria-label="Télécharger le CV en PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>CV</span></a>
     <button class="theme" id="themeBtn" aria-label="Changer de thème">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-    </button>
+    </button></div>
   </div>
 </header>
 
@@ -597,6 +610,7 @@ main,footer,.marquee{position:relative;z-index:1}
         <div class="ctas">
           <a class="btn primary magnetic" href="#projets">Voir mes projets <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
           <a class="btn magnetic" href="#contact">Me contacter</a>
+          <a class="btn magnetic dl" href="CV_El_Yonel_Ousmane_Niang.pdf" download="CV_El_Yonel_Ousmane_Niang.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Mon CV</a>
         </div>
       </div>
       <div class="portrait">
@@ -898,7 +912,8 @@ main,footer,.marquee{position:relative;z-index:1}
           <li><b>PROJETS</b><span>Karat, Karat Logistique, Keur Xaleyi, Boutique Étoile…</span></li>
           <li><b>STAGE</b><span>Développeur logiciel chez WASSIL</span></li>
         </ul>
-        <div class="ctas" style="animation:none"><a class="btn primary magnetic" href="CV_El_Yonel_Ousmane_Niang.pdf" download>Télécharger le CV (PDF) <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        <div class="ctas" style="animation:none"><a class="btn primary magnetic dl" href="CV_El_Yonel_Ousmane_Niang.pdf" download="CV_El_Yonel_Ousmane_Niang.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Télécharger le CV (PDF)</a><a class="btn magnetic dl" href="CV_El_Yonel_Ousmane_Niang.png" download="CV_El_Yonel_Ousmane_Niang.png" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Version image (PNG)</a></div>
+        <p class="dlnote">Fonctionne sur téléphone, tablette et ordinateur. Sur iPhone, le PDF s'ouvre : touchez Partager puis « Enregistrer dans Fichiers ».</p>
       </div>
     </div>
   </section>
