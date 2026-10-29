@@ -13,13 +13,14 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
-      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
+      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés (vous cochez lesquels), le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
       Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un seul élève.</p>
     <div class="filtres">
       <select id="mois" aria-label="Mois">${options(moisInfo.mois.map((m) => [m, `${nomMois(m)}${m < moisCourant() ? ' — mois passé' : m === moisCourant() ? ' — ce mois-ci' : ''}`]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
       <select id="qui">${options([['tous', 'Tous les élèves'], ['1', 'Seulement ceux qui doivent']], 'tous')}</select>
     </div>
+    <div class="carte" id="zone-retard" style="margin-bottom:1rem"></div>
     <div id="passe"></div>
     <div id="alerte"></div>
     <div id="resume"></div>
@@ -32,9 +33,28 @@ export async function afficher(el, params) {
   const lire = () => {
     const f = { mois: el.querySelector('#mois').value, classe_id: el.querySelector('#classe').value };
     if (el.querySelector('#qui').value === '1') f.impayes = '1';
+    // Mois en retard : seulement ceux qui sont cochés
+    const cases = [...el.querySelectorAll('[data-retard]')];
+    if (cases.some((c) => !c.checked)) f.retard = cases.filter((c) => c.checked).map((c) => c.value).join(',') || 'aucun';
     return f;
   };
   const chemin = () => '/paiements/factures.pdf' + qs(lire());
+
+  // Cases des mois précédant le mois choisi : cochées d'office
+  const casesRetard = () => {
+    const m = el.querySelector('#mois').value;
+    const avant = moisInfo.mois.filter((x) => x < m);
+    el.querySelector('#zone-retard').innerHTML = avant.length
+      ? `<b>Mois en retard à reprendre sur les factures</b>
+         <p class="petit muted" style="margin:.2rem 0 .5rem">Cochez les mois précédents à réclamer (seuls ceux qui restent impayés apparaissent sur la facture de chaque élève).</p>
+         <div class="ligne" style="flex-wrap:wrap;gap:.4rem 1rem">${avant.map((x) => `<label class="case"><input type="checkbox" data-retard value="${x}" checked> ${e(nomMois(x))}</label>`).join('')}</div>
+         <div class="ligne petit" style="margin-top:.5rem;gap:1rem"><button type="button" class="btn lien petit" id="tout-retard">Tout cocher</button>
+           <button type="button" class="btn lien petit" id="aucun-retard">Tout décocher</button></div>`
+      : '<span class="petit muted">Pas de mois précédent : c\'est le premier mois de l\'année scolaire.</span>';
+    el.querySelectorAll('[data-retard]').forEach((c) => { c.onchange = charger; });
+    const coche = (v) => () => { el.querySelectorAll('[data-retard]').forEach((c) => { c.checked = v; }); charger(); };
+    if (el.querySelector('#tout-retard')) { el.querySelector('#tout-retard').onclick = coche(true); el.querySelector('#aucun-retard').onclick = coche(false); }
+  };
 
   const charger = async () => {
     const m = el.querySelector('#mois').value;
@@ -65,7 +85,7 @@ export async function afficher(el, params) {
       ], d.liste, { vide: 'Aucune facture pour ces critères.' })}</div>`;
       const mois = lire().mois;
       el.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
-      el.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer(`/paiements/factures.pdf?mois=${mois}&eleve_id=${b.dataset.impr}`); });
+      el.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer('/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_id: b.dataset.impr })); });
     } catch (err) { erreur(err); }
   };
 
@@ -75,7 +95,9 @@ export async function afficher(el, params) {
   // Mois passé : on ne garde d'office que les élèves qui doivent encore ce mois
   el.querySelector('#mois').onchange = () => {
     el.querySelector('#qui').value = el.querySelector('#mois').value < moisCourant() ? '1' : 'tous';
+    casesRetard();
     charger();
   };
+  casesRetard();
   await charger();
 }

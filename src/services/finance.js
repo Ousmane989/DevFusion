@@ -96,14 +96,18 @@ async function fraisAnnexes(inscriptionIds) {
  * @param {string} mois AAAA-MM-01
  * @param {{classeId?, eleveId?, impayesSeulement?}} opts
  */
-async function facturesMois(mois, { classeId, eleveId, impayesSeulement } = {}) {
+/**
+ * `moisRetard` (facultatif) : mois précédents à reprendre sur la facture (cochés par la
+ * directrice). Absent : tous les mois précédents encore impayés.
+ */
+async function facturesMois(mois, { classeId, eleveId, impayesSeulement, moisRetard } = {}) {
   const annee = await anneeActiveRequise();
   if (!moisAnnee(annee).includes(mois)) throw new HttpError(400, 'Ce mois ne fait pas partie de l\'année scolaire.');
   let liste = await situationMois(mois, { classeId });
   if (eleveId) liste = liste.filter((x) => x.eleve_id === Number(eleveId));
   // Arriérés : mois précédents de l'année (depuis l'inscription) non soldés.
   const arrieres = new Map();
-  for (const m of moisAnnee(annee).filter((x) => x < mois)) {
+  for (const m of moisAnnee(annee).filter((x) => x < mois && (!moisRetard || moisRetard.includes(x)))) {
     for (const s of await situationMois(m, { classeId })) {
       if (s.reste <= 0) continue;
       const a = arrieres.get(s.inscription_id) || [];
