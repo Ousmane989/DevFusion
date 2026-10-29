@@ -14,7 +14,8 @@ export async function afficher(el, params) {
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
       2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés (vous cochez lesquels), le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
-      Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un élève ; cochez plusieurs élèves pour les modifier l'un après l'autre et n'imprimer que ceux-là.</p>
+      Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un élève ; cochez plusieurs élèves pour les modifier l'un après l'autre et n'imprimer que ceux-là.
+      Les élèves marqués « 🤝 cas social » n'ont pas de facture du mois.</p>
     <div class="filtres">
       <select id="mois" aria-label="Mois">${options(moisInfo.mois.map((m) => [m, `${nomMois(m)}${m < moisCourant() ? ' — mois passé' : m === moisCourant() ? ' — ce mois-ci' : ''}`]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
