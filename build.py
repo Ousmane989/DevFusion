@@ -1,5 +1,5 @@
 # Génère index.html (site autonome pour Vercel) à partir de src.html.
-import base64, pathlib
+import base64, pathlib, re
 d = pathlib.Path(__file__).parent
 s = (d / 'src.html').read_text()
 photo = 'data:image/jpeg;base64,' + base64.b64encode((d / 'photo.jpg').read_bytes()).decode()
@@ -8,7 +8,9 @@ for key, name in (('__LOGONAV__', 'logo-nav.jpg'), ('__LOGOFULL__', 'logo-full.j
     s = s.replace(key, 'data:image/jpeg;base64,' + base64.b64encode((d / name).read_bytes()).decode())
 SITE = 'https://ousmane-niang-portfolio.vercel.app/'
 # portfolio.html : version Artifact (sans <head>) ; le CV se télécharge depuis le site en ligne
-(d / 'portfolio.html').write_text(s.replace('__CVPDF__', SITE + 'CV_El_Yonel_Ousmane_Niang.pdf').replace('__CVPNG__', SITE + 'CV_El_Yonel_Ousmane_Niang.png'))
+art = s.replace('__CVPDF__', SITE + 'CV_El_Yonel_Ousmane_Niang.pdf').replace('__CVPNG__', SITE + 'CV_El_Yonel_Ousmane_Niang.png')
+art = re.sub(r' download="[^"]*"', '', art)  # l'aperçu Claude bloque « download » : le lien ouvre le fichier hébergé
+(d / 'portfolio.html').write_text(art)
 # index.html : site complet, fichiers du CV servis à côté de la page
 s = s.replace('__CVPDF__', 'CV_El_Yonel_Ousmane_Niang.pdf').replace('__CVPNG__', 'CV_El_Yonel_Ousmane_Niang.png')
 head = '''<!doctype html>
