@@ -155,7 +155,10 @@ router.post('/:id/annuler', autoriser('directeur'), ah(async (req, res) => {
 function filtresFactures(req) {
   const mois = String(req.query.mois || '');
   if (!/^\d{4}-\d{2}-01$/.test(mois)) throw new HttpError(400, 'Choisissez le mois.');
-  return [mois, { classeId: vide(req.query.classe_id), eleveId: vide(req.query.eleve_id), impayesSeulement: req.query.impayes === '1' }];
+  // Mois en retard cochés (« aucun » = aucun) ; absent = tous les mois précédents impayés
+  const r = req.query.retard;
+  const moisRetard = r === undefined ? undefined : String(r).split(',').filter((x) => /^\d{4}-\d{2}-01$/.test(x));
+  return [mois, { classeId: vide(req.query.classe_id), eleveId: vide(req.query.eleve_id), impayesSeulement: req.query.impayes === '1', moisRetard }];
 }
 router.get('/factures', ah(async (req, res) => {
   const [mois, opts] = filtresFactures(req);
