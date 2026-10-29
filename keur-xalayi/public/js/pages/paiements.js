@@ -48,7 +48,8 @@ export async function afficher(el, params) {
           <select id="mois">${options(optMois, moisDefaut)}</select>
           <select id="classe">${options(optClasses, params.classe_id || '', { vide: 'Toutes les classes' })}</select>
           <select id="statut">${options([['paye', 'Payé'], ['partiel', 'Partiel'], ['impaye', 'Impayé']], '', { vide: 'Tous les statuts' })}</select>
-        </div><div id="resume"></div><div class="ligne fin" style="margin-bottom:.6rem" id="exp"></div><div id="tab"></div>`;
+        </div><p class="petit muted" style="margin:-.3rem 0 .8rem">Les élèves marqués « 🤝 cas social » n'apparaissent pas dans les listes de paiement.</p>
+        <div id="resume"></div><div class="ligne fin" style="margin-bottom:.6rem" id="exp"></div><div id="tab"></div>`;
       const lire = () => ({ mois: zone.querySelector('#mois').value, classe_id: zone.querySelector('#classe').value, statut: zone.querySelector('#statut').value });
       const exp = zone.querySelector('#exp');
       exp.innerHTML = boutonsExport('statut');

@@ -185,7 +185,7 @@ router.get('/factures/edition', ah(async (req, res) => {
   const mois = String(req.query.mois || '');
   if (!/^\d{4}-\d{2}-01$/.test(mois)) throw new HttpError(400, 'Choisissez le mois.');
   const [f] = await finance.facturesMois(mois, { eleveId: req.query.eleve_id });
-  if (!f) throw new HttpError(404, 'Pas de facture ce mois-ci pour cet élève (pas encore inscrit, parti ou archivé).');
+  if (!f) throw new HttpError(404, 'Pas de facture ce mois-ci pour cet élève (pas encore inscrit, parti, archivé, ou marqué « cas social »).');
   const p = await one('SELECT * FROM parametres WHERE id = 1');
   const { limiteFacture } = require('../services/rappels');
   res.json({

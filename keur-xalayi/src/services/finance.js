@@ -58,7 +58,7 @@ async function situationMois(mois, opts = {}) {
        JOIN classes c ON c.id = i.classe_id
        JOIN niveaux n ON n.id = c.niveau_id
        LEFT JOIN paiements p ON p.inscription_id = i.id AND p.type = 'mensualite' AND p.mois = $1 AND NOT p.annule
-      WHERE i.annee_id = $2 AND e.statut = 'actif' AND i.decision <> 'parti'
+      WHERE i.annee_id = $2 AND e.statut = 'actif' AND i.decision <> 'parti' AND NOT e.cas_social -- cas sociaux : hors des listes de paiement
         AND date_trunc('month', i.date_inscription)::date <= $1 ${filtre}
       GROUP BY i.id, e.id, c.id, n.ordre
       ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`,

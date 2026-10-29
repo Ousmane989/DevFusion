@@ -38,7 +38,7 @@ export async function afficher(el, { id, nouveau }) {
       <div class="ligne" style="margin-top:1rem">
         ${gestion && insc && v.statut === 'actif' ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
         ${gestion && insc ? '<button class="btn clair" id="facture">🧾 Facture d\'inscription</button>' : ''}
-        ${gestion && insc && v.statut === 'actif' ? '<button class="btn clair" id="facture-mois">🧾 Facture du mois</button>' : ''}
+        ${gestion && insc && v.statut === 'actif' && !v.cas_social ? '<button class="btn clair" id="facture-mois">🧾 Facture du mois</button>' : ''}
         ${gestion ? `<a class="btn clair" href="#/eleves/${v.id}/modifier">✏️ Modifier</a>` : ''}
         ${gestion ? '<button class="btn clair" id="message">💬 Message au parent</button>' : ''}
         ${insc ? `<button class="btn clair" id="carte">🪪 Carte d'élève</button>` : ''}
