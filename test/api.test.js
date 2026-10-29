@@ -158,6 +158,35 @@ test('reliquat, fournitures et uniforme : dus, encaissés, sur la facture du moi
   assert.strictEqual(f.liste[0].total_autres, 12000 + 10000 + 8000);
 });
 
+test('modifier la facture du mois d\'un seul élève, puis la rétablir', async () => {
+  const { mois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const ed = (await appel('dir', `/api/paiements/factures/edition?mois=${mois[0]}&eleve_id=${eleveId}`)).donnees;
+  assert.ok(ed.auto.length >= 1 && ed.modifiee === null, JSON.stringify(ed));
+  const fourn = ed.auto.find((l) => l.cle === 'annexe:fournitures');
+  assert.strictEqual(fourn.verse, 5000);
+  // Fournitures ramenées à 9 000 (avance 5 000 reprise des paiements), ligne « Transport » ajoutée, une ligne retirée
+  const lignes = ed.auto.filter((l) => l.cle !== 'annexe:uniforme').map((l) => (l.cle === 'annexe:fournitures' ? { ...l, montant: 9000, verse: 0 } : l));
+  lignes.push({ cle: null, libelle: 'Transport', montant: 3000, verse: 1000 });
+  const r = await appel('dir', '/api/paiements/factures/edition', { methode: 'PUT', corps: { mois: ed.mois, inscription_id: ed.inscription_id, lignes, note: 'Payer en deux fois', motif: 'Arrangement', date_limite: '2026-11-10' } });
+  assert.strictEqual(r.statut, 200, JSON.stringify(r.donnees));
+  const ed2 = (await appel('dir', `/api/paiements/factures/edition?mois=${mois[0]}&eleve_id=${eleveId}`)).donnees;
+  assert.strictEqual(ed2.modifiee.lignes.find((l) => l.cle === 'annexe:fournitures').verse, 5000);
+  assert.ok(!ed2.modifiee.lignes.some((l) => l.cle === 'annexe:uniforme'));
+  const attendu = ed2.modifiee.lignes.reduce((t, l) => t + Math.max(0, l.montant - l.verse), 0);
+  assert.strictEqual(ed2.total, attendu);
+  const liste = (await appel('dir', `/api/paiements/factures?mois=${mois[0]}&eleve_id=${eleveId}`)).donnees;
+  assert.ok(liste.liste[0].modifiee && liste.liste[0].total === attendu);
+  assert.strictEqual((await appel('dir', `/api/paiements/factures.pdf?mois=${mois[0]}&eleve_id=${eleveId}`)).statut, 200);
+  // Refus : avance plus grande que le montant
+  const mauvais = await appel('dir', '/api/paiements/factures/edition', { methode: 'PUT', corps: { mois: ed.mois, inscription_id: ed.inscription_id, lignes: [{ libelle: 'X', montant: 10, verse: 50 }] } });
+  assert.strictEqual(mauvais.statut, 400);
+  // Rétablir
+  await appel('dir', `/api/paiements/factures/edition?mois=${ed.mois}&inscription_id=${ed.inscription_id}`, { methode: 'DELETE' });
+  assert.strictEqual((await appel('dir', `/api/paiements/factures/edition?mois=${mois[0]}&eleve_id=${eleveId}`)).donnees.modifiee, null);
+  // Les enseignants n'y ont pas accès
+  assert.ok([401, 403].includes((await appel('ens', `/api/paiements/factures/edition?mois=${mois[0]}&eleve_id=${eleveId}`)).statut));
+});
+
 test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {
   const mois = (await appel('dir', '/api/paiements/mois')).donnees.mois[0];
   const ap = await appel('dir', '/api/whatsapp/rappels/apercu', { methode: 'POST', corps: { mois, impayes_seulement: true } });

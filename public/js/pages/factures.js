@@ -3,6 +3,7 @@
 // Chaque facture : mensualité du mois, réduction, déjà versé, mois précédents
 // impayés et total à payer.
 import { get, e, qs, options, argent, nomMois, tableau, ouvrir, imprimer, moisCourant, kpi, erreur } from '../ui.js';
+import { modifierFacture } from '../facture-edition.js';
 
 export async function afficher(el, params) {
   const [classes, moisInfo] = await Promise.all([get('/classes'), get('/paiements/mois')]);
@@ -12,7 +13,8 @@ export async function afficher(el, params) {
   el.innerHTML = `
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
-      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.</p>
+      2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
+      Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un seul élève.</p>
     <div class="filtres">
       <select id="mois">${options(moisInfo.mois.map((m) => [m, nomMois(m)]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
@@ -50,8 +52,14 @@ export async function afficher(el, params) {
         { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
         { titre: 'Mois précédents', classe: 'num', rendu: (x) => (x.total_arrieres ? argent(x.total_arrieres) : '—') },
         { titre: 'Reliquat, fournitures, uniforme, blouson', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
-        { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>` },
+        { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>${x.modifiee ? '<div><span class="badge info">✏️ modifiée</span></div>' : ''}` },
+        { titre: '', rendu: (x) => `<div class="ligne" style="flex-wrap:nowrap;gap:.3rem">
+            <button class="btn petit clair" data-modif="${x.eleve_id}" title="Modifier la facture de cet élève">✏️ Modifier</button>
+            <button class="btn petit clair" data-impr="${x.eleve_id}" title="Imprimer la facture de cet élève">🖨️</button></div>` },
       ], d.liste, { vide: 'Aucune facture pour ces critères.' })}</div>`;
+      const mois = lire().mois;
+      el.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
+      el.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer(`/paiements/factures.pdf?mois=${mois}&eleve_id=${b.dataset.impr}`); });
     } catch (err) { erreur(err); }
   };
 
