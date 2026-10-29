@@ -436,12 +436,18 @@ test('cas social : coché par la directrice, filtré, caché aux enseignants', a
   assert.strictEqual(fiche.cas_social_note, 'Orphelin de père');
   const h = (await appel('dir', `/api/eleves/${eleveId}/modifications`)).donnees;
   assert.deepStrictEqual(h[0].changements.find((c) => c.champ === 'Cas social'), { champ: 'Cas social', avant: 'Non', apres: 'Oui' });
+  // Hors des listes de paiement tant qu'il est « cas social »
+  const { mois: lesMois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const statut = (await appel('dir', `/api/paiements/statut?mois=${lesMois[0]}`)).donnees;
+  assert.ok(!statut.liste.some((x) => x.eleve_id === eleveId), 'cas social absent de la situation du mois');
+  assert.strictEqual((await appel('dir', `/api/paiements/factures/edition?mois=${lesMois[0]}&eleve_id=${eleveId}`)).statut, 404);
   const prof = await appel('ens', `/api/eleves/${eleveId}`);
   if (prof.statut === 200) assert.ok(!('cas_social' in prof.donnees.eleve) && !('cas_social_note' in prof.donnees.eleve));
   for (const l of (await appel('ens', '/api/eleves')).donnees) assert.ok(!('cas_social' in l));
   // Décoché : la note est effacée
   await appel('dir', `/api/eleves/${eleveId}`, { methode: 'PUT', corps: { cas_social: false } });
   assert.strictEqual((await appel('dir', `/api/eleves/${eleveId}`)).donnees.eleve.cas_social_note, null);
+  assert.ok((await appel('dir', `/api/paiements/statut?mois=${lesMois[0]}`)).donnees.liste.some((x) => x.eleve_id === eleveId), 'de retour dans la liste');
 });
 
 test('suppression d\'élèves sélectionnés (avec confirmation s\'ils ont des paiements)', async () => {
