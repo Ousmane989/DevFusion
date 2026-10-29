@@ -39,8 +39,8 @@ export async function afficher(el, { id }) {
 
       <fieldset><legend>👨‍👩‍👧 Les parents</legend>
         <div class="grille g3">
-          ${champ('Nom du père', `<input name="pere_nom" value="${e(v.pere_nom)}">`)}
-          ${champ('Nom de la mère', `<input name="mere_nom" value="${e(v.mere_nom)}">`)}
+          ${champ('Nom du père', `<input name="pere_nom" value="${e(v.pere_nom)}" placeholder="Facultatif">`)}
+          ${champ('Nom de la mère', `<input name="mere_nom" value="${e(v.mere_nom)}" placeholder="Facultatif">`)}
           ${champ('Tuteur (si différent)', `<input name="tuteur_nom" value="${e(v.tuteur_nom)}">`)}
           ${champ('Numéro WhatsApp du parent', champTel('whatsapp', v.whatsapp, { requis: !id }), { requis: !id, aide: id && !v.whatsapp ? 'À compléter : sans numéro, pas de rappels ni d\'annonces pour cet élève.' : 'Utilisé pour les rappels et les annonces.' })}
           ${champ('Second numéro', champTel('telephone2', v.telephone2))}

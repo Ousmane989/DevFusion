@@ -49,6 +49,7 @@ async function situationMois(mois, opts = {}) {
   const rows = await query(
     `SELECT i.id AS inscription_id, e.id AS eleve_id, e.matricule, e.nom, e.prenom, e.sexe, e.whatsapp,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,''), 'Parent') AS parent,
+            NULLIF(concat_ws(' / ', NULLIF(trim(e.pere_nom),''), NULLIF(trim(e.mere_nom),''), NULLIF(trim(e.tuteur_nom),'')), '') AS parents,
             c.id AS classe_id, c.nom AS classe, n.ordre,
             (i.mensualite - i.reduction) AS du, i.reduction, i.reduction_motif,
             COALESCE(SUM(p.montant), 0) AS verse

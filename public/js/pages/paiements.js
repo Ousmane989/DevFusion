@@ -33,7 +33,7 @@ export async function afficher(el, params) {
         if (q.trim().length < 2) { res.innerHTML = '<p class="muted">Tapez au moins 2 lettres.</p>'; return; }
         const l = await get('/eleves' + qs({ q }));
         res.innerHTML = l.length ? `<ul class="liste">${l.slice(0, 20).map((x) => `<li>${avatar(x)}
-          <div class="principal"><b>${e(x.prenom)} ${e(x.nom)}</b><span class="petit muted">${e(x.classe || '—')} · ${e(x.matricule)} · ${e(x.parent || '')}</span></div>
+          <div class="principal"><b>${e(x.prenom)} ${e(x.nom)}</b><span class="petit muted">${e(x.classe || '—')} · ${e(x.matricule)} · ${e([x.pere_nom, x.mere_nom, x.tuteur_nom].filter(Boolean).join(' / '))}</span></div>
           <button class="btn" data-id="${x.id}">Encaisser</button></li>`).join('')}</ul>` : '<p class="muted">Aucun élève trouvé.</p>';
         res.querySelectorAll('[data-id]').forEach((b) => { b.onclick = () => encaisser(Number(b.dataset.id), () => {}); });
       };
