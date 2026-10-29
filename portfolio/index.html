@@ -507,13 +507,52 @@ footer{padding-block:0 40px;color:var(--muted);font-size:14px;display:flex;justi
 .biglogo-wrap::before{content:"";position:absolute;inset:-14px;border-radius:36px;background:conic-gradient(from 0deg,#1f7bff,#62b2ff,transparent 40%,#1f7bff 70%,transparent);animation:spin 6s linear infinite;filter:blur(14px);opacity:.75}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+
+/* ===== Surfaces animées ===== */
+/* Fond animé sur toute la page : grille qui défile, halos et étoiles */
+.bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bgfx .grid{position:absolute;inset:-80px;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;opacity:.55;animation:gridMove 18s linear infinite;-webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%)}
+@keyframes gridMove{to{transform:translate(64px,64px)}}
+.bgfx .blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.22;animation:drift 26s ease-in-out infinite}
+.bgfx .b1{width:600px;height:600px;background:#1f7bff;right:-200px;top:30%}
+.bgfx .b2{width:520px;height:520px;background:#0a3fae;left:-220px;top:65%;animation-delay:-9s;animation-duration:32s}
+.bgfx .b3{width:420px;height:420px;background:#62b2ff;left:40%;top:105%;opacity:.14;animation-delay:-17s}
+:root[data-theme="light"] .bgfx .blob{opacity:.12}
+.bgfx .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#bfe0ff;animation:twk var(--t,3s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+:root[data-theme="light"] .bgfx .star{background:#1f7bff}
+@keyframes twk{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.9;transform:scale(1.4)}}
+.bgfx .beam{position:absolute;top:-40%;width:2px;height:40%;background:linear-gradient(transparent,#62b2ff,transparent);opacity:.5;animation:beam var(--t,7s) linear infinite;animation-delay:var(--dl,0s)}
+@keyframes beam{to{transform:translateY(360vh)}}
+main,footer,.marquee{position:relative;z-index:1}
+
+/* Cartes : verre dépoli + bordure lumineuse qui tourne */
+@property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+.stat,.tech,#projets .card{
+  border-color:transparent!important;
+  background:
+    linear-gradient(var(--surface),var(--surface)) padding-box,
+    conic-gradient(from var(--ang),var(--line) 0 60%,var(--gold) 75%,var(--gold-2) 80%,var(--line) 92%) border-box;
+  animation:spinBorder 6s linear infinite;
+}
+.stat:nth-child(2),.tech:nth-child(2),#projets .card:nth-child(2n){animation-delay:-2s}
+.stat:nth-child(3),.tech:nth-child(3),#projets .card:nth-child(3n){animation-delay:-4s}
+.stat:hover,.tech:hover,#projets .card:hover{animation-duration:2s}
+@keyframes spinBorder{to{--ang:360deg}}
+/* Reflet qui balaie la surface des cartes */
+.stat::before,.tech::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(98,178,255,.10) 50%,transparent 65%);background-size:250% 100%;animation:sheen 7s ease-in-out infinite}
+.tech:nth-child(2)::before,.stat:nth-child(2)::before{animation-delay:-2.3s}
+.tech:nth-child(3)::before,.stat:nth-child(3)::before{animation-delay:-4.6s}
+@keyframes sheen{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+/* Bandes défilantes en verre */
+.marquee{background:color-mix(in srgb,var(--surface) 70%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .js .rv{opacity:1;transform:none}
   .js .tech .chips span{opacity:1;transform:none}
   #net{display:none}
   .js #projets .card.pre{opacity:1;transform:none}
-  .loader,.spark,.floaters,.aurora{display:none}
+  .loader,.spark,.floaters,.aurora,.bgfx .star,.bgfx .beam{display:none}
   .js .rv,.js .sec-head h2 .ch{filter:none;opacity:1;transform:none}
 }
 </style>
@@ -543,6 +582,7 @@ footer{padding-block:0 40px;color:var(--muted);font-size:14px;display:flex;justi
   </div>
 </header>
 
+<div class="bgfx" id="bgfx" aria-hidden="true"><div class="grid"></div><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
 <main id="top">
   <section class="hero">
     <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1037,6 +1077,11 @@ footer{padding-block:0 40px;color:var(--muted);font-size:14px;display:flex;justi
     document.querySelectorAll('.sec-head code').forEach(function(c){so.observe(c)})}
 
   if(reduce)return;
+
+  // Étoiles et rayons du fond
+  var bg=document.getElementById('bgfx');
+  for(var k=0;k<60;k++){var st=document.createElement('i');st.className='star';st.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;--t:'+(2+Math.random()*4)+'s;--dl:'+(-Math.random()*5)+'s';bg.appendChild(st)}
+  for(var k2=0;k2<5;k2++){var bm=document.createElement('i');bm.className='beam';bm.style.cssText='left:'+(8+k2*20+Math.random()*8)+'%;--t:'+(6+Math.random()*6)+'s;--dl:'+(-Math.random()*10)+'s';bg.appendChild(bm)}
 
   // Symboles de code flottants
   var fl=document.getElementById('floaters'),sym=['</>','{ }','( )','=>','#','01','[ ]',';','&&','SQL','</>','//'];
