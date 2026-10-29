@@ -16,10 +16,11 @@ export async function afficher(el, params) {
       2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés, le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
       Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un seul élève.</p>
     <div class="filtres">
-      <select id="mois">${options(moisInfo.mois.map((m) => [m, nomMois(m)]), moisDefaut)}</select>
+      <select id="mois" aria-label="Mois">${options(moisInfo.mois.map((m) => [m, `${nomMois(m)}${m < moisCourant() ? ' — mois passé' : m === moisCourant() ? ' — ce mois-ci' : ''}`]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
       <select id="qui">${options([['tous', 'Tous les élèves'], ['1', 'Seulement ceux qui doivent']], 'tous')}</select>
     </div>
+    <div id="passe"></div>
     <div id="alerte"></div>
     <div id="resume"></div>
     <div class="barre-action" style="margin-bottom:1rem">
@@ -36,6 +37,11 @@ export async function afficher(el, params) {
   const chemin = () => '/paiements/factures.pdf' + qs(lire());
 
   const charger = async () => {
+    const m = el.querySelector('#mois').value;
+    el.querySelector('#passe').innerHTML = m < moisCourant()
+      ? `<div class="alerte info">⏰ <div><b>Mois passé (${e(nomMois(m))})</b> : pour les élèves en retard. Les factures portent la mention
+          « <b>EN RETARD</b> » avec la prochaine date limite. Les mois suivants encore impayés ne sont pas repris :
+          pour tout réclamer en une seule facture, choisissez plutôt le mois en cours (il reprend les mois précédents impayés).</div></div>` : '';
     try {
       const d = await get('/paiements/factures' + qs(lire()));
       el.querySelector('#alerte').innerHTML = d.sans_mensualite
@@ -65,6 +71,11 @@ export async function afficher(el, params) {
 
   el.querySelector('#imprimer').onclick = () => imprimer(chemin());
   el.querySelector('#pdf').onclick = () => ouvrir(chemin());
-  ['#mois', '#classe', '#qui'].forEach((s) => { el.querySelector(s).onchange = charger; });
+  ['#classe', '#qui'].forEach((s) => { el.querySelector(s).onchange = charger; });
+  // Mois passé : on ne garde d'office que les élèves qui doivent encore ce mois
+  el.querySelector('#mois').onchange = () => {
+    el.querySelector('#qui').value = el.querySelector('#mois').value < moisCourant() ? '1' : 'tous';
+    charger();
+  };
   await charger();
 }
