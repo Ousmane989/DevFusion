@@ -20,5 +20,8 @@
   ],
   "regions": [
     "dub1"
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
