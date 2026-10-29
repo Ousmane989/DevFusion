@@ -158,7 +158,10 @@ function filtresFactures(req) {
   // Mois en retard cochés (« aucun » = aucun) ; absent = tous les mois précédents impayés
   const r = req.query.retard;
   const moisRetard = r === undefined ? undefined : String(r).split(',').filter((x) => /^\d{4}-\d{2}-01$/.test(x));
-  return [mois, { classeId: vide(req.query.classe_id), eleveId: vide(req.query.eleve_id), impayesSeulement: req.query.impayes === '1', moisRetard }];
+  // Élèves cochés : eleve_ids=12,15,40
+  const eleveIds = req.query.eleve_ids ? String(req.query.eleve_ids).split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0) : undefined;
+  if (eleveIds && !eleveIds.length) throw new HttpError(400, 'Aucun élève sélectionné.');
+  return [mois, { classeId: vide(req.query.classe_id), eleveId: vide(req.query.eleve_id), eleveIds, impayesSeulement: req.query.impayes === '1', moisRetard }];
 }
 router.get('/factures', ah(async (req, res) => {
   const [mois, opts] = filtresFactures(req);

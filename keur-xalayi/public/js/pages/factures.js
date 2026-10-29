@@ -2,7 +2,7 @@
 // l'école) et imprime toutes les factures d'un coup (2 par feuille A4, à couper en deux).
 // Chaque facture : mensualité du mois, réduction, déjà versé, mois précédents
 // impayés et total à payer.
-import { get, e, qs, options, argent, nomMois, tableau, ouvrir, imprimer, moisCourant, kpi, erreur } from '../ui.js';
+import { get, e, qs, options, argent, nomMois, tableau, ouvrir, imprimer, moisCourant, kpi, erreur, confirmer } from '../ui.js';
 import { modifierFacture } from '../facture-edition.js';
 
 export async function afficher(el, params) {
@@ -14,7 +14,7 @@ export async function afficher(el, params) {
     <div class="entete-page"><h1>Factures du mois</h1></div>
     <p class="muted" style="margin-top:-.4rem">Préparez en une fois les factures de mensualité à remettre aux parents :
       2 factures par feuille A4, à couper en deux. Chaque facture reprend aussi les mois précédents non réglés (vous cochez lesquels), le reliquat, les fournitures, l'uniforme et le blouson, avec les avances déjà versées et le reste à payer.
-      Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un seul élève.</p>
+      Le bouton <b>✏️ Modifier</b> permet d'ajuster la facture d'un élève ; cochez plusieurs élèves pour les modifier l'un après l'autre et n'imprimer que ceux-là.</p>
     <div class="filtres">
       <select id="mois" aria-label="Mois">${options(moisInfo.mois.map((m) => [m, `${nomMois(m)}${m < moisCourant() ? ' — mois passé' : m === moisCourant() ? ' — ce mois-ci' : ''}`]), moisDefaut)}</select>
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), params.classe_id || '', { vide: 'Toute l\'école' })}</select>
@@ -32,6 +32,13 @@ export async function afficher(el, params) {
       <div class="ligne" style="justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem"><h2 style="margin:0">Aperçu</h2>
         <span class="muted gras" id="compte-q"></span></div>
       <input class="recherche" type="search" id="q" placeholder="🔍 Rechercher un élève : nom, prénom, matricule, parent ou classe…" style="width:100%;margin-bottom:.8rem">
+      <label class="case petit" style="margin-bottom:.6rem"><input type="checkbox" id="tout"> Tout sélectionner (élèves affichés)</label>
+      <div id="barre-sel" class="alerte attention cache" style="align-items:center;flex-wrap:wrap;gap:.5rem">
+        <div style="flex:1;min-width:160px"><b id="nb-sel">0</b> élève(s) sélectionné(s)</div>
+        <button class="btn petit" id="modif-sel">✏️ Modifier leurs factures (une par une)</button>
+        <button class="btn petit clair" id="impr-sel">🖨️ Imprimer la sélection</button>
+        <button class="btn petit clair" id="desel">Tout désélectionner</button>
+      </div>
       <div id="liste"></div>
     </div>`;
 
@@ -61,6 +68,14 @@ export async function afficher(el, params) {
     if (el.querySelector('#tout-retard')) { el.querySelector('#tout-retard').onclick = coche(true); el.querySelector('#aucun-retard').onclick = coche(false); }
   };
 
+  // Élèves cochés (gardés quand la liste est filtrée ou rechargée)
+  const selection = new Set();
+  const majSelection = () => {
+    el.querySelector('#nb-sel').textContent = selection.size;
+    el.querySelector('#barre-sel').classList.toggle('cache', !selection.size);
+  };
+  const cheminSelection = () => '/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_ids: [...selection].join(',') });
+
   // Aperçu, filtré par la recherche (sans recharger)
   let derniere = null;
   const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -72,6 +87,7 @@ export async function afficher(el, params) {
     el.querySelector('#compte-q').textContent = q ? `${lignes.length} élève(s) trouvé(s) sur ${d.liste.length}` : `${d.liste.length} élève(s)`;
     const zone = el.querySelector('#liste');
     zone.innerHTML = tableau([
+      { titre: 'Sélection', entete: '', rendu: (x) => `<input type="checkbox" data-sel="${x.eleve_id}" ${selection.has(x.eleve_id) ? 'checked' : ''} aria-label="Sélectionner ${e(x.prenom)} ${e(x.nom)}">` },
       { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}">${e(x.prenom)} ${e(x.nom)}</a>` },
       { titre: 'Classe', rendu: (x) => e(x.classe) },
       { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
@@ -85,6 +101,30 @@ export async function afficher(el, params) {
     const mois = lire().mois;
     zone.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
     zone.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer('/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_id: b.dataset.impr })); });
+    // Cases à cocher
+    const cases = [...zone.querySelectorAll('[data-sel]')];
+    const tout = el.querySelector('#tout');
+    const majTout = () => { tout.checked = cases.length > 0 && cases.every((c) => c.checked); tout.indeterminate = !tout.checked && cases.some((c) => c.checked); };
+    cases.forEach((c) => {
+      c.onchange = () => { const id = Number(c.dataset.sel); if (c.checked) selection.add(id); else selection.delete(id); majSelection(); majTout(); };
+    });
+    tout.onchange = () => { cases.forEach((c) => { c.checked = tout.checked; const id = Number(c.dataset.sel); if (tout.checked) selection.add(id); else selection.delete(id); }); majSelection(); };
+    majTout(); majSelection();
+  };
+
+  // Modifier les factures cochées l'une après l'autre, puis proposer de les imprimer
+  const modifierSelection = () => {
+    const ids = derniere.liste.map((x) => x.eleve_id).filter((id) => selection.has(id)); // ordre de la liste
+    if (!ids.length) { erreur(new Error('Les élèves sélectionnés ne sont pas dans la liste affichée (changez le mois ou la classe).')); return; }
+    const mois = lire().mois;
+    const suivant = async (i) => {
+      if (i >= ids.length) {
+        if (await confirmer(`Imprimer maintenant les ${ids.length} facture(s) sélectionnée(s) ?`, { titre: 'Factures modifiées', ok: '🖨️ Imprimer' })) imprimer(cheminSelection());
+        return;
+      }
+      modifierFacture({ eleveId: ids[i], mois, apres: charger, serie: { rang: i + 1, total: ids.length }, auFermer: () => suivant(i + 1) });
+    };
+    suivant(0);
   };
 
   const charger = async () => {
@@ -109,6 +149,9 @@ export async function afficher(el, params) {
   };
 
   el.querySelector('#q').oninput = rendreListe;
+  el.querySelector('#modif-sel').onclick = modifierSelection;
+  el.querySelector('#impr-sel').onclick = () => imprimer(cheminSelection());
+  el.querySelector('#desel').onclick = () => { selection.clear(); rendreListe(); };
   el.querySelector('#imprimer').onclick = () => imprimer(chemin());
   el.querySelector('#pdf').onclick = () => ouvrir(chemin());
   ['#classe', '#qui'].forEach((s) => { el.querySelector(s).onchange = charger; });

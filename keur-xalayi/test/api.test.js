@@ -148,6 +148,12 @@ test('factures de mensualité du mois : aperçu, arriérés et PDF', async () =>
   for (const x of un) assert.ok(x.total_arrieres <= tous.find((t) => t.eleve_id === x.eleve_id).total_arrieres);
   assert.ok(un.some((x) => x.total_arrieres > 0));
   assert.strictEqual((await appel('dir', `/api/paiements/factures.pdf?mois=${dernier}&classe_id=${classe.id}&retard=${mois[0]},${mois[1]}`)).statut, 200);
+  // Élèves cochés seulement
+  const deux = ap.donnees.liste.slice(0, 2).map((x) => x.eleve_id);
+  const sel = (await appel('dir', `/api/paiements/factures?mois=${m}&eleve_ids=${deux.join(',')}`)).donnees;
+  assert.deepStrictEqual(sel.liste.map((x) => x.eleve_id).sort(), [...deux].sort());
+  assert.strictEqual((await appel('dir', `/api/paiements/factures.pdf?mois=${m}&eleve_ids=${deux.join(',')}`)).statut, 200);
+  assert.strictEqual((await appel('dir', `/api/paiements/factures?mois=${m}&eleve_ids=abc`)).statut, 400);
 });
 
 test('reliquat, fournitures et uniforme : dus, encaissés, sur la facture du mois', async () => {
