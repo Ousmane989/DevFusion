@@ -138,6 +138,16 @@ test('factures de mensualité du mois : aperçu, arriérés et PDF', async () =>
   assert.strictEqual(f.statut, 200);
   assert.strictEqual(f.donnees.subarray(0, 4).toString(), '%PDF');
   assert.strictEqual((await appel('dir', '/api/paiements/factures?mois=2031-01-01')).statut, 400);
+  // Mois en retard cochés : aucun, un seul, ou tous (par défaut)
+  const dernier = mois[mois.length - 1];
+  const tous = (await appel('dir', `/api/paiements/factures?mois=${dernier}&classe_id=${classe.id}`)).donnees.liste;
+  const aucun = (await appel('dir', `/api/paiements/factures?mois=${dernier}&classe_id=${classe.id}&retard=aucun`)).donnees.liste;
+  const un = (await appel('dir', `/api/paiements/factures?mois=${dernier}&classe_id=${classe.id}&retard=${mois[mois.length - 2]}`)).donnees.liste;
+  assert.ok(tous.some((x) => x.total_arrieres > 0), 'il y a des arriérés');
+  assert.ok(aucun.every((x) => x.total_arrieres === 0));
+  for (const x of un) assert.ok(x.total_arrieres <= tous.find((t) => t.eleve_id === x.eleve_id).total_arrieres);
+  assert.ok(un.some((x) => x.total_arrieres > 0));
+  assert.strictEqual((await appel('dir', `/api/paiements/factures.pdf?mois=${dernier}&classe_id=${classe.id}&retard=${mois[0]},${mois[1]}`)).statut, 200);
 });
 
 test('reliquat, fournitures et uniforme : dus, encaissés, sur la facture du mois', async () => {
