@@ -1,6 +1,6 @@
 // Informations aux parents : fête, réunion, vacances, sortie… La directrice les
 // écrit une fois, puis les imprime (1 ou 2 par feuille A4) ou les envoie par WhatsApp.
-import { get, post, put, del, e, options, champ, formulaire, confirmer, toast, erreur, imprimer, ouvrir, dateFr, videHtml } from '../ui.js';
+import { get, post, put, del, e, options, champ, formulaire, confirmer, toast, erreur, imprimer, ouvrir, dateFr, videHtml, salutation } from '../ui.js';
 
 export const TYPES = {
   fete: ['🎉', 'Fête'], reunion: ['👥', 'Réunion des parents'], vacances: ['🏖️', 'Vacances'], fermeture: ['🚪', 'Fermeture de l\'école'],
@@ -23,7 +23,7 @@ export function texteWhatsApp(c) {
   const date = c.date_evenement ? (c.date_fin && c.date_fin !== c.date_evenement ? `du ${dateFr(c.date_evenement)} au ${dateFr(c.date_fin)}` : `le ${dateFr(c.date_evenement)}`) : '';
   const quand = [date && `📅 ${date}`, c.heure && `🕘 ${c.heure}`, c.lieu && `📍 ${c.lieu}`].filter(Boolean).join('\n');
   const corps = c.texte.replace(/^chers parents,?\s*/i, '');
-  return `Bonjour {nom_parent},\n\n*${c.titre}*\n${quand ? quand + '\n' : ''}\n${corps}\n\nLa Direction — {ecole}`;
+  return `${salutation()} {nom_parent},\n\n*${c.titre}*\n${quand ? quand + '\n' : ''}\n${corps}\n\nLa Direction — {ecole}`;
 }
 
 export async function afficher(el) {

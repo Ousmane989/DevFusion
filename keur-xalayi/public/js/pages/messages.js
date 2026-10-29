@@ -1,5 +1,5 @@
 // Annonces groupées WhatsApp (école, classe, parent, numéro) et historique.
-import { get, post, e, qs, options, champ, dateHeure, badge, tableau, erreur, resultatEnvoi, modale, lireForm } from '../ui.js';
+import { get, post, e, qs, options, champ, dateHeure, badge, tableau, erreur, resultatEnvoi, modale, lireForm, saluer } from '../ui.js';
 import { texteWhatsApp } from './informations.js';
 
 const MODELES = {
@@ -30,7 +30,7 @@ export async function afficher(el, params) {
           <div id="z-numero" class="cache">${champ('Numéro WhatsApp', '<input name="telephone" placeholder="+221 77 123 45 67">')}</div>
         </div>
         ${champ('Modèle', `<select id="modele">${options([['libre', 'Message libre'], ['reunion', 'Réunion des parents'], ['fete', 'Fête de l\'école'], ['vacances', 'Vacances'], ['fermeture', 'Fermeture exceptionnelle']], 'libre')}</select>`)}
-        ${champ('Message', `<textarea name="texte" id="texte" rows="6" required>${e(MODELES.libre)}</textarea>`, { aide: 'Variables : {nom_parent}, {nom_eleve}, {classe}, {ecole}. Remplacez les [CROCHETS].' })}
+        ${champ('Message', `<textarea name="texte" id="texte" rows="6" required>${e(saluer(MODELES.libre))}</textarea>`, { aide: 'Variables : {nom_parent}, {nom_eleve}, {classe}, {ecole}. Remplacez les [CROCHETS]. « Bonjour » devient « Bonsoir » à partir de 14 h.' })}
         <label class="case"><input type="checkbox" name="manuel"> Envoyer moi-même depuis mon WhatsApp (liens wa.me)</label>
         <div class="ligne fin" style="margin-top:.8rem"><button class="btn vert">📲 Préparer l'envoi</button></div>
       </form></div>`;
@@ -38,7 +38,7 @@ export async function afficher(el, params) {
       const cible = f.querySelector('#cible');
       const majCible = () => ['classe', 'parent', 'numero'].forEach((c) => f.querySelector('#z-' + c).classList.toggle('cache', cible.value !== c));
       cible.onchange = majCible; majCible();
-      f.querySelector('#modele').onchange = (ev) => { f.querySelector('#texte').value = MODELES[ev.target.value]; };
+      f.querySelector('#modele').onchange = (ev) => { f.querySelector('#texte').value = saluer(MODELES[ev.target.value]); };
       // Venu de « Informations aux parents » : message et destinataires préremplis
       if (params.communique) {
         get(`/communiques/${params.communique}`).then((c) => {
