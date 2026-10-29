@@ -166,7 +166,7 @@ router.get('/factures', ah(async (req, res) => {
   res.json({
     mois, nb: liste.length, total: liste.reduce((t, x) => t + x.total, 0),
     sans_mensualite: liste.filter((x) => x.du + x.reduction <= 0).length, // tarif encore à 0
-    liste: liste.map(({ eleve_id, matricule, parent, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee }) => ({ eleve_id, matricule, parent, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee: !!modifiee })),
+    liste: liste.map(({ eleve_id, matricule, parents: parent, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee }) => ({ eleve_id, matricule, parent, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee: !!modifiee })),
   });
 }));
 router.get('/factures.pdf', ah(async (req, res) => {

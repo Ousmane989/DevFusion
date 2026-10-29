@@ -181,7 +181,8 @@ async function recu(numero) {
   const { query } = require('../db');
   const lignes = await query(
     `SELECT pa.*, e.matricule, e.nom, e.prenom, c.nom AS classe, a.libelle AS annee, u.nom_complet AS caissier,
-            COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent
+            COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
+            NULLIF(concat_ws(' / ', NULLIF(trim(e.pere_nom),''), NULLIF(trim(e.mere_nom),''), NULLIF(trim(e.tuteur_nom),'')), '') AS parents
        FROM paiements pa JOIN inscriptions i ON i.id = pa.inscription_id JOIN eleves e ON e.id = i.eleve_id
        JOIN classes c ON c.id = i.classe_id JOIN annees_scolaires a ON a.id = i.annee_id
        LEFT JOIN utilisateurs u ON u.id = pa.encaisse_par
@@ -202,7 +203,7 @@ async function recu(numero) {
     doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(9.5);
     const info = [
       ['Élève', `${r0.prenom} ${r0.nom}`], ['Matricule', r0.matricule], ['Classe', r0.classe],
-      ['Parent', r0.parent || '—'], ['Date', dateFr(r0.date_paiement)],
+      ['Parents', r0.parents || '—'], ['Date', dateFr(r0.date_paiement)],
       ['Mode', MODES_PAIEMENT[r0.mode] + (r0.reference ? ` (réf. ${r0.reference})` : '')],
     ];
     info.forEach(([k, v], i) => {
@@ -266,6 +267,7 @@ async function factureInscription(inscriptionId) {
   const insc = await one(
     `SELECT i.*, e.matricule, e.nom, e.prenom, e.whatsapp, c.nom AS classe, a.libelle AS annee, a.date_debut,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
+            NULLIF(concat_ws(' / ', NULLIF(trim(e.pere_nom),''), NULLIF(trim(e.mere_nom),''), NULLIF(trim(e.tuteur_nom),'')), '') AS parents,
             (SELECT COALESCE(SUM(montant),0) FROM paiements pa
               WHERE pa.inscription_id = i.id AND pa.type = 'inscription' AND NOT pa.annule) AS verse
        FROM inscriptions i JOIN eleves e ON e.id = i.eleve_id JOIN classes c ON c.id = i.classe_id
@@ -288,7 +290,7 @@ async function factureInscription(inscriptionId) {
     doc.roundedRect(l, yBloc, largeur, 70, 6).fill(COULEURS.clair);
     const info = [
       ['Élève', `${insc.prenom} ${insc.nom}`], ['Matricule', insc.matricule], ['Classe', insc.classe],
-      ['Parent', insc.parent || '—'], ['Date d\'inscription', dateFr(insc.date_inscription)], ['WhatsApp', insc.whatsapp || '—'],
+      ['Parents', insc.parents || '—'], ['Date d\'inscription', dateFr(insc.date_inscription)], ['WhatsApp', insc.whatsapp || '—'],
     ];
     info.forEach(([k, v], i) => {
       const col = i % 2; const lig = Math.floor(i / 2);
@@ -666,7 +668,7 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, enRetard, hau
   // Élève (une seule ligne de 4 informations)
   const yI = y0 + 65;
   doc.roundedRect(l, yI, largeur, 28, 4).fill(COULEURS.clair);
-  const infos = [['Élève', `${f.prenom} ${f.nom}`, 0.34], ['Classe', f.classe, 0.16], ['Matricule', f.matricule, 0.18], ['Parent', f.parent || '—', 0.32]];
+  const infos = [['Élève', `${f.prenom} ${f.nom}`, 0.34], ['Classe', f.classe, 0.16], ['Matricule', f.matricule, 0.18], ['Parents', f.parents || '—', 0.32]];
   let x = l + 8;
   for (const [k, v, part] of infos) {
     const w = largeur * part - 8;

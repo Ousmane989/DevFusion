@@ -27,7 +27,7 @@ export async function afficher(el, { id, nouveau }) {
           ${v.cas_social && v.cas_social_note ? `<div class="petit muted" style="margin-top:.3rem">🤝 ${e(v.cas_social_note)}</div>` : ''}
           <div class="grille g3" style="margin-top:.9rem;gap:.7rem">
             ${info('Né(e) le', [dateFr(v.date_naissance), v.lieu_naissance && 'à ' + e(v.lieu_naissance)].filter(Boolean).join(' '))}
-            ${info('Père', e(v.pere_nom))}${info('Mère', e(v.mere_nom))}${info('Tuteur', e(v.tuteur_nom))}
+            ${info('Père', e(v.pere_nom) || '<span class="muted">—</span>')}${info('Mère', e(v.mere_nom) || '<span class="muted">—</span>')}${info('Tuteur', e(v.tuteur_nom) || '<span class="muted">—</span>')}
             ${info('WhatsApp', v.whatsapp ? `<a href="https://wa.me/${e(v.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${e(v.whatsapp)}</a>` : '<span class="badge attention">À compléter</span>')}
             ${info('Téléphone 2', v.telephone2 ? `<a href="tel:${e(v.telephone2)}">${e(v.telephone2)}</a>` : '')}
             ${info('Adresse', e(v.adresse))}
