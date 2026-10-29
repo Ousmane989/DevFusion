@@ -6,11 +6,11 @@ photo = 'data:image/jpeg;base64,' + base64.b64encode((d / 'photo.jpg').read_byte
 s = s.replace('__PHOTO__', photo)
 for key, name in (('__LOGONAV__', 'logo-nav.jpg'), ('__LOGOFULL__', 'logo-full.jpg')):
     s = s.replace(key, 'data:image/jpeg;base64,' + base64.b64encode((d / name).read_bytes()).decode())
-# portfolio.html : version Artifact (sans <head>)
-(d / 'portfolio.html').write_text(s)
-# index.html : site complet, avec téléchargement du CV en PDF
-s = s.replace('<a class="btn primary magnetic" href="#contact">Demander la version PDF',
-              '<a class="btn primary magnetic" href="CV_El_Yonel_Ousmane_Niang.pdf" download>Télécharger le CV (PDF)')
+SITE = 'https://ousmane-niang-portfolio.vercel.app/'
+# portfolio.html : version Artifact (sans <head>) ; le CV se télécharge depuis le site en ligne
+(d / 'portfolio.html').write_text(s.replace('__CVPDF__', SITE + 'CV_El_Yonel_Ousmane_Niang.pdf').replace('__CVPNG__', SITE + 'CV_El_Yonel_Ousmane_Niang.png'))
+# index.html : site complet, fichiers du CV servis à côté de la page
+s = s.replace('__CVPDF__', 'CV_El_Yonel_Ousmane_Niang.pdf').replace('__CVPNG__', 'CV_El_Yonel_Ousmane_Niang.png')
 head = '''<!doctype html>
 <html lang="fr">
 <head>
