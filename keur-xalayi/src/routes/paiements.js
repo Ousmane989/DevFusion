@@ -163,7 +163,7 @@ router.get('/factures', ah(async (req, res) => {
   res.json({
     mois, nb: liste.length, total: liste.reduce((t, x) => t + x.total, 0),
     sans_mensualite: liste.filter((x) => x.du + x.reduction <= 0).length, // tarif encore à 0
-    liste: liste.map(({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total }) => ({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total })),
+    liste: liste.map(({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee }) => ({ eleve_id, prenom, nom, classe, du, verse, total_arrieres, total_autres, total, modifiee: !!modifiee })),
   });
 }));
 router.get('/factures.pdf', ah(async (req, res) => {
@@ -172,6 +172,54 @@ router.get('/factures.pdf', ah(async (req, res) => {
   if (!liste.length) throw new HttpError(404, 'Aucune facture pour ces critères.');
   const buf = await pdf.facturesMensualite(liste, mois);
   res.type('application/pdf').set('Content-Disposition', `inline; filename="factures-${mois.slice(0, 7)}.pdf"`).send(buf);
+}));
+
+// ---- Modifier la facture du mois d'un élève (une par une) ----
+router.get('/factures/edition', ah(async (req, res) => {
+  const mois = String(req.query.mois || '');
+  if (!/^\d{4}-\d{2}-01$/.test(mois)) throw new HttpError(400, 'Choisissez le mois.');
+  const [f] = await finance.facturesMois(mois, { eleveId: req.query.eleve_id });
+  if (!f) throw new HttpError(404, 'Pas de facture ce mois-ci pour cet élève (pas encore inscrit, parti ou archivé).');
+  const p = await one('SELECT * FROM parametres WHERE id = 1');
+  const { dateLimite } = require('../services/rappels');
+  res.json({
+    mois, inscription_id: f.inscription_id, eleve_id: f.eleve_id, prenom: f.prenom, nom: f.nom, classe: f.classe,
+    auto: finance.lignesFacture(f, mois), date_limite_defaut: dateLimite(mois, p), modifiee: f.modifiee || null, total: f.total,
+  });
+}));
+
+router.put('/factures/edition', ah(async (req, res) => {
+  const { mois, inscription_id: insc } = req.body;
+  if (!/^\d{4}-\d{2}-01$/.test(String(mois || ''))) throw new HttpError(400, 'Choisissez le mois.');
+  if (!(await one('SELECT 1 FROM inscriptions WHERE id = $1', [insc]))) throw new HttpError(404, 'Inscription introuvable.');
+  const brut = Array.isArray(req.body.lignes) ? req.body.lignes : [];
+  if (!brut.length) throw new HttpError(400, 'La facture doit avoir au moins une ligne.');
+  if (brut.length > 10) throw new HttpError(400, 'Dix lignes au plus par facture (elle doit tenir sur une demi-feuille).');
+  const lignes = brut.map((l) => {
+    const libelle = String(l.libelle || '').trim().slice(0, 120);
+    const m = Number(l.montant); const v = Number(l.verse || 0);
+    if (!libelle) throw new HttpError(400, 'Chaque ligne doit avoir une désignation.');
+    if (!Number.isFinite(m) || m < 0 || m > 1e9 || !Number.isFinite(v) || v < 0 || v > m) throw new HttpError(400, `Montant invalide sur la ligne « ${libelle} ».`);
+    const cle = /^(mois|arr:\d{4}-\d{2}-01|annexe:[a-z]+)$/.test(String(l.cle || '')) ? l.cle : null;
+    return cle ? { cle, libelle, montant: m } : { cle: null, libelle, montant: m, verse: v };
+  });
+  const dl = vide(req.body.date_limite);
+  if (dl && !/^\d{4}-\d{2}-\d{2}$/.test(dl)) throw new HttpError(400, 'Date limite invalide.');
+  const note = vide(String(req.body.note || '').trim()); const motif = vide(String(req.body.motif || '').trim());
+  if ((note && note.length > 200) || (motif && motif.length > 300)) throw new HttpError(400, 'Note ou motif trop long.');
+  await query(
+    `INSERT INTO factures_modifiees (inscription_id, mois, lignes, note, date_limite, motif, utilisateur_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
+     ON CONFLICT (inscription_id, mois) DO UPDATE SET lignes = EXCLUDED.lignes, note = EXCLUDED.note, date_limite = EXCLUDED.date_limite,
+       motif = EXCLUDED.motif, utilisateur_id = EXCLUDED.utilisateur_id, updated_at = now()`,
+    [insc, mois, JSON.stringify(lignes), note, dl, motif, req.user.id]);
+  res.json({ ok: true });
+}));
+
+// Rétablir la facture calculée automatiquement
+router.delete('/factures/edition', ah(async (req, res) => {
+  await query('DELETE FROM factures_modifiees WHERE inscription_id = $1 AND mois = $2', [req.query.inscription_id, req.query.mois]);
+  res.json({ ok: true });
 }));
 
 // ---- Reçu PDF ----

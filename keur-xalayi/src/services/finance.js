@@ -4,7 +4,7 @@
 // soldes. Une mensualité est due pour chaque mois de l'année scolaire à
 // partir du mois d'inscription. Dû = mensualité − réduction.
 const { query, one } = require('../db');
-const { moisEntre, debutMois, aujourdhui, HttpError, FRAIS_ANNEXES } = require('../utils');
+const { moisEntre, debutMois, aujourdhui, HttpError, FRAIS_ANNEXES, deMois, montant } = require('../utils');
 
 async function anneeActive() {
   return one('SELECT * FROM annees_scolaires WHERE active');
@@ -121,7 +121,46 @@ async function facturesMois(mois, { classeId, eleveId, impayesSeulement } = {}) 
     const totalAutres = autres.reduce((t, a) => t + a.reste, 0);
     return { ...x, arrieres: arr, total_arrieres: totalArrieres, autres, total_autres: totalAutres, total: x.reste + totalArrieres + totalAutres };
   });
+  // Factures modifiées à la main par la directrice
+  const modifs = liste.length ? await query(
+    `SELECT f.*, u.nom_complet AS par FROM factures_modifiees f LEFT JOIN utilisateurs u ON u.id = f.utilisateur_id
+      WHERE f.mois = $1 AND f.inscription_id = ANY($2)`, [mois, liste.map((x) => x.inscription_id)]) : [];
+  const parInsc = new Map(modifs.map((m) => [m.inscription_id, m]));
+  liste = liste.map((x) => {
+    const m = parInsc.get(x.inscription_id);
+    if (!m) return x;
+    const lignes = appliquerModif(lignesFacture(x, mois), m.lignes);
+    return { ...x, modifiee: { lignes, note: m.note, date_limite: m.date_limite, motif: m.motif, par: m.par, le: m.updated_at },
+      total: lignes.reduce((t, l) => t + Math.max(0, l.montant - l.verse), 0) };
+  });
   return impayesSeulement ? liste.filter((x) => x.total > 0) : liste;
+}
+
+/**
+ * Lignes d'une facture du mois, calculées : mensualité du mois, mois précédents restés
+ * impayés, puis reliquat / fournitures / uniforme / blouson encore dus.
+ * `fmt` met en forme un montant dans le libellé de la réduction.
+ */
+function lignesFacture(f, mois, fmt = montant) {
+  return [
+    { cle: 'mois', libelle: `Mensualité ${deMois(mois)}${f.reduction > 0 ? ` (réduction ${f.reduction_motif || ''} : -${fmt(f.reduction)})` : ''}`,
+      montant: f.du, verse: Math.min(f.verse, f.du) },
+    ...(f.arrieres || []).map((a) => ({ cle: `arr:${a.mois}`, libelle: `Mensualité ${deMois(a.mois)} (reste)`, montant: a.du, verse: Math.min(a.verse, a.du) })),
+    ...(f.autres || []).map((a) => ({ cle: `annexe:${a.type}`, libelle: a.libelle, montant: a.du, verse: a.verse })),
+  ];
+}
+
+/**
+ * Lignes enregistrées par la directrice, avec les avances à jour : une ligne reliée à une
+ * ligne calculée reprend les paiements réels (si elle a disparu, c'est qu'elle est soldée).
+ */
+function appliquerModif(auto, lignes) {
+  const parCle = new Map(auto.map((l) => [l.cle, l]));
+  return lignes.map((l) => {
+    if (!l.cle) return { ...l, verse: Math.min(Number(l.verse) || 0, l.montant) };
+    const a = parCle.get(l.cle);
+    return { ...l, verse: a ? Math.min(a.verse, l.montant) : l.montant };
+  });
 }
 
 /** Impayés (reste > 0) pour un mois, ou pour tous les mois échus si mois est vide. */
@@ -189,4 +228,4 @@ async function resumeMois(mois, opts = {}) {
   };
 }
 
-module.exports = { anneeActive, anneeActiveRequise, facturesMois, fraisAnnexes, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };
+module.exports = { anneeActive, anneeActiveRequise, facturesMois, lignesFacture, fraisAnnexes, moisAnnee, moisEchus, statutDe, situationMois, impayes, soldeInscription, resumeMois };

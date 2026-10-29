@@ -1,6 +1,7 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
 import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement, supprimerEleves } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
+import { modifierFacture } from '../facture-edition.js';
 
 export async function afficher(el, { id, nouveau }) {
   const d = await get(`/eleves/${id}`);
@@ -145,7 +146,14 @@ export async function afficher(el, { id, nouveau }) {
   const facture = () => imprimer(`/eleves/${v.id}/facture-inscription.pdf`);
   if ($('#payer-insc')) $('#payer-insc').onclick = payerInscription;
   if ($('#facture')) $('#facture').onclick = facture;
-  if ($('#facture-mois')) $('#facture-mois').onclick = () => imprimer(`/paiements/factures.pdf?mois=${moisCourant()}&eleve_id=${v.id}`);
+  if ($('#facture-mois')) {
+    $('#facture-mois').onclick = async () => {
+      // Mois proposés : ceux de l'année scolaire ; par défaut le mois en cours
+      const { mois: liste } = await get('/paiements/mois');
+      const mois = liste.includes(moisCourant()) ? moisCourant() : liste[0];
+      modifierFacture({ eleveId: v.id, mois, moisListe: liste });
+    };
+  }
   if ($('#facture-nouveau')) $('#facture-nouveau').onclick = facture;
 
   // Juste après une inscription : la facture est proposée tout de suite (une seule fois).
