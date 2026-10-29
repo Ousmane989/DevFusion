@@ -20,6 +20,17 @@ function dateLimite(mois, p) {
   return `${mois.slice(0, 7)}-${p2(p.date_limite_jour)}`;
 }
 
+/**
+ * Date limite imprimée sur une facture. Pour un mois passé (élève en retard), la date limite
+ * d'origine est dépassée : on prend la prochaine date limite à venir.
+ */
+function limiteFacture(mois, p, jour = aujourdhui()) {
+  const lim = dateLimite(mois, p);
+  if (lim >= jour) return { limite: lim, enRetard: false };
+  const ceMois = dateLimite(debutMois(jour), p);
+  return { limite: ceMois >= jour ? ceMois : dateLimite(ajouterMois(debutMois(jour), 1), p), enRetard: true };
+}
+
 /** Date du premier rappel pour le mois M : le jour du rappel qui précède la date limite. */
 function dateRappel(mois, p) {
   const m = p.rappel_jour < p.date_limite_jour ? mois : ajouterMois(mois, -1);
@@ -138,4 +149,4 @@ async function calendrier() {
   }));
 }
 
-module.exports = { preparer, envoyer, tacheQuotidienne, calendrier, dateLimite, dateRappel, dateSecondRappel };
+module.exports = { preparer, envoyer, tacheQuotidienne, calendrier, dateLimite, limiteFacture, dateRappel, dateSecondRappel };

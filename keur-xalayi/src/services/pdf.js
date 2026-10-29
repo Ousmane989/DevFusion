@@ -6,7 +6,7 @@
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const { one } = require('../db');
-const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement } = require('../utils');
+const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement, aujourdhui } = require('../utils');
 const { lignesFacture } = require('./finance');
 
 const COULEURS = {
@@ -650,7 +650,7 @@ async function certificats(liste) {
 const numeroFactureMois = (mois, inscriptionId) => `FM${mois.slice(2, 4)}${mois.slice(5, 7)}-${String(inscriptionId).padStart(4, '0')}`;
 
 // Chaque facture occupe une demi-feuille A4 (hauteur = 421 pt) ; la signature est en bas de sa partie.
-function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
+function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, enRetard, hauteur }) {
   const l = 36; const largeur = 595.28 - 72;
   // En-tête : logo, école, coordonnées / titre et numéro
   dessinerLogo(doc, p, l, y0 + 16, 38);
@@ -708,8 +708,11 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
   y += 23;
   doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(10)
     .text(f.total > 0 ? `RESTE À PAYER : ${montant(f.total, p.devise)}` : '', l, y, { width: largeur, align: 'right', lineBreak: false });
-  doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(9)
-    .text(f.total > 0 ? `À payer avant le ${f.modifiee && f.modifiee.date_limite ? jourMois(f.modifiee.date_limite) : limite}`
+  // Date choisie à la main (facture modifiée), tant qu'elle n'est pas dépassée
+  const dateMain = f.modifiee && f.modifiee.date_limite >= aujourdhui() ? f.modifiee.date_limite : null;
+  const retard = f.total > 0 && !dateMain && enRetard;
+  doc.fillColor(retard ? '#C0392B' : COULEURS.texte).font('Helvetica-Bold').fontSize(9)
+    .text(f.total > 0 ? `${retard ? 'EN RETARD — à payer avant le' : 'À payer avant le'} ${dateMain ? jourMois(dateMain) : limite}`
       : totalDu <= 0 ? 'Montant de la mensualité non encore fixé.' : f.modifiee ? 'Facture réglée. Merci !' : 'Mensualité réglée. Merci !',
     l, y, { width: largeur / 2, lineBreak: false });
   doc.font('Helvetica').fontSize(7.5).fillColor(COULEURS.gris)
@@ -746,11 +749,10 @@ const FACTURES_PAR_FEUILLE = 2;
 async function facturesMensualite(liste, mois) {
   const p = await parametres();
   const a = await one('SELECT libelle FROM annees_scolaires WHERE active');
-  const { dateLimite } = require('./rappels');
+  const { limiteFacture } = require('./rappels');
   const hauteur = 841.89 / FACTURES_PAR_FEUILLE;
-  const lim = dateLimite(mois, p); // AAAA-MM-JJ
-  const limite = jourMois(lim); // « 05 novembre 2026 »
-  const ctx = { mois, annee: a ? a.libelle : '', limite, hauteur };
+  const lim = limiteFacture(mois, p); // mois passé : prochaine date limite, mention « en retard »
+  const ctx = { mois, annee: a ? a.libelle : '', limite: jourMois(lim.limite), enRetard: lim.enRetard, hauteur };
   return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
     for (let i = 0; i < liste.length; i += FACTURES_PAR_FEUILLE) {
       doc.addPage();
