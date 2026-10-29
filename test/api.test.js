@@ -484,6 +484,25 @@ test('passage en classe supérieure (aperçu) : GS → CI → CP', async () => {
   if (ci) assert.strictEqual(ci.niveau_cible, 'CP', 'le CI passe au CP');
 });
 
+test('informations aux parents : création, PDF (1 et 2 par feuille), modification, suppression', async () => {
+  const r = await appel('dir', '/api/communiques', { methode: 'POST', corps: { type: 'fete', titre: 'Fête de fin d\'année', texte: 'Chers parents,\n\nGrande fête à l\'école ! 🎉', date_evenement: '2027-06-26', heure: '15 h', lieu: 'Cour de l\'école', coupon: true } });
+  assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
+  const id = r.donnees.id;
+  for (const n of [1, 2]) {
+    const f = await appel('dir', `/api/communiques/${id}/pdf?par_page=${n}`);
+    assert.strictEqual(f.statut, 200);
+    assert.strictEqual(f.donnees.subarray(0, 4).toString(), '%PDF');
+  }
+  assert.strictEqual((await appel('dir', `/api/communiques/${id}`, { methode: 'PUT', corps: { type: 'vacances', titre: 'Vacances', texte: 'Bonnes vacances', date_evenement: '2027-07-01', date_fin: '2027-06-01' } })).statut, 400, 'fin avant début');
+  assert.strictEqual((await appel('dir', `/api/communiques/${id}`, { methode: 'PUT', corps: { type: 'vacances', titre: 'Vacances', texte: 'Bonnes vacances' } })).statut, 200);
+  assert.strictEqual((await appel('dir', `/api/communiques/${id}`)).donnees.titre, 'Vacances');
+  assert.strictEqual((await appel('dir', '/api/communiques', { methode: 'POST', corps: { titre: '', texte: 'x' } })).statut, 400);
+  assert.strictEqual((await appel('dir', '/api/communiques/abc')).statut, 404);
+  assert.ok([401, 403].includes((await appel('ens', '/api/communiques')).statut));
+  await appel('dir', `/api/communiques/${id}`, { methode: 'DELETE' });
+  assert.strictEqual((await appel('dir', `/api/communiques/${id}`)).statut, 404);
+});
+
 test('sauvegarde gardée dans la base puis téléchargée', async () => {
   const s = await appel('dir', '/api/parametres/sauvegardes', { methode: 'POST', corps: {} });
   assert.strictEqual(s.statut, 201, JSON.stringify(s.donnees));
