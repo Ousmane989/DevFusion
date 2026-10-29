@@ -181,10 +181,10 @@ router.get('/factures/edition', ah(async (req, res) => {
   const [f] = await finance.facturesMois(mois, { eleveId: req.query.eleve_id });
   if (!f) throw new HttpError(404, 'Pas de facture ce mois-ci pour cet élève (pas encore inscrit, parti ou archivé).');
   const p = await one('SELECT * FROM parametres WHERE id = 1');
-  const { dateLimite } = require('../services/rappels');
+  const { limiteFacture } = require('../services/rappels');
   res.json({
     mois, inscription_id: f.inscription_id, eleve_id: f.eleve_id, prenom: f.prenom, nom: f.nom, classe: f.classe,
-    auto: finance.lignesFacture(f, mois), date_limite_defaut: dateLimite(mois, p), modifiee: f.modifiee || null, total: f.total,
+    auto: finance.lignesFacture(f, mois), date_limite_defaut: limiteFacture(mois, p).limite, modifiee: f.modifiee || null, total: f.total,
   });
 }));
 
