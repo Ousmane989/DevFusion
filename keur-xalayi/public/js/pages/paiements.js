@@ -1,6 +1,7 @@
 // Paiements : encaisser, journal, situation des mensualités (par mois et par classe).
 import { get, post, e, qs, tableau, options, argent, nomMois, dateFr, badge, MODES, modesDuPays, estRole, ouvrir, formulaire, champ, toast, avatar, boutonsExport, activerExports, aujourdhui, kpi, erreur, objetPaiement } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
+import { modifierFacture } from '../facture-edition.js';
 
 let minuteur;
 
@@ -43,6 +44,7 @@ export async function afficher(el, params) {
     // ---- Statut de chaque élève pour un mois ----
     async situation() {
       zone.innerHTML = `<div class="filtres">
+          <input class="recherche" type="search" id="q-sit" placeholder="🔍 Rechercher un élève (nom, prénom, matricule)…">
           <select id="mois">${options(optMois, moisDefaut)}</select>
           <select id="classe">${options(optClasses, params.classe_id || '', { vide: 'Toutes les classes' })}</select>
           <select id="statut">${options([['paye', 'Payé'], ['partiel', 'Partiel'], ['impaye', 'Impayé']], '', { vide: 'Tous les statuts' })}</select>
@@ -59,19 +61,36 @@ export async function afficher(el, params) {
           ${kpi('Encaissé', argent(r.encaisse), r.taux === null ? 'rien d\'attendu ce mois' : `${r.taux} % recouvré`, 'var(--succes)')}
           ${kpi('Reste à encaisser', argent(r.reste), '', 'var(--danger)')}
           ${kpi('Élèves', `${r.nbPayes} / ${r.nbPayes + r.nbPartiels + r.nbImpayes}`, `ont payé · ${r.nbPartiels} partiel(s)`, 'var(--primaire)')}</div>`;
+        derniere = d;
+        rendre();
+      };
+      // Liste filtrée par statut et par la recherche (sans recharger)
+      let derniere = null;
+      const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const rendre = () => {
+        if (!derniere) return;
         const st = zone.querySelector('#statut').value;
-        const liste = st ? d.liste.filter((x) => x.statut === st) : d.liste;
+        const q = sansAccent(zone.querySelector('#q-sit').value.trim());
+        const liste = derniere.liste.filter((x) => (!st || x.statut === st)
+          && (!q || [`${x.prenom} ${x.nom}`, `${x.nom} ${x.prenom}`, x.matricule, x.classe].some((t) => sansAccent(t).includes(q))));
         zone.querySelector('#tab').innerHTML = tableau([
           { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}"><b>${e(x.prenom)} ${e(x.nom)}</b></a><div class="petit muted">${e(x.matricule)}</div>` },
           { titre: 'Classe', rendu: (x) => e(x.classe) },
           { titre: 'Dû', classe: 'num', rendu: (x) => argent(x.du) + (x.reduction > 0 ? `<div class="petit muted">réd. ${e(x.reduction_motif || '')}</div>` : '') },
           { titre: 'Versé', classe: 'num', rendu: (x) => argent(x.verse) },
           { titre: 'Statut', rendu: (x) => badge(x.statut) },
-          { titre: '', rendu: (x) => (x.reste > 0 ? `<button class="btn petit" data-payer="${x.eleve_id}" data-mois="${x.mois}">Encaisser</button>` : '') },
-        ], liste, { vide: 'Aucun élève.' });
+          { titre: '', rendu: (x) => `<div class="ligne" style="flex-wrap:nowrap;gap:.3rem">
+              ${x.reste > 0 ? `<button class="btn petit" data-payer="${x.eleve_id}" data-mois="${x.mois}">Encaisser</button>` : ''}
+              ${estRole('directeur') ? `<button class="btn petit clair" data-facture="${x.eleve_id}" title="Voir / modifier la facture du mois">🧾 Facture</button>
+              <a class="btn petit clair" href="#/eleves/${x.eleve_id}/modifier" title="Modifier la fiche de l'élève">✏️</a>` : ''}</div>` },
+        ], liste, { vide: q ? 'Aucun élève ne correspond à la recherche.' : 'Aucun élève.' });
         zone.querySelectorAll('[data-payer]').forEach((b) => { b.onclick = () => encaisser(Number(b.dataset.payer), charger, [b.dataset.mois]); });
+        zone.querySelectorAll('[data-facture]').forEach((b) => {
+          b.onclick = () => modifierFacture({ eleveId: b.dataset.facture, mois: derniere.mois, moisListe: moisInfo.mois, apres: charger });
+        });
       };
-      zone.querySelectorAll('select').forEach((s) => { s.onchange = charger; });
+      zone.querySelector('#q-sit').oninput = rendre;
+      zone.querySelectorAll('select').forEach((s) => { s.onchange = s.id === 'statut' ? rendre : charger; });
       await charger();
     },
 
