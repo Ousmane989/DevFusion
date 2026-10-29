@@ -7,6 +7,7 @@ const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const { one } = require('../db');
 const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement } = require('../utils');
+const { lignesFacture } = require('./finance');
 
 const COULEURS = {
   primaire: '#2E3192', // bleu du logo de l'école
@@ -693,16 +694,11 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
     y += 13;
     doc.moveTo(l, y - 2.5).lineTo(l + largeur, y - 2.5).lineWidth(0.4).strokeColor(COULEURS.ligne).stroke();
   };
-  // Mois facturé (réduction indiquée dans le libellé)
-  const verseMois = Math.min(f.verse, f.du);
-  ligne(`Mensualité ${deMois(mois)}${f.reduction > 0 ? ` (réduction ${f.reduction_motif || ''} : -${montant(f.reduction, p.devise)})` : ''}`,
-    f.du, verseMois, Math.max(0, f.du - verseMois));
-  // Mois précédents restés impayés ou payés en partie
-  for (const ar of f.arrieres || []) ligne(`Mensualité ${deMois(ar.mois)} (reste)`, ar.du, Math.min(ar.verse, ar.du), ar.reste);
-  // Reliquat, fournitures, uniforme, blouson
-  for (const au of f.autres || []) ligne(au.libelle, au.du, au.verse, au.reste);
-  const totalDu = f.du + (f.arrieres || []).reduce((t, x) => t + x.du, 0) + (f.autres || []).reduce((t, x) => t + x.du, 0);
-  const totalVerse = verseMois + (f.arrieres || []).reduce((t, x) => t + Math.min(x.verse, x.du), 0) + (f.autres || []).reduce((t, x) => t + x.verse, 0);
+  // Lignes calculées, ou celles modifiées à la main par la directrice pour cet élève
+  const lignes = f.modifiee ? f.modifiee.lignes : lignesFacture(f, mois, (n) => montant(n, p.devise));
+  for (const x of lignes) ligne(x.libelle, x.montant, x.verse, Math.max(0, x.montant - x.verse));
+  const totalDu = lignes.reduce((t, x) => t + x.montant, 0);
+  const totalVerse = lignes.reduce((t, x) => t + x.verse, 0);
   doc.rect(l, y, largeur, 19).fill(COULEURS.clair);
   doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(9)
     .text('TOTAL', l + 8, y + 5.5, { lineBreak: false })
@@ -713,12 +709,17 @@ function dessinerFactureMois(doc, p, f, y0, { mois, annee, limite, hauteur }) {
   doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(10)
     .text(f.total > 0 ? `RESTE À PAYER : ${montant(f.total, p.devise)}` : '', l, y, { width: largeur, align: 'right', lineBreak: false });
   doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(9)
-    .text(f.total > 0 ? `À payer avant le ${limite}` : f.du + f.reduction <= 0 ? 'Montant de la mensualité non encore fixé.' : 'Mensualité réglée. Merci !',
-      l, y, { width: largeur / 2, lineBreak: false });
+    .text(f.total > 0 ? `À payer avant le ${f.modifiee && f.modifiee.date_limite ? jourMois(f.modifiee.date_limite) : limite}`
+      : totalDu <= 0 ? 'Montant de la mensualité non encore fixé.' : f.modifiee ? 'Facture réglée. Merci !' : 'Mensualité réglée. Merci !',
+    l, y, { width: largeur / 2, lineBreak: false });
   doc.font('Helvetica').fontSize(7.5).fillColor(COULEURS.gris)
     .text('Un reçu est remis à chaque versement. Les avances sont déduites du reste à payer.', l, y + 13, { width: largeur, lineBreak: false });
+  if (f.modifiee && f.modifiee.note) {
+    doc.font('Helvetica-Oblique').fontSize(8).fillColor(COULEURS.texte)
+      .text(`Note : ${f.modifiee.note}`, l, y + 25, { width: largeur, height: 22, ellipsis: true });
+  }
 
-  if (f.total === 0 && f.du > 0) {
+  if (f.total === 0 && totalDu > 0) {
     doc.save().rotate(-12, { origin: [l + largeur / 2, y0 + 140] })
       .font('Helvetica-Bold').fontSize(40).fillColor('#1E8E5A').opacity(0.2)
       .text('PAYÉE', l, y0 + 122, { width: largeur, align: 'center', lineBreak: false }).restore();
@@ -737,6 +738,9 @@ function ligneDecoupe(doc, y) {
   doc.fillColor('#888888').font('Helvetica').fontSize(7).text('couper ici', 262, y - 3.5, { width: 72, align: 'center', lineBreak: false });
 }
 
+/** « 2026-11-05 » → « 05 novembre 2026 » */
+const jourMois = (iso) => `${String(iso).slice(8, 10)} ${nomMois(String(iso))}`;
+
 /** PDF des factures de mensualité d'un mois : 2 factures par feuille A4, à couper en deux. */
 const FACTURES_PAR_FEUILLE = 2;
 async function facturesMensualite(liste, mois) {
@@ -745,7 +749,7 @@ async function facturesMensualite(liste, mois) {
   const { dateLimite } = require('./rappels');
   const hauteur = 841.89 / FACTURES_PAR_FEUILLE;
   const lim = dateLimite(mois, p); // AAAA-MM-JJ
-  const limite = `${lim.slice(8, 10)} ${nomMois(lim)}`; // « 05 novembre 2026 »
+  const limite = jourMois(lim); // « 05 novembre 2026 »
   const ctx = { mois, annee: a ? a.libelle : '', limite, hauteur };
   return produire({ size: 'A4', margin: 0, autoFirstPage: false }, (doc) => {
     for (let i = 0; i < liste.length; i += FACTURES_PAR_FEUILLE) {

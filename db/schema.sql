@@ -443,3 +443,19 @@ ALTER TABLE parametres ADD COLUMN IF NOT EXISTS entete_certificat TEXT NOT NULL 
 -- ---------- Cas sociaux (information confidentielle, visible par la directrice seulement) ----------
 ALTER TABLE eleves ADD COLUMN IF NOT EXISTS cas_social BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE eleves ADD COLUMN IF NOT EXISTS cas_social_note TEXT;
+
+-- ---------- Factures du mois modifiées à la main (une par élève et par mois) ----------
+-- Lignes : [{ cle, libelle, montant, verse }]. « cle » relie une ligne calculée (mois, arriéré,
+-- fournitures…) : son avance versée reste alors calculée à partir des vrais paiements.
+CREATE TABLE IF NOT EXISTS factures_modifiees (
+  id              SERIAL PRIMARY KEY,
+  inscription_id  INTEGER NOT NULL REFERENCES inscriptions(id) ON DELETE CASCADE,
+  mois            DATE NOT NULL,
+  lignes          JSONB NOT NULL,
+  note            TEXT,
+  date_limite     DATE,
+  motif           TEXT,
+  utilisateur_id  INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (inscription_id, mois)
+);
