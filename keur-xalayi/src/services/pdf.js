@@ -765,4 +765,99 @@ async function facturesMensualite(liste, mois) {
   });
 }
 
-module.exports = { texteImprimable, recu, facturesMensualite, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };
+// ------------------------------------------------------------------
+// Informations aux parents (fête, réunion, vacances…) : 1 ou 2 par feuille A4
+// ------------------------------------------------------------------
+const JOURS_SEMAINE = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+/** « 2026-12-12 » → « samedi 12 décembre 2026 » (« 1er » pour le premier du mois). */
+function dateEnLettres(iso) {
+  const j = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
+  const n = j.getDate();
+  return `${JOURS_SEMAINE[j.getDay()]} ${n === 1 ? '1er' : n} ${nomMois(String(iso))}`;
+}
+
+function dessinerCommunique(doc, p, c, y0, hauteur, petit) {
+  const l = petit ? 40 : 50; const largeur = 595.28 - 2 * l;
+  const k = petit ? 0.82 : 1; // tailles réduites sur une demi-feuille
+  // En-tête : logo et école à gauche, « communiqué » et date à droite
+  const tl = 50 * k;
+  dessinerLogo(doc, p, l, y0, tl);
+  doc.fillColor(COULEURS.secondaire).font('Helvetica-Bold').fontSize(15 * k).text(p.nom_ecole, l + tl + 10, y0 + 6 * k, { width: 260, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8 * k)
+    .text(p.adresse || '', l + tl + 10, y0 + 26 * k, { width: 260, lineBreak: false, ellipsis: true })
+    .text(p.telephone ? `Tél. ${p.telephone}` : '', l + tl + 10, y0 + 37 * k, { width: 260, lineBreak: false, ellipsis: true });
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(13 * k)
+    .text('COMMUNIQUÉ', l, y0 + 6 * k, { width: largeur, align: 'right', lineBreak: false });
+  doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(8.5 * k)
+    .text('Information aux parents d\'élèves', l, y0 + 24 * k, { width: largeur, align: 'right', lineBreak: false })
+    .text(`${p.ville ? `${p.ville}, le` : 'Le'} ${dateFr(new Date().toISOString())}`, l, y0 + 36 * k, { width: largeur, align: 'right', lineBreak: false });
+  let y = y0 + tl + 8;
+  doc.rect(l, y, largeur, 2).fill(COULEURS.primaire);
+  y += 16 * k;
+
+  // Titre
+  doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(20 * k);
+  const hT = doc.heightOfString(c.titre.toUpperCase(), { width: largeur, align: 'center' });
+  doc.text(c.titre.toUpperCase(), l, y, { width: largeur, align: 'center', height: 60 * k, ellipsis: true });
+  y += Math.min(hT, 60 * k) + 10 * k;
+
+  // Quand, où, pour qui
+  const infos = [];
+  if (c.date_evenement) {
+    infos.push(['Date', c.date_fin && c.date_fin !== c.date_evenement
+      ? `du ${dateEnLettres(c.date_evenement)} au ${dateEnLettres(c.date_fin)}` : dateEnLettres(c.date_evenement)]);
+  }
+  if (c.heure) infos.push(['Heure', c.heure]);
+  if (c.lieu) infos.push(['Lieu', c.lieu]);
+  infos.push(['Pour', c.classe ? `les parents des élèves de ${c.classe}` : 'tous les parents d\'élèves']);
+  const hl = 16 * k;
+  doc.roundedRect(l, y, largeur, infos.length * hl + 12 * k, 5).fill(COULEURS.clair);
+  let yi = y + 7 * k;
+  for (const [cle, val] of infos) {
+    doc.fillColor(COULEURS.gris).font('Helvetica').fontSize(9.5 * k).text(cle, l + 14, yi, { width: 60, lineBreak: false });
+    doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(10.5 * k).text(val, l + 80, yi - 0.5, { width: largeur - 94, lineBreak: false, ellipsis: true });
+    yi += hl;
+  }
+  y += infos.length * hl + 12 * k + 14 * k;
+
+  // Texte, puis signature ; coupon-réponse en bas si demandé
+  const hCoupon = c.coupon ? (petit ? 78 : 104) : 0;
+  const ySign = y0 + hauteur - hCoupon - (petit ? 34 : 50);
+  doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(11.5 * k)
+    .text(c.texte, l, y, { width: largeur, height: Math.max(20, ySign - y - 8), ellipsis: true, align: 'justify', lineGap: 2 * k });
+  doc.fillColor(COULEURS.texte).font('Helvetica-Bold').fontSize(10 * k)
+    .text(p.directrice_nom ? `La Directrice, ${p.directrice_nom}` : 'La Direction', l, ySign, { width: largeur, align: 'right', lineBreak: false });
+
+  if (c.coupon) {
+    let yc = y0 + hauteur - hCoupon;
+    doc.save().moveTo(l - 14, yc).lineTo(l + largeur + 14, yc).dash(4, { space: 3 }).lineWidth(0.6).strokeColor('#888888').stroke().restore();
+    yc += 9 * k;
+    doc.fillColor(COULEURS.primaire).font('Helvetica-Bold').fontSize(9.5 * k)
+      .text('COUPON-RÉPONSE À RETOURNER À L\'ÉCOLE', l, yc, { width: largeur, align: 'center', lineBreak: false });
+    yc += 16 * k;
+    const pointilles = '.'.repeat(60);
+    doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(9.5 * k)
+      .text(`Je soussigné(e) ${pointilles}, parent de l'élève ${'.'.repeat(45)}`, l, yc, { width: largeur, lineBreak: false, ellipsis: true });
+    yc += 15 * k;
+    doc.text(`classe ${'.'.repeat(20)}, ai bien reçu l'information « ${c.titre} ».`, l, yc, { width: largeur, lineBreak: false, ellipsis: true });
+    yc += 18 * k;
+    doc.text(`Date : ${'.'.repeat(30)}`, l, yc, { width: largeur / 2, lineBreak: false })
+      .text(`Signature du parent : ${'.'.repeat(30)}`, l + largeur / 2, yc, { width: largeur / 2, align: 'right', lineBreak: false });
+  }
+}
+
+/** Information aux parents : une par feuille A4, ou deux exemplaires à couper (parPage = 2). */
+async function communique(c, { parPage = 1 } = {}) {
+  const p = await parametres();
+  return produire({ size: 'A4', margin: 0 }, (doc) => {
+    if (parPage === 2) {
+      dessinerCommunique(doc, p, c, 24, DEMI_PAGE - 30, true);
+      ligneDecoupe(doc, DEMI_PAGE);
+      dessinerCommunique(doc, p, c, DEMI_PAGE + 24, DEMI_PAGE - 30, true);
+    } else {
+      dessinerCommunique(doc, p, c, 40, 841.89 - 70, false);
+    }
+  });
+}
+
+module.exports = { communique, texteImprimable, recu, facturesMensualite, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

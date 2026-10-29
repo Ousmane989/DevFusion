@@ -1,5 +1,6 @@
 // Annonces groupées WhatsApp (école, classe, parent, numéro) et historique.
 import { get, post, e, qs, options, champ, dateHeure, badge, tableau, erreur, resultatEnvoi, modale, lireForm } from '../ui.js';
+import { texteWhatsApp } from './informations.js';
 
 const MODELES = {
   reunion: 'Bonjour {nom_parent}, l\'école {ecole} vous invite à une réunion des parents le [DATE] à [HEURE]. Votre présence est importante. Merci.',
@@ -38,6 +39,14 @@ export async function afficher(el, params) {
       const majCible = () => ['classe', 'parent', 'numero'].forEach((c) => f.querySelector('#z-' + c).classList.toggle('cache', cible.value !== c));
       cible.onchange = majCible; majCible();
       f.querySelector('#modele').onchange = (ev) => { f.querySelector('#texte').value = MODELES[ev.target.value]; };
+      // Venu de « Informations aux parents » : message et destinataires préremplis
+      if (params.communique) {
+        get(`/communiques/${params.communique}`).then((c) => {
+          f.querySelector('#texte').value = texteWhatsApp(c);
+          if (c.classe_id) { cible.value = 'classe'; f.classe_id.value = c.classe_id; majCible(); }
+          zone.querySelector('.carte').insertAdjacentHTML('afterbegin', `<div class="alerte info" style="margin-bottom:.8rem">📌 <div>Information « <b>${e(c.titre)}</b> » prête à envoyer. Vérifiez le message puis cliquez sur « Préparer l'envoi ».</div></div>`);
+        }).catch(erreur);
+      }
       let t;
       f.querySelector('#q-eleve').oninput = (ev) => {
         clearTimeout(t);

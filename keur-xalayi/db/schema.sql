@@ -459,3 +459,20 @@ CREATE TABLE IF NOT EXISTS factures_modifiees (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (inscription_id, mois)
 );
+
+-- ---------- Informations aux parents (fêtes, réunions, vacances…) : à imprimer ou envoyer ----------
+CREATE TABLE IF NOT EXISTS communiques (
+  id              SERIAL PRIMARY KEY,
+  type            TEXT NOT NULL DEFAULT 'autre',
+  titre           TEXT NOT NULL,
+  date_evenement  DATE,
+  date_fin        DATE,
+  heure           TEXT,
+  lieu            TEXT,
+  classe_id       INTEGER REFERENCES classes(id) ON DELETE SET NULL,  -- vide = toute l'école
+  texte           TEXT NOT NULL,
+  coupon          BOOLEAN NOT NULL DEFAULT FALSE,                     -- coupon-réponse à retourner signé
+  utilisateur_id  INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
