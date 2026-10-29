@@ -70,6 +70,7 @@ router.get('/', ah(async (req, res) => {
     `SELECT e.id, e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.whatsapp, e.telephone2, e.statut,
             e.date_sortie, e.motif_sortie, (e.photo IS NOT NULL) AS a_photo, e.remarques, e.cas_social,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
+            e.pere_nom, e.mere_nom, e.tuteur_nom,
             i.id AS inscription_id, c.id AS classe_id, c.nom AS classe, i.date_inscription, i.mensualite, i.reduction
        FROM eleves e
        LEFT JOIN LATERAL (
