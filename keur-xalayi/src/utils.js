@@ -113,8 +113,32 @@ function normaliserTel(tel, indicatifDefaut = '+221') {
 }
 
 /** Remplace les {variables} d'un modèle de message. */
-function remplir(modele, vars) {
-  return String(modele).replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : m));
+/** À partir de cette heure (heure de Dakar), les messages commencent par « Bonsoir ». */
+const HEURE_BONSOIR = 14;
+
+/** Heure (0-23) à l'heure locale de l'école. */
+function heureLocale(d = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Africa/Dakar' }).formatToParts(d); // heure de l'école (Sénégal)
+  return Number(parts.find((x) => x.type === 'hour').value) % 24;
+}
+
+/** « Bonjour » le matin et en début d'après-midi, « Bonsoir » ensuite (et la nuit). */
+function salutation(d = new Date()) {
+  const h = heureLocale(d);
+  return h >= HEURE_BONSOIR || h < 4 ? 'Bonsoir' : 'Bonjour';
+}
+
+/**
+ * Remplit un modèle de message ({nom_parent}, {ecole}…). Le « Bonjour » / « Bonsoir » du début
+ * suit l'heure d'envoi ; {salutation} est aussi disponible dans les modèles.
+ */
+function remplir(modele, vars, d = new Date()) {
+  const sal = salutation(d);
+  const texte = String(modele).replace(/^(\s*)(Bonjour|Bonsoir)\b/i, (m, esp) => esp + sal);
+  return texte.replace(/\{(\w+)\}/g, (m, k) => {
+    if (k === 'salutation' && vars[k] === undefined) return sal;
+    return vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : m;
+  });
 }
 
 /** Vérifie la présence de champs obligatoires dans un objet. */
@@ -144,6 +168,7 @@ const MODES_PAIEMENT = {
 };
 
 module.exports = {
+  salutation, heureLocale, HEURE_BONSOIR,
   HttpError, ah, MOIS, nomMois, deMois, aujourdhui, debutMois, ajouterMois, moisEntre,
   dateFr, montant, normaliserTel, numeroValide, PAYS, FRAIS_ANNEXES, objetPaiement, remplir, exiger, vide, MODES_PAIEMENT,
 };

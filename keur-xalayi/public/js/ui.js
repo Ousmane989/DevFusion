@@ -133,6 +133,10 @@ export function aujourdhui() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 export const moisCourant = () => aujourdhui().slice(0, 7) + '-01';
+/** « Bonjour » avant 14 h, « Bonsoir » ensuite (le serveur fait de même à l'envoi). */
+export const salutation = (d = new Date()) => (d.getHours() >= 14 || d.getHours() < 4 ? 'Bonsoir' : 'Bonjour');
+/** Remplace le « Bonjour » / « Bonsoir » du début d'un message selon l'heure. */
+export const saluer = (texte) => String(texte).replace(/^(\s*)(Bonjour|Bonsoir)\b/i, (m, esp) => esp + salutation());
 export const badge = (statut, texte) => `<span class="badge ${e(statut)}">${e(texte ?? STATUTS[statut] ?? statut)}</span>`;
 export const initiales = (p, n) => e(((p || '')[0] || '') + ((n || '')[0] || '')).toUpperCase();
 export function avatar(el, grand = false) {

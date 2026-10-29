@@ -31,6 +31,7 @@ export async function afficher(el) {
         </form>
       </div>
       <div class="carte"><h2>✉️ Modèles de messages</h2>
+        <p class="petit muted" style="margin-top:-.3rem">« Bonjour » au début d'un message devient automatiquement « Bonsoir » s'il part à partir de 14 h.</p>
         <form id="modeles">
           ${champ('Premier rappel', `<textarea name="modele_rappel" rows="5" ${directeur ? '' : 'disabled'}>${e(p.modele_rappel)}</textarea>`)}
           ${champ('Second rappel', `<textarea name="modele_second_rappel" rows="4" ${directeur ? '' : 'disabled'}>${e(p.modele_second_rappel)}</textarea>`)}

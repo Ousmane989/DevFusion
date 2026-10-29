@@ -484,6 +484,15 @@ test('passage en classe supérieure (aperçu) : GS → CI → CP', async () => {
   if (ci) assert.strictEqual(ci.niveau_cible, 'CP', 'le CI passe au CP');
 });
 
+test('Bonjour le matin, Bonsoir à partir de 14 h (heure de Dakar)', () => {
+  const { remplir } = require('../src/utils');
+  assert.strictEqual(remplir('Bonjour {nom_parent},', { nom_parent: 'Awa' }, new Date('2026-10-30T09:30:00Z')), 'Bonjour Awa,');
+  assert.strictEqual(remplir('Bonjour {nom_parent},', { nom_parent: 'Awa' }, new Date('2026-10-30T14:05:00Z')), 'Bonsoir Awa,');
+  assert.strictEqual(remplir('Bonsoir', {}, new Date('2026-10-30T07:00:00Z')), 'Bonjour');
+  assert.strictEqual(remplir('{salutation} !', {}, new Date('2026-10-30T19:00:00Z')), 'Bonsoir !');
+  assert.strictEqual(remplir('Merci, Bonjour', {}, new Date('2026-10-30T19:00:00Z')), 'Merci, Bonjour', 'seulement au début');
+});
+
 test('informations aux parents : création, PDF (1 et 2 par feuille), modification, suppression', async () => {
   const r = await appel('dir', '/api/communiques', { methode: 'POST', corps: { type: 'fete', titre: 'Fête de fin d\'année', texte: 'Chers parents,\n\nGrande fête à l\'école ! 🎉', date_evenement: '2027-06-26', heure: '15 h', lieu: 'Cour de l\'école', coupon: true } });
   assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));

@@ -1,5 +1,5 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
-import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement, supprimerEleves } from '../ui.js';
+import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement, supprimerEleves, salutation } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
 import { modifierFacture } from '../facture-edition.js';
 
@@ -181,7 +181,7 @@ export async function afficher(el, { id, nouveau }) {
   if ($('#carte')) $('#carte').onclick = () => ouvrir(`/exports/cartes.pdf?eleve_ids=${v.id}`);
   if ($('#message')) {
     $('#message').onclick = () => formulaire(`Message au parent de ${v.prenom}`,
-      champ('Message', `<textarea name="texte" required rows="5">Bonjour {nom_parent}, </textarea>`, { aide: 'Variables possibles : {nom_parent}, {nom_eleve}, {classe}' })
+      champ('Message', `<textarea name="texte" required rows="5">${salutation()} {nom_parent}, </textarea>`, { aide: 'Variables possibles : {nom_parent}, {nom_eleve}, {classe}' })
       + '<label class="case"><input type="checkbox" name="manuel"> Envoyer moi-même depuis mon WhatsApp (lien)</label>',
       async (f) => { resultatEnvoi(await post('/whatsapp/annonce', { cible: 'parent', eleve_id: v.id, texte: f.texte, manuel: f.manuel })); }, { ok: 'Envoyer' });
   }
