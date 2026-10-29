@@ -28,7 +28,12 @@ export async function afficher(el, params) {
       <button class="btn" id="imprimer">🖨️ Imprimer les factures</button>
       <button class="btn clair" id="pdf">📄 Voir / télécharger le PDF</button>
     </div>
-    <div id="liste"></div>`;
+    <div class="carte">
+      <div class="ligne" style="justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem"><h2 style="margin:0">Aperçu</h2>
+        <span class="muted gras" id="compte-q"></span></div>
+      <input class="recherche" type="search" id="q" placeholder="🔍 Rechercher un élève : nom, prénom, matricule, parent ou classe…" style="width:100%;margin-bottom:.8rem">
+      <div id="liste"></div>
+    </div>`;
 
   const lire = () => {
     const f = { mois: el.querySelector('#mois').value, classe_id: el.querySelector('#classe').value };
@@ -56,6 +61,32 @@ export async function afficher(el, params) {
     if (el.querySelector('#tout-retard')) { el.querySelector('#tout-retard').onclick = coche(true); el.querySelector('#aucun-retard').onclick = coche(false); }
   };
 
+  // Aperçu, filtré par la recherche (sans recharger)
+  let derniere = null;
+  const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const rendreListe = () => {
+    if (!derniere) return;
+    const d = derniere;
+    const q = sansAccent(el.querySelector('#q').value.trim());
+    const lignes = q ? d.liste.filter((x) => [`${x.prenom} ${x.nom}`, `${x.nom} ${x.prenom}`, x.matricule, x.parent, x.classe].some((t) => sansAccent(t).includes(q))) : d.liste;
+    el.querySelector('#compte-q').textContent = q ? `${lignes.length} élève(s) trouvé(s) sur ${d.liste.length}` : `${d.liste.length} élève(s)`;
+    const zone = el.querySelector('#liste');
+    zone.innerHTML = tableau([
+      { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}">${e(x.prenom)} ${e(x.nom)}</a>` },
+      { titre: 'Classe', rendu: (x) => e(x.classe) },
+      { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
+      { titre: 'Mois précédents', classe: 'num', rendu: (x) => (x.total_arrieres ? argent(x.total_arrieres) : '—') },
+      { titre: 'Reliquat, fournitures, uniforme, blouson', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
+      { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>${x.modifiee ? '<div><span class="badge info">✏️ modifiée</span></div>' : ''}` },
+      { titre: '', rendu: (x) => `<div class="ligne" style="flex-wrap:nowrap;gap:.3rem">
+          <button class="btn petit clair" data-modif="${x.eleve_id}" title="Modifier la facture de cet élève">✏️ Modifier</button>
+          <button class="btn petit clair" data-impr="${x.eleve_id}" title="Imprimer la facture de cet élève">🖨️</button></div>` },
+    ], lignes, { vide: q ? 'Aucun élève ne correspond à la recherche.' : 'Aucune facture pour ces critères.' });
+    const mois = lire().mois;
+    zone.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
+    zone.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer('/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_id: b.dataset.impr })); });
+  };
+
   const charger = async () => {
     const m = el.querySelector('#mois').value;
     el.querySelector('#passe').innerHTML = m < moisCourant()
@@ -72,23 +103,12 @@ export async function afficher(el, params) {
           ${kpi('Factures', d.nb, `${Math.ceil(d.nb / 2)} feuille(s) A4`, 'var(--secondaire)')}
           ${kpi('Total à encaisser', argent(d.total), `mensualité ${e(nomMois(d.mois))}, mois précédents et autres frais`, 'var(--primaire)')}</div>`;
       el.querySelector('#imprimer').disabled = el.querySelector('#pdf').disabled = !d.nb;
-      el.querySelector('#liste').innerHTML = `<div class="carte"><h2>Aperçu</h2>${tableau([
-        { titre: 'Élève', rendu: (x) => `<a href="#/eleves/${x.eleve_id}">${e(x.prenom)} ${e(x.nom)}</a>` },
-        { titre: 'Classe', rendu: (x) => e(x.classe) },
-        { titre: `Mensualité ${e(nomMois(d.mois).split(' ')[0])}`, classe: 'num', rendu: (x) => argent(Math.max(0, x.du - x.verse)) },
-        { titre: 'Mois précédents', classe: 'num', rendu: (x) => (x.total_arrieres ? argent(x.total_arrieres) : '—') },
-        { titre: 'Reliquat, fournitures, uniforme, blouson', classe: 'num', rendu: (x) => (x.total_autres ? argent(x.total_autres) : '—') },
-        { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>${x.modifiee ? '<div><span class="badge info">✏️ modifiée</span></div>' : ''}` },
-        { titre: '', rendu: (x) => `<div class="ligne" style="flex-wrap:nowrap;gap:.3rem">
-            <button class="btn petit clair" data-modif="${x.eleve_id}" title="Modifier la facture de cet élève">✏️ Modifier</button>
-            <button class="btn petit clair" data-impr="${x.eleve_id}" title="Imprimer la facture de cet élève">🖨️</button></div>` },
-      ], d.liste, { vide: 'Aucune facture pour ces critères.' })}</div>`;
-      const mois = lire().mois;
-      el.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
-      el.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer('/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_id: b.dataset.impr })); });
+      derniere = d;
+      rendreListe();
     } catch (err) { erreur(err); }
   };
 
+  el.querySelector('#q').oninput = rendreListe;
   el.querySelector('#imprimer').onclick = () => imprimer(chemin());
   el.querySelector('#pdf').onclick = () => ouvrir(chemin());
   ['#classe', '#qui'].forEach((s) => { el.querySelector(s).onchange = charger; });
