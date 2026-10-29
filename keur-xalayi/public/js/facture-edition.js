@@ -6,15 +6,18 @@ import { get, put, del, e, qs, argent, nomMois, modale, confirmer, toast, erreur
 /**
  * Ouvre l'éditeur. `moisListe` (facultatif) : mois proposés dans un sélecteur.
  * `apres()` est appelé après un enregistrement ou un rétablissement.
+ * `serie` ({ rang, total }) : élèves sélectionnés modifiés l'un après l'autre ;
+ * `auFermer()` est alors appelé à la fermeture, pour passer au suivant.
  */
-export async function modifierFacture({ eleveId, mois, moisListe, apres }) {
+export async function modifierFacture({ eleveId, mois, moisListe, apres, serie, auFermer }) {
   let d;
-  try { d = await get('/paiements/factures/edition' + qs({ mois, eleve_id: eleveId })); } catch (err) { erreur(err); return; }
+  try { d = await get('/paiements/factures/edition' + qs({ mois, eleve_id: eleveId })); } catch (err) { erreur(err); if (auFermer) auFermer(); return; }
+  let changeDeMois = false; // la fenêtre est rouverte sur un autre mois : la série continue dans la nouvelle
   // Lignes de travail : celles déjà modifiées, sinon celles calculées
   let lignes = (d.modifiee ? d.modifiee.lignes : d.auto).map((l) => ({ ...l }));
   const auto = new Map(d.auto.map((l) => [l.cle, l]));
 
-  const m = modale(`🧾 Facture ${nomMois(d.mois)} — ${d.prenom} ${d.nom}`, `
+  const m = modale(`${serie ? `(${serie.rang}/${serie.total}) ` : ''}🧾 Facture ${nomMois(d.mois)} — ${d.prenom} ${d.nom}`, `
     ${moisListe ? `<div class="ligne" style="margin-bottom:.6rem"><label class="gras">Mois</label>
       <select id="fe-mois" style="max-width:220px">${options(moisListe.map((x) => [x, nomMois(x)]), d.mois)}</select></div>` : ''}
     ${d.modifiee ? `<div class="alerte info" style="margin-bottom:.6rem">✏️ <div>Facture déjà modifiée${d.modifiee.par ? ` par ${e(d.modifiee.par)}` : ''}${d.modifiee.motif ? ` — motif : <b>${e(d.modifiee.motif)}</b>` : ''}.</div></div>` : ''}
@@ -33,10 +36,13 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres }) {
     <label style="margin-top:.6rem;display:block">Note imprimée sur la facture <span class="petit muted">(facultatif)</span>
       <input id="fe-note" maxlength="200" value="${e(d.modifiee ? d.modifiee.note || '' : '')}" placeholder="Ex. Le parent paiera en deux fois."></label>`, {
     large: true,
+    auFermer: () => { if (!changeDeMois && auFermer) auFermer(); },
     actions: `${d.modifiee ? '<button class="btn clair" data-retablir style="margin-right:auto">↩️ Rétablir la facture d\'origine</button>' : ''}
-      <button class="btn clair" data-annuler>Annuler</button>
+      ${serie ? `<button class="btn clair" data-annuler>${serie.rang < serie.total ? '⏭️ Passer' : 'Fermer'}</button>
+      <button class="btn" data-ok>💾 Enregistrer${serie.rang < serie.total ? ' et continuer' : ''}</button>`
+    : `<button class="btn clair" data-annuler>Annuler</button>
       <button class="btn clair" data-ok>💾 Enregistrer</button>
-      <button class="btn" data-imprimer>🖨️ Enregistrer et imprimer</button>`,
+      <button class="btn" data-imprimer>🖨️ Enregistrer et imprimer</button>`}`,
   });
   const $ = (s) => m.el.querySelector(s);
   const corps = $('#fe-table tbody');
@@ -78,7 +84,10 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres }) {
 
   $('#fe-ajout').onclick = () => { lignes.push({ cle: null, libelle: '', montant: 0, verse: 0 }); afficher(); corps.querySelector('tr:last-child input').focus(); };
   if ($('#fe-mois')) {
-    $('#fe-mois').onchange = () => { m.fermer(); modifierFacture({ eleveId, mois: $('#fe-mois').value, moisListe, apres }); };
+    $('#fe-mois').onchange = () => {
+      changeDeMois = true; m.fermer();
+      modifierFacture({ eleveId, mois: $('#fe-mois').value, moisListe, apres, serie, auFermer });
+    };
   }
   $('[data-annuler]').onclick = m.fermer;
 
@@ -101,7 +110,7 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres }) {
     } catch (err) { erreur(err); btns.forEach((b) => { b.disabled = false; }); }
   };
   $('[data-ok]').onclick = () => enregistrer(false);
-  $('[data-imprimer]').onclick = () => enregistrer(true);
+  if ($('[data-imprimer]')) $('[data-imprimer]').onclick = () => enregistrer(true);
   if ($('[data-retablir]')) {
     $('[data-retablir]').onclick = async () => {
       if (!await confirmer('Revenir à la facture calculée automatiquement (vos modifications pour ce mois seront effacées) ?', { ok: 'Rétablir' })) return;
