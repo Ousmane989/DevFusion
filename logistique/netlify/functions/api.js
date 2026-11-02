@@ -9,4 +9,5 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 const serverless = require('serverless-http');
 const app = require('../../app/src/livreur/app');
 
-exports.handler = serverless(app);
+// Images et polices renvoyées en binaire (sinon elles arrivent abîmées).
+exports.handler = serverless(app, { binary: ['image/*', 'font/*', 'application/octet-stream'] });
