@@ -39,7 +39,7 @@ window.LV = (function () {
 
   // Logo : camion stylisé + barre rouge (couleurs du drapeau).
   function brand(sub) {
-    return '<a href="/livreur" class="brand"><span class="brand-mark">' + icon('truck') + '</span><span><span class="brand-name">Karat <b>Logistique</b></span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
+    return '<a href="/livreur" class="brand"><span class="brand-mark"><img src="/livreur/img/icon.png" alt="" /></span><span><span class="brand-name">Karat <b>Logistique</b></span><small>' + (sub || 'Livraison · Mauritanie') + '</small></span></a>';
   }
 
   // ----- Carte de la Mauritanie (SVG, projection équirectangulaire) -----
@@ -85,7 +85,7 @@ window.LV = (function () {
         '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5.5"/><text x="' + (p[0] + (left ? -10 : 10)) + '" y="' + (p[1] + 4) + '"' + (left ? ' text-anchor="end"' : '') + '>' + esc(z.name) + '</text></g>';
     });
     return '<svg class="mr-map" viewBox="-6 -6 ' + (W + 12) + ' ' + (H + 12) + '" role="img" aria-label="Carte de la Mauritanie : agence à Nouakchott et villes desservies">' +
-      '<defs><linearGradient id="mrLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14905b"/><stop offset="1" stop-color="#0a5a39"/></linearGradient>' +
+      '<defs><linearGradient id="mrLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1f7a"/><stop offset="1" stop-color="#140b40"/></linearGradient>' +
       '<clipPath id="mrClip"><path d="' + d + '"/></clipPath></defs>' + grid +
       '<path class="land" d="' + d + '"/>' +
       '<g clip-path="url(#mrClip)" opacity=".12"><path d="M0 ' + H * 0.35 + ' Q' + W * 0.5 + ' ' + H * 0.25 + ' ' + W + ' ' + H * 0.4 + '" stroke="#ffffff" stroke-width="40" fill="none"/></g>' +
@@ -247,7 +247,7 @@ window.LV = (function () {
     const f = document.getElementById('lv-footer');
     if (f) {
       f.outerHTML = '<div class="flag-stripe"></div><footer class="site-footer"><div class="container"><div class="footer-grid">' +
-        '<div>' + brand() + '<p style="margin-top:16px;max-width:340px;font-size:14.5px">L\'agence de livraison des e-commerçants, basée à Nouakchott : stockage, confirmation, livraison dans toutes les wilayas, encaissement et reversement.</p>' +
+        '<div><a href="/livreur" class="footer-logo"><img class="logo-light" src="/livreur/img/logo.png" alt="Karat Logistique" /><img class="logo-dark" src="/livreur/img/logo-dark.png" alt="Karat Logistique" /></a><p style="margin-top:16px;max-width:340px;font-size:14.5px">L\'agence de livraison des e-commerçants, basée à Nouakchott : stockage, confirmation, livraison dans toutes les wilayas, encaissement et reversement.</p>' +
         '<div class="footer-pay"><span>Espèces</span><span>Bankily</span><span>Masrvi</span><span>Sedad</span></div></div>' +
         '<div><h4>Services</h4><ul><li><a href="/livreur#services">Stockage & préparation</a></li><li><a href="/livreur#services">Confirmation des commandes</a></li><li><a href="/livreur#services">Livraison partout</a></li><li><a href="/livreur#services">Encaissement & reversement</a></li></ul></div>' +
         '<div><h4>Partenaires</h4><ul><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +

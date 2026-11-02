@@ -24,7 +24,7 @@
   function apply(t) {
     root.setAttribute('data-theme', t);
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#0a120e' : '#ffffff');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#0b0820' : '#ffffff');
     var label = t === 'dark' ? 'Passer en mode jour' : 'Passer en mode nuit';
     var btns = document.querySelectorAll('[data-theme-toggle]');
     for (var i = 0; i < btns.length; i++) {
