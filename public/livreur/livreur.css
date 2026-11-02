@@ -261,7 +261,7 @@ section, .site-footer { overflow-x: clip; }
 .section-head.left { margin-left: 0; text-align: left; }
 .section-head h2 { font-size: clamp(30px, 4.2vw, 46px); margin-bottom: 16px; }
 .section-head p { color: var(--text-dim); font-size: 17.5px; }
-.hl { color: var(--brand-2); background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--brand)); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 6s linear infinite; }
+.hl { color: var(--accent); background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 35%, #ffc08a 50%, var(--accent) 65%, var(--accent) 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 6s linear infinite; }
 
 /* ---------------- Héro ---------------- */
 .hero { padding: 76px 0 170px; overflow: hidden; background: var(--surface); }
@@ -483,8 +483,8 @@ section, .site-footer { overflow-x: clip; }
 .phone::before { content: ''; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: 70px; height: 18px; border-radius: 12px; background: #0d0a24; z-index: 2; }
 .phone-screen { background: var(--bg); border-radius: 26px; overflow: hidden; padding: 40px 12px 16px; color: var(--text); display: grid; gap: 8px; }
 .phone-screen .ph-title { font-family: var(--head); font-weight: 700; font-size: 14px; padding: 0 4px 4px; }
-.ph-card { background: var(--surface); border-radius: 12px; padding: 10px; font-size: 11.5px; box-shadow: var(--shadow-sm); display: grid; gap: 3px; animation: phCard 6s var(--ease) infinite; }
-.ph-card:nth-of-type(2) { animation-delay: .25s; }
+.ph-card { background: var(--surface); border-radius: 12px; padding: 10px; font-size: 11.5px; box-shadow: var(--shadow-sm); display: grid; gap: 3px; animation: phCard 9s var(--ease) infinite; }
+.ph-card:nth-of-type(2) { animation-delay: .25s; } .ph-card:nth-of-type(3) { animation-delay: .5s; } .ph-card:nth-of-type(4) { animation-delay: .75s; }
 .ph-btn { animation: pulseBtn 2s ease-in-out infinite; }
 .ph-card b { font-family: var(--head); font-size: 12px; }
 .ph-card .ph-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
@@ -596,7 +596,7 @@ tr.clickable { cursor: pointer; }
 .price-band::after { background: var(--accent-soft); }
 .price-main { max-width: 520px; }
 .price-big { font-family: var(--head); font-weight: 800; color: var(--ink); line-height: 1; margin: 6px 0 14px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.price-big > span { font-size: clamp(46px, 7vw, 76px); background: linear-gradient(90deg, var(--brand), var(--brand-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.price-big > span { font-size: clamp(46px, 7vw, 76px); background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 35%, #ffc08a 50%, var(--accent) 65%, var(--accent) 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 5s linear infinite; }
 .price-big small { font-family: var(--sans); font-size: 18px; font-weight: 600; color: var(--text-dim); }
 .price-checks { margin-top: 0 !important; max-width: 440px; font-size: 15.5px !important; }
 @media (max-width: 860px) { .price-band { flex-direction: column; align-items: flex-start; } }
@@ -726,11 +726,17 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 /* Intro : un camion traverse l'écran à l'ouverture de l'accueil. */
 body.lv-intro::before { content: ''; position: fixed; inset: 0; background: var(--surface); z-index: 9998; animation: introOut .55s ease 1.25s forwards; }
 body.lv-intro::after {
-  content: ''; position: fixed; left: 50%; top: 50%; width: 150px; height: 80px; margin: -40px 0 0 -75px; z-index: 9999;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 80'%3E%3Crect x='4' y='14' width='86' height='44' rx='8' fill='%230b6b43'/%3E%3Crect x='4' y='52' width='86' height='6' fill='%23d21034'/%3E%3Cpath d='M90 26h26l18 18v14H90z' fill='%2310935c'/%3E%3Cpath d='M98 31h15l11 12H98z' fill='%23e7f4ec'/%3E%3Ctext x='47' y='42' font-family='Arial' font-weight='900' font-size='15' fill='%23ffc21a' text-anchor='middle'%3EKARAT%3C/text%3E%3Ccircle cx='28' cy='62' r='10' fill='%23063b26'/%3E%3Ccircle cx='28' cy='62' r='4' fill='%23ffc21a'/%3E%3Ccircle cx='112' cy='62' r='10' fill='%23063b26'/%3E%3Ccircle cx='112' cy='62' r='4' fill='%23ffc21a'/%3E%3C/svg%3E") center / contain no-repeat;
-  animation: introTruck 1.4s cubic-bezier(.6,0,.4,1) forwards;
+  content: ''; position: fixed; left: 50%; top: 50%; width: 300px; height: 150px; margin: -75px 0 0 -150px; z-index: 9999;
+  background: url('/livreur/img/logo-h.png?v=2') center / contain no-repeat;
+  animation: introTruck 1.5s cubic-bezier(.6,0,.4,1) forwards;
 }
-@keyframes introTruck { 0% { transform: translateX(-70vw); } 45%, 55% { transform: translateX(0); } 100% { transform: translateX(70vw); opacity: 0; visibility: hidden; } }
+:root[data-theme="dark"] body.lv-intro::after { background-image: url('/livreur/img/logo-h-dark.png?v=2'); }
+@keyframes introTruck {
+  0% { transform: translateX(-80vw) skewX(-12deg); }
+  40% { transform: translateX(14px) skewX(4deg); }
+  48%, 58% { transform: translateX(0) scale(1.04); }
+  100% { transform: translateX(80vw) skewX(-12deg); opacity: 0; visibility: hidden; }
+}
 @keyframes introOut { to { opacity: 0; visibility: hidden; } }
 
 /* Barre de progression de lecture + bouton retour en haut */
@@ -826,7 +832,7 @@ body.leaving { animation: leave .28s ease forwards; }
 @keyframes fillIn { to { fill-opacity: 1; } }
 @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
 @keyframes phoneUp { from { transform: translateY(80px) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes phCard { 0%, 8% { transform: translateX(110%); opacity: 0; } 16%, 88% { transform: none; opacity: 1; } 96%, 100% { transform: translateX(-110%); opacity: 0; } }
+@keyframes phCard { 0%, 3% { transform: translateX(110%); opacity: 0; } 9%, 93% { transform: none; opacity: 1; } 98%, 100% { transform: translateX(-110%); opacity: 0; } }
 @keyframes pulseBtn { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 @keyframes barFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes shakeIn { 0% { opacity: 0; transform: translateX(-10px); } 40% { transform: translateX(8px); } 70% { transform: translateX(-4px); } 100% { opacity: 1; transform: none; } }
@@ -834,6 +840,48 @@ body.leaving { animation: leave .28s ease forwards; }
 @keyframes leave { to { opacity: 0; transform: translateY(-8px); } }
 @keyframes spinAng { to { --ang: 360deg; } }
 @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+
+/* ==================================================================
+   ANIMATIONS SUPPLÉMENTAIRES (aux couleurs du logo)
+   ================================================================== */
+/* Logo : arrive en roulant, petit rebond au survol, flotte en pied de page. */
+.site-header .brand-logo img { animation: logoIn .9s var(--ease) .15s backwards; transform-origin: 30% 80%; }
+.site-header .brand-logo:hover img { animation: logoBump .6s var(--ease); }
+.sidebar .brand-logo img { animation: logoIn .9s var(--ease) backwards; }
+.footer-logo img { animation: floaty 5s ease-in-out infinite; }
+@keyframes logoIn { from { opacity: 0; transform: translateX(-60px) skewX(-14deg); } 70% { transform: translateX(4px) skewX(3deg); } to { opacity: 1; transform: none; } }
+@keyframes logoBump { 0%, 100% { transform: none; } 30% { transform: translateX(6px) rotate(-3deg); } 60% { transform: translateX(-3px) rotate(1deg); } }
+
+/* Traînées de vitesse orange (comme sur le logo) derrière le titre de l'accueil. */
+.speed-lines { position: absolute; left: 0; top: 150px; width: 46%; height: 260px; pointer-events: none; z-index: 0; }
+.speed-lines i { position: absolute; left: -10%; height: 10px; border-radius: 10px; background: linear-gradient(90deg, transparent, var(--accent)); opacity: 0; animation: streak 2.8s cubic-bezier(.4,0,.2,1) infinite; }
+.speed-lines i:nth-child(1) { top: 10%; width: 46%; animation-delay: .2s; }
+.speed-lines i:nth-child(2) { top: 34%; width: 62%; animation-delay: .9s; height: 8px; }
+.speed-lines i:nth-child(3) { top: 58%; width: 38%; animation-delay: 1.5s; }
+.speed-lines i:nth-child(4) { top: 82%; width: 54%; animation-delay: 2.1s; height: 6px; background: linear-gradient(90deg, transparent, var(--brand)); }
+@keyframes streak { 0% { transform: translateX(-40%); opacity: 0; } 25% { opacity: .22; } 70% { opacity: .1; } 100% { transform: translateX(120%); opacity: 0; } }
+.hero-grid { position: relative; z-index: 1; }
+
+/* Boutons principaux : reflet qui passe régulièrement. */
+.btn-primary::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-20deg); animation: shine 3.6s ease-in-out infinite; pointer-events: none; }
+@keyframes shine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+
+/* Icônes des cartes : apparition puis rebond au survol. */
+.card-ico, .stat .ic, .hero-proof .ic { transition: transform .35s var(--ease), background .3s, color .3s; }
+.card:hover .card-ico, .stat:hover .ic, .hero-proof div:hover .ic { transform: translateY(-4px) rotate(-6deg) scale(1.08); background: var(--accent); color: #fff; }
+.in .card-ico, .card.in .card-ico { animation: icoPop .6s var(--ease) .15s backwards; }
+@keyframes icoPop { from { transform: scale(.4) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Titres de section : le mot souligné se trace en orange. */
+.hl-under::after { transform-origin: left; animation: underline 1s var(--ease) .3s backwards; }
+@keyframes underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Espaces : chiffres clés qui apparaissent en cascade, barre du haut animée. */
+.kpi strong { animation: kpiIn .7s var(--ease) backwards; }
+.kpi:nth-child(2) strong { animation-delay: .08s; } .kpi:nth-child(3) strong { animation-delay: .16s; } .kpi:nth-child(4) strong { animation-delay: .24s; }
+@keyframes kpiIn { from { opacity: 0; transform: translateY(14px) scale(.9); } to { opacity: 1; transform: none; } }
+.topbar::after { content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 30%; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: scan 3.5s ease-in-out infinite; }
+@keyframes scan { 0% { left: -30%; } 100% { left: 100%; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
