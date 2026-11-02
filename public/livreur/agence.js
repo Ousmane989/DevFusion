@@ -327,9 +327,10 @@
       const r = await api('/agency/stock');
       const rows = r.data.stock || [];
       document.getElementById('a-stock').innerHTML = rows.length
-        ? '<table><thead><tr><th>Partenaire</th><th>Article</th><th>Réf.</th><th>Emplacement</th><th class="num">Qté</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
+        ? '<table><thead><tr><th>Partenaire</th><th>Article</th><th>Réf.</th><th>Emplacement</th><th class="num">En stock</th><th class="num">Réservé</th><th class="num">Livré</th><th class="num">Disponible</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
           rows.map((s) => '<tr><td>' + esc(s.partner_name || '—') + '</td><td>' + esc(s.name) + '</td><td class="muted">' + esc(s.sku || '') + '</td><td class="muted">' + esc(s.location || '') + '</td>' +
-            '<td class="num"><b style="color:' + (s.qty <= 2 ? 'var(--danger)' : 'inherit') + '">' + s.qty + '</b></td><td class="muted">' + date(s.updated_at, true) + '</td>' +
+            '<td class="num">' + s.qty + '</td><td class="num">' + (s.reserved || 0) + '</td><td class="num">' + (s.delivered || 0) + '</td>' +
+            '<td class="num"><b style="color:' + (s.available <= 2 ? 'var(--danger)' : 'inherit') + '">' + s.available + '</b></td><td class="muted">' + date(s.updated_at, true) + '</td>' +
             '<td class="num"><button class="btn btn-ghost btn-sm" data-stock-add="' + s.id + '">+ / −</button> <button class="btn btn-danger btn-sm" data-stock-del="' + s.id + '">Suppr.</button></td></tr>').join('') + '</tbody></table>'
         : '<div class="empty">Aucun stock enregistré.</div>';
     },
@@ -603,6 +604,6 @@
     }
     last = d;
     const id = location.hash.slice(1) || 'dashboard';
-    if (!LV.modalOpen() && ['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch', 'partenaires'].includes(id)) refresh();
+    if (!LV.modalOpen() && ['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch', 'partenaires', 'stock'].includes(id)) refresh();
   }, 15000);
 })();

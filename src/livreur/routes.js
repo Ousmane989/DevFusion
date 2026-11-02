@@ -250,12 +250,15 @@ partner.get('/summary', wrap(async (req, res) => {
     if (String(o.created_at).startsWith(d)) todayCount++;
   }
   const paid = await db.prepare('SELECT COALESCE(SUM(amount), 0) AS s FROM lv_payouts WHERE partner_id = ?').get(id);
+  // Empreinte du stock : change à chaque saisie (partenaire ou agence) pour le temps réel.
+  const st = await db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(qty), 0) AS q, MAX(updated_at) AS u FROM lv_stock WHERE partner_id = ?').get(id);
   const delivered = by.livree || 0;
   const closed = delivered + (by.echec || 0) + (by.retournee || 0) + (by.annulee || 0);
   res.json({
     total: rows.length, today: todayCount, by, sales, pending_payout: pending, paid: Number(paid.s),
     rate: closed ? Math.round((delivered / closed) * 100) : null,
     in_progress: rows.length - closed - (by.reportee || 0),
+    stock_stamp: [st.n, st.q, st.u || ''].join('|'),
   });
 }));
 
@@ -304,8 +307,28 @@ partner.post('/orders/:id/cancel', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Mouvements de chaque article : quantités réservées par les commandes en cours
+// et quantités livrées. Le stock reste saisi à la main ; « disponible » =
+// quantité en stock − réservé.
+const ACTIVE = ['nouvelle', 'confirmee', 'assignee', 'recuperee', 'en_cours', 'reportee'];
+async function withMovements(items) {
+  if (!items.length) return items;
+  const rows = await db.prepare(`SELECT stock_id, status, SUM(stock_qty) AS q FROM lv_orders WHERE stock_id IN (${items.map(() => '?').join(',')}) GROUP BY stock_id, status`)
+    .all(...items.map((i) => i.id));
+  const mv = {};
+  for (const r of rows) {
+    const m = mv[r.stock_id] || (mv[r.stock_id] = { reserved: 0, delivered: 0 });
+    if (ACTIVE.includes(r.status)) m.reserved += Number(r.q) || 0;
+    else if (r.status === 'livree') m.delivered += Number(r.q) || 0;
+  }
+  return items.map((i) => {
+    const m = mv[i.id] || { reserved: 0, delivered: 0 };
+    return { ...i, reserved: m.reserved, delivered: m.delivered, available: Math.max(0, Number(i.qty) - m.reserved) };
+  });
+}
+
 partner.get('/stock', wrap(async (req, res) => {
-  res.json({ stock: await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(req.lv.id) });
+  res.json({ stock: await withMovements(await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(req.lv.id)) });
 }));
 
 // Stock saisi manuellement par le partenaire (l'agence peut aussi le corriger).
@@ -547,7 +570,7 @@ agency.put('/users/:id', wrap(async (req, res) => {
 
 // --- Stock déposé par les partenaires ---
 agency.get('/stock', wrap(async (_req, res) => {
-  res.json({ stock: await db.prepare('SELECT s.*, u.business_name AS partner_name FROM lv_stock s LEFT JOIN lv_users u ON u.id = s.partner_id ORDER BY u.business_name, s.name').all() });
+  res.json({ stock: await withMovements(await db.prepare('SELECT s.*, u.business_name AS partner_name FROM lv_stock s LEFT JOIN lv_users u ON u.id = s.partner_id ORDER BY u.business_name, s.name').all()) });
 }));
 agency.post('/stock', wrap(async (req, res) => {
   const b = req.body || {};
