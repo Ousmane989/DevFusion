@@ -21,6 +21,19 @@
   setupNewForm();
   setupProfile();
 
+  // Suivi de chaque produit : en stock (saisi), réservé par les commandes en
+  // cours, livré, et disponible. Mis à jour en temps réel.
+  function stockTable(rows, compact) {
+    if (!rows.length) return '<div class="empty">Aucun article. ' + (compact ? 'Ajoutez vos produits dans « Mon stock ».' : 'Cliquez sur « Ajouter un article » pour saisir votre stock.') + '</div>';
+    return '<table><thead><tr><th>Produit</th>' + (compact ? '' : '<th>Référence</th>') + '<th class="num">En stock</th><th class="num">Réservé</th><th class="num">Livré</th><th class="num">Disponible</th>' +
+      (compact ? '' : '<th>Mis à jour</th><th></th>') + '</tr></thead><tbody>' +
+      rows.map((s) => '<tr><td><b>' + esc(s.name) + '</b></td>' + (compact ? '' : '<td class="muted">' + esc(s.sku || '—') + '</td>') +
+        '<td class="num">' + s.qty + '</td><td class="num">' + (s.reserved || 0) + '</td><td class="num">' + (s.delivered || 0) + '</td>' +
+        '<td class="num"><b style="color:' + (s.available <= 2 ? 'var(--danger)' : 'var(--brand)') + '">' + s.available + '</b></td>' +
+        (compact ? '' : '<td class="muted">' + date(s.updated_at, true) + '</td><td class="num"><button class="btn btn-ghost btn-sm" data-stock-qty="' + s.id + '" data-qty="' + s.qty + '">Modifier</button></td>') +
+        '</tr>').join('') + '</tbody></table>';
+  }
+
   function ordersTable(rows) {
     if (!rows.length) return '<div class="empty">Aucune commande pour le moment.</div>';
     return '<table><thead><tr><th>Code</th><th>Client</th><th>Zone</th><th>Statut</th><th class="num">À encaisser</th><th>Date</th></tr></thead><tbody>' +
@@ -63,7 +76,8 @@
 
   const VIEWS = {
     async dashboard() {
-      const [s, o] = await Promise.all([api('/partner/summary'), api('/partner/orders')]);
+      const [s, o, st] = await Promise.all([api('/partner/summary'), api('/partner/orders'), api('/partner/stock')]);
+      document.getElementById('p-dash-stock').innerHTML = stockTable(st.data.stock || [], true);
       const d = s.data;
       document.getElementById('p-kpis').innerHTML =
         kpi('Commandes', d.total, d.today + ' aujourd\'hui') +
@@ -88,12 +102,7 @@
     },
     async stock() {
       const r = await api('/partner/stock');
-      const rows = r.data.stock || [];
-      document.getElementById('p-stock').innerHTML = rows.length
-        ? '<table><thead><tr><th>Article</th><th>Référence</th><th>Emplacement</th><th class="num">Quantité</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
-          rows.map((s) => '<tr><td>' + esc(s.name) + '</td><td class="muted">' + esc(s.sku || '—') + '</td><td class="muted">' + esc(s.location || '—') + '</td><td class="num"><b style="color:' + (s.qty <= 2 ? 'var(--danger)' : 'inherit') + '">' + s.qty + '</b></td><td class="muted">' + date(s.updated_at, true) + '</td>' +
-            '<td class="num"><button class="btn btn-ghost btn-sm" data-stock-qty="' + s.id + '" data-qty="' + s.qty + '">Modifier</button></td></tr>').join('') + '</tbody></table>'
-        : '<div class="empty">Aucun article. Cliquez sur « Ajouter un article » pour saisir votre stock.</div>';
+      document.getElementById('p-stock').innerHTML = stockTable(r.data.stock || [], false);
     },
     async reversements() {
       const [s, p] = await Promise.all([api('/partner/summary'), api('/partner/payouts')]);
@@ -191,11 +200,13 @@
   LV.live(async () => {
     const r = await api('/partner/summary');
     if (!r.ok) return;
-    const next = JSON.stringify([r.data.total, r.data.by, r.data.pending_payout]);
+    const next = JSON.stringify([r.data.total, r.data.by, r.data.pending_payout, r.data.stock_stamp]);
     if (stamp && next !== stamp) {
-      LV.notify(r.data.total > JSON.parse(stamp)[0] ? 'Nouvelle commande reçue' : 'Vos commandes ont été mises à jour');
+      const prev = JSON.parse(stamp);
+      LV.notify(r.data.total > prev[0] ? 'Nouvelle commande reçue'
+        : (r.data.stock_stamp !== prev[3] && JSON.stringify(r.data.by) === JSON.stringify(prev[1]) ? 'Votre stock a été mis à jour' : 'Vos commandes ont été mises à jour'));
       const id = location.hash.slice(1) || 'dashboard';
-      if (!LV.modalOpen() && ['dashboard', 'commandes', 'reversements'].includes(id)) VIEWS[id]();
+      if (!LV.modalOpen() && ['dashboard', 'commandes', 'stock', 'reversements'].includes(id)) VIEWS[id]();
     }
     stamp = next;
   }, 15000);
