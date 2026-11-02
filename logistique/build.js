@@ -13,11 +13,17 @@ const OUT = path.join(__dirname, 'app');
 // Déploiement depuis un dossier déjà préparé (sans le reste du dépôt) : rien à copier.
 if (!fs.existsSync(path.join(ROOT, 'src', 'livreur')) && fs.existsSync(path.join(OUT, 'src'))) {
   console.log('Karat Logistique : dossier app/ déjà prêt.');
-  process.exit(0);
+} else {
+  fs.rmSync(OUT, { recursive: true, force: true });
+  fs.cpSync(path.join(ROOT, 'src'), path.join(OUT, 'src'), { recursive: true });
+  fs.cpSync(path.join(ROOT, 'public', 'livreur'), path.join(OUT, 'public', 'livreur'), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'public', 'favicon.svg'), path.join(OUT, 'public', 'favicon.svg'));
+  console.log('Karat Logistique : fichiers copiés dans', path.relative(ROOT, OUT));
 }
 
-fs.rmSync(OUT, { recursive: true, force: true });
-fs.cpSync(path.join(ROOT, 'src'), path.join(OUT, 'src'), { recursive: true });
-fs.cpSync(path.join(ROOT, 'public', 'livreur'), path.join(OUT, 'public', 'livreur'), { recursive: true });
-fs.copyFileSync(path.join(ROOT, 'public', 'favicon.svg'), path.join(OUT, 'public', 'favicon.svg'));
-console.log('Karat Logistique : fichiers copiés dans', path.relative(ROOT, OUT));
+// Fichiers statiques (images, styles, scripts) servis directement par le CDN
+// de Netlify, sans passer par la fonction ; les pages HTML restent servies par
+// l'application (redirection vers la connexion pour les espaces protégés).
+const STATIC = path.join(__dirname, 'public', 'livreur');
+fs.rmSync(STATIC, { recursive: true, force: true });
+fs.cpSync(path.join(OUT, 'public', 'livreur'), STATIC, { recursive: true, filter: (f) => !f.endsWith('.html') });
