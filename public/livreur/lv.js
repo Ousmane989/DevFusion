@@ -40,8 +40,8 @@ window.LV = (function () {
   // Logo officiel Karat Logistique (version claire / version nuit) ; « sub »
   // nomme l'espace sous le logo dans le menu des espaces.
   function brand(sub) {
-    return '<a href="/livreur" class="brand brand-logo"><img class="logo-light" src="/livreur/img/logo-h.png" alt="Karat Logistique" />' +
-      '<img class="logo-dark" src="/livreur/img/logo-h-dark.png" alt="Karat Logistique" />' + (sub ? '<small>' + sub + '</small>' : '') + '</a>';
+    return '<a href="/livreur" class="brand brand-logo"><img class="logo-light" src="/livreur/img/logo-h.png?v=2" alt="Karat Logistique" />' +
+      '<img class="logo-dark" src="/livreur/img/logo-h-dark.png?v=2" alt="Karat Logistique" />' + (sub ? '<small>' + sub + '</small>' : '') + '</a>';
   }
 
   // ----- Carte de la Mauritanie (SVG, projection équirectangulaire) -----
@@ -249,7 +249,7 @@ window.LV = (function () {
     const f = document.getElementById('lv-footer');
     if (f) {
       f.outerHTML = '<div class="flag-stripe"></div><footer class="site-footer"><div class="container"><div class="footer-grid">' +
-        '<div><a href="/livreur" class="footer-logo"><img class="logo-light" src="/livreur/img/logo.png" alt="Karat Logistique" /><img class="logo-dark" src="/livreur/img/logo-dark.png" alt="Karat Logistique" /></a><p style="margin-top:16px;max-width:340px;font-size:14.5px">L\'agence de livraison des e-commerçants, basée à Nouakchott : stockage, confirmation, livraison dans toutes les wilayas, encaissement et reversement.</p>' +
+        '<div><a href="/livreur" class="footer-logo"><img class="logo-light" src="/livreur/img/logo.png?v=2" alt="Karat Logistique" /><img class="logo-dark" src="/livreur/img/logo-dark.png?v=2" alt="Karat Logistique" /></a><p style="margin-top:16px;max-width:340px;font-size:14.5px">L\'agence de livraison des e-commerçants, basée à Nouakchott : stockage, confirmation, livraison dans toutes les wilayas, encaissement et reversement.</p>' +
         '<div class="footer-pay"><span>Espèces</span><span>Bankily</span><span>Masrvi</span><span>Sedad</span></div></div>' +
         '<div><h4>Services</h4><ul><li><a href="/livreur#services">Stockage & préparation</a></li><li><a href="/livreur#services">Confirmation des commandes</a></li><li><a href="/livreur#services">Livraison partout</a></li><li><a href="/livreur#services">Encaissement & reversement</a></li></ul></div>' +
         '<div><h4>Partenaires</h4><ul><li><a href="/livreur/inscription">Devenir partenaire</a></li><li><a href="/livreur/partenaire">Espace partenaire</a></li><li><a href="/livreur/suivi">Suivre un colis</a></li><li><a href="/livreur#faq">FAQ</a></li></ul></div>' +
