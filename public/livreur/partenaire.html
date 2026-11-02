@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/favicon.svg" />
-  <script src="/livreur/theme.js?v=20261024a"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261024a" />
+  <script src="/livreur/theme.js?v=20261102a"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261102a" />
 </head>
 <body>
   <div class="app">
@@ -26,6 +26,10 @@
           <div class="panel flush">
             <div class="panel-head"><h2>Dernières commandes</h2><div class="actions"><button class="btn btn-ghost btn-sm" data-goto="commandes">Tout voir</button></div></div>
             <div class="table-wrap" id="p-recent"></div>
+          </div>
+          <div class="panel flush">
+            <div class="panel-head"><h2>Mon stock en direct</h2><div class="actions"><span class="live-badge"><i></i>En direct</span><button class="btn btn-ghost btn-sm" data-goto="stock">Gérer</button></div></div>
+            <div class="table-wrap" id="p-dash-stock"></div>
           </div>
         </div>
 
@@ -82,7 +86,7 @@
         <!-- Stock -->
         <div data-view="stock" class="hidden">
           <div class="panel">
-            <div class="panel-head"><p class="dim" style="margin:0">Votre stock est saisi à la main, par vous ou par l'agence. Il n'est jamais décompté automatiquement : mettez la quantité à jour après vos ventes.</p><div class="actions"><button class="btn btn-primary btn-sm" id="p-new-stock">+ Ajouter un article</button></div></div>
+            <div class="panel-head"><p class="dim" style="margin:0">Suivez chaque produit en direct : <b>En stock</b> est saisi à la main (par vous ou par l'agence), <b>Réservé</b> correspond à vos commandes en cours, <b>Livré</b> au total livré, et <b>Disponible</b> à ce qu'il vous reste à vendre.</p><div class="actions"><button class="btn btn-primary btn-sm" id="p-new-stock">+ Ajouter un article</button></div></div>
             <div class="table-wrap" id="p-stock"></div>
           </div>
         </div>
@@ -120,8 +124,8 @@
       </div>
     </div>
   </div>
-  <script src="/livreur/lv.js?v=20261024a"></script>
-  <script src="/livreur/anim.js?v=20261024a"></script>
-  <script src="/livreur/partenaire.js?v=20261024a"></script>
+  <script src="/livreur/lv.js?v=20261102a"></script>
+  <script src="/livreur/anim.js?v=20261102a"></script>
+  <script src="/livreur/partenaire.js?v=20261102a"></script>
 </body>
 </html>
