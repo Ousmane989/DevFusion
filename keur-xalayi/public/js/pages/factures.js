@@ -134,8 +134,8 @@ export async function afficher(el, params) {
   const charger = async () => {
     const m = el.querySelector('#mois').value;
     el.querySelector('#passe').innerHTML = m < moisCourant()
-      ? `<div class="alerte info">⏰ <div><b>Mois passé (${e(nomMois(m))})</b> : pour les élèves en retard. Les factures portent la mention
-          « <b>EN RETARD</b> » avec la prochaine date limite. Les mois suivants encore impayés ne sont pas repris :
+      ? `<div class="alerte info">⏰ <div><b>Mois passé (${e(nomMois(m))})</b> : pour les élèves en retard. Une fois sa date limite dépassée
+          (le 05 du mois suivant), la facture porte la mention « <b>EN RETARD</b> » avec la prochaine date limite. Les mois suivants encore impayés ne sont pas repris :
           pour tout réclamer en une seule facture, choisissez plutôt le mois en cours (il reprend les mois précédents impayés).</div></div>` : '';
     try {
       const d = await get('/paiements/factures' + qs(lire()));
