@@ -69,7 +69,9 @@ test('inscription d\'un élève avec matricule automatique et contrôle du Whats
   assert.strictEqual(mauvais.statut, 400);
   const r = await appel('dir', '/api/eleves', {
     methode: 'POST',
-    corps: { nom: 'Test', prenom: 'Élève', sexe: 'F', whatsapp: '77 123 45 67', classe_id: classe.id, reduction: 500, reduction_motif: 'Fratrie' },
+    // Inscrit au début de l'année scolaire : tous les mois le concernent, quel que soit le jour où les tests tournent
+    corps: { nom: 'Test', prenom: 'Élève', sexe: 'F', whatsapp: '77 123 45 67', classe_id: classe.id, reduction: 500, reduction_motif: 'Fratrie',
+      date_inscription: (await appel('dir', '/api/paiements/mois')).donnees.mois[0] },
   });
   assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
   assert.match(r.donnees.matricule, /^KX\d{2}-\d{4}$/);
@@ -123,6 +125,17 @@ test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async 
   const wa = await appel('dir', `/api/paiements/recu/${r.donnees.numero_recu}/whatsapp`, { methode: 'POST', corps: {} });
   assert.strictEqual(wa.statut, 200);
   assert.match(wa.donnees.lien, /^https:\/\/wa\.me\/221771234567\?text=/);
+});
+
+test('journal des paiements : recherche par prénom puis nom, sans accents', async () => {
+  const tous = (await appel('dir', '/api/paiements')).donnees.paiements;
+  assert.ok(tous.length > 0);
+  const x = tous[0];
+  const sansAcc = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  for (const q of [`${x.prenom} ${x.nom}`, `${x.nom} ${x.prenom}`, sansAcc(`${x.prenom} ${x.nom}`).toUpperCase(), x.matricule, x.numero_recu]) {
+    const r = (await appel('dir', '/api/paiements?q=' + encodeURIComponent(q))).donnees.paiements;
+    assert.ok(r.some((p) => p.id === x.id), `recherche « ${q} »`);
+  }
 });
 
 test('factures de mensualité du mois : aperçu, arriérés et PDF', async () => {
