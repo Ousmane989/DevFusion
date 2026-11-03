@@ -23,8 +23,13 @@ router.get('/', ah(async (req, res) => {
   if (type) { params.push(type); where.push(`p.type = $${params.length}`); }
   if (classe_id) { params.push(classe_id); where.push(`i.classe_id = $${params.length}`); }
   if (q) {
-    params.push(`%${String(q).toLowerCase()}%`);
-    where.push(`(lower(e.nom || ' ' || e.prenom) LIKE $${params.length} OR lower(e.matricule) LIKE $${params.length} OR lower(p.numero_recu) LIKE $${params.length})`);
+    // Nom et prénom dans les deux sens, matricule, n° de reçu, parents, téléphone ; sans tenir compte des accents
+    const sansAccent = (t) => `translate(lower(${t}), 'àâäáãçéèêëíìîïñóòôöõúùûüýÿ', 'aaaaaceeeeiiiinooooouuuuyy')`;
+    params.push(`%${String(q).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')}%`);
+    const k = `$${params.length}`;
+    where.push(`(${sansAccent("e.nom || ' ' || e.prenom")} LIKE ${k} OR ${sansAccent("e.prenom || ' ' || e.nom")} LIKE ${k}
+      OR lower(e.matricule) LIKE ${k} OR lower(p.numero_recu) LIKE ${k} OR COALESCE(e.whatsapp, '') LIKE ${k}
+      OR ${sansAccent("COALESCE(e.pere_nom,'') || ' ' || COALESCE(e.mere_nom,'') || ' ' || COALESCE(e.tuteur_nom,'')")} LIKE ${k})`);
   }
   const rows = await query(
     `SELECT p.*, e.id AS eleve_id, e.matricule, e.nom, e.prenom, c.nom AS classe, u.nom_complet AS encaisse_par_nom

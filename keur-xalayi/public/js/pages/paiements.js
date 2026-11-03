@@ -120,10 +120,11 @@ export async function afficher(el, params) {
 
     // ---- Journal ----
     async journal() {
-      const debutMois = aujourdhui().slice(0, 8) + '01';
+      // Par défaut : toute l'année scolaire (une recherche retrouve aussi les paiements des mois passés)
+      const debutAnnee = moisInfo.mois[0] || aujourdhui().slice(0, 8) + '01';
       zone.innerHTML = `<div class="filtres">
-          <input type="search" id="q" placeholder="🔍 Élève, matricule ou n° de reçu" class="recherche">
-          <input type="date" id="du" value="${debutMois}" title="Du"><input type="date" id="au" value="${aujourdhui()}" title="Au">
+          <input type="search" id="q" placeholder="🔍 Nom ou prénom de l'élève, parent, matricule ou n° de reçu" class="recherche">
+          <input type="date" id="du" value="${debutAnnee}" title="Du"><input type="date" id="au" value="${aujourdhui()}" title="Au">
           <select id="mode">${options(modesDuPays(), '', { vide: 'Tous les modes' })}</select>
           <select id="classe">${options(optClasses, '', { vide: 'Toutes les classes' })}</select>
         </div><div class="ligne" style="margin-bottom:.6rem"><b id="total"></b><span class="espace"></span><span id="exp"></span></div><div id="tab"></div>`;
