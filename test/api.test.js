@@ -267,9 +267,12 @@ test('rappel automatique : exécuté une seule fois par mois', async () => {
   assert.ok(rappels.dateLimite(mois, p) > jour);
   // Facture d'un mois passé (élève en retard) : prochaine date limite à venir
   const q = { date_limite_jour: 5 };
-  assert.deepStrictEqual(rappels.limiteFacture('2026-10-01', q, '2026-10-03'), { limite: '2026-10-05', enRetard: false });
-  assert.deepStrictEqual(rappels.limiteFacture('2026-10-01', q, '2026-11-02'), { limite: '2026-11-05', enRetard: true });
+  // La facture d'un mois se paie avant le 05 du mois suivant
+  assert.deepStrictEqual(rappels.limiteFacture('2026-10-01', q, '2026-10-03'), { limite: '2026-11-05', enRetard: false });
+  assert.deepStrictEqual(rappels.limiteFacture('2026-11-01', q, '2026-11-03'), { limite: '2026-12-05', enRetard: false });
+  assert.deepStrictEqual(rappels.limiteFacture('2026-10-01', q, '2026-11-05'), { limite: '2026-11-05', enRetard: false });
   assert.deepStrictEqual(rappels.limiteFacture('2026-10-01', q, '2026-11-20'), { limite: '2026-12-05', enRetard: true });
+  assert.deepStrictEqual(rappels.limiteFacture('2026-12-01', q, '2027-01-02'), { limite: '2027-01-05', enRetard: false });
   // Nettoyage : laisse le vrai rappel du mois se déclencher normalement.
   await query('DELETE FROM rappels_executions WHERE mois = $1', [mois]);
   await query("DELETE FROM messages WHERE mois = $1 AND envoye_par IS NULL", [mois]);
