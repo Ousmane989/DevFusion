@@ -3,7 +3,7 @@
 // Chaque facture : mensualité du mois, réduction, déjà versé, mois précédents
 // impayés et total à payer.
 import { get, e, qs, options, argent, nomMois, tableau, ouvrir, imprimer, moisCourant, kpi, erreur, confirmer } from '../ui.js';
-import { modifierFacture } from '../facture-edition.js';
+import { modifierFacture, envoyerFactures } from '../facture-edition.js';
 
 export async function afficher(el, params) {
   const [classes, moisInfo] = await Promise.all([get('/classes'), get('/paiements/mois')]);
@@ -38,6 +38,7 @@ export async function afficher(el, params) {
         <div style="flex:1;min-width:160px"><b id="nb-sel">0</b> élève(s) sélectionné(s)</div>
         <button class="btn petit" id="modif-sel">✏️ Modifier leurs factures (une par une)</button>
         <button class="btn petit clair" id="impr-sel">🖨️ Imprimer la sélection</button>
+        <button class="btn petit vert" id="wa-sel">📲 Envoyer aux parents</button>
         <button class="btn petit clair" id="desel">Tout désélectionner</button>
       </div>
       <div id="liste"></div>
@@ -97,11 +98,13 @@ export async function afficher(el, params) {
       { titre: 'Total à payer', classe: 'num', rendu: (x) => `<b>${argent(x.total)}</b>${x.modifiee ? '<div><span class="badge info">✏️ modifiée</span></div>' : ''}` },
       { titre: '', rendu: (x) => `<div class="ligne" style="flex-wrap:nowrap;gap:.3rem">
           <button class="btn petit clair" data-modif="${x.eleve_id}" title="Modifier la facture de cet élève">✏️ Modifier</button>
-          <button class="btn petit clair" data-impr="${x.eleve_id}" title="Imprimer la facture de cet élève">🖨️</button></div>` },
+          <button class="btn petit clair" data-impr="${x.eleve_id}" title="Imprimer la facture de cet élève">🖨️</button>
+          <button class="btn petit vert" data-wa="${x.eleve_id}" title="Envoyer la facture au parent par WhatsApp">📲</button></div>` },
     ], lignes, { vide: q ? 'Aucun élève ne correspond à la recherche.' : 'Aucune facture pour ces critères.' });
     const mois = lire().mois;
     zone.querySelectorAll('[data-modif]').forEach((b) => { b.onclick = () => modifierFacture({ eleveId: b.dataset.modif, mois, apres: charger }); });
     zone.querySelectorAll('[data-impr]').forEach((b) => { b.onclick = () => imprimer('/paiements/factures.pdf' + qs({ ...lire(), classe_id: '', impayes: '', eleve_id: b.dataset.impr })); });
+    zone.querySelectorAll('[data-wa]').forEach((b) => { b.onclick = () => envoyerFactures(mois, [Number(b.dataset.wa)], { retard: lire().retard }); });
     // Cases à cocher
     const cases = [...zone.querySelectorAll('[data-sel]')];
     const tout = el.querySelector('#tout');
@@ -152,6 +155,12 @@ export async function afficher(el, params) {
   el.querySelector('#q').oninput = rendreListe;
   el.querySelector('#modif-sel').onclick = modifierSelection;
   el.querySelector('#impr-sel').onclick = () => imprimer(cheminSelection());
+  el.querySelector('#wa-sel').onclick = async () => {
+    const ids = derniere ? derniere.liste.map((x) => x.eleve_id).filter((id) => selection.has(id)) : [];
+    if (!ids.length) { erreur(new Error('Les élèves sélectionnés ne sont pas dans la liste affichée.')); return; }
+    if (!await confirmer(`Envoyer la facture de ${nomMois(lire().mois)} aux parents de ${ids.length} élève(s) par WhatsApp ?`, { ok: '📲 Envoyer' })) return;
+    envoyerFactures(lire().mois, ids, { retard: lire().retard });
+  };
   el.querySelector('#desel').onclick = () => { selection.clear(); rendreListe(); };
   el.querySelector('#imprimer').onclick = () => imprimer(chemin());
   el.querySelector('#pdf').onclick = () => ouvrir(chemin());

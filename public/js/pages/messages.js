@@ -9,7 +9,7 @@ const MODELES = {
   fermeture: 'Bonjour {nom_parent}, l\'école {ecole} sera exceptionnellement fermée le [DATE] en raison de [MOTIF]. Merci de votre compréhension.',
   libre: 'Bonjour {nom_parent}, ',
 };
-const TYPES = { rappel: 'Rappel', second_rappel: '2ᵉ rappel', annonce: 'Annonce', absence: 'Absence', bulletin: 'Bulletin', recu: 'Reçu', test: 'Test' };
+const TYPES = { rappel: 'Rappel', second_rappel: '2ᵉ rappel', annonce: 'Annonce', absence: 'Absence', bulletin: 'Bulletin', recu: 'Reçu', facture: 'Facture', test: 'Test' };
 const STATUTS = { envoye: 'Envoyé', echec: 'Échec', a_envoyer: 'À envoyer', ouvert: 'Ouvert dans WhatsApp' };
 
 export async function afficher(el, params) {

@@ -8,7 +8,7 @@ const { autoriser } = require('../auth');
 const finance = require('../services/finance');
 const pdf = require('../services/pdf');
 const { envoyerMessages } = require('../services/whatsapp');
-const { lienRecu } = require('../services/liens');
+const { lienRecu, lienFactureMois } = require('../services/liens');
 
 const router = express.Router();
 router.use(autoriser('directeur'));
@@ -231,6 +231,36 @@ router.put('/factures/edition', ah(async (req, res) => {
 router.delete('/factures/edition', ah(async (req, res) => {
   await query('DELETE FROM factures_modifiees WHERE inscription_id = $1 AND mois = $2', [req.query.inscription_id, req.query.mois]);
   res.json({ ok: true });
+}));
+
+// ---- Envoyer la facture du mois aux parents par WhatsApp (un élève ou les élèves cochés) ----
+// Corps : { mois, eleve_ids: [..], retard?: 'AAAA-MM-01,…' | 'aucun', manuel? }
+router.post('/factures/whatsapp', ah(async (req, res) => {
+  const mois = String(req.body.mois || '');
+  if (!/^\d{4}-\d{2}-01$/.test(mois)) throw new HttpError(400, 'Choisissez le mois.');
+  const eleveIds = (Array.isArray(req.body.eleve_ids) ? req.body.eleve_ids : []).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+  if (!eleveIds.length) throw new HttpError(400, 'Aucun élève sélectionné.');
+  const retard = req.body.retard ? String(req.body.retard) : '';
+  const moisRetard = retard ? retard.split(',').filter((x) => /^\d{4}-\d{2}-01$/.test(x)) : undefined;
+  const liste = await finance.facturesMois(mois, { eleveIds, moisRetard });
+  if (!liste.length) throw new HttpError(404, 'Pas de facture ce mois-ci pour ces élèves.');
+  const p = await one('SELECT * FROM parametres WHERE id = 1');
+  const { limiteFacture } = require('../services/rappels');
+  const lim = limiteFacture(mois, p);
+  const msgs = liste.map((f) => {
+    const dl = f.modifiee && f.modifiee.date_limite >= aujourdhui() ? f.modifiee.date_limite : lim.limite;
+    const modele = f.total > 0
+      ? 'Bonjour {nom_parent}, voici la facture de {mois} de {nom_eleve} ({classe}). Reste à payer : {montant}, à régler avant le {date_limite}. Merci ! École {ecole}.'
+      : 'Bonjour {nom_parent}, voici la facture de {mois} de {nom_eleve} ({classe}) : tout est réglé. Merci ! École {ecole}.';
+    return {
+      telephone: f.whatsapp, destinataire: f.parent, eleve_id: f.eleve_id,
+      texte: remplir(modele, { nom_parent: f.parent, mois: nomMois(mois), nom_eleve: `${f.prenom} ${f.nom}`, classe: f.classe,
+        montant: montant(f.total, p.devise), date_limite: `${dl.slice(8, 10)}/${dl.slice(5, 7)}/${dl.slice(0, 4)}`, ecole: p.nom_ecole }),
+      document: { link: lienFactureMois(req, mois, f.eleve_id, retard), filename: `facture-${mois.slice(0, 7)}.pdf` },
+    };
+  });
+  const envoyes = await envoyerMessages(msgs, { type: 'facture', userId: req.user.id, canal: req.body.manuel ? 'manuel' : undefined });
+  res.json({ messages: envoyes, sans_numero: envoyes.sansNumero || 0 });
 }));
 
 // ---- Reçu PDF ----
