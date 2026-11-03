@@ -3,10 +3,12 @@
 // Élèves : inscription, fiche, recherche, archivage, réinscription.
 const express = require('express');
 const { query, one, tx } = require('../db');
-const { ah, HttpError, exiger, vide, normaliserTel, aujourdhui } = require('../utils');
+const { ah, HttpError, exiger, vide, normaliserTel, aujourdhui, remplir, montant } = require('../utils');
 const { autoriser, verifierClasse } = require('../auth');
 const { soldeInscription } = require('../services/finance');
 const pdf = require('../services/pdf');
+const { envoyerMessages } = require('../services/whatsapp');
+const { lienFactureInscription } = require('../services/liens');
 
 const router = express.Router();
 const gestion = autoriser('directeur'); // inscriptions et modifications : espace directrice
@@ -176,6 +178,29 @@ router.get('/:id/facture-inscription.pdf', gestion, ah(async (req, res) => {
   const f = insc && await pdf.factureInscription(insc.id);
   if (!f) throw new HttpError(404, 'Aucune inscription pour cet élève.');
   res.type('application/pdf').set('Content-Disposition', `inline; filename="facture-${f.numero}.pdf"`).send(f.buf);
+}));
+
+// ---- Envoyer la facture d'inscription au parent par WhatsApp ----
+router.post('/:id/facture-inscription/whatsapp', gestion, ah(async (req, res) => {
+  const e = await one(
+    `SELECT e.id, e.nom, e.prenom, e.whatsapp, c.nom AS classe, i.frais_inscription,
+            COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,''), 'Parent') AS parent,
+            (SELECT COALESCE(SUM(p.montant),0) FROM paiements p WHERE p.inscription_id = i.id AND p.type = 'inscription' AND NOT p.annule) AS verse
+       FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN annees_scolaires a ON a.id = i.annee_id JOIN classes c ON c.id = i.classe_id
+      WHERE e.id = $1 ORDER BY a.active DESC, a.date_debut DESC LIMIT 1`, [req.params.id]);
+  if (!e) throw new HttpError(404, 'Aucune inscription pour cet élève.');
+  if (!e.whatsapp) throw new HttpError(400, 'Le numéro WhatsApp du parent n\'est pas renseigné : complétez-le sur la fiche de l\'élève.');
+  const p = await one('SELECT nom_ecole, devise FROM parametres WHERE id = 1');
+  const reste = Math.max(0, e.frais_inscription - e.verse);
+  const texte = remplir(reste > 0
+    ? 'Bonjour {nom_parent}, voici la facture d\'inscription de {nom_eleve} ({classe}). Reste à payer : {montant}. Merci ! École {ecole}.'
+    : 'Bonjour {nom_parent}, voici la facture d\'inscription de {nom_eleve} ({classe}) : les frais d\'inscription sont réglés. Merci ! École {ecole}.',
+  { nom_parent: e.parent, nom_eleve: `${e.prenom} ${e.nom}`, classe: e.classe, montant: montant(reste, p.devise), ecole: p.nom_ecole });
+  const [m] = await envoyerMessages([{
+    telephone: e.whatsapp, destinataire: e.parent, eleve_id: e.id, texte,
+    document: { link: lienFactureInscription(req, e.id), filename: 'facture-inscription.pdf' },
+  }], { type: 'facture', userId: req.user.id, canal: req.body.manuel ? 'manuel' : undefined });
+  res.json(m);
 }));
 
 // ---- Nouvelle inscription ----

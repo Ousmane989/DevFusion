@@ -1,7 +1,26 @@
 // Modifier la facture du mois d'un élève, une par une : montants, désignations,
 // lignes ajoutées ou retirées, date limite et note. La modification est gardée :
 // elle ressort aussi dans l'impression de toutes les factures du mois.
-import { get, put, del, e, qs, argent, nomMois, modale, confirmer, toast, erreur, imprimer, options } from './ui.js';
+import { get, post, put, del, e, qs, argent, nomMois, modale, confirmer, toast, erreur, imprimer, options, resultatEnvoi } from './ui.js';
+
+/**
+ * Envoie la facture du mois aux parents par WhatsApp (message + lien vers la facture PDF).
+ * `retard` : mois en retard repris, comme sur la page Factures du mois.
+ */
+export async function envoyerFactures(mois, eleveIds, { retard } = {}) {
+  try {
+    const r = await post('/paiements/factures/whatsapp', { mois, eleve_ids: eleveIds, retard });
+    if (r.sans_numero) toast(`${r.sans_numero} élève(s) sans numéro WhatsApp : facture non envoyée (complétez le numéro sur leur fiche).`);
+    resultatEnvoi(r.messages, r.messages.length > 1 ? 'Envoyer les factures' : 'Envoyer la facture');
+  } catch (err) { erreur(err); }
+}
+
+/** Envoie la facture d'inscription au parent par WhatsApp. */
+export async function envoyerFactureInscription(eleveId) {
+  try {
+    resultatEnvoi([await post(`/eleves/${eleveId}/facture-inscription/whatsapp`)], 'Envoyer la facture d\'inscription');
+  } catch (err) { erreur(err); }
+}
 
 /**
  * Ouvre l'éditeur. `moisListe` (facultatif) : mois proposés dans un sélecteur.
@@ -42,6 +61,7 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres, serie, 
       <button class="btn" data-ok>💾 Enregistrer${serie.rang < serie.total ? ' et continuer' : ''}</button>`
     : `<button class="btn clair" data-annuler>Annuler</button>
       <button class="btn clair" data-ok>💾 Enregistrer</button>
+      <button class="btn vert" data-envoyer>📲 Envoyer au parent</button>
       <button class="btn" data-imprimer>🖨️ Enregistrer et imprimer</button>`}`,
   });
   const $ = (s) => m.el.querySelector(s);
@@ -91,8 +111,13 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres, serie, 
   }
   $('[data-annuler]').onclick = m.fermer;
 
+  // Quelque chose a-t-il été changé ? (sinon « Envoyer » n'enregistre rien)
+  let modifie = false;
+  m.el.querySelector('.corps').addEventListener('input', () => { modifie = true; });
+  m.el.querySelector('.corps').addEventListener('click', (ev) => { if (ev.target.closest('#fe-ajout, [data-retirer]')) modifie = true; });
+
   const chemin = () => `/paiements/factures.pdf?mois=${d.mois}&eleve_id=${d.eleve_id}`;
-  const enregistrer = async (puisImprimer) => {
+  const enregistrer = async (puis) => { // puis : 'imprimer', 'envoyer' ou rien
     // Les valeurs encore en cours de saisie (sans avoir quitté le champ)
     corps.querySelectorAll('input').forEach((x) => { lignes[x.dataset.i][x.dataset.k] = x.dataset.k === 'libelle' ? x.value : Number(x.value); });
     const corpsReq = {
@@ -102,15 +127,19 @@ export async function modifierFacture({ eleveId, mois, moisListe, apres, serie, 
     const btns = m.el.querySelectorAll('footer .btn');
     btns.forEach((b) => { b.disabled = true; });
     try {
-      await put('/paiements/factures/edition', corpsReq);
-      toast('Facture modifiée.', 'succes');
+      if (puis !== 'envoyer' || modifie) {
+        await put('/paiements/factures/edition', corpsReq);
+        toast('Facture modifiée.', 'succes');
+      }
       m.fermer();
       if (apres) apres();
-      if (puisImprimer) imprimer(chemin());
+      if (puis === 'imprimer') imprimer(chemin());
+      if (puis === 'envoyer') envoyerFactures(d.mois, [d.eleve_id]);
     } catch (err) { erreur(err); btns.forEach((b) => { b.disabled = false; }); }
   };
-  $('[data-ok]').onclick = () => enregistrer(false);
-  if ($('[data-imprimer]')) $('[data-imprimer]').onclick = () => enregistrer(true);
+  $('[data-ok]').onclick = () => enregistrer();
+  if ($('[data-imprimer]')) $('[data-imprimer]').onclick = () => enregistrer('imprimer');
+  if ($('[data-envoyer]')) $('[data-envoyer]').onclick = () => enregistrer('envoyer');
   if ($('[data-retablir]')) {
     $('[data-retablir]').onclick = async () => {
       if (!await confirmer('Revenir à la facture calculée automatiquement (vos modifications pour ce mois seront effacées) ?', { ok: 'Rétablir' })) return;
