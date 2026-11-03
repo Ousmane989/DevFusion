@@ -21,11 +21,12 @@ function dateLimite(mois, p) {
 }
 
 /**
- * Date limite imprimée sur une facture. Pour un mois passé (élève en retard), la date limite
- * d'origine est dépassée : on prend la prochaine date limite à venir.
+ * Date limite imprimée sur une facture : la facture du mois M se paie avant le « jour limite »
+ * du mois suivant (facture de novembre : avant le 05 décembre). Si cette date est dépassée
+ * (élève en retard), on prend la prochaine date limite à venir.
  */
 function limiteFacture(mois, p, jour = aujourdhui()) {
-  const lim = dateLimite(mois, p);
+  const lim = dateLimite(ajouterMois(mois, 1), p);
   if (lim >= jour) return { limite: lim, enRetard: false };
   const ceMois = dateLimite(debutMois(jour), p);
   return { limite: ceMois >= jour ? ceMois : dateLimite(ajouterMois(debutMois(jour), 1), p), enRetard: true };
