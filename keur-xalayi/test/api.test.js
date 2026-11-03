@@ -216,6 +216,28 @@ test('modifier la facture du mois d\'un seul élève, puis la rétablir', async 
   assert.ok([401, 403].includes((await appel('ens', `/api/paiements/factures/edition?mois=${mois[0]}&eleve_id=${eleveId}`)).statut));
 });
 
+test('envoyer la facture du mois et la facture d\'inscription au parent par WhatsApp', async () => {
+  const { mois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const r = await appel('dir', '/api/paiements/factures/whatsapp', { methode: 'POST', corps: { mois: mois[0], eleve_ids: [eleveId] } });
+  assert.strictEqual(r.statut, 200, JSON.stringify(r.donnees));
+  const m = r.donnees.messages[0];
+  assert.strictEqual(m.type, 'facture');
+  assert.match(m.contenu, /facture de/);
+  // Le message contient un lien signé vers la facture PDF, consultable sans compte
+  const lien = new URL(m.contenu.match(/https?:\/\/\S+/)[0]);
+  const f = await fetch(base + lien.pathname + lien.search);
+  assert.strictEqual(f.status, 200);
+  assert.strictEqual(Buffer.from(await f.arrayBuffer()).subarray(0, 4).toString(), '%PDF');
+  assert.strictEqual((await fetch(base + lien.pathname + '?s=faux')).status, 403);
+  assert.strictEqual((await fetch(base + lien.pathname.replace(/\/\d+$/, '/999999') + lien.search)).status, 403, 'pas la facture d\'un autre élève');
+  assert.strictEqual((await appel('dir', '/api/paiements/factures/whatsapp', { methode: 'POST', corps: { mois: mois[0], eleve_ids: [] } })).statut, 400);
+  // Facture d'inscription
+  const ins = await appel('dir', `/api/eleves/${eleveId}/facture-inscription/whatsapp`, { methode: 'POST', corps: {} });
+  assert.strictEqual(ins.statut, 200, JSON.stringify(ins.donnees));
+  const lien2 = new URL(ins.donnees.contenu.match(/https?:\/\/\S+/)[0]);
+  assert.strictEqual((await fetch(base + lien2.pathname + lien2.search)).status, 200);
+});
+
 test('rappels WhatsApp : aperçu, envoi manuel et historique', async () => {
   const mois = (await appel('dir', '/api/paiements/mois')).donnees.mois[0];
   const ap = await appel('dir', '/api/whatsapp/rappels/apercu', { methode: 'POST', corps: { mois, impayes_seulement: true } });

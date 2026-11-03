@@ -1,7 +1,7 @@
 // Fiche élève : identité, parents, paiements mois par mois, présences, historique.
 import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau, champ, options, formulaire, confirmer, toast, erreur, ouvrir, imprimer, moisCourant, MODES, modale, aujourdhui, resultatEnvoi, ctx, objetPaiement, supprimerEleves, salutation } from '../ui.js';
 import { encaisser, envoyerRecu } from './_paiement.js';
-import { modifierFacture } from '../facture-edition.js';
+import { modifierFacture, envoyerFactureInscription } from '../facture-edition.js';
 
 export async function afficher(el, { id, nouveau }) {
   const d = await get(`/eleves/${id}`);
@@ -38,6 +38,7 @@ export async function afficher(el, { id, nouveau }) {
       <div class="ligne" style="margin-top:1rem">
         ${gestion && insc && v.statut === 'actif' ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
         ${gestion && insc ? '<button class="btn clair" id="facture">🧾 Facture d\'inscription</button>' : ''}
+        ${gestion && insc ? '<button class="btn clair" id="facture-wa" title="Envoyer la facture d\'inscription au parent par WhatsApp">📲 Envoyer la facture d\'inscription</button>' : ''}
         ${gestion && insc && v.statut === 'actif' && !v.cas_social ? '<button class="btn clair" id="facture-mois">🧾 Facture du mois</button>' : ''}
         ${gestion ? `<a class="btn clair" href="#/eleves/${v.id}/modifier">✏️ Modifier</a>` : ''}
         ${gestion ? '<button class="btn clair" id="message">💬 Message au parent</button>' : ''}
@@ -146,6 +147,7 @@ export async function afficher(el, { id, nouveau }) {
   const facture = () => imprimer(`/eleves/${v.id}/facture-inscription.pdf`);
   if ($('#payer-insc')) $('#payer-insc').onclick = payerInscription;
   if ($('#facture')) $('#facture').onclick = facture;
+  if ($('#facture-wa')) $('#facture-wa').onclick = () => envoyerFactureInscription(v.id);
   if ($('#facture-mois')) {
     $('#facture-mois').onclick = async () => {
       // Mois proposés : ceux de l'année scolaire ; par défaut le mois en cours
@@ -169,12 +171,14 @@ export async function afficher(el, { id, nouveau }) {
       </div>
       <button class="btn bloc" data-facture style="font-size:1.1rem;padding:.9rem">🖨️ Imprimer la facture d'inscription</button>
       <div class="grille g2" style="margin-top:.6rem">
+        <button class="btn vert" data-wa>📲 Envoyer au parent par WhatsApp</button>
         <button class="btn clair" data-pdf>📄 Voir / télécharger le PDF</button>
         ${fi.reste > 0 ? '<button class="btn vert" data-payer>💰 Encaisser les frais maintenant</button>' : ''}
       </div>`, { actions: '<button class="btn clair" data-f>Plus tard</button>' });
     md.el.querySelector('[data-f]').onclick = md.fermer;
     md.el.querySelector('[data-facture]').onclick = facture;
     md.el.querySelector('[data-pdf]').onclick = () => ouvrir(`/eleves/${v.id}/facture-inscription.pdf`);
+    md.el.querySelector('[data-wa]').onclick = () => envoyerFactureInscription(v.id);
     const p = md.el.querySelector('[data-payer]');
     if (p) p.onclick = () => { md.fermer(); payerInscription(); };
   }

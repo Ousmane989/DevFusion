@@ -476,3 +476,14 @@ CREATE TABLE IF NOT EXISTS communiques (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ---------- Factures envoyées aux parents par WhatsApp : nouveau type de message ----------
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'messages_type_check'
+               AND pg_get_constraintdef(oid) NOT LIKE '%facture%') THEN
+    ALTER TABLE messages DROP CONSTRAINT messages_type_check;
+    ALTER TABLE messages ADD CONSTRAINT messages_type_check
+      CHECK (type IN ('rappel','second_rappel','annonce','absence','bulletin','recu','facture','test'));
+  END IF;
+END $$;

@@ -24,4 +24,15 @@ function lienRecu(req, numero) {
   return `${baseUrl(req)}/recu/${encodeURIComponent(numero)}?s=${signer('recu:' + numero)}`;
 }
 
-module.exports = { signer, verifier, baseUrl, lienRecu };
+/** Facture du mois d'un élève ; `retard` : mois en retard repris (liste « AAAA-MM-01,… » ou « aucun »), vide = tous. */
+function lienFactureMois(req, mois, eleveId, retard = '') {
+  const r = retard ? `&r=${encodeURIComponent(retard)}` : '';
+  return `${baseUrl(req)}/facture/mois/${mois}/${eleveId}?s=${signer(`facture:${mois}:${eleveId}:${retard}`)}${r}`;
+}
+
+/** Facture d'inscription d'un élève (inscription de l'année en cours). */
+function lienFactureInscription(req, eleveId) {
+  return `${baseUrl(req)}/facture/inscription/${eleveId}?s=${signer(`facture-inscription:${eleveId}`)}`;
+}
+
+module.exports = { signer, verifier, baseUrl, lienRecu, lienFactureMois, lienFactureInscription };
