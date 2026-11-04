@@ -1,0 +1,13 @@
+{
+  "name": "bobine-studio-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bobine — studio vidéo IA : avatars et storyboard générés par IA.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1"
+  }
+}
