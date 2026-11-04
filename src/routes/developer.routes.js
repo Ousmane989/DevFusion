@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { listOrders } = require('../ordersStore');
+const { PLANS, getUserById } = require('../account');
 const { publicProduct } = require('../catalog');
 const { listWebhooks, deliver } = require('../webhooks');
 
@@ -30,7 +31,14 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // POST /api/dev/key { label } — genere une cle (renvoyee EN CLAIR une seule fois)
-router.post('/key', requireAuth, async (req, res) => {
+// API & webhooks : réservés à la formule Pro.
+function requireApiPlan(req, res, next) {
+  const plan = PLANS[(req.account || req.user).plan] || PLANS.pro;
+  if (!plan.api) return res.status(403).json({ code: 'plan_limit', error: "L'API et les webhooks sont inclus dans la formule Pro." });
+  next();
+}
+
+router.post('/key', requireAuth, requireApiPlan, async (req, res) => {
   const label = String((req.body && req.body.label) || 'Ma clé').trim().slice(0, 60) || 'Ma clé';
   const secret = crypto.randomBytes(24).toString('hex');
   const key = 'karat_live_' + secret;
@@ -48,7 +56,7 @@ router.delete('/key/:id', requireAuth, async (req, res) => {
 });
 
 // POST /api/dev/webhook { url, events }
-router.post('/webhook', requireAuth, async (req, res) => {
+router.post('/webhook', requireAuth, requireApiPlan, async (req, res) => {
   const b = req.body || {};
   const url = String(b.url || '').trim();
   if (!/^https?:\/\/.+/i.test(url)) return res.status(400).json({ errors: { url: 'URL invalide (http/https).' } });
@@ -86,6 +94,10 @@ async function apiKeyAuth(req, res, next) {
     const row = await db.prepare('SELECT * FROM api_keys WHERE key_hash = ?').get(sha256(key));
     if (!row) return res.status(401).json({ error: 'Clé API invalide.' });
     await db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?").run(row.id);
+    // Boutique dont l'essai ou l'abonnement (porté par le compte) a expiré.
+    const shop = await getUserById(row.user_id);
+    const acct = shop && shop.owner_id ? await getUserById(shop.owner_id) : shop;
+    if (!acct || acct.status === 'locked') return res.status(402).json({ error: 'Abonnement Karat expiré.', code: 'locked' });
     req.apiUserId = row.user_id;
     next();
   } catch (err) { next(err); }
