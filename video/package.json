@@ -1,0 +1,19 @@
+{
+  "name": "karat-video",
+  "private": true,
+  "description": "Vidéos animées du site vitrine Karat (Remotion), réalisées à partir de vraies captures de la plateforme.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render:tour": "remotion render src/index.ts KaratTour out/karat-tour.mp4 --codec=h264 --crf=26"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "@types/react": "18.3.12"
+  }
+}

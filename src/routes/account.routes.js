@@ -4,7 +4,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware');
-const { hashPassword, verifyPassword, clearSessionCookie } = require('../auth');
+const { hashPassword, verifyPassword, clearSessionCookie, signSession, setSessionCookie } = require('../auth');
 const { getUserById, getUserByEmail, publicUser } = require('../account');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,6 +58,9 @@ router.post('/password', requireAuth, async (req, res) => {
   const hash = await hashPassword(next);
   // Toutes les boutiques du compte partagent le mot de passe du compte.
   await db.prepare('UPDATE users SET password_hash = ? WHERE id = ? OR owner_id = ?').run(hash, req.account.id, req.account.id);
+  // Les sessions des autres appareils deviennent invalides (empreinte du mot
+  // de passe) ; on garde celle-ci ouverte avec un jeton à jour.
+  setSessionCookie(res, signSession({ ...req.user, password_hash: hash }));
   res.json({ ok: true });
 });
 
