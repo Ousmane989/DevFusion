@@ -16,7 +16,7 @@ export async function afficher(el, params) {
       <select id="classe">${options(classes.map((c) => [c.id, `${c.nom} (${c.effectif})`]), filtres.classe_id, { vide: 'Toutes les classes' })}</select>
       <select id="sexe">${options([['M', 'Garçons'], ['F', 'Filles']], '', { vide: 'Garçons et filles' })}</select>
       ${estRole('directeur') ? `<select id="cas">${options([['1', '🤝 Cas sociaux']], filtres.cas_social, { vide: 'Tous les élèves' })}</select>` : ''}
-      <select id="statut">${options([['actif', 'Élèves actifs'], ['archive', 'Élèves archivés (partis)']], filtres.statut)}</select>
+      <select id="statut">${options([['actif', 'Élèves actifs'], ['en_attente', 'En attente d\'inscription'], ['archive', 'Élèves archivés (partis)']], filtres.statut)}</select>
     </div>
     <div class="ligne" style="margin-bottom:.8rem"><span id="compte" class="muted gras"></span>
       ${estRole('directeur') ? '<label class="case petit"><input type="checkbox" id="tout"> Tout sélectionner</label>' : ''}<span class="espace"></span>

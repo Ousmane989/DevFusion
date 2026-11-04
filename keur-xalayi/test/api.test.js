@@ -488,6 +488,34 @@ test('cas social : coché par la directrice, filtré, caché aux enseignants', a
   assert.ok((await appel('dir', `/api/paiements/statut?mois=${lesMois[0]}`)).donnees.liste.some((x) => x.eleve_id === eleveId), 'de retour dans la liste');
 });
 
+test('paiement avant inscription : élève en attente, payé, puis inscription finalisée', async () => {
+  const { mois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const r = await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom: 'Attente', prenom: 'Moussa', sexe: 'M', classe_id: classe.id, en_attente: true, date_inscription: mois[0] } });
+  assert.strictEqual(r.statut, 201, JSON.stringify(r.donnees));
+  const id = r.donnees.id;
+  // Hors des listes tant que l'inscription n'est pas finalisée
+  assert.ok(!(await appel('dir', '/api/eleves')).donnees.some((x) => x.id === id));
+  assert.ok((await appel('dir', '/api/eleves?statut=en_attente')).donnees.some((x) => x.id === id));
+  // Paiement d'une mensualité avant l'inscription
+  const p = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: r.donnees.inscription_id, type: 'mensualite', mois: [mois[0]], montant: 1000, mode: 'especes' } });
+  assert.strictEqual(p.statut, 201, JSON.stringify(p.donnees));
+  let res = (await appel('dir', '/api/eleves/inscriptions/resume')).donnees;
+  assert.strictEqual(res.attente.find((x) => x.id === id).verse, 1000);
+  assert.ok(!(await appel('dir', `/api/paiements/statut?mois=${mois[0]}`)).donnees.liste.some((x) => x.eleve_id === id), 'pas dans la situation du mois');
+  // Finalisation : il rejoint sa classe, le paiement est gardé
+  const f = await appel('dir', `/api/eleves/${id}`, { methode: 'PUT', corps: { whatsapp: '77 555 44 33', finaliser: true, motif_modification: 'Inscription finalisée' } });
+  assert.strictEqual(f.statut, 200, JSON.stringify(f.donnees));
+  const fiche = (await appel('dir', `/api/eleves/${id}`)).donnees;
+  assert.strictEqual(fiche.eleve.statut, 'actif');
+  assert.strictEqual(fiche.solde.mois[0].verse, 1000);
+  assert.ok((await appel('dir', `/api/paiements/statut?mois=${mois[0]}`)).donnees.liste.some((x) => x.eleve_id === id));
+  const h = (await appel('dir', `/api/eleves/${id}/modifications`)).donnees;
+  assert.ok(h[0].changements.some((c) => c.champ === 'Inscription' && c.apres === 'Finalisée'));
+  res = (await appel('dir', '/api/eleves/inscriptions/resume?jours=366')).donnees;
+  assert.ok(!res.attente.some((x) => x.id === id) && res.nouveaux.some((x) => x.id === id));
+  await appel('dir', '/api/eleves/supprimer', { methode: 'POST', corps: { ids: [id], avec_paiements: true } });
+});
+
 test('suppression d\'élèves sélectionnés (avec confirmation s\'ils ont des paiements)', async () => {
   const creer = async (nom) => (await appel('dir', '/api/eleves', { methode: 'POST', corps: { nom, prenom: 'Test', sexe: 'M', classe_id: classe.id } })).donnees;
   const a = await creer('Asupprimer'); const b = await creer('Bsupprimer');

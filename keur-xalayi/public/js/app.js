@@ -10,6 +10,7 @@ const D = 'directeur'; const T = 'enseignant'; // deux espaces : directrice et e
 const MENU = [
   ['', '🏠', 'Tableau de bord', [D, T], 'Accueil'],
   ['eleves', '👧', 'Élèves', [D, T], 'Élèves'],
+  ['inscriptions', '🆕', 'Inscriptions', [D], 'Élèves'],
   ['classes', '🏫', 'Classes', [D, T], 'Élèves'],
   ['certificats', '📜', 'Certificats de scolarité', [D], 'Élèves'],
   ['presences', '✅', 'Faire l\'appel', [D, T], 'Élèves'],
@@ -36,6 +37,7 @@ const ROUTES = [
   [/^$/, 'tableau-de-bord', 'Tableau de bord', [D, T]],
   [/^eleves$/, 'eleves', 'Élèves', [D, T]],
   [/^eleves\/nouveau$/, 'eleve-form', 'Nouvelle inscription', [D]],
+  [/^inscriptions$/, 'inscriptions', 'Inscriptions', [D]],
   [/^eleves\/(\d+)\/modifier$/, 'eleve-form', 'Modifier l\'élève', [D]],
   [/^eleves\/(\d+)$/, 'eleve-fiche', 'Fiche élève', [D, T]],
   [/^certificats$/, 'certificats', 'Certificats de scolarité', [D]],

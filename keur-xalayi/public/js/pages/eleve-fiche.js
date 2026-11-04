@@ -3,7 +3,7 @@ import { get, post, e, avatar, dateFr, argent, nomMois, badge, estRole, tableau,
 import { encaisser, envoyerRecu } from './_paiement.js';
 import { modifierFacture, envoyerFactureInscription } from '../facture-edition.js';
 
-export async function afficher(el, { id, nouveau }) {
+export async function afficher(el, { id, nouveau, payer }) {
   const d = await get(`/eleves/${id}`);
   const v = d.eleve;
   const insc = d.inscription;
@@ -14,6 +14,9 @@ export async function afficher(el, { id, nouveau }) {
   el.innerHTML = `
     ${nouveau ? `<div class="alerte succes">✔ Inscription enregistrée. ${gestion && insc ? `<button class="btn petit" id="facture-nouveau">🖨️ Facture d'inscription</button>
       ${d.solde && d.solde.inscriptionFrais.reste > 0 ? '<button class="btn petit vert" id="payer-insc">Encaisser les frais d\'inscription</button>' : ''}` : ''}</div>` : ''}
+    ${v.statut === 'en_attente' ? `<div class="alerte attention" style="align-items:center;flex-wrap:wrap">⏳ <div style="flex:1;min-width:220px"><b>En attente d'inscription.</b>
+      Ses paiements sont bien enregistrés, mais l'élève n'apparaît pas encore dans sa classe ni dans les listes.</div>
+      ${gestion ? `<a class="btn petit" href="#/eleves/${v.id}/modifier?finaliser=1">✅ Finaliser l'inscription</a>` : ''}</div>` : ''}
     ${v.statut === 'archive' ? `<div class="alerte attention">🗄️ Élève archivé le ${dateFr(v.date_sortie)} — ${e(v.motif_sortie || '')}</div>` : ''}
     ${v.remarques ? `<div class="alerte danger">⚠️ <div><b>À savoir :</b> ${e(v.remarques)}</div></div>` : ''}
     <div class="carte">
@@ -36,7 +39,7 @@ export async function afficher(el, { id, nouveau }) {
         </div>
       </div>
       <div class="ligne" style="margin-top:1rem">
-        ${gestion && insc && v.statut === 'actif' ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
+        ${gestion && insc && ['actif', 'en_attente'].includes(v.statut) ? '<button class="btn" id="payer">💰 Encaisser un paiement</button>' : ''}
         ${gestion && insc ? '<button class="btn clair" id="facture">🧾 Facture d\'inscription</button>' : ''}
         ${gestion && insc ? '<button class="btn clair" id="facture-wa" title="Envoyer la facture d\'inscription au parent par WhatsApp">📲 Envoyer la facture d\'inscription</button>' : ''}
         ${gestion && insc && v.statut === 'actif' && !v.cas_social ? '<button class="btn clair" id="facture-mois">🧾 Facture du mois</button>' : ''}
@@ -78,7 +81,7 @@ export async function afficher(el, { id, nouveau }) {
     { titre: 'Versé', classe: 'num', rendu: (m) => argent(m.verse) },
     { titre: 'Reste', classe: 'num', rendu: (m) => (m.reste ? `<b>${argent(m.reste)}</b>` : '—') },
     { titre: 'Statut', rendu: (m) => (!m.exigible ? badge('non_concerne', 'Avant inscription') : !m.echu && m.statut !== 'paye' ? badge('neutre', 'À venir') : badge(m.statut)) },
-    { titre: '', rendu: (m) => (gestion && m.reste > 0 && v.statut === 'actif' ? `<button class="btn petit" data-payer="${m.mois}">Payer</button>` : '') },
+    { titre: '', rendu: (m) => (gestion && m.reste > 0 && ['actif', 'en_attente'].includes(v.statut) ? `<button class="btn petit" data-payer="${m.mois}">Payer</button>` : '') },
   ], s.mois)}
         </div>
         <div class="carte"><h2>Paiements reçus</h2>
@@ -143,6 +146,8 @@ export async function afficher(el, { id, nouveau }) {
   const recharger = () => afficher(el, { id });
   const $ = (s) => el.querySelector(s);
   if ($('#payer')) $('#payer').onclick = () => encaisser(v.id, recharger);
+  // Venu de « Paiement avant inscription » : la fenêtre d'encaissement s'ouvre tout de suite
+  if (payer && $('#payer')) { history.replaceState(null, '', `#/eleves/${v.id}`); encaisser(v.id, recharger); }
   const payerInscription = () => encaisser(v.id, recharger).then(() => { const t = document.querySelector('.modale #type'); if (t) { t.value = 'inscription'; t.dispatchEvent(new Event('change')); } });
   const facture = () => imprimer(`/eleves/${v.id}/facture-inscription.pdf`);
   if ($('#payer-insc')) $('#payer-insc').onclick = payerInscription;
