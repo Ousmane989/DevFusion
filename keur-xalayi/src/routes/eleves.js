@@ -91,6 +91,24 @@ router.get('/', ah(async (req, res) => {
 const TARIFS = ['frais_inscription', 'mensualite', 'reduction', 'reduction_motif', 'cas_social', 'cas_social_note'];
 function masquerTarifs(ligne) { TARIFS.forEach((k) => delete ligne[k]); return ligne; }
 
+// ---- Page « Inscriptions » : élèves en attente d'inscription et nouveaux inscrits ----
+router.get('/inscriptions/resume', gestion, ah(async (req, res) => {
+  const jours = Math.min(366, Math.max(1, Number(req.query.jours) || 30));
+  const champs = `e.id, e.matricule, e.nom, e.prenom, e.sexe, e.whatsapp, e.created_at, c.nom AS classe, i.id AS inscription_id,
+            i.date_inscription, i.frais_inscription, i.mensualite, i.reduction,
+            COALESCE(NULLIF(concat_ws(' / ', NULLIF(trim(e.pere_nom),''), NULLIF(trim(e.mere_nom),''), NULLIF(trim(e.tuteur_nom),'')), ''), '—') AS parents,
+            COALESCE(SUM(p.montant) FILTER (WHERE NOT p.annule), 0) AS verse,
+            COALESCE(SUM(p.montant) FILTER (WHERE NOT p.annule AND p.type = 'inscription'), 0) AS verse_inscription,
+            COUNT(p.id) FILTER (WHERE NOT p.annule) AS nb_paiements`;
+  const depuis = `FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
+       JOIN classes c ON c.id = i.classe_id LEFT JOIN paiements p ON p.inscription_id = i.id`;
+  const attente = await query(`SELECT ${champs} ${depuis} WHERE e.statut = 'en_attente' GROUP BY e.id, c.id, i.id ORDER BY e.created_at DESC`);
+  const nouveaux = await query(
+    `SELECT ${champs} ${depuis} WHERE e.statut = 'actif' AND i.date_inscription >= current_date - $1::int
+      GROUP BY e.id, c.id, i.id ORDER BY i.date_inscription DESC, e.created_at DESC LIMIT 300`, [jours]);
+  res.json({ attente, nouveaux, jours });
+}));
+
 // ---- Fiche complète ----
 router.get('/:id', ah(async (req, res) => {
   const e = await one('SELECT * FROM eleves WHERE id = $1', [req.params.id]);
@@ -207,6 +225,8 @@ router.post('/:id/facture-inscription/whatsapp', gestion, ah(async (req, res) =>
 router.post('/', gestion, ah(async (req, res) => {
   const d = await nettoyer(req.body);
   exiger(req.body, ['classe_id']);
+  // Paiement avant inscription : l'élève est enregistré « en attente », hors des listes, ses paiements sont gardés
+  if (req.body.en_attente === true) d.statut = 'en_attente';
   const dateInsc = vide(req.body.date_inscription) || aujourdhui();
   const r = await tx(async (c) => {
     const cl = await tarifClasse(c, req.body.classe_id);
@@ -276,6 +296,16 @@ router.put('/:id', gestion, ah(async (req, res) => {
                 date_inscription = COALESCE($6, date_inscription), fournitures = $7, uniforme = $8, reliquat = $9, blouson = $10 WHERE id = $11`,
         [cl.id, m.frais, m.mens, m.red, m.motif, vide(req.body.date_inscription), m.fourn, m.unif, m.reliquat, m.blous, insc.id]);
     }
+    // Finaliser l'inscription d'un élève « en attente » : il rejoint sa classe (en dernier sur la liste)
+    if (req.body.finaliser === true && avantEleve.statut === 'en_attente') {
+      await c.query("UPDATE eleves SET statut = 'actif' WHERE id = $1", [req.params.id]);
+      const i2 = await c.one(
+        'SELECT i.id, i.classe_id FROM inscriptions i JOIN annees_scolaires a ON a.id = i.annee_id AND a.active WHERE i.eleve_id = $1', [req.params.id]);
+      if (i2) {
+        await c.query(`UPDATE inscriptions SET numero = (SELECT COALESCE(MAX(numero), 0) + 1 FROM inscriptions WHERE classe_id = $1 AND id <> $2)
+                        WHERE id = $2`, [i2.classe_id, i2.id]);
+      }
+    }
     // Historique : ce qui a changé (avant → après), qui, quand, et pourquoi.
     const apresEleve = await c.one('SELECT * FROM eleves WHERE id = $1', [req.params.id]);
     const apresInsc = await c.one(
@@ -283,6 +313,7 @@ router.put('/:id', gestion, ah(async (req, res) => {
          JOIN classes cl ON cl.id = i.classe_id WHERE i.eleve_id = $1`, [req.params.id]);
     const changements = [];
     for (const k of CHAMPS) if (!pareil(avantEleve[k], apresEleve[k])) changements.push({ champ: LIBELLES[k] || k, avant: lisible(avantEleve[k]), apres: lisible(apresEleve[k]) });
+    if (avantEleve.statut === 'en_attente' && apresEleve.statut === 'actif') changements.push({ champ: 'Inscription', avant: 'En attente', apres: 'Finalisée' });
     if (avantEleve.photo !== apresEleve.photo) changements.push({ champ: 'Photo', avant: avantEleve.photo ? 'oui' : 'non', apres: apresEleve.photo ? 'nouvelle' : 'retirée' });
     if (avantInsc && apresInsc) {
       for (const k of ['classe', 'date_inscription', 'frais_inscription', 'mensualite', 'reduction', 'reduction_motif', 'fournitures', 'uniforme', 'blouson', 'reliquat']) {

@@ -487,3 +487,13 @@ BEGIN
       CHECK (type IN ('rappel','second_rappel','annonce','absence','bulletin','recu','facture','test'));
   END IF;
 END $$;
+
+-- ---------- Élèves « en attente d'inscription » : ont payé (mensualité…) mais pas encore inscrits ----------
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'eleves_statut_check'
+               AND pg_get_constraintdef(oid) NOT LIKE '%en_attente%') THEN
+    ALTER TABLE eleves DROP CONSTRAINT eleves_statut_check;
+    ALTER TABLE eleves ADD CONSTRAINT eleves_statut_check CHECK (statut IN ('actif','archive','en_attente'));
+  END IF;
+END $$;

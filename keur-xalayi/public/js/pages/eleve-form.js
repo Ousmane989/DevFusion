@@ -1,15 +1,20 @@
 // Formulaire d'inscription / modification d'un élève.
 import { get, post, put, e, champ, options, champTel, activerTels, lireForm, toast, erreur, reduireImage, aujourdhui, argent } from '../ui.js';
 
-export async function afficher(el, { id }) {
+export async function afficher(el, { id, attente, finaliser }) {
   const [classes, fiche] = await Promise.all([get('/classes'), id ? get(`/eleves/${id}`) : null]);
   const v = fiche ? fiche.eleve : {};
   const insc = fiche ? fiche.inscription : null;
   let photo = v.photo || null;
 
   el.innerHTML = `
-    <div class="entete-page"><h1>${id ? `Modifier : ${e(v.prenom)} ${e(v.nom)}` : 'Nouvelle inscription'}</h1>
+    <div class="entete-page"><h1>${finaliser ? `Finaliser l'inscription : ${e(v.prenom)} ${e(v.nom)}` : id ? `Modifier : ${e(v.prenom)} ${e(v.nom)}` : attente ? 'Paiement avant inscription' : 'Nouvelle inscription'}</h1>
       ${id ? `<span class="badge info">${e(v.matricule)}</span>` : '<span class="muted petit">Le matricule sera généré automatiquement.</span>'}</div>
+    ${attente && !id ? `<div class="alerte info">⏳ <div>L'élève a payé mais n'est pas encore inscrit ? Remplissez au moins le <b>nom, le prénom, le sexe et la classe</b> :
+      il sera enregistré « <b>en attente d'inscription</b> », vous encaissez son paiement tout de suite, et vous finaliserez son inscription plus tard
+      (page <b>Inscriptions</b>). Il n'apparaît dans sa classe et dans les listes qu'une fois l'inscription finalisée.</div></div>` : ''}
+    ${finaliser ? `<div class="alerte info">✅ <div>Complétez ou vérifiez les informations, puis cliquez sur « Finaliser l'inscription ».
+      Les paiements déjà faits sont gardés, et l'élève rejoint sa classe.</div></div>` : ''}
     <form id="f" novalidate>
       <fieldset><legend>👧 L'élève</legend>
         <div class="grille g3">
@@ -42,7 +47,7 @@ export async function afficher(el, { id }) {
           ${champ('Nom du père', `<input name="pere_nom" value="${e(v.pere_nom)}" placeholder="Facultatif">`)}
           ${champ('Nom de la mère', `<input name="mere_nom" value="${e(v.mere_nom)}" placeholder="Facultatif">`)}
           ${champ('Tuteur (si différent)', `<input name="tuteur_nom" value="${e(v.tuteur_nom)}">`)}
-          ${champ('Numéro WhatsApp du parent', champTel('whatsapp', v.whatsapp, { requis: !id }), { requis: !id, aide: id && !v.whatsapp ? 'À compléter : sans numéro, pas de rappels ni d\'annonces pour cet élève.' : 'Utilisé pour les rappels et les annonces.' })}
+          ${champ('Numéro WhatsApp du parent', champTel('whatsapp', v.whatsapp, { requis: !id && !attente }), { requis: !id && !attente, aide: id && !v.whatsapp ? 'À compléter : sans numéro, pas de rappels ni d\'annonces pour cet élève.' : 'Utilisé pour les rappels et les annonces.' })}
           ${champ('Second numéro', champTel('telephone2', v.telephone2))}
           ${champ('Adresse / quartier', `<input name="adresse" value="${e(v.adresse)}">`)}
         </div>
@@ -77,7 +82,7 @@ export async function afficher(el, { id }) {
       </fieldset>` : ''}
 
       <div class="barre-action">
-        <button class="btn" id="ok">💾 ${id ? 'Enregistrer les modifications' : 'Inscrire l\'élève'}</button>
+        <button class="btn" id="ok">${finaliser ? '✅ Finaliser l\'inscription' : id ? '💾 Enregistrer les modifications' : attente ? '💾 Enregistrer et encaisser le paiement' : '💾 Inscrire l\'élève'}</button>
         <a class="btn clair" href="${id ? `#/eleves/${id}` : '#/eleves'}">Annuler</a>
       </div>
     </form>`;
@@ -131,26 +136,28 @@ export async function afficher(el, { id }) {
     ev.preventDefault();
     if (!f.reportValidity()) return;
     const d = lireForm(f);
-    if (!d.whatsapp && !id) return erreur(new Error('Le numéro WhatsApp du parent est obligatoire.'));
+    if (!d.whatsapp && !id && !attente) return erreur(new Error('Le numéro WhatsApp du parent est obligatoire.'));
+    if (attente && !id) d.en_attente = true;
+    if (finaliser) d.finaliser = true;
     d.photo = photo;
     d.reduction_motif = d.reduction_motif_choix === 'autre' ? d.reduction_motif_autre : d.reduction_motif_choix;
     delete d.reduction_motif_choix; delete d.reduction_motif_autre;
     if (!(Number(d.reduction) > 0)) { d.reduction = 0; d.reduction_motif = null; }
     // Motif de la modification : choix + précision (« Autre » = la précision seule)
     const choix = d.motif_choix === 'autre' ? '' : (d.motif_choix || '');
-    d.motif_modification = [choix, (d.motif_detail || '').trim()].filter(Boolean).join(' — ') || null;
+    d.motif_modification = [choix, (d.motif_detail || '').trim()].filter(Boolean).join(' — ') || (finaliser ? 'Inscription finalisée' : null);
     delete d.motif_choix; delete d.motif_detail;
     const btn = el.querySelector('#ok');
     btn.disabled = true;
     try {
       if (id) {
         await put(`/eleves/${id}`, d);
-        toast('Fiche enregistrée.', 'succes');
-        location.hash = `#/eleves/${id}`;
+        toast(finaliser ? 'Inscription finalisée.' : 'Fiche enregistrée.', 'succes');
+        location.hash = finaliser ? `#/eleves/${id}?nouveau=1` : `#/eleves/${id}`;
       } else {
         const r = await post('/eleves', d);
-        toast(`Élève inscrit — matricule ${r.matricule}`, 'succes');
-        location.hash = `#/eleves/${r.id}?nouveau=1`;
+        toast(attente ? `Élève enregistré en attente d'inscription — matricule ${r.matricule}` : `Élève inscrit — matricule ${r.matricule}`, 'succes');
+        location.hash = attente ? `#/eleves/${r.id}?payer=1` : `#/eleves/${r.id}?nouveau=1`;
       }
     } catch (err) { erreur(err); } finally { btn.disabled = false; }
   };
