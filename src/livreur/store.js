@@ -227,6 +227,8 @@ function ensureReady() {
       // arrivent à la fois chez l'agence et dans l'espace du partenaire lié.
       try { await db.exec('ALTER TABLE lv_collabs ADD COLUMN partner_id INTEGER'); } catch (_) { /* déjà présente */ }
       try { await db.exec('ALTER TABLE lv_orders ADD COLUMN merchant_id INTEGER'); } catch (_) { /* déjà présente */ }
+      // Prix unitaire des articles (valeur du stock dans le bilan).
+      try { await db.exec('ALTER TABLE lv_stock ADD COLUMN price INTEGER NOT NULL DEFAULT 0'); } catch (_) { /* déjà présente */ }
       await seed();
     })().catch((e) => { ready = null; throw e; });
   }
@@ -253,6 +255,12 @@ function deliveryFee(itemsCount) {
 // Montant que le livreur encaisse auprès du destinataire.
 function collectedAmount(o) {
   return Number(o.cod_amount || 0) + (o.fee_payer === 'destinataire' ? Number(o.fee || 0) : 0);
+}
+// Part du livreur sur les frais d'une commande (100 MRU par produit sur 150 par
+// défaut, au prorata si l'agence a ajusté les frais) ; le reste va à l'agence.
+function courierShare(o) {
+  const per = config.livreur.feePerItem;
+  return per ? Math.round(Number(o.fee || 0) * config.livreur.courierPerItem / per) : 0;
 }
 // Montant net reversé au partenaire pour une commande livrée.
 function partnerNet(o) {
@@ -339,6 +347,6 @@ async function linkCollabPartner(collab, partnerId) {
 }
 
 module.exports = {
-  db, now, today, ensureReady, newTrackingCode, findZone, deliveryFee, collectedAmount, partnerNet, addEvent,
+  db, now, today, ensureReady, newTrackingCode, findZone, deliveryFee, collectedAmount, partnerNet, courierShare, addEvent,
   STATUSES, listActiveAgencies, acceptedCollabFor, collabsForMerchant, createBoutiqueOrder, linkCollabPartner,
 };

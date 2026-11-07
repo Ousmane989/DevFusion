@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
-  <script src="/livreur/theme.js?v=20261102e"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261102e" />
+  <script src="/livreur/theme.js?v=20261107b"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261107b" />
 </head>
 <body>
   <div class="app">
@@ -75,6 +75,18 @@
           <div class="panel flush"><div class="table-wrap" id="a-collabs"></div></div>
         </div>
 
+        <div data-view="bilan" class="hidden">
+          <div class="panel bl-tools">
+            <div class="row-3" style="align-items:end">
+              <div class="field"><label>Du</label><input type="date" id="a-bl-from" /></div>
+              <div class="field"><label>Au</label><input type="date" id="a-bl-to" /></div>
+              <div class="field"><label>Partenaire</label><select id="a-bl-partner"></select></div>
+              <div class="field bl-btns"><button class="btn btn-ghost btn-sm" data-bl="today">Aujourd'hui</button><button class="btn btn-ghost btn-sm" data-bl="yesterday">Hier</button><button class="btn btn-ghost btn-sm" data-bl="month">Ce mois</button><button class="btn btn-primary btn-sm" data-bl="print">Imprimer / PDF</button></div>
+            </div>
+          </div>
+          <div class="panel" id="a-bilan"></div>
+        </div>
+
         <div data-view="stock" class="hidden">
           <div class="panel flush"><div class="panel-head"><h2>Stock des partenaires</h2><div class="actions"><button class="btn btn-primary btn-sm" id="a-new-stock">+ Enregistrer un dépôt</button></div></div><div class="table-wrap" id="a-stock"></div></div>
         </div>
@@ -105,8 +117,8 @@
       </div>
     </div>
   </div>
-  <script src="/livreur/lv.js?v=20261102e"></script>
-  <script src="/livreur/anim.js?v=20261102e"></script>
-  <script src="/livreur/agence.js?v=20261102e"></script>
+  <script src="/livreur/lv.js?v=20261107b"></script>
+  <script src="/livreur/anim.js?v=20261107b"></script>
+  <script src="/livreur/agence.js?v=20261107b"></script>
 </body>
 </html>
