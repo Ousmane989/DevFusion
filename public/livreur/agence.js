@@ -13,6 +13,7 @@
     { id: 'stock', label: 'Stock', icon: 'warehouse' },
     { id: 'caisse', label: 'Caisse', icon: 'cash' },
     { id: 'reversements', label: 'Reversements', icon: 'shield' },
+    { id: 'bilan', label: 'Bilan du jour', icon: 'chart' },
     { id: 'tarifs', label: 'Zones & délais', icon: 'tag' },
     { id: 'messages', label: 'Messages', icon: 'chat' },
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -214,12 +215,35 @@
     });
   }
 
+
+  // --------- Bilan (clôture) de la journée ou de la période ---------
+  const blFrom = document.getElementById('a-bl-from');
+  const blTo = document.getElementById('a-bl-to');
+  const isoDay = (d) => d.toISOString().slice(0, 10);
+  blFrom.value = blTo.value = isoDay(new Date());
+  async function loadBilan() {
+    const q = '?from=' + blFrom.value + '&to=' + blTo.value + (document.getElementById('a-bl-partner').value ? '&partner_id=' + document.getElementById('a-bl-partner').value : '');
+    const r = await api('/agency/bilan' + q);
+    document.getElementById('a-bilan').innerHTML = r.ok ? LV.bilanDoc(r.data, true) : '<div class="empty">' + esc(r.data.error || 'Bilan indisponible.') + '</div>';
+  }
+  [blFrom, blTo, document.getElementById('a-bl-partner')].forEach((el) => el.addEventListener('change', loadBilan));
+  document.querySelector('[data-view="bilan"] .bl-tools').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-bl]');
+    if (!b) return;
+    const d = new Date();
+    if (b.dataset.bl === 'print') return window.print();
+    if (b.dataset.bl === 'today') { blFrom.value = blTo.value = isoDay(d); }
+    if (b.dataset.bl === 'yesterday') { d.setDate(d.getDate() - 1); blFrom.value = blTo.value = isoDay(d); }
+    if (b.dataset.bl === 'month') { blTo.value = isoDay(d); d.setDate(1); blFrom.value = isoDay(d); }
+    loadBilan();
+  });
+
   // --------- Stock ---------
   function newStock() {
     const body = modal('Enregistrer un dépôt de stock',
       '<form><div class="form-msg"></div><div class="field"><label>Partenaire</label><select name="partner_id" required>' + partnerOptions('', '— Choisir —') + '</select></div>' +
       '<div class="row"><div class="field"><label>Article</label><input name="name" required /></div><div class="field"><label>Référence</label><input name="sku" /></div></div>' +
-      '<div class="row"><div class="field"><label>Quantité déposée</label><input type="number" name="qty" value="1" required /></div><div class="field"><label>Emplacement</label><input name="location" placeholder="Ex. Étagère A3" /></div></div>' +
+      '<div class="row-3"><div class="field"><label>Quantité déposée</label><input type="number" name="qty" value="1" required /></div><div class="field"><label>Prix unitaire (MRU)</label><input type="number" name="price" min="0" /></div><div class="field"><label>Emplacement</label><input name="location" placeholder="Ex. Étagère A3" /></div></div>' +
       '<button class="btn btn-primary btn-block" type="submit">Enregistrer</button></form>');
     const f = body.querySelector('form');
     f.addEventListener('submit', async (e) => {
@@ -323,6 +347,14 @@
       document.getElementById('a-team').innerHTML = usersTable(r.data.users || [], 'agence');
     },
 
+    async bilan() {
+      await loadPeople();
+      const sel = document.getElementById('a-bl-partner');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Tous les partenaires</option>' + partners.map((p) => '<option value="' + p.id + '">' + esc(p.business_name || p.name) + '</option>').join('');
+      sel.value = cur;
+      return loadBilan();
+    },
     async stock() {
       const r = await api('/agency/stock');
       const rows = r.data.stock || [];

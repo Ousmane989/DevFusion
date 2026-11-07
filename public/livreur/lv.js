@@ -113,6 +113,52 @@ window.LV = (function () {
     return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
   function money(n) { return Math.round(Number(n) || 0).toLocaleString('fr-FR') + ' MRU'; }
+
+  // ----- Bilan (clôture) imprimable : partenaire ou agence -----
+  // d = réponse de /partner/bilan ou /agency/bilan ; agency = vue agence
+  // (partage des frais livreur / agence et gains des livreurs).
+  function bilanDoc(d, agency) {
+    const fr = (x) => x.split('-').reverse().join('/');
+    const pct = (v) => (v == null ? '—' : v + ' %');
+    const t = d.totals;
+    const period = d.from === d.to ? 'Journée du ' + fr(d.from) : 'Période du ' + fr(d.from) + ' au ' + fr(d.to);
+    const sec = (ic, title) => '<h3 class="bl-h">' + icon(ic) + '<span>' + title + '</span></h3>';
+    let h = '<div class="bl-doc"><div class="bl-top"><img src="/livreur/img/logo-h.png?v=2" alt="Karat Logistique" /><div><small>Imprimé le ' + date(d.generated_at, true) + '</small>' +
+      '<h2>' + (d.partner ? esc(d.partner.name) : 'Bilan de l\'agence') + '</h2><p>' + period.toUpperCase() + '</p></div></div>';
+    if (d.partner) {
+      h += sec('warehouse', 'État du stock');
+      h += d.stock.length
+        ? '<table class="bl-t"><thead><tr><th>Article</th><th class="num">Stock initial</th><th class="num">Livrés</th><th class="num">Stock restant</th><th class="num">Prix unitaire</th><th class="num">Valeur du stock</th></tr></thead><tbody>' +
+          d.stock.map((s) => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.initial + '</td><td class="num bl-o">' + s.delivered + '</td><td class="num bl-g">' + s.remaining + '</td><td class="num">' + (s.price ? money(s.price) : '—') + '</td><td class="num">' + (s.price ? money(s.value) : '—') + '</td></tr>').join('') +
+          '<tr class="bl-total"><td>TOTAL</td><td class="num">' + d.stock.reduce((a, s) => a + s.initial, 0) + '</td><td class="num bl-o">' + d.stock.reduce((a, s) => a + s.delivered, 0) + '</td><td class="num">' + d.stock.reduce((a, s) => a + s.remaining, 0) + '</td><td></td><td class="num bl-o">' + money(d.stock.reduce((a, s) => a + s.value, 0)) + '</td></tr></tbody></table>'
+        : '<p class="dim">Aucun article en stock.</p>';
+    }
+    h += sec('truck', 'Détail des livraisons effectuées') + '<p class="bl-count">Nombre de commandes livrées : <b>' + t.orders + '</b> · Produits livrés : <b>' + t.items + '</b></p>';
+    h += d.orders.length
+      ? '<div class="table-wrap"><table class="bl-t bl-orders"><thead><tr><th>Commande</th>' + (d.partner ? '' : '<th>Partenaire</th>') + '<th>Client</th><th>Produits</th><th class="num">Encaissé</th><th class="num">Livraison</th>' +
+        (agency ? '<th class="num">Part livreur</th><th class="num">Part agence</th>' : '') + '<th class="num">Net partenaire</th></tr></thead><tbody>' +
+        d.orders.map((o) => '<tr><td><span class="code">' + esc(o.code) + '</span><br><span class="muted">' + date(o.date, true) + (o.courier ? ' · ' + esc(o.courier) : '') + '</span></td>' + (d.partner ? '' : '<td>' + esc(o.partner || '—') + '</td>') +
+          '<td>' + esc(o.recipient) + '<br><span class="muted">' + esc(phoneFmt(o.phone)) + (o.zone ? ' · ' + esc(o.zone) : '') + '</span></td>' +
+          '<td>' + esc(o.products || '—') + '<br><span class="muted">' + o.items + ' produit' + (o.items > 1 ? 's' : '') + '</span></td><td class="num"><b>' + money(o.collected) + '</b></td><td class="num">' + money(o.fee) + '</td>' +
+          (agency ? '<td class="num">' + money(o.courier_share) + '</td><td class="num">' + money(o.agency_share) + '</td>' : '') +
+          '<td class="num">' + money(o.partner_net) + '</td></tr>').join('') + '</tbody></table></div>'
+      : '<p class="dim">Aucune livraison sur cette période.</p>';
+    h += sec('chart', 'Récapitulatif') + '<div class="bl-recap">' +
+      '<div><span>Encaissements totaux</span><b>' + money(t.collected) + '</b></div><div><span>Ventes (montant des produits)</span><b>' + money(t.sales) + '</b></div>' +
+      '<div><span>Frais de livraison totaux</span><b>' + money(t.fees) + '</b></div>' +
+      (agency ? '<div><span>Part des livreurs</span><b>' + money(t.courier) + '</b></div><div><span>Part de l\'agence</span><b>' + money(t.agency) + '</b></div>' : '<div><span>Produits livrés</span><b>' + t.items + '</b></div>') +
+      '</div><div class="bl-due"><span>Reliquat à verser ' + (d.partner ? 'au partenaire' : 'aux partenaires') + '</span><b>' + money(t.partner_due) + '</b></div>';
+    if (d.partner && d.stock.length) {
+      h += '<div class="bl-recap bl-green"><div><span>Stock restant total</span><b>' + d.stock.reduce((a, s) => a + s.remaining, 0) + ' unités</b></div><div><span>Valeur du stock restant</span><b>' + money(d.stock.reduce((a, s) => a + s.value, 0)) + '</b></div></div>';
+    }
+    if (agency && d.couriers.length) {
+      h += sec('bike', 'Gains des livreurs') + '<table class="bl-t"><thead><tr><th>Livreur</th><th class="num">Commandes</th><th class="num">Produits</th><th class="num">Argent encaissé (à remettre)</th><th class="num">Gain du livreur</th></tr></thead><tbody>' +
+        d.couriers.map((c) => '<tr><td><b>' + esc(c.name) + '</b></td><td class="num">' + c.orders + '</td><td class="num">' + c.items + '</td><td class="num">' + money(c.collected) + '</td><td class="num bl-o"><b>' + money(c.share) + '</b></td></tr>').join('') + '</tbody></table>';
+    }
+    h += sec('shield', 'Bilan des performances') + '<div class="bl-perf"><div><b>' + d.perf.delivered + '</b><span>Commandes livrées</span></div><div><b>' + pct(d.perf.confirm_rate) + '</b><span>Taux de confirmation</span></div><div><b>' + pct(d.perf.delivery_rate) + '</b><span>Taux de livraison</span></div></div>';
+    h += '<p class="bl-foot">Document généré automatiquement par Karat Logistique · ' + date(d.generated_at, true) + '</p></div>';
+    return h;
+  }
   function phoneFmt(p) {
     const d = String(p || '').replace(/\D/g, '');
     if (d.length === 11 && d.startsWith('222')) return '+222 ' + d.slice(3).replace(/(\d{2})(?=\d)/g, '$1 ');
@@ -386,7 +432,7 @@ window.LV = (function () {
   }
 
   return {
-    icon, brand, api, esc, money, phoneFmt, date, badge, USER_STATUS, msg, clearMsg, toast, modal, closeModal, live, notify, modalOpen,
+    icon, brand, api, esc, money, bilanDoc, phoneFmt, date, badge, USER_STATUS, msg, clearMsg, toast, modal, closeModal, live, notify, modalOpen,
     formData, submit, info, zoneOptions, publicChrome, mapSvg, fillContacts, appShell, setCount, logout, WA_SVG,
   };
 })();
