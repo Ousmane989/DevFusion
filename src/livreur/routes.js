@@ -327,6 +327,79 @@ async function withMovements(items) {
   });
 }
 
+// ------------------------------------------------------------------
+// Bilan (clôture) d'une période : stock, livraisons effectuées, encaissements,
+// partage des frais (livreur / agence), reliquat dû au partenaire, performances.
+// Un partenaire voit le sien ; l'agence le voit par partenaire ou pour tous.
+// ------------------------------------------------------------------
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+function bilanPeriod(q) {
+  let from = DAY.test(q.from || '') ? q.from : S.today();
+  let to = DAY.test(q.to || '') ? q.to : from;
+  if (to < from) [from, to] = [to, from];
+  return { from, to };
+}
+async function buildBilan({ from, to }, partnerId) {
+  const start = from + ' 00:00:00';
+  const end = to + ' 23:59:59';
+  const only = partnerId ? ' AND o.partner_id = ?' : '';
+  const args = partnerId ? [partnerId] : [];
+  const delivered = await db.prepare(`SELECT o.*, c.name AS courier_name, p.business_name AS partner_name, s.name AS stock_name
+    FROM lv_orders o LEFT JOIN lv_users c ON c.id = o.courier_id LEFT JOIN lv_users p ON p.id = o.partner_id LEFT JOIN lv_stock s ON s.id = o.stock_id
+    WHERE o.status = 'livree' AND o.delivered_at >= ? AND o.delivered_at <= ?${only} ORDER BY o.delivered_at`).all(start, end, ...args);
+  const created = await db.prepare(`SELECT o.status FROM lv_orders o WHERE o.created_at >= ? AND o.created_at <= ?${only}`).all(start, end, ...args);
+
+  const totals = { orders: delivered.length, items: 0, sales: 0, collected: 0, fees: 0, courier: 0, agency: 0, partner_due: 0 };
+  const couriers = {};
+  const soldByStock = {};
+  const orders = delivered.map((o) => {
+    const fee = Number(o.fee || 0);
+    const cShare = S.courierShare(o);
+    const row = {
+      code: o.code, date: o.delivered_at, recipient: o.recipient_name, phone: o.recipient_phone, zone: o.zone_name, address: o.address,
+      products: [o.stock_name ? o.stock_name + ' × ' + (o.stock_qty || 1) : '', o.description || ''].filter(Boolean).join(' · '), items: Number(o.items_count || 1), partner: o.partner_name || o.sender_name || '',
+      courier: o.courier_name || '', cod: Number(o.cod_amount || 0), collected: S.collectedAmount(o), fee, fee_payer: o.fee_payer,
+      courier_share: cShare, agency_share: fee - cShare, partner_net: S.partnerNet(o),
+    };
+    totals.items += row.items; totals.sales += row.cod; totals.collected += row.collected; totals.fees += fee;
+    totals.courier += cShare; totals.agency += fee - cShare; totals.partner_due += row.partner_net;
+    if (o.stock_id) soldByStock[o.stock_id] = (soldByStock[o.stock_id] || 0) + Number(o.stock_qty || 0);
+    const k = o.courier_id || 0;
+    const c = couriers[k] || (couriers[k] = { name: o.courier_name || 'Sans livreur', orders: 0, items: 0, collected: 0, share: 0 });
+    c.orders++; c.items += row.items; c.collected += row.collected; c.share += cShare;
+    return row;
+  });
+
+  let stock = [];
+  if (partnerId) {
+    const items = await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(partnerId);
+    stock = items.map((i) => {
+      const sold = soldByStock[i.id] || 0;
+      const left = Number(i.qty);
+      return { name: i.name, sku: i.sku, initial: left + sold, delivered: sold, remaining: left, price: Number(i.price || 0), value: left * Number(i.price || 0) };
+    });
+  }
+
+  const by = {};
+  created.forEach((o) => { by[o.status] = (by[o.status] || 0) + 1; });
+  const confirmed = created.filter((o) => !['nouvelle', 'annulee'].includes(o.status)).length;
+  const closed = (by.livree || 0) + (by.echec || 0) + (by.retournee || 0) + (by.annulee || 0);
+  return {
+    from, to, generated_at: S.now(), orders, stock, totals,
+    couriers: partnerId ? [] : Object.values(couriers),
+    perf: {
+      created: created.length, delivered: delivered.length,
+      confirm_rate: created.length ? Math.round((confirmed / created.length) * 100) : null,
+      delivery_rate: closed ? Math.round(((by.livree || 0) / closed) * 100) : null,
+    },
+  };
+}
+
+partner.get('/bilan', wrap(async (req, res) => {
+  const b = await buildBilan(bilanPeriod(req.query), req.lv.id);
+  res.json({ ...b, partner: { name: req.lv.business_name || req.lv.name, phone: req.lv.phone } });
+}));
+
 partner.get('/stock', wrap(async (req, res) => {
   res.json({ stock: await withMovements(await db.prepare('SELECT * FROM lv_stock WHERE partner_id = ? ORDER BY name').all(req.lv.id)) });
 }));
@@ -335,16 +408,18 @@ partner.get('/stock', wrap(async (req, res) => {
 partner.post('/stock', wrap(async (req, res) => {
   const b = req.body || {};
   if (!str(b.name)) return bad(res, 'Le nom de l\'article est obligatoire.');
-  await db.prepare('INSERT INTO lv_stock (partner_id, name, sku, qty, location, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(req.lv.id, str(b.name, 120), str(b.sku, 60), Math.max(0, Math.round(Number(b.qty) || 0)), '', S.now());
+  await db.prepare('INSERT INTO lv_stock (partner_id, name, sku, qty, price, location, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(req.lv.id, str(b.name, 120), str(b.sku, 60), Math.max(0, Math.round(Number(b.qty) || 0)), Math.max(0, Math.round(Number(b.price) || 0)), '', S.now());
   res.status(201).json({ ok: true });
 }));
 partner.put('/stock/:id', wrap(async (req, res) => {
   const s = await db.prepare('SELECT * FROM lv_stock WHERE id = ? AND partner_id = ?').get(int(req.params.id), req.lv.id);
   if (!s) return bad(res, 'Article introuvable.', 404);
-  const qty = Math.max(0, Math.round(Number(req.body && req.body.qty)));
+  const b = req.body || {};
+  const qty = b.qty === undefined ? Number(s.qty) : Math.max(0, Math.round(Number(b.qty)));
+  const price = b.price === undefined ? Number(s.price || 0) : Math.max(0, Math.round(Number(b.price) || 0));
   if (!Number.isFinite(qty)) return bad(res, 'Quantité invalide.');
-  await db.prepare('UPDATE lv_stock SET qty = ?, updated_at = ? WHERE id = ?').run(qty, S.now(), s.id);
+  await db.prepare('UPDATE lv_stock SET qty = ?, price = ?, updated_at = ? WHERE id = ?').run(qty, price, S.now(), s.id);
   res.json({ ok: true });
 }));
 
@@ -576,8 +651,8 @@ agency.post('/stock', wrap(async (req, res) => {
   const b = req.body || {};
   const p = await db.prepare("SELECT id FROM lv_users WHERE id = ? AND role = 'partenaire'").get(int(b.partner_id));
   if (!p || !str(b.name)) return bad(res, 'Partenaire et article sont obligatoires.');
-  await db.prepare('INSERT INTO lv_stock (partner_id, name, sku, qty, location, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(p.id, str(b.name, 120), str(b.sku, 60), Math.round(Number(b.qty) || 0), str(b.location, 60), S.now());
+  await db.prepare('INSERT INTO lv_stock (partner_id, name, sku, qty, price, location, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(p.id, str(b.name, 120), str(b.sku, 60), Math.round(Number(b.qty) || 0), Math.max(0, Math.round(Number(b.price) || 0)), str(b.location, 60), S.now());
   res.status(201).json({ ok: true });
 }));
 agency.put('/stock/:id', wrap(async (req, res) => {
@@ -585,8 +660,9 @@ agency.put('/stock/:id', wrap(async (req, res) => {
   if (!s) return bad(res, 'Article introuvable.', 404);
   const b = req.body || {};
   const qty = b.add !== undefined ? Number(s.qty) + Math.round(Number(b.add) || 0) : (b.qty !== undefined ? Math.round(Number(b.qty) || 0) : s.qty);
-  await db.prepare('UPDATE lv_stock SET name = ?, sku = ?, qty = ?, location = ?, updated_at = ? WHERE id = ?')
-    .run(str(b.name ?? s.name, 120), str(b.sku ?? s.sku, 60), qty, str(b.location ?? s.location, 60), S.now(), s.id);
+  const price = b.price !== undefined ? Math.max(0, Math.round(Number(b.price) || 0)) : Number(s.price || 0);
+  await db.prepare('UPDATE lv_stock SET name = ?, sku = ?, qty = ?, price = ?, location = ?, updated_at = ? WHERE id = ?')
+    .run(str(b.name ?? s.name, 120), str(b.sku ?? s.sku, 60), qty, price, str(b.location ?? s.location, 60), S.now(), s.id);
   res.json({ ok: true });
 }));
 agency.delete('/stock/:id', wrap(async (req, res) => {
@@ -679,6 +755,15 @@ agency.get('/export.csv', wrap(async (_req, res) => {
   const rows = await db.prepare('SELECT * FROM lv_orders ORDER BY id DESC').all();
   res.set('Content-Disposition', 'attachment; filename="commandes-karat-logistique.csv"');
   res.type('text/csv; charset=utf-8').send(toCsv(rows));
+}));
+
+// --- Bilan de la période (par partenaire ou toute l'agence) ---
+agency.get('/bilan', wrap(async (req, res) => {
+  const pid = int(req.query.partner_id) || null;
+  const p = pid ? await db.prepare("SELECT business_name, name, phone FROM lv_users WHERE id = ? AND role = 'partenaire'").get(pid) : null;
+  if (pid && !p) return bad(res, 'Partenaire introuvable.', 404);
+  const b = await buildBilan(bilanPeriod(req.query), pid);
+  res.json({ ...b, partner: p ? { name: p.business_name || p.name, phone: p.phone } : null, shares: { fee_per_item: config.livreur.feePerItem, courier_per_item: config.livreur.courierPerItem } });
 }));
 
 // --- Collaborations avec les boutiques Karat (demande / acceptation) ---
