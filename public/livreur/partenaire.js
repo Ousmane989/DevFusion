@@ -8,6 +8,7 @@
     { id: 'commandes', label: 'Mes commandes', icon: 'list' },
     { id: 'stock', label: 'Mon stock', icon: 'warehouse' },
     { id: 'reversements', label: 'Reversements', icon: 'cash' },
+    { id: 'bilan', label: 'Bilan du jour', icon: 'chart' },
     { id: 'profil', label: 'Mon profil', icon: 'user' },
   ];
   let info = { zones: [], fee_per_item: 0, statuses: {} };
@@ -30,7 +31,7 @@
       rows.map((s) => '<tr><td><b>' + esc(s.name) + '</b></td>' + (compact ? '' : '<td class="muted">' + esc(s.sku || '—') + '</td>') +
         '<td class="num">' + s.qty + '</td><td class="num">' + (s.reserved || 0) + '</td><td class="num">' + (s.delivered || 0) + '</td>' +
         '<td class="num"><b style="color:' + (s.available <= 2 ? 'var(--danger)' : 'var(--brand)') + '">' + s.available + '</b></td>' +
-        (compact ? '' : '<td class="muted">' + date(s.updated_at, true) + '</td><td class="num"><button class="btn btn-ghost btn-sm" data-stock-qty="' + s.id + '" data-qty="' + s.qty + '">Modifier</button></td>') +
+        (compact ? '' : '<td class="muted">' + date(s.updated_at, true) + '</td><td class="num"><button class="btn btn-ghost btn-sm" data-stock-qty="' + s.id + '" data-qty="' + s.qty + '" data-price="' + (s.price || 0) + '">Modifier</button></td>') +
         '</tr>').join('') + '</tbody></table>';
   }
 
@@ -100,6 +101,7 @@
       el.innerHTML = ordersTable(r.data.orders || []);
       bindRows(el);
     },
+    bilan() { return loadBilan(); },
     async stock() {
       const r = await api('/partner/stock');
       document.getElementById('p-stock').innerHTML = stockTable(r.data.stock || [], false);
@@ -174,7 +176,7 @@
     const body = modal('Ajouter un article',
       '<form><div class="form-msg"></div>' +
       '<div class="row"><div class="field"><label>Article</label><input name="name" required /></div><div class="field"><label>Référence</label><input name="sku" /></div></div>' +
-      '<div class="field"><label>Quantité</label><input type="number" name="qty" min="0" value="1" required /></div>' +
+      '<div class="row"><div class="field"><label>Quantité</label><input type="number" name="qty" min="0" value="1" required /></div><div class="field"><label>Prix unitaire (MRU)</label><input type="number" name="price" min="0" placeholder="Ex. 2500" /></div></div>' +
       '<button class="btn btn-primary btn-block" type="submit">Enregistrer</button></form>');
     const f = body.querySelector('form');
     f.addEventListener('submit', async (e) => {
@@ -187,12 +189,41 @@
   document.getElementById('p-stock').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-stock-qty]');
     if (!b) return;
-    const n = prompt('Nouvelle quantité en stock :', b.dataset.qty);
-    if (n === null || n.trim() === '' || !Number.isFinite(Number(n))) return;
-    const r = await api('/partner/stock/' + b.dataset.stockQty, { qty: Number(n) }, 'PUT');
-    if (!r.ok) return toast(r.data.error, true);
-    toast('Stock mis à jour'); VIEWS.stock();
+    const body = modal('Modifier l\'article',
+      '<form><div class="form-msg"></div><div class="row"><div class="field"><label>Quantité en stock</label><input type="number" name="qty" min="0" value="' + esc(b.dataset.qty) + '" required /></div>' +
+      '<div class="field"><label>Prix unitaire (MRU)</label><input type="number" name="price" min="0" value="' + esc(b.dataset.price || 0) + '" /></div></div>' +
+      '<button class="btn btn-primary btn-block" type="submit">Enregistrer</button></form>');
+    const f = body.querySelector('form');
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const r = await LV.submit(f, '/partner/stock/' + b.dataset.stockQty, null, 'PUT');
+      if (!r.ok) return;
+      closeModal(); toast('Stock mis à jour'); VIEWS.stock();
+    });
   });
+
+  // --------- Bilan (clôture) de la journée ou de la période ---------
+  const blFrom = document.getElementById('p-bl-from');
+  const blTo = document.getElementById('p-bl-to');
+  const isoDay = (d) => d.toISOString().slice(0, 10);
+  blFrom.value = blTo.value = isoDay(new Date());
+  async function loadBilan() {
+    const q = '?from=' + blFrom.value + '&to=' + blTo.value;
+    const r = await api('/partner/bilan' + q);
+    document.getElementById('p-bilan').innerHTML = r.ok ? LV.bilanDoc(r.data, false) : '<div class="empty">' + esc(r.data.error || 'Bilan indisponible.') + '</div>';
+  }
+  [blFrom, blTo].forEach((el) => el.addEventListener('change', loadBilan));
+  document.querySelector('[data-view="bilan"] .bl-tools').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-bl]');
+    if (!b) return;
+    const d = new Date();
+    if (b.dataset.bl === 'print') return window.print();
+    if (b.dataset.bl === 'today') { blFrom.value = blTo.value = isoDay(d); }
+    if (b.dataset.bl === 'yesterday') { d.setDate(d.getDate() - 1); blFrom.value = blTo.value = isoDay(d); }
+    if (b.dataset.bl === 'month') { blTo.value = isoDay(d); d.setDate(1); blFrom.value = isoDay(d); }
+    loadBilan();
+  });
+
   shell.start();
 
   // Temps réel : dès qu'une commande change de statut, la vue se met à jour.

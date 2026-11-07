@@ -8,6 +8,7 @@
     "lng": -15.9785
   },
   "fee_per_item": 150,
+  "courier_per_item": 100,
   "zones": [
     { "name": "Tevragh Zeina", "region": "Nouakchott", "kind": "commune", "delay": "Moins de 2 h" },
     { "name": "Ksar", "region": "Nouakchott", "kind": "commune", "delay": "Moins de 2 h" },
