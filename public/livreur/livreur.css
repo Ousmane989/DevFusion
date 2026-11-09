@@ -938,6 +938,39 @@ body.leaving { animation: leave .28s ease forwards; }
   .kpi strong, .bl-doc * { animation: none !important; }
 }
 
+/* Inscription livreur : accord de partage de la position */
+.geo-box { display: flex; gap: 16px; padding: 18px; margin: 6px 0 18px; border: 1.5px dashed var(--line-strong); border-radius: 16px; background: var(--surface-2); }
+.geo-box.ok { border-style: solid; border-color: var(--success); }
+.geo-box.ko { border-style: solid; border-color: var(--danger); }
+.geo-ic { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; background: var(--accent); color: #fff; }
+.geo-ic svg { width: 24px; height: 24px; }
+.geo-box p { font-size: 14px; color: var(--text-dim); margin: 6px 0 10px; }
+.geo-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.geo-consent input { width: 18px; height: 18px; margin-top: 2px; flex: none; }
+.geo-state { display: block; font-size: 13px; margin-top: 8px; color: var(--text-mute); }
+.geo-box.ok .geo-state { color: var(--success); font-weight: 700; }
+.geo-box.ko .geo-state { color: var(--danger); }
+/* Espace livreur : bandeau de localisation */
+.geo-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; margin-bottom: 18px; font-weight: 600; background: var(--accent-soft); color: var(--accent-dark); }
+.geo-banner.ok { background: rgba(18,160,95,.12); color: var(--success); }
+.geo-banner .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+.geo-banner.ok .dot { animation: ping-green 1.8s ease-out infinite; }
+.geo-banner .btn { margin-left: auto; }
+/* Espace agence : carte des livreurs */
+.fleet { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
+.fleet-map { height: 560px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); }
+.fleet-list { display: grid; gap: 10px; align-content: start; max-height: 560px; overflow: auto; }
+.fleet-item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); cursor: pointer; }
+.fleet-item:hover { border-color: var(--accent); }
+.fleet-item .st { width: 10px; height: 10px; border-radius: 50%; background: var(--text-mute); flex: none; }
+.fleet-item.on .st { background: var(--success); box-shadow: 0 0 0 4px rgba(18,160,95,.18); }
+.fleet-item b { display: block; }
+.fleet-item small { color: var(--text-mute); }
+.fleet-pin { width: 38px; height: 38px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--brand); border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.35); display: grid; place-items: center; }
+.fleet-pin.on { background: var(--accent); }
+.fleet-pin span { transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 13px; font-family: var(--head); }
+@media (max-width: 1060px) { .fleet { grid-template-columns: 1fr; } .fleet-map { height: 420px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
   html { scroll-behavior: auto; }

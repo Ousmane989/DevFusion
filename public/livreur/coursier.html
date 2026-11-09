@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
-  <script src="/livreur/theme.js?v=20261109b"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109b" />
+  <script src="/livreur/theme.js?v=20261109c"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109c" />
 </head>
 <body>
   <div class="app">
@@ -20,8 +20,13 @@
         <div class="actions"><button class="btn btn-ghost btn-sm" id="c-refresh">Actualiser</button></div>
       </header>
       <div class="content">
+        <div class="geo-banner" id="c-geo"><span class="dot"></span><span id="c-geo-text">Localisation en cours d'activation…</span></div>
         <div data-view="tournee" class="hidden">
           <div class="kpis" id="c-kpis"></div>
+          <div class="panel flush" id="c-avail-panel">
+            <div class="panel-head"><h2>Commandes confirmées à livrer</h2><div class="actions"><span class="live-badge"><i></i>En direct</span></div></div>
+            <div class="list-cards" id="c-avail" style="padding:0 18px 18px"></div>
+          </div>
           <h2 style="font-size:18px;margin-bottom:12px">À livrer</h2>
           <div class="list-cards" id="c-active"></div>
           <h2 style="font-size:18px;margin:28px 0 12px">Terminées aujourd'hui</h2>
@@ -41,8 +46,8 @@
       </div>
     </div>
   </div>
-  <script src="/livreur/lv.js?v=20261109b"></script>
-  <script src="/livreur/anim.js?v=20261109b"></script>
-  <script src="/livreur/coursier.js?v=20261109b"></script>
+  <script src="/livreur/lv.js?v=20261109c"></script>
+  <script src="/livreur/anim.js?v=20261109c"></script>
+  <script src="/livreur/coursier.js?v=20261109c"></script>
 </body>
 </html>

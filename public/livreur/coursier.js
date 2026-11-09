@@ -56,10 +56,49 @@
     toast('Statut mis à jour'); VIEWS.tournee();
   }
 
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]');
     if (b) act(b.dataset.id, b.dataset.act);
+    const t = e.target.closest('[data-take]');
+    if (t) {
+      t.disabled = true;
+      const r = await api('/courier/orders/' + t.dataset.take + '/take', {});
+      if (!r.ok) { t.disabled = false; toast(r.data.error, true); return VIEWS.tournee(); }
+      toast('Course ajoutée à votre tournée ✓'); VIEWS.tournee();
+    }
+    if (e.target.closest('[data-geo-retry]')) startGeo();
   });
+
+  // --------- Position en temps réel (partagée avec l'agence pendant le service) ---------
+  const geoBox = document.getElementById('c-geo');
+  const geoText = document.getElementById('c-geo-text');
+  let lastSent = 0;
+  let watchId = null;
+  function geoState(ok, text) {
+    geoBox.classList.toggle('ok', ok);
+    geoText.innerHTML = text;
+  }
+  function sendPos(p) {
+    const now = Date.now();
+    if (now - lastSent < 20000) return; // au plus une position toutes les 20 s
+    lastSent = now;
+    api('/courier/location', { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0) });
+    geoState(true, 'Position partagée avec l\'agence · mise à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+  }
+  function startGeo() {
+    if (!navigator.geolocation) return geoState(false, 'Votre téléphone ne permet pas la localisation : vous ne pouvez pas prendre de course.');
+    if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    lastSent = 0;
+    watchId = navigator.geolocation.watchPosition(sendPos, (err) => {
+      geoState(false, (err && err.code === 1
+        ? 'Localisation refusée : autorisez-la pour ce site dans les réglages du navigateur pour recevoir et prendre des courses.'
+        : 'Position introuvable : activez le GPS (localisation) de votre téléphone.') + ' <button class="btn btn-primary btn-sm" data-geo-retry>Réessayer</button>');
+    }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 });
+  }
+  startGeo();
+  // Le navigateur peut suspendre la localisation en arrière-plan : on renvoie
+  // la position dès que l'espace revient au premier plan.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastSent = 0; startGeo(); } });
   document.getElementById('c-refresh').addEventListener('click', () => shell.show(location.hash.slice(1)));
 
   function kpi(label, value, sub, accent) {
@@ -68,7 +107,15 @@
 
   const VIEWS = {
     async tournee() {
-      const [t, c] = await Promise.all([api('/courier/tour'), api('/courier/cash')]);
+      const [t, c, av] = await Promise.all([api('/courier/tour'), api('/courier/cash'), api('/courier/available')]);
+      const avail = (av.data && av.data.orders) || [];
+      document.getElementById('c-avail').innerHTML = avail.length
+        ? avail.map((o) => '<div class="order-card"><div class="top"><span class="code">' + esc(o.code) + '</span>' + badge(o.status, o.status_label) + '</div>' +
+            '<div class="meta"><span><b>' + esc(o.zone_name) + '</b> — ' + esc(o.address) + '</span>' +
+            (o.pickup_address ? '<span class="muted">Enlèvement : ' + esc(o.pickup_address) + (o.partner_name ? ' (' + esc(o.partner_name) + ')' : '') + '</span>' : '') +
+            '<span class="muted">' + (o.items_count || 1) + ' produit(s) · à encaisser ' + money(o.collected) + '</span></div>' +
+            '<div class="btns"><button class="btn btn-primary" data-take="' + o.id + '"' + (av.data.location_ok ? '' : ' disabled title="Activez votre position"') + '>Prendre cette course</button></div></div>').join('')
+        : '<div class="empty">Aucune commande confirmée en attente. Vous serez alerté dès qu\'il y en a une.</div>';
       const active = t.data.active || [];
       const done = t.data.done || [];
       const toCollect = active.reduce((s, o) => s + o.collected, 0);
@@ -99,16 +146,20 @@
   };
   shell.start();
 
-  // Temps réel : alerte dès qu'une nouvelle course est assignée.
+  // Temps réel : alerte dès qu'une course est assignée ou qu'une commande
+  // confirmée est disponible.
   let known = null;
+  let knownAvail = null;
   LV.live(async () => {
-    const r = await api('/courier/tour');
-    if (!r.ok) return;
+    const [r, a] = await Promise.all([api('/courier/tour'), api('/courier/available')]);
+    if (!r.ok || !a.ok) return;
     const ids = (r.data.active || []).map((o) => o.id);
-    if (known && ids.some((id) => !known.includes(id))) {
-      LV.notify('Nouvelle course assignée');
-      if (!LV.modalOpen() && (location.hash.slice(1) || 'tournee') === 'tournee') VIEWS.tournee();
-    }
-    known = ids;
-  }, 15000);
+    const av = (a.data.orders || []).map((o) => o.id);
+    let changed = false;
+    if (known && ids.some((id) => !known.includes(id))) { LV.notify('Nouvelle course assignée'); changed = true; }
+    if (knownAvail && av.some((id) => !knownAvail.includes(id))) { LV.notify('Nouvelle commande confirmée à livrer'); changed = true; }
+    if (knownAvail && av.length !== knownAvail.length) changed = true;
+    if (changed && !LV.modalOpen() && (location.hash.slice(1) || 'tournee') === 'tournee') VIEWS.tournee();
+    known = ids; knownAvail = av;
+  }, 10000);
 })();

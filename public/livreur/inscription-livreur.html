@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karat Logistique</title>
+  <meta name="description" content="Devenez livreur Karat Logistique à Nouakchott : recevez les commandes confirmées directement sur votre téléphone." />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
+  <script src="/livreur/theme.js?v=20261109c"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109c" />
+</head>
+<body>
+  <div id="lv-header"></div>
+  <header class="page-hero"><div class="container"><span class="eyebrow">Devenir livreur</span><h1>Livrez avec Karat Logistique</h1><p>Recevez les commandes confirmées sur votre téléphone et livrez dans votre quartier. Votre compte est validé par l'agence.</p></div></header>
+  <main class="page-mid page-body">
+    <form class="card" id="courier-form">
+      <div class="form-msg"></div>
+      <div class="row">
+        <div class="field"><label>Nom complet</label><input name="name" required autocomplete="name" /></div>
+        <div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" required placeholder="22 22 22 22" autocomplete="username" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Moyen de transport</label><select name="vehicle"><option>Moto</option><option>Voiture</option><option>Vélo</option><option>À pied</option></select></div>
+        <div class="field"><label>Ville</label><input name="city" value="Nouakchott" /></div>
+      </div>
+      <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="6" required autocomplete="new-password" /><small>6 caractères minimum.</small></div>
+
+      <div class="geo-box" id="geo-box">
+        <div class="geo-ic"></div>
+        <div>
+          <strong>Partage de votre position (obligatoire)</strong>
+          <p>Pendant votre service, l'agence voit votre position en temps réel pour vous attribuer les courses les plus proches et suivre les livraisons. Elle n'est partagée que lorsque votre espace livreur est ouvert.</p>
+          <label class="geo-consent"><input type="checkbox" name="geo_consent" value="1" required /> J'accepte de partager ma position avec l'agence pendant mon service.</label>
+          <button type="button" class="btn btn-ghost btn-sm" id="geo-btn">Autoriser ma position</button>
+          <span class="geo-state" id="geo-state">Position non encore autorisée.</span>
+        </div>
+      </div>
+      <input type="hidden" name="lat" /><input type="hidden" name="lng" /><input type="hidden" name="acc" />
+      <button class="btn btn-primary btn-block" type="submit">Envoyer ma demande</button>
+    </form>
+    <p class="auth-switch">Déjà livreur ? <a href="/livreur/agence/connexion">Se connecter</a></p>
+  </main>
+  <div id="lv-footer"></div>
+  <script src="/livreur/lv.js?v=20261109c"></script>
+  <script src="/livreur/anim.js?v=20261109c"></script>
+  <script>
+  (function () {
+    'use strict';
+    LV.publicChrome();
+    document.querySelector('.geo-ic').innerHTML = LV.icon('pin');
+    var form = document.getElementById('courier-form');
+    var state = document.getElementById('geo-state');
+    var box = document.getElementById('geo-box');
+    function locate() {
+      return new Promise(function (resolve) {
+        if (!navigator.geolocation) { state.textContent = 'Votre téléphone ne permet pas la localisation.'; return resolve(false); }
+        state.textContent = 'Demande d\'autorisation…';
+        navigator.geolocation.getCurrentPosition(function (p) {
+          form.lat.value = p.coords.latitude; form.lng.value = p.coords.longitude; form.acc.value = Math.round(p.coords.accuracy || 0);
+          state.textContent = 'Position autorisée ✓'; box.classList.add('ok'); box.classList.remove('ko');
+          resolve(true);
+        }, function (err) {
+          state.textContent = err && err.code === 1
+            ? 'Position refusée : autorisez la localisation pour ce site dans les réglages de votre navigateur, puis réessayez.'
+            : 'Position introuvable : activez le GPS (localisation) de votre téléphone, puis réessayez.';
+          box.classList.add('ko'); box.classList.remove('ok'); resolve(false);
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      });
+    }
+    document.getElementById('geo-btn').addEventListener('click', locate);
+    form.geo_consent.addEventListener('change', function () { if (form.geo_consent.checked && !form.lat.value) locate(); });
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!form.lat.value && !(await locate())) { LV.msg(form.querySelector('.form-msg'), 'error', 'Autorisez le partage de votre position pour vous inscrire comme livreur.'); return; }
+      var r = await LV.submit(form, '/inscription-livreur');
+      if (!r.ok) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      form.innerHTML = '<div style="text-align:center;padding:20px 0"><h2 style="margin-bottom:10px">Demande envoyée ✓</h2><p class="dim">Merci ! L\'agence va valider votre compte. Vous pourrez ensuite vous connecter avec votre téléphone et votre mot de passe depuis « Espace agence ».</p><a class="btn btn-primary" style="margin-top:20px" href="/livreur">Retour à l\'accueil</a></div>';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+  </script>
+</body>
+</html>

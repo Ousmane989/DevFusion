@@ -227,6 +227,10 @@ function ensureReady() {
       // arrivent à la fois chez l'agence et dans l'espace du partenaire lié.
       try { await db.exec('ALTER TABLE lv_collabs ADD COLUMN partner_id INTEGER'); } catch (_) { /* déjà présente */ }
       try { await db.exec('ALTER TABLE lv_orders ADD COLUMN merchant_id INTEGER'); } catch (_) { /* déjà présente */ }
+      // Position des livreurs (partagée avec leur accord, suivie en temps réel par l'agence).
+      for (const col of ['last_lat REAL', 'last_lng REAL', 'last_acc INTEGER', "last_seen TEXT NOT NULL DEFAULT ''", 'geo_consent INTEGER NOT NULL DEFAULT 0']) {
+        try { await db.exec('ALTER TABLE lv_users ADD COLUMN ' + col); } catch (_) { /* déjà présente */ }
+      }
       // Prix unitaire des articles (valeur du stock dans le bilan).
       try { await db.exec('ALTER TABLE lv_stock ADD COLUMN price INTEGER NOT NULL DEFAULT 0'); } catch (_) { /* déjà présente */ }
       await seed();
