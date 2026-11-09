@@ -1,4 +1,4 @@
-# Karat Livreur — application Android des livreurs
+# Karat Livreur — application des livreurs (Android et iPhone)
 
 Application Capacitor qui ouvre l'espace livreur de Karat Logistique
 (`https://karat-logistique.netlify.app/livreur/coursier`) et partage la position
@@ -26,3 +26,20 @@ Karat Logistique la conserve (archive `karat-livreur-cle.zip` : keystore, mot de
 passe, alias `karat`). Toutes les mises à jour doivent être signées avec cette
 même clé, sinon Android refuse de les installer par-dessus.
 Pensez à augmenter `versionCode` dans `android/app/build.gradle` à chaque version.
+
+## iPhone (iOS)
+
+Le projet Xcode est dans `ios/` (Swift Package Manager, iOS 14+). Il se construit
+uniquement sur un Mac avec Xcode. Le workflow GitHub `iOS Karat Livreur` vérifie
+qu'il compile à chaque modification (simulateur, sans signature).
+
+Pour l'installer sur les iPhone des livreurs :
+
+1. Créer un compte Apple Developer (99 $ par an) au nom de Karat Logistique.
+2. Sur un Mac : `npm install && npx cap sync ios && npx cap open ios`, choisir
+   l'équipe (Team) dans Signing & Capabilities, puis Product › Archive.
+3. Envoyer l'archive sur App Store Connect et inviter les livreurs dans
+   **TestFlight** (ou publier sur l'App Store).
+
+Le suivi écran verrouillé utilise le mode d'arrière-plan « location »
+(`UIBackgroundModes`) ; iOS affiche l'indicateur bleu de localisation.
