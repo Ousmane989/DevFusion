@@ -1,7 +1,5 @@
 'use strict';
 
-const crypto = require('crypto');
-
 // ------------------------------------------------------------------
 // API Karat Logistique — /api/livreur
 //   public      : infos, suivi de colis, contact, inscription partenaire
@@ -182,6 +180,9 @@ const LOGIN = { partenaire: '/livreur/connexion', agence: '/livreur/agence/conne
 router.post('/login', loginLimiter, wrap(async (req, res) => {
   const phone = normPhone(req.body.phone);
   const u = await db.prepare('SELECT * FROM lv_users WHERE phone = ?').get(phone);
+  if (u && !u.password_hash) {
+    return bad(res, 'Votre compte est prêt : créez d\'abord votre mot de passe depuis votre tableau de bord Karat, rubrique « Agence de livraison ».', 403);
+  }
   if (!u || !(await verifyPassword(String(req.body.password || ''), u.password_hash))) {
     return bad(res, 'Téléphone ou mot de passe incorrect.', 401);
   }
@@ -787,8 +788,7 @@ agency.post('/collabs/:id/accept', wrap(async (req, res) => {
   let partnerId = null;
   let created = null;
   // Acceptation directe (aucun compte choisi) ou création demandée : on relie le
-  // compte partenaire qui a le même numéro, sinon on le crée avec un mot de
-  // passe généré, renvoyé une seule fois pour être transmis au commerçant.
+  // compte partenaire qui a le même numéro, sinon on le crée.
   if (b.partner_id === 'new' || !b.partner_id) {
     const phone = normPhone(b.phone || c.phone);
     if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
@@ -798,15 +798,14 @@ agency.post('/collabs/:id/accept', wrap(async (req, res) => {
       if (ex.status !== 'active') await db.prepare("UPDATE lv_users SET status = 'active' WHERE id = ?").run(ex.id);
       partnerId = ex.id;
     } else {
-      let password = String(b.password || '');
-      if (password && password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères (ou laissez vide pour en générer un).');
-      if (!password) password = crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6) + crypto.randomInt(10, 99);
+      // Compte sans mot de passe : seul le commerçant le choisit, depuis son
+      // tableau de bord Karat (où il est déjà authentifié). L'agence ne le connaît pas.
       const shop = str(b.business_name, 120) || c.shop_name || 'Boutique';
       const r = await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, activity, city, created_at)
-        VALUES ('partenaire', ?, ?, ?, 'active', ?, 'Boutique Karat', ?, ?)`)
-        .run(shop, phone, await hashPassword(password), shop, c.city || 'Nouakchott', S.now());
+        VALUES ('partenaire', ?, ?, '', 'active', ?, 'Boutique Karat', ?, ?)`)
+        .run(shop, phone, shop, c.city || 'Nouakchott', S.now());
       partnerId = r.lastInsertRowid;
-      created = { name: shop, phone, password };
+      created = { name: shop, phone };
     }
   } else {
     const p = await db.prepare("SELECT id, status FROM lv_users WHERE id = ? AND role = 'partenaire'").get(int(b.partner_id));

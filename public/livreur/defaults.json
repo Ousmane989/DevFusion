@@ -9,6 +9,7 @@
   },
   "fee_per_item": 150,
   "courier_per_item": 100,
+  "site_url": "https://karat-logistique.netlify.app/livreur",
   "zones": [
     { "name": "Tevragh Zeina", "region": "Nouakchott", "kind": "commune", "delay": "Moins de 2 h" },
     { "name": "Ksar", "region": "Nouakchott", "kind": "commune", "delay": "Moins de 2 h" },
