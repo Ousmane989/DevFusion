@@ -12,6 +12,10 @@ function setLvSession(res, user) {
   const token = jwt.sign({ lv: user.id }, config.jwtSecret, { expiresIn: '180d' });
   res.cookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: config.isProd, maxAge: MAX_AGE });
 }
+// Jeton de l'application livreur (même signature que la session, durée courte).
+function deviceToken(user) {
+  return jwt.sign({ lv: user.id, dev: 1 }, config.jwtSecret, { expiresIn: '30d' });
+}
 function clearLvSession(res) {
   res.clearCookie(COOKIE);
 }
@@ -31,7 +35,10 @@ function publicUser(u) {
 /** Attache req.lv (utilisateur Karat Logistique connecté). */
 async function loadLv(req, _res, next) {
   try {
-    const token = req.cookies && req.cookies[COOKIE];
+    // Cookie de session ; à défaut, jeton « Bearer » (envoi natif de la position
+    // par l'application Android, hors de la WebView).
+    const auth = String(req.get('authorization') || '');
+    const token = (req.cookies && req.cookies[COOKIE]) || (auth.startsWith('Bearer ') ? auth.slice(7) : '');
     if (token) {
       let payload = null;
       try { payload = jwt.verify(token, config.jwtSecret); } catch (_) { payload = null; }
@@ -54,4 +61,4 @@ function requireRole(role) {
   };
 }
 
-module.exports = { COOKIE, setLvSession, clearLvSession, normPhone, publicUser, loadLv, requireRole };
+module.exports = { COOKIE, setLvSession, deviceToken, clearLvSession, normPhone, publicUser, loadLv, requireRole };

@@ -1,0 +1,21 @@
+{
+  "appId": "mr.karat.logistique.livreur",
+  "appName": "Karat Livreur",
+  "webDir": "www",
+  "server": {
+    "url": "https://karat-logistique.netlify.app/livreur/coursier",
+    "androidScheme": "https",
+    "allowNavigation": [
+      "karat-logistique.netlify.app"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "useLegacyBridge": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    }
+  }
+}

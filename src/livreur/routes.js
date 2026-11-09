@@ -13,7 +13,7 @@ const rateLimit = require('express-rate-limit');
 const { config } = require('../config');
 const { hashPassword, verifyPassword } = require('../auth');
 const S = require('./store');
-const { setLvSession, clearLvSession, normPhone, publicUser, loadLv, requireRole } = require('./auth');
+const { setLvSession, deviceToken, clearLvSession, normPhone, publicUser, loadLv, requireRole } = require('./auth');
 
 const { db } = S;
 const router = express.Router();
@@ -506,6 +506,13 @@ courier.post('/orders/:id/status', wrap(async (req, res) => {
   }
   await setStatus(o, status, { actor: req.lv.name, note: status === 'livree' ? ('Remis à ' + str(req.body.received_by, 120) + (note ? ' — ' + note : '')) : note, received_by: req.body.received_by });
   res.json({ ok: true });
+}));
+
+// Jeton pour l'application Android : la position y est envoyée par le code
+// natif (en arrière-plan), sans passer par les cookies de la page.
+courier.get('/device-token', wrap(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ token: deviceToken(req.lv) });
 }));
 
 // Position en temps réel envoyée par l'espace livreur (toutes les ~20 s).

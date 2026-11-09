@@ -96,7 +96,57 @@
     geoState(true, 'Position partagée avec l\'agence · mise à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) +
       '<small style="display:block;font-weight:500;opacity:.85">Gardez cette page ouverte pendant votre tournée' + ('wakeLock' in navigator ? ' : l\'écran reste allumé.' : ' et l\'écran allumé.') + '</small>');
   }
+  // Application Android « Karat Livreur » : suivi natif qui continue écran
+  // verrouillé (notification « suivi actif ») ; la position part par le
+  // réseau natif, avec un jeton, même quand la page est en arrière-plan.
+  const CAP = window.Capacitor;
+  const BG = CAP && CAP.isNativePlatform && CAP.isNativePlatform() && CAP.Plugins && CAP.Plugins.BackgroundGeolocation;
+  let nativeWatcher = null;
+  let devToken = null;
+  async function nativeSend(force) {
+    if (!lastPos) return;
+    const now = Date.now();
+    if (!force && now - lastSent < 20000) return;
+    lastSent = now;
+    try {
+      if (!devToken) { const t = await api('/courier/device-token'); devToken = t.ok && t.data.token; }
+      await CAP.Plugins.CapacitorHttp.request({
+        url: location.origin + '/api/livreur/courier/location', method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + devToken }, data: posBody(),
+      });
+      geoState(true, 'Suivi actif (application) · ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) +
+        '<small style="display:block;font-weight:500;opacity:.85">Votre position reste partagée même téléphone verrouillé, pendant votre service.</small>');
+    } catch (_) { /* réseau indisponible : nouvel essai à la prochaine position */ }
+  }
+  async function startNativeGeo() {
+    if (nativeWatcher) return;
+    nativeWatcher = await BG.addWatcher({
+      backgroundTitle: 'Karat Livreur — suivi actif',
+      backgroundMessage: 'Votre position est partagée avec l\'agence pendant votre service.',
+      requestPermissions: true, stale: false, distanceFilter: 0,
+    }, (loc, err) => {
+      if (err) {
+        geoState(false, 'Localisation refusée : autorisez-la pour l\'application Karat Livreur. <button class="btn btn-primary btn-sm" data-geo-open>Ouvrir les réglages</button>');
+        if (err.code === 'NOT_AUTHORIZED') { BG.removeWatcher({ id: nativeWatcher }); nativeWatcher = null; }
+        return;
+      }
+      lastPos = { coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy } };
+      nativeSend(false);
+    });
+    // Même immobile, le livreur reste « en service » : position renvoyée chaque minute.
+    setInterval(() => nativeSend(true), 60000);
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-geo-open]') && BG) BG.openSettings(); });
+
+  // Hors de l'application, sur Android : proposer de l'installer.
+  if (!BG && /Android/i.test(navigator.userAgent)) {
+    const dl = document.getElementById('c-app');
+    dl.classList.remove('hidden');
+    dl.querySelector('.ic').innerHTML = icon('download');
+  }
+
   function startGeo() {
+    if (BG) return startNativeGeo();
     if (!navigator.geolocation) return geoState(false, 'Votre téléphone ne permet pas la localisation : vous ne pouvez pas prendre de course.');
     if (watchId != null) navigator.geolocation.clearWatch(watchId);
     lastSent = 0;

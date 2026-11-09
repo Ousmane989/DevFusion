@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Karat Livreur</string>
+    <string name="title_activity_main">Karat Livreur</string>
+    <string name="package_name">mr.karat.logistique.livreur</string>
+    <string name="custom_url_scheme">mr.karat.logistique.livreur</string>
+    <string name="capacitor_background_geolocation_notification_channel_name">Suivi de position (service)</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_karat</string>
+</resources>
