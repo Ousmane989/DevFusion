@@ -7,7 +7,10 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // Karat Logistique (/livreur) : les livreurs partagent leur position pendant
+  // leur service ; la localisation reste interdite sur le reste du site.
+  const geo = req.path.startsWith('/livreur') ? 'geolocation=(self)' : 'geolocation=()';
+  res.setHeader('Permissions-Policy', geo + ', microphone=(), camera=()');
   if (config.isProd) {
     res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   }

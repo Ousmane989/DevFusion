@@ -9,7 +9,7 @@ const { loadLv } = require('./auth');
 const { HOME, LOGIN } = require('./routes');
 
 const DIR = path.join(__dirname, '..', '..', 'public', 'livreur');
-const PAGES = ['suivi', 'connexion', 'inscription', 'partenaire', 'coursier', 'agence'];
+const PAGES = ['suivi', 'connexion', 'inscription', 'inscription-livreur', 'partenaire', 'coursier', 'agence'];
 const PROTECTED = { partenaire: 'partenaire', coursier: 'coursier', agence: 'agence' };
 
 const pages = express.Router();

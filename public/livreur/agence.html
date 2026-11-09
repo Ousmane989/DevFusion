@@ -7,8 +7,9 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
-  <script src="/livreur/theme.js?v=20261109b"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109b" />
+  <script src="/livreur/theme.js?v=20261109c"></script>
+  <link rel="stylesheet" href="/livreur/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109c" />
 </head>
 <body>
   <div class="app">
@@ -75,6 +76,11 @@
           <div class="panel flush"><div class="table-wrap" id="a-collabs"></div></div>
         </div>
 
+        <div data-view="carte" class="hidden">
+          <div class="panel-head" style="margin-bottom:14px"><p class="dim" style="margin:0">Position de vos livreurs en temps réel, partagée pendant leur service (espace livreur ouvert). Mise à jour automatique toutes les 15 s.</p><div class="actions"><span class="live-badge"><i></i>En direct</span></div></div>
+          <div class="fleet"><div class="fleet-map" id="a-fleet-map"></div><div class="fleet-list" id="a-fleet-list"></div></div>
+        </div>
+
         <div data-view="bilan" class="hidden">
           <div class="panel bl-tools">
             <div class="row-3" style="align-items:end">
@@ -117,8 +123,8 @@
       </div>
     </div>
   </div>
-  <script src="/livreur/lv.js?v=20261109b"></script>
-  <script src="/livreur/anim.js?v=20261109b"></script>
-  <script src="/livreur/agence.js?v=20261109b"></script>
+  <script src="/livreur/lv.js?v=20261109c"></script>
+  <script src="/livreur/anim.js?v=20261109c"></script>
+  <script src="/livreur/agence.js?v=20261109c"></script>
 </body>
 </html>
