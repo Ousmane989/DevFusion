@@ -1,0 +1,30 @@
+# Application iPhone « Karat Livreur » : vérifie qu'elle compile (sur un Mac de
+# GitHub, sans signature). La signature et l'envoi sur TestFlight demandent un
+# compte Apple Developer (voir mobile-livreur/README.md).
+name: iOS Karat Livreur
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['mobile-livreur/**', '.github/workflows/ios-livreur.yml']
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: mobile-livreur
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx cap sync ios
+      - name: Compiler pour le simulateur (sans signature)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -40
+          test ${PIPESTATUS[0]} -eq 0
