@@ -7,8 +7,8 @@
   <meta name="description" content="Devenez livreur Karat Logistique à Nouakchott : recevez les commandes confirmées directement sur votre téléphone." />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
-  <script src="/livreur/theme.js?v=20261109d"></script>
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109d" />
+  <script src="/livreur/theme.js?v=20261109e"></script>
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261109e" />
 </head>
 <body>
   <div id="lv-header"></div>
@@ -42,8 +42,8 @@
     <p class="auth-switch">Déjà livreur ? <a href="/livreur/agence/connexion">Se connecter</a></p>
   </main>
   <div id="lv-footer"></div>
-  <script src="/livreur/lv.js?v=20261109d"></script>
-  <script src="/livreur/anim.js?v=20261109d"></script>
+  <script src="/livreur/lv.js?v=20261109e"></script>
+  <script src="/livreur/anim.js?v=20261109e"></script>
   <script>
   (function () {
     'use strict';
@@ -75,7 +75,7 @@
       if (!form.lat.value && !(await locate())) { LV.msg(form.querySelector('.form-msg'), 'error', 'Autorisez le partage de votre position pour vous inscrire comme livreur.'); return; }
       var r = await LV.submit(form, '/inscription-livreur');
       if (!r.ok) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-      form.innerHTML = '<div style="text-align:center;padding:20px 0"><h2 style="margin-bottom:10px">Demande envoyée ✓</h2><p class="dim">Merci ! L\'agence va valider votre compte. Vous pourrez ensuite vous connecter avec votre téléphone et votre mot de passe depuis « Espace agence ».</p><a class="btn btn-primary" style="margin-top:20px" href="/livreur">Retour à l\'accueil</a></div>';
+      form.innerHTML = '<div style="text-align:center;padding:20px 0"><h2 style="margin-bottom:10px">Demande envoyée ✓</h2><p class="dim">Merci ! L\'agence va valider votre compte. En attendant, installez l\'application <b>Karat Livreur</b> (Android) : vous vous y connecterez avec votre téléphone et votre mot de passe, et votre position restera partagée même téléphone verrouillé.</p><a class="btn btn-primary" style="margin-top:20px" href="/livreur/app/karat-livreur.apk" download>Télécharger l\'application</a><p class="muted" style="margin-top:14px;font-size:13px">Sur iPhone : utilisez l\'espace livreur dans le navigateur en gardant la page ouverte.</p></div>';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   })();
