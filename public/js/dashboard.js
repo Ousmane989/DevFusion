@@ -1189,8 +1189,10 @@
   // ================================================================
   // Agence de livraison — collaboration (demande / acceptation)
   // ================================================================
+  let lvSite = '';
   async function loadDelivery() {
     const r = await api('/api/delivery/agencies', 'GET');
+    lvSite = (r.ok && r.data && r.data.site_url) || '';
     renderAgencies((r.ok && r.data && r.data.agencies) || []);
     loaded.delivery = true;
   }
@@ -1212,8 +1214,29 @@
     el.innerHTML = list.map((a) => '<div class="ag-card">'
       + '<div class="ag-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8zM5.5 19a2 2 0 1 0 0 .01M18.5 19a2 2 0 1 0 0 .01"/></svg></div>'
       + '<div class="ag-body"><div class="ag-name">' + esc(a.name) + '</div>' + (a.city ? '<div class="ag-city">' + esc(a.city) + '</div>' : '') + agencyChip(a.status) + '</div>'
-      + '<div class="ag-act">' + agencyBtn(a) + '</div></div>').join('');
+      + '<div class="ag-act">' + agencyBtn(a) + '</div>' + partnerBlock(a) + '</div>').join('');
     if (window.KaratI18n) window.KaratI18n.apply();
+  }
+  // Espace partenaire Karat Logistique : le commerçant choisit lui-même son
+  // mot de passe (l'agence ne le connaît jamais).
+  function partnerBlock(a) {
+    if (a.status !== 'accepted' || !a.partner) return '';
+    const p = a.partner;
+    const phone = '+' + String(p.phone || '').replace(/^(\d{3})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5');
+    return '<div class="ag-partner">'
+      + '<div class="ag-pline"><b>Votre espace partenaire</b> · identifiant : ' + esc(phone) + (lvSite ? ' · <a href="' + esc(lvSite) + '/connexion" target="_blank" rel="noopener">Ouvrir mon espace</a>' : '') + '</div>'
+      + (p.has_password ? '<button type="button" class="btn btn-ghost btn-sm" data-ag-pwd-toggle="' + a.id + '">Changer mon mot de passe</button>' : '<div class="ag-pline ag-warn">Créez votre mot de passe pour accéder à votre espace partenaire (suivi des commandes et du stock en temps réel).</div>')
+      + '<form class="ag-pwd' + (p.has_password ? ' hidden' : '') + '" data-ag-pwd="' + a.id + '">'
+      + '<input type="password" name="password" minlength="6" required placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password" />'
+      + '<input type="password" name="password2" minlength="6" required placeholder="Confirmer" autocomplete="new-password" />'
+      + '<button type="submit" class="btn btn-primary btn-sm">' + (p.has_password ? 'Enregistrer' : 'Créer mon mot de passe') + '</button></form></div>';
+  }
+  async function savePartnerPassword(form) {
+    const pw = form.password.value;
+    if (pw !== form.password2.value) return dashToast('✖ Les deux mots de passe ne correspondent pas');
+    const r = await api('/api/delivery/partner-password', 'POST', { agencyId: Number(form.dataset.agPwd), password: pw });
+    if (r.ok) { dashToast('Mot de passe enregistré ✓ Connectez-vous avec votre téléphone'); loadDelivery(); }
+    else dashToast('✖ ' + ((r.data && r.data.error) || 'Erreur'));
   }
   async function requestAgency(id) {
     const r = await api('/api/delivery/request', 'POST', { agencyId: Number(id) });
@@ -1314,6 +1337,11 @@
       let b;
       if ((b = e.target.closest('[data-ag-req]'))) return requestAgency(b.dataset.agReq);
       if ((b = e.target.closest('[data-ag-cancel]'))) return cancelAgency(b.dataset.agCancel);
+      if ((b = e.target.closest('[data-ag-pwd-toggle]'))) { const f = document.querySelector('[data-ag-pwd="' + b.dataset.agPwdToggle + '"]'); if (f) f.classList.toggle('hidden'); return; }
+    });
+    if (agList) agList.addEventListener('submit', (e) => {
+      const f = e.target.closest('[data-ag-pwd]');
+      if (f) { e.preventDefault(); savePartnerPassword(f); }
     });
     // Barre d'onglets du bas (téléphone) : navigation rapide type appli.
     qa('.dash-tab[data-section]').forEach((t) => t.addEventListener('click', () => switchSection(t.dataset.section)));

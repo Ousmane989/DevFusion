@@ -88,6 +88,8 @@ const config = {
     feePerItem: Number(process.env.LIVREUR_FEE_PER_ITEM || LIVREUR_FEES.fee_per_item),
     // Part du livreur sur ces frais (100 MRU par produit) ; le reste revient à l'agence.
     courierPerItem: Number(process.env.LIVREUR_COURIER_PER_ITEM || LIVREUR_FEES.courier_per_item || 0),
+    // Adresse publique du site Karat Logistique (lien depuis le tableau de bord Karat).
+    siteUrl: (process.env.LIVREUR_SITE_URL || LIVREUR_FEES.site_url || '/livreur').replace(/\/+$/, ''),
     adminPhone: (process.env.LIVREUR_ADMIN_PHONE || '').replace(/[^0-9]/g, ''),
     adminPassword: process.env.LIVREUR_ADMIN_PASSWORD || '',
   },

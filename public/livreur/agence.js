@@ -200,7 +200,7 @@
       '<div data-new-partner>' +
       '<div class="row"><div class="field"><label>Nom de la boutique</label><input name="business_name" value="' + esc(x.shop_name || '') + '" /></div>' +
       '<div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" value="' + esc(x.phone || '') + '" /></div></div>' +
-      '<div class="field"><label>Mot de passe (facultatif)</label><input name="password" minlength="6" autocomplete="new-password" placeholder="Laissez vide pour en générer un" /><small>Le commerçant se connecte avec ce numéro et ce mot de passe sur l\'espace partenaire.</small></div>' +
+      '<p class="dim" style="font-size:13.5px">Le commerçant choisira lui-même son mot de passe depuis son tableau de bord Karat (rubrique « Agence de livraison ») : l\'agence ne le connaît pas.</p>' +
       '</div>' +
       '<button class="btn btn-primary btn-block" type="submit">' + (x.status === 'accepted' ? 'Enregistrer' : 'Accepter et lier') + '</button></form>');
     const f = body.querySelector('form');
@@ -215,7 +215,7 @@
   }
 
   // Acceptation en un clic : la boutique est reliée au compte partenaire de même
-  // numéro, ou un compte est créé avec un mot de passe généré, à transmettre.
+  // numéro, ou un espace est créé dont le commerçant choisit le mot de passe.
   async function quickAccept(id) {
     const r = await api('/agency/collabs/' + id + '/accept', {});
     if (!r.ok) return acceptCollab(id);
@@ -225,16 +225,15 @@
     await loadPeople(); refresh();
     if (!d || !d.created) return toast('Boutique acceptée — ses commandes arrivent chez vous et chez le partenaire.');
     const c = d.created;
-    const site = location.origin + '/livreur/connexion';
-    const text = 'Bonjour ' + c.name + ', votre compte partenaire Karat Logistique est activé.\n' +
-      'Connexion : ' + site + '\nTéléphone : ' + phoneFmt(c.phone) + '\nMot de passe : ' + c.password + '\n' +
-      'Vous y suivez vos commandes et votre stock en temps réel.';
+    const text = 'Bonjour ' + c.name + ', votre collaboration avec Karat Logistique est acceptée !\n' +
+      'Ouvrez votre tableau de bord Karat, rubrique « Agence de livraison », et créez le mot de passe de votre espace partenaire.\n' +
+      'Vous vous connecterez ensuite sur ' + location.origin + '/livreur/connexion avec votre téléphone (' + phoneFmt(c.phone) + ') pour suivre vos commandes et votre stock en temps réel.';
     modal('Boutique acceptée ✓',
-      '<p class="dim" style="margin-bottom:14px">Un compte partenaire a été créé. Transmettez ces identifiants au commerçant : ils ne seront plus affichés.</p>' +
-      '<div class="panel" style="margin-bottom:16px"><p><b>Boutique :</b> ' + esc(c.name) + '</p><p><b>Téléphone :</b> ' + esc(phoneFmt(c.phone)) + '</p>' +
-      '<p><b>Mot de passe :</b> <code style="font-size:18px">' + esc(c.password) + '</code></p></div>' +
-      '<a class="btn btn-primary btn-block" target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '?text=' + encodeURIComponent(text) + '">Envoyer par WhatsApp</a>');
+      '<p class="dim" style="margin-bottom:14px">Un espace partenaire a été créé pour <b>' + esc(c.name) + '</b> (identifiant : ' + esc(phoneFmt(c.phone)) + '). ' +
+      'Le commerçant choisit lui-même son mot de passe depuis son tableau de bord Karat : vous n\'avez rien à lui transmettre.</p>' +
+      '<a class="btn btn-primary btn-block" target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '?text=' + encodeURIComponent(text) + '">Le prévenir sur WhatsApp</a>');
   }
+
 
 
   // --------- Bilan (clôture) de la journée ou de la période ---------
