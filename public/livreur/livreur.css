@@ -975,6 +975,14 @@ body.leaving { animation: leave .28s ease forwards; }
 .fleet-pin span { transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 13px; font-family: var(--head); }
 @media (max-width: 1060px) { .fleet { grid-template-columns: 1fr; } .fleet-map { height: 420px; } }
 
+/* Lien de téléchargement de l'application livreur */
+.app-dl { display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 14px; border-radius: 14px; background: var(--brand); color: #fff; text-decoration: none; }
+.app-dl.hidden { display: none; }
+.app-dl .ic { width: 40px; height: 40px; flex: none; border-radius: 12px; display: grid; place-items: center; background: var(--accent); }
+.app-dl .ic svg { width: 22px; height: 22px; }
+.app-dl small { display: block; opacity: .8; font-size: 12.5px; }
+.app-dl .btn { margin-left: auto; flex: none; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
   html { scroll-behavior: auto; }
