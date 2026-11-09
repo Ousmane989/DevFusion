@@ -200,7 +200,7 @@
       '<div data-new-partner>' +
       '<div class="row"><div class="field"><label>Nom de la boutique</label><input name="business_name" value="' + esc(x.shop_name || '') + '" /></div>' +
       '<div class="field"><label>Téléphone (identifiant)</label><input name="phone" type="tel" value="' + esc(x.phone || '') + '" /></div></div>' +
-      '<div class="field"><label>Mot de passe à communiquer au commerçant</label><input name="password" minlength="6" autocomplete="new-password" /><small>Le commerçant se connecte avec ce numéro et ce mot de passe sur l\'espace partenaire.</small></div>' +
+      '<div class="field"><label>Mot de passe (facultatif)</label><input name="password" minlength="6" autocomplete="new-password" placeholder="Laissez vide pour en générer un" /><small>Le commerçant se connecte avec ce numéro et ce mot de passe sur l\'espace partenaire.</small></div>' +
       '</div>' +
       '<button class="btn btn-primary btn-block" type="submit">' + (x.status === 'accepted' ? 'Enregistrer' : 'Accepter et lier') + '</button></form>');
     const f = body.querySelector('form');
@@ -210,9 +210,30 @@
       e.preventDefault();
       const r = await LV.submit(f, '/agency/collabs/' + x.id + '/accept');
       if (!r.ok) return;
-      closeModal(); toast('Boutique liée — ses commandes arrivent chez vous et chez le partenaire.');
-      await loadPeople(); refresh();
+      closeModal(); afterAccept(r.data);
     });
+  }
+
+  // Acceptation en un clic : la boutique est reliée au compte partenaire de même
+  // numéro, ou un compte est créé avec un mot de passe généré, à transmettre.
+  async function quickAccept(id) {
+    const r = await api('/agency/collabs/' + id + '/accept', {});
+    if (!r.ok) return acceptCollab(id);
+    afterAccept(r.data);
+  }
+  async function afterAccept(d) {
+    await loadPeople(); refresh();
+    if (!d || !d.created) return toast('Boutique acceptée — ses commandes arrivent chez vous et chez le partenaire.');
+    const c = d.created;
+    const site = location.origin + '/livreur/connexion';
+    const text = 'Bonjour ' + c.name + ', votre compte partenaire Karat Logistique est activé.\n' +
+      'Connexion : ' + site + '\nTéléphone : ' + phoneFmt(c.phone) + '\nMot de passe : ' + c.password + '\n' +
+      'Vous y suivez vos commandes et votre stock en temps réel.';
+    modal('Boutique acceptée ✓',
+      '<p class="dim" style="margin-bottom:14px">Un compte partenaire a été créé. Transmettez ces identifiants au commerçant : ils ne seront plus affichés.</p>' +
+      '<div class="panel" style="margin-bottom:16px"><p><b>Boutique :</b> ' + esc(c.name) + '</p><p><b>Téléphone :</b> ' + esc(phoneFmt(c.phone)) + '</p>' +
+      '<p><b>Mot de passe :</b> <code style="font-size:18px">' + esc(c.password) + '</code></p></div>' +
+      '<a class="btn btn-primary btn-block" target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '?text=' + encodeURIComponent(text) + '">Envoyer par WhatsApp</a>');
   }
 
 
@@ -434,7 +455,7 @@
         rejected: '<span class="muted">Refusée</span>',
       };
       const act = (c) => c.status === 'pending'
-        ? '<button class="btn btn-primary btn-sm" data-collab-accept="' + c.id + '">Accepter</button> <button class="btn btn-ghost btn-sm" data-collab-reject="' + c.id + '">Refuser</button>'
+        ? '<button class="btn btn-primary btn-sm" data-collab-quick="' + c.id + '">Accepter</button> <button class="btn btn-ghost btn-sm" data-collab-accept="' + c.id + '">Choisir le compte</button> <button class="btn btn-ghost btn-sm" data-collab-reject="' + c.id + '">Refuser</button>'
         : (c.status === 'accepted'
           ? '<button class="btn btn-ghost btn-sm" data-collab-accept="' + c.id + '">' + (c.partner_id ? 'Changer le compte' : 'Lier un compte') + '</button> <button class="btn btn-ghost btn-sm" data-collab-reject="' + c.id + '">Suspendre</button>'
           : '<button class="btn btn-primary btn-sm" data-collab-accept="' + c.id + '">Accepter</button>');
@@ -461,7 +482,7 @@
       '<div class="actions"><a class="btn btn-dark btn-sm" href="tel:+' + esc(p.phone) + '">Appeler</a><button class="btn btn-success btn-sm" data-user="' + p.id + '" data-set="active">Accepter</button>' +
       '<button class="btn btn-danger btn-sm" data-user="' + p.id + '" data-set="suspended">Refuser</button></div></div>').concat(shopsReq.map((x) =>
       '<div class="req-item"><span class="badge st-confirmee">Boutique Karat</span><div class="who"><b>' + esc(x.shop_name || '—') + '</b><span>' + esc(phoneFmt(x.phone)) + ' · ' + date(x.created_at, true) + '</span></div>' +
-      '<div class="actions"><button class="btn btn-success btn-sm" data-collab-accept="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>'));
+      '<div class="actions"><button class="btn btn-success btn-sm" data-collab-quick="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>'));
     document.getElementById('a-requests-panel').classList.toggle('hidden', !rows.length);
     document.getElementById('a-requests').innerHTML = rows.join('');
   }
@@ -598,6 +619,7 @@
       return VIEWS.messages();
     }
 
+    if ((b = t.closest('[data-collab-quick]'))) return quickAccept(b.dataset.collabQuick);
     if ((b = t.closest('[data-collab-accept]'))) return acceptCollab(b.dataset.collabAccept);
     if ((b = t.closest('[data-collab-reject]'))) {
       const r = await api('/agency/collabs/' + b.dataset.collabReject + '/reject', {});
