@@ -1,3 +1,6 @@
+<p align="center"><img src="../assets/ousmane-dev.png" alt="Ousmane Dev" width="260" /></p>
+<p align="center"><b>Projet réalisé par Ousmane Dev</b></p>
+
 # Karat Livreur — application des livreurs (Android et iPhone)
 
 Application Capacitor qui ouvre l'espace livreur de Karat Logistique

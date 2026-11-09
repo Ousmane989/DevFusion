@@ -1,3 +1,6 @@
+<p align="center"><img src="assets/ousmane-dev.png" alt="Ousmane Dev" width="260" /></p>
+<p align="center"><b>Projet réalisé par Ousmane Dev</b></p>
+
 # Karat — plateforme SaaS de boutiques en ligne
 
 Karat permet aux commerçants de **Mauritanie** et du **Sénégal** de créer une
