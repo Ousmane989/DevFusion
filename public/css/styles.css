@@ -779,6 +779,13 @@ img { max-width: 100%; display: block; }
 .ag-chip.ok { color: #7fe0a8; border-color: rgba(52,199,123,.4); background: rgba(52,199,123,.12); }
 .ag-chip.wait { color: var(--gold-light); border-color: rgba(212,175,55,.4); background: rgba(212,175,55,.1); }
 .ag-chip.no { color: #f0a29c; border-color: rgba(230,103,95,.4); }
+.ag-card { flex-wrap: wrap; }
+.ag-partner { flex-basis: 100%; display: grid; gap: 10px; padding-top: 12px; margin-top: 4px; border-top: 1px dashed var(--line); font-size: .9rem; }
+.ag-pline a { color: var(--gold-light); font-weight: 600; }
+.ag-warn { color: var(--gold-light); }
+.ag-pwd { display: flex; flex-wrap: wrap; gap: 8px; }
+.ag-pwd.hidden { display: none; }
+.ag-pwd input { flex: 1 1 180px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-card); color: inherit; }
 .ag-act { flex: none; }
 @media (max-width: 560px) {
   .ag-card { flex-wrap: wrap; }
