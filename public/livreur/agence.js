@@ -274,18 +274,18 @@
       if (c.lat == null) return;
       const ll = [c.lat, c.lng];
       pts.push(ll);
-      const html = '<div class="fleet-pin' + (c.online ? ' on' : '') + '"><span>' + esc((c.name || '?').trim().charAt(0).toUpperCase()) + '</span></div>';
-      const pop = '<b>' + esc(c.name) + '</b><br>' + esc(c.vehicle || '') + ' · ' + agoText(c.ago) + '<br>' + c.active + ' course(s) en cours<br><a href="tel:+' + esc(c.phone) + '">Appeler</a> · <a target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '">WhatsApp</a>';
+      const html = '<div class="fleet-pin' + (c.lost ? ' lost' : (c.online ? ' on' : '')) + '"><span>' + (c.lost ? '!' : esc((c.name || '?').trim().charAt(0).toUpperCase())) + '</span></div>';
+      const pop = '<b>' + esc(c.name) + '</b><br>' + (c.lost ? '<b style="color:var(--danger)">Position perdue pendant une course</b><br>' : '') + esc(c.vehicle || '') + ' · dernière position ' + agoText(c.ago) + '<br>' + c.active + ' course(s) en cours<br><a href="tel:+' + esc(c.phone) + '">Appeler</a> · <a target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '">WhatsApp</a>';
       if (fleetMarkers[c.id]) { fleetMarkers[c.id].setLatLng(ll).setIcon(L.divIcon({ className: '', html, iconSize: [38, 38], iconAnchor: [19, 38] })).setPopupContent(pop); }
       else fleetMarkers[c.id] = L.marker(ll, { icon: L.divIcon({ className: '', html, iconSize: [38, 38], iconAnchor: [19, 38] }) }).addTo(fleetMap).bindPopup(pop);
     });
     if (fit && pts.length) fleetMap.fitBounds(pts, { padding: [40, 40], maxZoom: 14 });
     const online = list.filter((c) => c.online).length;
-    LV.setCount('carte', online);
     document.getElementById('a-fleet-list').innerHTML = (list.length
       ? '<p class="dim" style="margin:0 0 4px">' + online + ' en service sur ' + list.length + ' livreur(s)</p>' + list.map((c) =>
-        '<div class="fleet-item' + (c.online ? ' on' : '') + '" data-fleet="' + c.id + '"><span class="st"></span><div><b>' + esc(c.name) + '</b>' +
-        '<small>' + (c.status === 'pending' ? 'Inscription à valider · ' : '') + (c.online ? 'En service' : 'Hors ligne') + ' · ' + agoText(c.ago) + ' · ' + c.active + ' course(s)</small></div></div>').join('')
+        '<div class="fleet-item' + (c.lost ? ' lost' : (c.online ? ' on' : '')) + '" data-fleet="' + c.id + '"><span class="st"></span><div><b>' + esc(c.name) + '</b>' +
+        '<small>' + (c.status === 'pending' ? 'Inscription à valider · ' : '') + (c.lost ? 'Position perdue en course' : (c.online ? 'En service' : 'Hors ligne')) + ' · ' + agoText(c.ago) + ' · ' + c.active + ' course(s)</small></div>' +
+        (c.lost ? '<a class="btn btn-danger btn-sm" style="margin-left:auto" href="tel:+' + esc(c.phone) + '">Appeler</a>' : '') + '</div>').join('')
       : '<div class="empty">Aucun livreur pour le moment.</div>');
   }
   document.getElementById('a-fleet-list').addEventListener('click', (e) => {
@@ -293,6 +293,18 @@
     const m = it && fleetMarkers[it.dataset.fleet];
     if (m) { fleetMap.setView(m.getLatLng(), 15); m.openPopup(); }
   });
+
+  // Alerte dès qu'un livreur en course ne partage plus sa position (> 3 min).
+  let lostKnown = null;
+  async function watchLost() {
+    const r = await api('/agency/couriers/positions');
+    if (!r.ok) return;
+    const lost = r.data.couriers.filter((c) => c.lost);
+    LV.setCount('carte', lost.length || r.data.couriers.filter((c) => c.online).length);
+    if (lostKnown) lost.filter((c) => !lostKnown.includes(c.id)).forEach((c) => LV.notify('Position perdue : ' + c.name + ' (en course)'));
+    lostKnown = lost.map((c) => c.id);
+  }
+  watchLost();
 
   // --------- Bilan (clôture) de la journée ou de la période ---------
   const blFrom = document.getElementById('a-bl-from');
@@ -724,5 +736,6 @@
     const id = location.hash.slice(1) || 'dashboard';
     if (!LV.modalOpen() && ['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch', 'partenaires', 'stock'].includes(id)) refresh();
     if (id === 'carte') loadFleet();
+    watchLost();
   }, 15000);
 })();
