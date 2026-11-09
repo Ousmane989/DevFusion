@@ -8,6 +8,7 @@
     { id: 'dispatch', label: 'Dispatch', icon: 'route' },
     { id: 'commandes', label: 'Commandes', icon: 'list' },
     { id: 'livreurs', label: 'Livreurs', icon: 'bike' },
+    { id: 'carte', label: 'Carte des livreurs', icon: 'pin' },
     { id: 'partenaires', label: 'Partenaires', icon: 'store' },
     { id: 'boutiques', label: 'Boutiques Karat', icon: 'store' },
     { id: 'stock', label: 'Stock', icon: 'warehouse' },
@@ -236,6 +237,63 @@
 
 
 
+  // --------- Carte des livreurs (position en temps réel) ---------
+  let fleetMap = null;
+  const fleetMarkers = {};
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = '/livreur/vendor/leaflet/leaflet.js';
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function agoText(sec) {
+    if (sec == null) return 'jamais localisé';
+    if (sec < 60) return 'à l\'instant';
+    if (sec < 3600) return 'il y a ' + Math.round(sec / 60) + ' min';
+    if (sec < 86400) return 'il y a ' + Math.round(sec / 3600) + ' h';
+    return 'il y a ' + Math.round(sec / 86400) + ' j';
+  }
+  async function loadFleet(fit) {
+    await loadLeaflet();
+    if (!fleetMap) {
+      fleetMap = L.map('a-fleet-map', { zoomControl: true }).setView([info.contact.lat || 18.0865, info.contact.lng || -15.9785], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(fleetMap);
+      L.marker([info.contact.lat || 18.0865, info.contact.lng || -15.9785], {
+        icon: L.divIcon({ className: '', html: '<div class="fleet-pin on" style="background:var(--brand)"><span>A</span></div>', iconSize: [38, 38], iconAnchor: [19, 38] }),
+      }).addTo(fleetMap).bindPopup('<b>Agence Karat Logistique</b>');
+      fit = true;
+    }
+    setTimeout(() => fleetMap.invalidateSize(), 50);
+    const r = await api('/agency/couriers/positions');
+    const list = (r.data && r.data.couriers) || [];
+    const pts = [];
+    list.forEach((c) => {
+      if (c.lat == null) return;
+      const ll = [c.lat, c.lng];
+      pts.push(ll);
+      const html = '<div class="fleet-pin' + (c.online ? ' on' : '') + '"><span>' + esc((c.name || '?').trim().charAt(0).toUpperCase()) + '</span></div>';
+      const pop = '<b>' + esc(c.name) + '</b><br>' + esc(c.vehicle || '') + ' · ' + agoText(c.ago) + '<br>' + c.active + ' course(s) en cours<br><a href="tel:+' + esc(c.phone) + '">Appeler</a> · <a target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone) + '">WhatsApp</a>';
+      if (fleetMarkers[c.id]) { fleetMarkers[c.id].setLatLng(ll).setIcon(L.divIcon({ className: '', html, iconSize: [38, 38], iconAnchor: [19, 38] })).setPopupContent(pop); }
+      else fleetMarkers[c.id] = L.marker(ll, { icon: L.divIcon({ className: '', html, iconSize: [38, 38], iconAnchor: [19, 38] }) }).addTo(fleetMap).bindPopup(pop);
+    });
+    if (fit && pts.length) fleetMap.fitBounds(pts, { padding: [40, 40], maxZoom: 14 });
+    const online = list.filter((c) => c.online).length;
+    LV.setCount('carte', online);
+    document.getElementById('a-fleet-list').innerHTML = (list.length
+      ? '<p class="dim" style="margin:0 0 4px">' + online + ' en service sur ' + list.length + ' livreur(s)</p>' + list.map((c) =>
+        '<div class="fleet-item' + (c.online ? ' on' : '') + '" data-fleet="' + c.id + '"><span class="st"></span><div><b>' + esc(c.name) + '</b>' +
+        '<small>' + (c.status === 'pending' ? 'Inscription à valider · ' : '') + (c.online ? 'En service' : 'Hors ligne') + ' · ' + agoText(c.ago) + ' · ' + c.active + ' course(s)</small></div></div>').join('')
+      : '<div class="empty">Aucun livreur pour le moment.</div>');
+  }
+  document.getElementById('a-fleet-list').addEventListener('click', (e) => {
+    const it = e.target.closest('[data-fleet]');
+    const m = it && fleetMarkers[it.dataset.fleet];
+    if (m) { fleetMap.setView(m.getLatLng(), 15); m.openPopup(); }
+  });
+
   // --------- Bilan (clôture) de la journée ou de la période ---------
   const blFrom = document.getElementById('a-bl-from');
   const blTo = document.getElementById('a-bl-to');
@@ -367,6 +425,7 @@
       document.getElementById('a-team').innerHTML = usersTable(r.data.users || [], 'agence');
     },
 
+    carte() { return loadFleet(); },
     async bilan() {
       await loadPeople();
       const sel = document.getElementById('a-bl-partner');
@@ -472,8 +531,9 @@
 
   // Demandes de partenariat en attente (inscriptions sur le site + boutiques Karat).
   async function renderRequests() {
-    const [u, c] = await Promise.all([api('/agency/users?role=partenaire&status=pending'), api('/agency/collabs')]);
+    const [u, c, cr] = await Promise.all([api('/agency/users?role=partenaire&status=pending'), api('/agency/collabs'), api('/agency/users?role=coursier&status=pending')]);
     const partnersReq = (u.data && u.data.users) || [];
+    const couriersReq = (cr.data && cr.data.users) || [];
     const shopsReq = ((c.data && c.data.collabs) || []).filter((x) => x.status === 'pending');
     const rows = partnersReq.map((p) =>
       '<div class="req-item"><span class="badge st-pending">Nouveau partenaire</span><div class="who"><b>' + esc(p.business_name || p.name) + '</b><span>' + esc(p.name) + ' · ' +
@@ -481,7 +541,11 @@
       '<div class="actions"><a class="btn btn-dark btn-sm" href="tel:+' + esc(p.phone) + '">Appeler</a><button class="btn btn-success btn-sm" data-user="' + p.id + '" data-set="active">Accepter</button>' +
       '<button class="btn btn-danger btn-sm" data-user="' + p.id + '" data-set="suspended">Refuser</button></div></div>').concat(shopsReq.map((x) =>
       '<div class="req-item"><span class="badge st-confirmee">Boutique Karat</span><div class="who"><b>' + esc(x.shop_name || '—') + '</b><span>' + esc(phoneFmt(x.phone)) + ' · ' + date(x.created_at, true) + '</span></div>' +
-      '<div class="actions"><button class="btn btn-success btn-sm" data-collab-quick="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>'));
+      '<div class="actions"><button class="btn btn-success btn-sm" data-collab-quick="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>')).concat(couriersReq.map((p) =>
+      '<div class="req-item"><span class="badge st-assignee">Nouveau livreur</span><div class="who"><b>' + esc(p.name) + '</b><span>' + esc(phoneFmt(p.phone)) + (p.vehicle ? ' · ' + esc(p.vehicle) : '') +
+      (p.geo_consent ? ' · position autorisée ✓' : '') + ' · ' + date(p.created_at, true) + '</span></div>' +
+      '<div class="actions"><a class="btn btn-dark btn-sm" href="tel:+' + esc(p.phone) + '">Appeler</a><button class="btn btn-success btn-sm" data-user="' + p.id + '" data-set="active">Accepter</button>' +
+      '<button class="btn btn-danger btn-sm" data-user="' + p.id + '" data-set="suspended">Refuser</button></div></div>'));
     document.getElementById('a-requests-panel').classList.toggle('hidden', !rows.length);
     document.getElementById('a-requests').innerHTML = rows.join('');
   }
@@ -654,9 +718,11 @@
       const newOrders = d.total - last.total;
       if (newOrders > 0) LV.notify(newOrders === 1 ? 'Nouvelle commande reçue' : newOrders + ' nouvelles commandes reçues');
       if (requestsOf(d) > requestsOf(last)) LV.notify('Nouvelle demande de partenariat');
+      if ((d.pending_users.coursier || 0) > (last.pending_users.coursier || 0)) LV.notify('Nouvelle inscription de livreur');
     }
     last = d;
     const id = location.hash.slice(1) || 'dashboard';
     if (!LV.modalOpen() && ['dashboard', 'commandes', 'boutiques', 'appel', 'dispatch', 'partenaires', 'stock'].includes(id)) refresh();
+    if (id === 'carte') loadFleet();
   }, 15000);
 })();

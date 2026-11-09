@@ -173,6 +173,32 @@ router.post('/inscription', formLimiter, wrap(async (req, res) => {
   res.status(201).json({ ok: true });
 }));
 
+// Position GPS valide (degrés) ou null.
+function geo(lat, lng) {
+  const a = Number(lat); const o = Number(lng);
+  return Number.isFinite(a) && Number.isFinite(o) && Math.abs(a) <= 90 && Math.abs(o) <= 180 && (a || o) ? { lat: a, lng: o } : null;
+}
+
+// Inscription d'un livreur : le partage de sa position est obligatoire (accord
+// donné dans le navigateur pendant l'inscription). Compte validé par l'agence.
+router.post('/inscription-livreur', formLimiter, wrap(async (req, res) => {
+  const b = req.body || {};
+  const name = str(b.name, 120);
+  const phone = normPhone(b.phone);
+  const password = String(b.password || '');
+  const pos = geo(b.lat, b.lng);
+  if (!name) return bad(res, 'Le nom est obligatoire.');
+  if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
+  if (password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères.');
+  if (String(b.geo_consent) !== '1' || !pos) return bad(res, 'Autorisez le partage de votre position pour vous inscrire comme livreur.');
+  if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Un compte existe déjà avec ce numéro.', 409);
+  await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, vehicle, city, geo_consent, last_lat, last_lng, last_acc, last_seen, created_at)
+    VALUES ('coursier', ?, ?, ?, 'pending', ?, ?, 1, ?, ?, ?, ?, ?)`)
+    .run(name, phone, await hashPassword(password), str(b.vehicle, 40) || 'Moto', str(b.city, 80) || 'Nouakchott', pos.lat, pos.lng,
+      Math.round(Number(b.acc) || 0), S.now(), S.now());
+  res.status(201).json({ ok: true });
+}));
+
 const HOME = { agence: '/livreur/agence', partenaire: '/livreur/partenaire', coursier: '/livreur/coursier' };
 // Page de connexion de chaque espace.
 const LOGIN = { partenaire: '/livreur/connexion', agence: '/livreur/agence/connexion', coursier: '/livreur/agence/connexion' };
@@ -472,6 +498,35 @@ courier.post('/orders/:id/status', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Position en temps réel envoyée par l'espace livreur (toutes les ~20 s).
+courier.post('/location', wrap(async (req, res) => {
+  const pos = geo(req.body && req.body.lat, req.body && req.body.lng);
+  if (!pos) return bad(res, 'Position invalide.');
+  await db.prepare('UPDATE lv_users SET last_lat = ?, last_lng = ?, last_acc = ?, last_seen = ?, geo_consent = 1 WHERE id = ?')
+    .run(pos.lat, pos.lng, Math.round(Number(req.body.acc) || 0), S.now(), req.lv.id);
+  res.json({ ok: true });
+}));
+
+// Commandes confirmées par le centre d'appel, pas encore attribuées : chaque
+// livreur les reçoit et peut prendre une course.
+const GEO_FRESH_MIN = 15;
+const fresh = (u) => u && u.last_seen && (Date.now() - new Date(String(u.last_seen).replace(' ', 'T') + 'Z').getTime()) < GEO_FRESH_MIN * 60000;
+courier.get('/available', wrap(async (req, res) => {
+  const rows = await db.prepare(ORDER_SELECT + " WHERE o.status = 'confirmee' AND o.courier_id IS NULL ORDER BY o.updated_at").all();
+  const me = await db.prepare('SELECT last_seen FROM lv_users WHERE id = ?').get(req.lv.id);
+  res.json({ orders: rows.map(decorate), location_ok: Boolean(fresh(me)) });
+}));
+courier.post('/orders/:id/take', wrap(async (req, res) => {
+  const me = await db.prepare('SELECT last_seen FROM lv_users WHERE id = ?').get(req.lv.id);
+  if (!fresh(me)) return bad(res, 'Activez le partage de votre position pour prendre une course.', 403);
+  const id = int(req.params.id);
+  const r = await db.prepare("UPDATE lv_orders SET courier_id = ?, status = 'assignee', updated_at = ? WHERE id = ? AND status = 'confirmee' AND courier_id IS NULL")
+    .run(req.lv.id, S.now(), id);
+  if (!r.changes) return bad(res, 'Cette course vient d\'être prise par un autre livreur.', 409);
+  await S.addEvent(id, 'assignee', 'Course prise par le livreur', req.lv.name);
+  res.json({ ok: true });
+}));
+
 courier.get('/cash', wrap(async (req, res) => {
   const rows = await db.prepare("SELECT * FROM lv_orders WHERE courier_id = ? AND status = 'livree' AND cash_remit_id IS NULL ORDER BY delivered_at DESC").all(req.lv.id);
   const remits = await db.prepare('SELECT * FROM lv_cash WHERE courier_id = ? ORDER BY id DESC LIMIT 50').all(req.lv.id);
@@ -758,6 +813,26 @@ agency.get('/export.csv', wrap(async (_req, res) => {
   const rows = await db.prepare('SELECT * FROM lv_orders ORDER BY id DESC').all();
   res.set('Content-Disposition', 'attachment; filename="commandes-karat-logistique.csv"');
   res.type('text/csv; charset=utf-8').send(toCsv(rows));
+}));
+
+// --- Position des livreurs en temps réel ---
+agency.get('/couriers/positions', wrap(async (_req, res) => {
+  const rows = await db.prepare(`SELECT u.id, u.name, u.phone, u.vehicle, u.status, u.geo_consent, u.last_lat, u.last_lng, u.last_acc, u.last_seen,
+    (SELECT COUNT(*) FROM lv_orders o WHERE o.courier_id = u.id AND o.status IN ('assignee', 'recuperee', 'en_cours', 'reportee')) AS active
+    FROM lv_users u WHERE u.role = 'coursier' AND u.status <> 'suspended' ORDER BY u.name`).all();
+  const now = Date.now();
+  res.json({
+    now: S.now(),
+    couriers: rows.map((u) => {
+      const seen = u.last_seen ? new Date(String(u.last_seen).replace(' ', 'T') + 'Z').getTime() : 0;
+      const ago = seen ? Math.round((now - seen) / 1000) : null;
+      return {
+        id: u.id, name: u.name, phone: u.phone, vehicle: u.vehicle, status: u.status, consent: Boolean(u.geo_consent),
+        lat: u.last_lat == null ? null : Number(u.last_lat), lng: u.last_lng == null ? null : Number(u.last_lng), acc: u.last_acc,
+        last_seen: u.last_seen || null, ago, online: ago != null && ago < 120, active: Number(u.active),
+      };
+    }),
+  });
 }));
 
 // --- Bilan de la période (par partenaire ou toute l'agence) ---
