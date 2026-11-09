@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 // ------------------------------------------------------------------
 // API Karat Logistique — /api/livreur
 //   public      : infos, suivi de colis, contact, inscription partenaire
@@ -783,17 +785,29 @@ agency.post('/collabs/:id/accept', wrap(async (req, res) => {
   if (!c) return bad(res, 'Demande introuvable.', 404);
   const b = req.body || {};
   let partnerId = null;
-  if (b.partner_id === 'new') {
+  let created = null;
+  // Acceptation directe (aucun compte choisi) ou création demandée : on relie le
+  // compte partenaire qui a le même numéro, sinon on le crée avec un mot de
+  // passe généré, renvoyé une seule fois pour être transmis au commerçant.
+  if (b.partner_id === 'new' || !b.partner_id) {
     const phone = normPhone(b.phone || c.phone);
-    const password = String(b.password || '');
     if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
-    if (password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères.');
-    if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Un compte existe déjà avec ce numéro : choisissez-le dans la liste.', 409);
-    const shop = str(b.business_name, 120) || c.shop_name || 'Boutique';
-    const r = await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, activity, city, created_at)
-      VALUES ('partenaire', ?, ?, ?, 'active', ?, 'Boutique Karat', ?, ?)`)
-      .run(shop, phone, await hashPassword(password), shop, c.city || 'Nouakchott', S.now());
-    partnerId = r.lastInsertRowid;
+    const ex = await db.prepare('SELECT id, role, status FROM lv_users WHERE phone = ?').get(phone);
+    if (ex && ex.role !== 'partenaire') return bad(res, 'Ce numéro appartient déjà à un compte de l\'agence ou d\'un livreur.', 409);
+    if (ex) {
+      if (ex.status !== 'active') await db.prepare("UPDATE lv_users SET status = 'active' WHERE id = ?").run(ex.id);
+      partnerId = ex.id;
+    } else {
+      let password = String(b.password || '');
+      if (password && password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères (ou laissez vide pour en générer un).');
+      if (!password) password = crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6) + crypto.randomInt(10, 99);
+      const shop = str(b.business_name, 120) || c.shop_name || 'Boutique';
+      const r = await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, business_name, activity, city, created_at)
+        VALUES ('partenaire', ?, ?, ?, 'active', ?, 'Boutique Karat', ?, ?)`)
+        .run(shop, phone, await hashPassword(password), shop, c.city || 'Nouakchott', S.now());
+      partnerId = r.lastInsertRowid;
+      created = { name: shop, phone, password };
+    }
   } else {
     const p = await db.prepare("SELECT id, status FROM lv_users WHERE id = ? AND role = 'partenaire'").get(int(b.partner_id));
     if (!p) return bad(res, 'Choisissez le compte partenaire de cette boutique (ou créez-en un).');
@@ -802,7 +816,7 @@ agency.post('/collabs/:id/accept', wrap(async (req, res) => {
   }
   await db.prepare("UPDATE lv_collabs SET status = 'accepted', responded_at = ? WHERE id = ?").run(S.now(), c.id);
   await S.linkCollabPartner(c, partnerId);
-  res.json({ ok: true });
+  res.json({ ok: true, created });
 }));
 
 agency.post('/collabs/:id/reject', wrap(async (req, res) => {
