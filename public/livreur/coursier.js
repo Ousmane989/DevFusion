@@ -44,14 +44,14 @@
       f.addEventListener('submit', async (e) => {
         e.preventDefault();
         const d = LV.formData(f);
-        const payload = livree ? { status, received_by: d.received_by, note: d.note } : { status, note: d.reason + (d.detail ? ' — ' + d.detail : '') };
+        const payload = Object.assign(livree ? { status, received_by: d.received_by, note: d.note } : { status, note: d.reason + (d.detail ? ' — ' + d.detail : '') }, posBody());
         const r = await api('/courier/orders/' + id + '/status', payload);
         if (!r.ok) return LV.msg(f.querySelector('.form-msg'), 'error', r.data.error);
         closeModal(); toast(livree ? 'Livraison confirmée ✓' : 'Enregistré'); VIEWS.tournee();
       });
       return;
     }
-    const r = await api('/courier/orders/' + id + '/status', { status });
+    const r = await api('/courier/orders/' + id + '/status', Object.assign({ status }, posBody()));
     if (!r.ok) return toast(r.data.error, true);
     toast('Statut mis à jour'); VIEWS.tournee();
   }
@@ -62,7 +62,7 @@
     const t = e.target.closest('[data-take]');
     if (t) {
       t.disabled = true;
-      const r = await api('/courier/orders/' + t.dataset.take + '/take', {});
+      const r = await api('/courier/orders/' + t.dataset.take + '/take', posBody());
       if (!r.ok) { t.disabled = false; toast(r.data.error, true); return VIEWS.tournee(); }
       toast('Course ajoutée à votre tournée ✓'); VIEWS.tournee();
     }
@@ -74,16 +74,27 @@
   const geoText = document.getElementById('c-geo-text');
   let lastSent = 0;
   let watchId = null;
+  let lastPos = null;
+  const posBody = () => (lastPos ? { lat: lastPos.coords.latitude, lng: lastPos.coords.longitude, acc: Math.round(lastPos.coords.accuracy || 0) } : {});
+  // L'écran reste allumé pendant le service : la page continue d'envoyer la
+  // position (un site ne peut pas suivre un téléphone verrouillé).
+  let wakeLock = null;
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (_) { /* refusé ou non pris en charge */ }
+  }
   function geoState(ok, text) {
     geoBox.classList.toggle('ok', ok);
     geoText.innerHTML = text;
   }
   function sendPos(p) {
+    lastPos = p;
+    keepAwake();
     const now = Date.now();
     if (now - lastSent < 20000) return; // au plus une position toutes les 20 s
     lastSent = now;
     api('/courier/location', { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0) });
-    geoState(true, 'Position partagée avec l\'agence · mise à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    geoState(true, 'Position partagée avec l\'agence · mise à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) +
+      '<small style="display:block;font-weight:500;opacity:.85">Gardez cette page ouverte pendant votre tournée' + ('wakeLock' in navigator ? ' : l\'écran reste allumé.' : ' et l\'écran allumé.') + '</small>');
   }
   function startGeo() {
     if (!navigator.geolocation) return geoState(false, 'Votre téléphone ne permet pas la localisation : vous ne pouvez pas prendre de course.');
@@ -98,7 +109,7 @@
   startGeo();
   // Le navigateur peut suspendre la localisation en arrière-plan : on renvoie
   // la position dès que l'espace revient au premier plan.
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastSent = 0; startGeo(); } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastSent = 0; startGeo(); keepAwake(); } });
   document.getElementById('c-refresh').addEventListener('click', () => shell.show(location.hash.slice(1)));
 
   function kpi(label, value, sub, accent) {

@@ -494,6 +494,16 @@ courier.post('/orders/:id/status', wrap(async (req, res) => {
   const note = str(req.body.note, 300);
   if (status === 'livree' && !str(req.body.received_by)) return bad(res, 'Indiquez le nom de la personne qui a reçu le colis.');
   if ((status === 'echec' || status === 'reportee') && !note) return bad(res, 'Indiquez le motif.');
+  // Chaque étape de la course est horodatée avec la position du livreur, et
+  // n'est possible que si sa position est partagée (l'agence le voit toujours).
+  const pos = geo(req.body.lat, req.body.lng);
+  if (pos) {
+    await db.prepare('UPDATE lv_users SET last_lat = ?, last_lng = ?, last_acc = ?, last_seen = ? WHERE id = ?')
+      .run(pos.lat, pos.lng, Math.round(Number(req.body.acc) || 0), S.now(), req.lv.id);
+  } else {
+    const me = await db.prepare('SELECT last_seen FROM lv_users WHERE id = ?').get(req.lv.id);
+    if (!fresh(me)) return bad(res, 'Activez le partage de votre position pour mettre à jour la course.', 403);
+  }
   await setStatus(o, status, { actor: req.lv.name, note: status === 'livree' ? ('Remis à ' + str(req.body.received_by, 120) + (note ? ' — ' + note : '')) : note, received_by: req.body.received_by });
   res.json({ ok: true });
 }));
@@ -517,6 +527,11 @@ courier.get('/available', wrap(async (req, res) => {
   res.json({ orders: rows.map(decorate), location_ok: Boolean(fresh(me)) });
 }));
 courier.post('/orders/:id/take', wrap(async (req, res) => {
+  const pos = geo(req.body && req.body.lat, req.body && req.body.lng);
+  if (pos) {
+    await db.prepare('UPDATE lv_users SET last_lat = ?, last_lng = ?, last_acc = ?, last_seen = ? WHERE id = ?')
+      .run(pos.lat, pos.lng, Math.round(Number(req.body.acc) || 0), S.now(), req.lv.id);
+  }
   const me = await db.prepare('SELECT last_seen FROM lv_users WHERE id = ?').get(req.lv.id);
   if (!fresh(me)) return bad(res, 'Activez le partage de votre position pour prendre une course.', 403);
   const id = int(req.params.id);
@@ -830,6 +845,8 @@ agency.get('/couriers/positions', wrap(async (_req, res) => {
         id: u.id, name: u.name, phone: u.phone, vehicle: u.vehicle, status: u.status, consent: Boolean(u.geo_consent),
         lat: u.last_lat == null ? null : Number(u.last_lat), lng: u.last_lng == null ? null : Number(u.last_lng), acc: u.last_acc,
         last_seen: u.last_seen || null, ago, online: ago != null && ago < 120, active: Number(u.active),
+        // En course mais plus de position depuis plus de 3 min : l'agence est alertée.
+        lost: Number(u.active) > 0 && (ago == null || ago >= 180),
       };
     }),
   });
