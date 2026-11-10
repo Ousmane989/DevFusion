@@ -723,6 +723,26 @@ agency.put('/users/:id', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Supprimer un partenaire (compte de test, partenaire parti…). Refusé tant
+// qu'il a des commandes en cours ou de l'argent à lui reverser. Ses commandes
+// annulées et son stock sont supprimés ; les commandes livrées ou échouées
+// restent dans l'historique de l'agence (au nom de l'expéditeur).
+agency.delete('/users/:id', wrap(async (req, res) => {
+  const u = await db.prepare("SELECT * FROM lv_users WHERE id = ? AND role = 'partenaire'").get(int(req.params.id));
+  if (!u) return bad(res, 'Partenaire introuvable.', 404);
+  const active = await db.prepare(`SELECT COUNT(*) AS n FROM lv_orders WHERE partner_id = ? AND status IN (${ACTIVE.map(() => '?').join(',')})`).get(u.id, ...ACTIVE);
+  if (Number(active.n)) return bad(res, 'Ce partenaire a ' + active.n + ' commande(s) en cours : terminez-les ou annulez-les avant de le supprimer.');
+  const due = await db.prepare("SELECT COUNT(*) AS n FROM lv_orders WHERE partner_id = ? AND status = 'livree' AND payout_id IS NULL").get(u.id);
+  if (Number(due.n)) return bad(res, 'Ce partenaire a encore de l\'argent à recevoir (' + due.n + ' livraison(s) non reversée(s)) : faites le reversement avant de le supprimer.');
+  await db.prepare("DELETE FROM lv_events WHERE order_id IN (SELECT id FROM lv_orders WHERE partner_id = ? AND status = 'annulee')").run(u.id);
+  await db.prepare("DELETE FROM lv_orders WHERE partner_id = ? AND status = 'annulee'").run(u.id);
+  await db.prepare('UPDATE lv_orders SET partner_id = NULL WHERE partner_id = ?').run(u.id);
+  await db.prepare('DELETE FROM lv_stock WHERE partner_id = ?').run(u.id);
+  await db.prepare('UPDATE lv_collabs SET partner_id = NULL WHERE partner_id = ?').run(u.id);
+  await db.prepare('DELETE FROM lv_users WHERE id = ?').run(u.id);
+  res.json({ ok: true });
+}));
+
 // --- Stock déposé par les partenaires ---
 agency.get('/stock', wrap(async (_req, res) => {
   res.json({ stock: await withMovements(await db.prepare('SELECT s.*, u.business_name AS partner_name FROM lv_stock s LEFT JOIN lv_users u ON u.id = s.partner_id ORDER BY u.business_name, s.name').all()) });
