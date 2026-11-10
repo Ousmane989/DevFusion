@@ -155,11 +155,12 @@
         '<td><a href="tel:+' + esc(u.phone) + '">' + esc(phoneFmt(u.phone)) + '</a></td>' +
         (role === 'coursier' ? '<td>' + esc(u.vehicle || '—') + '</td><td class="muted">' + esc(u.address || '—') + '</td>' : '') +
         (role === 'partenaire' ? '<td class="muted">' + esc(u.activity || '—') + '</td><td class="muted">' + esc((u.payout_method || '—') + ' ' + (u.payout_number || '')) + '</td>' : '') +
-        '<td>' + badge(u.status, LV.USER_STATUS[u.status]) + '</td><td class="muted">' + date(u.created_at) + '</td><td class="num">' +
+        '<td>' + badge(u.status, LV.USER_STATUS[u.status]) + '</td><td class="muted">' + date(u.created_at) + '</td><td class="num"><div class="row-acts">' +
         (u.status !== 'active' ? '<button class="btn btn-success btn-sm" data-user="' + u.id + '" data-set="active">' + (u.status === 'pending' ? 'Valider' : 'Réactiver') + '</button> ' : '<button class="btn btn-ghost btn-sm" data-user="' + u.id + '" data-set="suspended">Suspendre</button> ') +
         '<button class="btn btn-ghost btn-sm" data-user="' + u.id + '" data-pw>Mot de passe</button>' +
-        (role === 'partenaire' ? ' <button class="btn btn-ghost btn-sm" data-orders-of="' + u.id + '">Commandes</button>' : '') +
-        '</td></tr>').join('') + '</tbody></table>';
+        (role === 'partenaire' ? ' <button class="btn btn-ghost btn-sm" data-orders-of="' + u.id + '">Commandes</button>' +
+          ' <button class="btn btn-danger btn-sm" data-del-partner="' + u.id + '" data-name="' + esc(u.business_name || u.name) + '">Supprimer</button>' : '') +
+        '</div></td></tr>').join('') + '</tbody></table>';
   }
 
   function newUser(role) {
@@ -611,6 +612,12 @@
       toast(ids.length + ' commande(s) assignée(s)'); return VIEWS.dispatch();
     }
 
+    if ((b = t.closest('[data-del-partner]'))) {
+      if (!confirm('Supprimer définitivement le partenaire « ' + b.dataset.name + ' » ?\n\nSon compte, son stock et ses commandes annulées seront supprimés. Ses livraisons passées restent dans votre historique.')) return;
+      const r = await api('/agency/users/' + b.dataset.delPartner, null, 'DELETE');
+      if (!r.ok) return toast(r.data.error, true);
+      toast('Partenaire supprimé'); await loadPeople(); return refresh();
+    }
     if ((b = t.closest('[data-set]'))) {
       const r = await api('/agency/users/' + b.dataset.user, { status: b.dataset.set }, 'PUT');
       if (!r.ok) return toast(r.data.error, true);
