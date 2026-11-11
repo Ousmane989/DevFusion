@@ -284,7 +284,7 @@ window.LV = (function () {
         '<ul class="nav-links">' +
         '<li><a href="/livreur#services">Services</a></li><li><a href="/livreur#fonctionnement">Fonctionnement</a></li>' +
         '<li><a href="/livreur#carte">Couverture</a></li><li><a href="/livreur#tarif">Tarif</a></li>' +
-        '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
+        '<li><a href="/livreur/suivi">Suivi colis</a></li><li><a href="/livreur/inscription-livreur">Devenir livreur</a></li><li><a href="/livreur#contact">Contact</a></li></ul>' +
         '<div class="nav-cta"><a href="/livreur/partenaire" class="btn btn-ghost btn-sm">' + icon('user', 'ico') + ' Espace partenaire</a>' +
         '<a href="/livreur/inscription" class="btn btn-green btn-sm">Devenir partenaire</a></div>' +
         themeButton() + '<button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button></div></header>';

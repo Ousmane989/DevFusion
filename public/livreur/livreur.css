@@ -985,6 +985,14 @@ body.leaving { animation: leave .28s ease forwards; }
 
 .row-acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 200px; }
 
+/* Recrutement des livreurs */
+.recruit { border-left-color: var(--accent); }
+.recruit-list { margin: 14px 0 0; }
+.recruit-list li::before { background: var(--accent) !important; color: #fff !important; }
+.recruit-perks { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.recruit-perks span { padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.recruit-perks b { color: var(--accent); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
   html { scroll-behavior: auto; }
