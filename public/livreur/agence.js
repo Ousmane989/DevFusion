@@ -556,6 +556,7 @@
       '<div class="req-item"><span class="badge st-confirmee">Boutique Karat</span><div class="who"><b>' + esc(x.shop_name || '—') + '</b><span>' + esc(phoneFmt(x.phone)) + ' · ' + date(x.created_at, true) + '</span></div>' +
       '<div class="actions"><button class="btn btn-success btn-sm" data-collab-quick="' + x.id + '">Accepter</button><button class="btn btn-danger btn-sm" data-collab-reject="' + x.id + '">Refuser</button></div></div>')).concat(couriersReq.map((p) =>
       '<div class="req-item"><span class="badge st-assignee">Nouveau livreur</span><div class="who"><b>' + esc(p.name) + '</b><span>' + esc(phoneFmt(p.phone)) + (p.vehicle ? ' · ' + esc(p.vehicle) : '') +
+      (p.address ? ' · ' + esc(p.address) : '') + (p.note ? ' · ' + esc(p.note) : '') +
       (p.geo_consent ? ' · position autorisée ✓' : '') + ' · ' + date(p.created_at, true) + '</span></div>' +
       '<div class="actions"><a class="btn btn-dark btn-sm" href="tel:+' + esc(p.phone) + '">Appeler</a><button class="btn btn-success btn-sm" data-user="' + p.id + '" data-set="active">Accepter</button>' +
       '<button class="btn btn-danger btn-sm" data-user="' + p.id + '" data-set="suspended">Refuser</button></div></div>'));

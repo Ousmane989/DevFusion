@@ -190,12 +190,15 @@ router.post('/inscription-livreur', formLimiter, wrap(async (req, res) => {
   if (!name) return bad(res, 'Le nom est obligatoire.');
   if (phone.length < 8) return bad(res, 'Numéro de téléphone invalide.');
   if (password.length < 6) return bad(res, 'Le mot de passe doit contenir au moins 6 caractères.');
+  const nni = String(b.nni || '').replace(/\D/g, '');
+  if (!str(b.address)) return bad(res, 'Indiquez le quartier où vous livrez.');
+  if (nni.length < 8 || nni.length > 12) return bad(res, 'Numéro de pièce d\'identité (NNI) invalide.');
   if (String(b.geo_consent) !== '1' || !pos) return bad(res, 'Autorisez le partage de votre position pour vous inscrire comme livreur.');
   if (await db.prepare('SELECT id FROM lv_users WHERE phone = ?').get(phone)) return bad(res, 'Un compte existe déjà avec ce numéro.', 409);
-  await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, vehicle, city, geo_consent, last_lat, last_lng, last_acc, last_seen, created_at)
-    VALUES ('coursier', ?, ?, ?, 'pending', ?, ?, 1, ?, ?, ?, ?, ?)`)
-    .run(name, phone, await hashPassword(password), str(b.vehicle, 40) || 'Moto', str(b.city, 80) || 'Nouakchott', pos.lat, pos.lng,
-      Math.round(Number(b.acc) || 0), S.now(), S.now());
+  await db.prepare(`INSERT INTO lv_users (role, name, phone, password_hash, status, vehicle, city, address, note, geo_consent, last_lat, last_lng, last_acc, last_seen, created_at)
+    VALUES ('coursier', ?, ?, ?, 'pending', ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`)
+    .run(name, phone, await hashPassword(password), str(b.vehicle, 40) || 'Moto', str(b.city, 80) || 'Nouakchott', str(b.address, 120),
+      'NNI ' + nni, pos.lat, pos.lng, Math.round(Number(b.acc) || 0), S.now(), S.now());
   res.status(201).json({ ok: true });
 }));
 
