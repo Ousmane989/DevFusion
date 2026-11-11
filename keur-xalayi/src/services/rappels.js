@@ -15,9 +15,15 @@ const { envoyerMessages } = require('./whatsapp');
 
 const p2 = (n) => String(n).padStart(2, '0');
 
-/** Date limite de paiement de la mensualité du mois M : le « jour limite » de M (ex. 05/11 pour novembre). */
+/** Le « jour limite » (ex. le 05) du mois m. */
+const jourLimite = (m, p) => `${m.slice(0, 7)}-${p2(p.date_limite_jour)}`;
+
+/**
+ * Date limite de paiement de la mensualité du mois M : le « jour limite » du mois suivant
+ * (novembre se paie avant le 05 décembre). Même règle pour les rappels et les factures.
+ */
 function dateLimite(mois, p) {
-  return `${mois.slice(0, 7)}-${p2(p.date_limite_jour)}`;
+  return jourLimite(ajouterMois(mois, 1), p);
 }
 
 /**
@@ -26,15 +32,15 @@ function dateLimite(mois, p) {
  * (élève en retard), on prend la prochaine date limite à venir.
  */
 function limiteFacture(mois, p, jour = aujourdhui()) {
-  const lim = dateLimite(ajouterMois(mois, 1), p);
+  const lim = dateLimite(mois, p);
   if (lim >= jour) return { limite: lim, enRetard: false };
-  const ceMois = dateLimite(debutMois(jour), p);
-  return { limite: ceMois >= jour ? ceMois : dateLimite(ajouterMois(debutMois(jour), 1), p), enRetard: true };
+  const ceMois = jourLimite(debutMois(jour), p);
+  return { limite: ceMois >= jour ? ceMois : jourLimite(ajouterMois(debutMois(jour), 1), p), enRetard: true };
 }
 
-/** Date du premier rappel pour le mois M : le jour du rappel qui précède la date limite. */
+/** Date du premier rappel pour le mois M : le jour du rappel qui précède la date limite (ex. 25 novembre pour novembre). */
 function dateRappel(mois, p) {
-  const m = p.rappel_jour < p.date_limite_jour ? mois : ajouterMois(mois, -1);
+  const m = p.rappel_jour < p.date_limite_jour ? ajouterMois(mois, 1) : mois;
   return `${m.slice(0, 7)}-${p2(p.rappel_jour)}`;
 }
 

@@ -327,8 +327,8 @@ async function factureInscription(inscriptionId) {
     const conditions = [
       `Mensualité : ${montant(mensuel, p.devise)} par mois`
         + (insc.reduction > 0 ? ` (au lieu de ${montant(insc.mensualite, p.devise)}, réduction : ${insc.reduction_motif || '—'})` : ''),
-      // Même règle que les rappels et les factures du mois : avant le jour limite du mois concerné.
-      `Chaque mensualité (d'octobre à juillet) est à payer avant le ${String(p.date_limite_jour).padStart(2, '0')} de chaque mois.`,
+      // Même règle que les rappels et les factures du mois : avant le jour limite du mois suivant.
+      `Chaque mensualité (d'octobre à juillet) est à payer avant le ${String(p.date_limite_jour).padStart(2, '0')} du mois suivant.`,
     ];
     doc.roundedRect(l, y, largeur, 40, 6).lineWidth(0.8).strokeColor(COULEURS.accent).stroke();
     doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5).text(conditions.join('\n'), l + 10, y + 8, { width: largeur - 20 });
