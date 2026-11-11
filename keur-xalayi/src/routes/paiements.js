@@ -14,6 +14,19 @@ const router = express.Router();
 router.use(autoriser('directeur'));
 
 // ---- Journal des paiements ----
+/**
+ * Condition SQL de recherche d'un paiement : nom et prénom dans les deux sens, matricule, n° de reçu,
+ * parents, téléphone ; sans tenir compte des accents. Ajoute le paramètre à `params`.
+ */
+function filtreRecherche(q, params) {
+  const sansAccent = (t) => `translate(lower(${t}), 'àâäáãçéèêëíìîïñóòôöõúùûüýÿ', 'aaaaaceeeeiiiinooooouuuuyy')`;
+  params.push(`%${String(q).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')}%`);
+  const k = `$${params.length}`;
+  return `(${sansAccent("e.nom || ' ' || e.prenom")} LIKE ${k} OR ${sansAccent("e.prenom || ' ' || e.nom")} LIKE ${k}
+      OR lower(e.matricule) LIKE ${k} OR lower(p.numero_recu) LIKE ${k} OR COALESCE(e.whatsapp, '') LIKE ${k}
+      OR ${sansAccent("COALESCE(e.pere_nom,'') || ' ' || COALESCE(e.mere_nom,'') || ' ' || COALESCE(e.tuteur_nom,'')")} LIKE ${k})`;
+}
+
 router.get('/', ah(async (req, res) => {
   const { du, au, mode, classe_id, q, type } = req.query;
   const params = []; const where = [];
@@ -22,15 +35,7 @@ router.get('/', ah(async (req, res) => {
   if (mode) { params.push(mode); where.push(`p.mode = $${params.length}`); }
   if (type) { params.push(type); where.push(`p.type = $${params.length}`); }
   if (classe_id) { params.push(classe_id); where.push(`i.classe_id = $${params.length}`); }
-  if (q) {
-    // Nom et prénom dans les deux sens, matricule, n° de reçu, parents, téléphone ; sans tenir compte des accents
-    const sansAccent = (t) => `translate(lower(${t}), 'àâäáãçéèêëíìîïñóòôöõúùûüýÿ', 'aaaaaceeeeiiiinooooouuuuyy')`;
-    params.push(`%${String(q).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')}%`);
-    const k = `$${params.length}`;
-    where.push(`(${sansAccent("e.nom || ' ' || e.prenom")} LIKE ${k} OR ${sansAccent("e.prenom || ' ' || e.nom")} LIKE ${k}
-      OR lower(e.matricule) LIKE ${k} OR lower(p.numero_recu) LIKE ${k} OR COALESCE(e.whatsapp, '') LIKE ${k}
-      OR ${sansAccent("COALESCE(e.pere_nom,'') || ' ' || COALESCE(e.mere_nom,'') || ' ' || COALESCE(e.tuteur_nom,'')")} LIKE ${k})`);
-  }
+  if (q) where.push(filtreRecherche(q, params));
   const rows = await query(
     `SELECT p.*, e.id AS eleve_id, e.matricule, e.nom, e.prenom, c.nom AS classe, u.nom_complet AS encaisse_par_nom
        FROM paiements p JOIN inscriptions i ON i.id = p.inscription_id JOIN eleves e ON e.id = i.eleve_id
@@ -261,6 +266,34 @@ router.post('/factures/whatsapp', ah(async (req, res) => {
   });
   const envoyes = await envoyerMessages(msgs, { type: 'facture', userId: req.user.id, canal: req.body.manuel ? 'manuel' : undefined });
   res.json({ messages: envoyes, sans_numero: envoyes.sansNumero || 0 });
+}));
+
+// ---- Page « Reçus » : un reçu par ligne (il peut couvrir plusieurs mois), filtré par mois payé ----
+router.get('/recus', ah(async (req, res) => {
+  const { mois, classe_id, q } = req.query;
+  const params = []; const where = []; const avoir = [];
+  if (classe_id) { params.push(classe_id); where.push(`i.classe_id = $${params.length}`); }
+  if (q) where.push(filtreRecherche(q, params));
+  if (mois) { params.push(mois); avoir.push(`bool_or(p.mois = $${params.length})`); } // reçus qui paient ce mois (même passé)
+  const rows = await query(
+    `SELECT p.numero_recu, MIN(p.date_paiement) AS date_paiement, MIN(p.created_at) AS created_at, e.id AS eleve_id, e.prenom, e.nom, e.matricule,
+            e.whatsapp, c.nom AS classe, COALESCE(SUM(p.montant) FILTER (WHERE NOT p.annule), 0) AS total, bool_and(p.annule) AS annule,
+            json_agg(json_build_object('type', p.type, 'mois', p.mois, 'remarque', p.remarque, 'montant', p.montant) ORDER BY p.mois NULLS FIRST, p.id) AS lignes
+       FROM paiements p JOIN inscriptions i ON i.id = p.inscription_id JOIN eleves e ON e.id = i.eleve_id JOIN classes c ON c.id = i.classe_id
+      ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+      GROUP BY p.numero_recu, e.id, c.id
+      ${avoir.length ? 'HAVING ' + avoir.join(' AND ') : ''}
+      ORDER BY MIN(p.date_paiement) DESC, MIN(p.created_at) DESC LIMIT 500`, params);
+  res.json({ recus: rows, total: rows.filter((r) => !r.annule).reduce((t, r) => t + r.total, 0) });
+}));
+
+// Plusieurs reçus dans un PDF (une page A5 chacun) : ?numeros=R26-0001,R26-0002
+router.get('/recus.pdf', ah(async (req, res) => {
+  const numeros = String(req.query.numeros || '').split(',').map((x) => x.trim()).filter(Boolean).slice(0, 200);
+  if (!numeros.length) throw new HttpError(400, 'Aucun reçu sélectionné.');
+  const buf = await pdf.recus(numeros);
+  if (!buf) throw new HttpError(404, 'Reçus introuvables.');
+  res.type('application/pdf').set('Content-Disposition', 'inline; filename="recus.pdf"').send(buf);
 }));
 
 // ---- Reçu PDF ----

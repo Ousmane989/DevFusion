@@ -176,10 +176,10 @@ function enLettres(nombre) {
 // ------------------------------------------------------------------
 // Reçu de paiement (format A5)
 // ------------------------------------------------------------------
-async function recu(numero) {
-  const p = await parametres();
+/** Lignes d'un reçu (un reçu peut couvrir plusieurs mois ou frais). */
+async function lignesRecu(numero) {
   const { query } = require('../db');
-  const lignes = await query(
+  return query(
     `SELECT pa.*, e.matricule, e.nom, e.prenom, c.nom AS classe, a.libelle AS annee, u.nom_complet AS caissier,
             COALESCE(NULLIF(e.tuteur_nom,''), NULLIF(e.pere_nom,''), NULLIF(e.mere_nom,'')) AS parent,
             NULLIF(concat_ws(' / ', NULLIF(trim(e.pere_nom),''), NULLIF(trim(e.mere_nom),''), NULLIF(trim(e.tuteur_nom),'')), '') AS parents
@@ -187,12 +187,32 @@ async function recu(numero) {
        JOIN classes c ON c.id = i.classe_id JOIN annees_scolaires a ON a.id = i.annee_id
        LEFT JOIN utilisateurs u ON u.id = pa.encaisse_par
       WHERE pa.numero_recu = $1 ORDER BY pa.mois NULLS FIRST, pa.id`, [numero]);
-  if (!lignes.length) return null;
+}
+
+/** Reçu PDF (format A5). */
+async function recu(numero) {
+  return recus([numero]);
+}
+
+/** Plusieurs reçus dans un seul PDF : une page A5 par reçu (impression groupée). */
+async function recus(numeros) {
+  const p = await parametres();
+  const lots = [];
+  for (const n of numeros) {
+    const lignes = await lignesRecu(n);
+    if (lignes.length) lots.push([n, lignes]);
+  }
+  if (!lots.length) return null;
+  return produire({ size: 'A5', margin: 30, autoFirstPage: false }, (doc) => {
+    for (const [n, lignes] of lots) { doc.addPage(); dessinerRecu(doc, p, n, lignes); }
+  });
+}
+
+function dessinerRecu(doc, p, numero, lignes) {
   const r0 = lignes[0];
   const annule = lignes.every((l) => l.annule);
   const total = lignes.filter((l) => !l.annule).reduce((s, l) => s + l.montant, 0);
-
-  return produire({ size: 'A5', margin: 30 }, (doc) => {
+  {
     entete(doc, p, 'REÇU DE PAIEMENT', `N° ${numero} — Année scolaire ${r0.annee}`);
     const l = doc.page.margins.left;
     const largeur = doc.page.width - l * 2;
@@ -251,7 +271,7 @@ async function recu(numero) {
       .text('Cachet et signature', l, ySig, { width: largeur, align: 'right' });
     doc.fontSize(7.5).text('Merci de conserver ce reçu. Aucun remboursement sans présentation du reçu.', l, ySig + 40, { width: largeur, align: 'center' });
     piedDePage(doc, p);
-  });
+  }
 }
 
 // ------------------------------------------------------------------
@@ -862,4 +882,4 @@ async function communique(c, { parPage = 1 } = {}) {
   });
 }
 
-module.exports = { communique, texteImprimable, recu, facturesMensualite, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };
+module.exports = { communique, texteImprimable, recu, recus, facturesMensualite, factureInscription, bulletins, cartes, tableau, certificats, enLettres, COULEURS };

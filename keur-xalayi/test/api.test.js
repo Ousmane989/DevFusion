@@ -127,6 +127,24 @@ test('paiement sur plusieurs mois, statuts payé / partiel et reçu PDF', async 
   assert.match(wa.donnees.lien, /^https:\/\/wa\.me\/221771234567\?text=/);
 });
 
+test('reçus : paiement d\'un mois passé daté d\'avant, liste par mois payé, plusieurs reçus en un PDF', async () => {
+  const { mois } = (await appel('dir', '/api/paiements/mois')).donnees;
+  const fiche = (await appel('dir', `/api/eleves/${eleveId}`)).donnees;
+  const passe = fiche.solde.mois.find((m) => m.exigible && m.reste > 0 && m.mois < mois[mois.length - 1]);
+  const p = await appel('dir', '/api/paiements', { methode: 'POST', corps: { inscription_id: fiche.inscription.id, type: 'mensualite', mois: [passe.mois], montant: 100, mode: 'especes', date_paiement: passe.mois } });
+  assert.strictEqual(p.statut, 201, JSON.stringify(p.donnees));
+  const l = (await appel('dir', `/api/paiements/recus?mois=${passe.mois}`)).donnees.recus;
+  const r = l.find((x) => x.numero_recu === p.donnees.numero_recu);
+  assert.ok(r, 'reçu trouvé par le mois payé');
+  assert.strictEqual(r.date_paiement, passe.mois);
+  const autre = l.find((x) => x.numero_recu !== p.donnees.numero_recu) || r;
+  const pdf = await appel('dir', `/api/paiements/recus.pdf?numeros=${p.donnees.numero_recu},${autre.numero_recu}`);
+  assert.strictEqual(pdf.statut, 200);
+  assert.strictEqual(pdf.donnees.subarray(0, 4).toString(), '%PDF');
+  assert.strictEqual((await appel('dir', '/api/paiements/recus.pdf?numeros=')).statut, 400);
+  assert.ok((await appel('dir', '/api/paiements/recus?q=' + encodeURIComponent(p.donnees.numero_recu))).donnees.recus.length === 1);
+});
+
 test('journal des paiements : recherche par prénom puis nom, sans accents', async () => {
   const tous = (await appel('dir', '/api/paiements')).donnees.paiements;
   assert.ok(tous.length > 0);
