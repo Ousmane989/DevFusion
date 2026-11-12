@@ -7,7 +7,7 @@ const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const { one } = require('../db');
 const { dateFr, nomMois, deMois, montant, MODES_PAIEMENT, objetPaiement, aujourdhui } = require('../utils');
-const { lignesFacture } = require('./finance');
+const { lignesFacture, fraisAnnexes } = require('./finance');
 
 const COULEURS = {
   primaire: '#2E3192', // bleu du logo de l'école
@@ -200,15 +200,18 @@ async function recus(numeros) {
   const lots = [];
   for (const n of numeros) {
     const lignes = await lignesRecu(n);
-    if (lignes.length) lots.push([n, lignes]);
+    if (!lignes.length) continue;
+    // Reliquat de l'élève (reste d'une année précédente) : rappelé sur chaque reçu tant qu'il existe
+    const annexes = (await fraisAnnexes([lignes[0].inscription_id])).get(lignes[0].inscription_id);
+    lots.push([n, lignes, annexes && annexes.reliquat]);
   }
   if (!lots.length) return null;
   return produire({ size: 'A5', margin: 30, autoFirstPage: false }, (doc) => {
-    for (const [n, lignes] of lots) { doc.addPage(); dessinerRecu(doc, p, n, lignes); }
+    for (const [n, lignes, reliquat] of lots) { doc.addPage(); dessinerRecu(doc, p, n, lignes, reliquat); }
   });
 }
 
-function dessinerRecu(doc, p, numero, lignes) {
+function dessinerRecu(doc, p, numero, lignes, reliquat) {
   const r0 = lignes[0];
   const annule = lignes.every((l) => l.annule);
   const total = lignes.filter((l) => !l.annule).reduce((s, l) => s + l.montant, 0);
@@ -257,6 +260,18 @@ function dessinerRecu(doc, p, numero, lignes) {
     y += 32;
     doc.fillColor(COULEURS.texte).font('Helvetica-Oblique').fontSize(9)
       .text(`Arrêté le présent reçu à la somme de : ${enLettres(total)} ${p.devise === 'FCFA' ? 'francs CFA' : 'ouguiyas'}.`, l, y, { width: largeur });
+
+    // Reliquat : montant, déjà versé, reste à payer (situation au jour de l'impression)
+    if (reliquat && reliquat.du > 0) {
+      const yR = doc.y + 10;
+      doc.roundedRect(l, yR, largeur, 34, 5).fill(reliquat.reste > 0 ? '#FFF6DC' : COULEURS.clair);
+      doc.fillColor(reliquat.reste > 0 ? '#A87600' : COULEURS.primaire).font('Helvetica-Bold').fontSize(9.5)
+        .text(reliquat.reste > 0 ? `RELIQUAT RESTANT À PAYER : ${montant(reliquat.reste, p.devise)}` : 'RELIQUAT ENTIÈREMENT RÉGLÉ', l + 10, yR + 6, { width: largeur - 20, lineBreak: false });
+      doc.fillColor(COULEURS.texte).font('Helvetica').fontSize(8.5)
+        .text(`Reliquat d'une année précédente : ${montant(reliquat.du, p.devise)}  ·  déjà versé : ${montant(reliquat.verse, p.devise)}  (au ${dateFr(new Date().toISOString())})`,
+          l + 10, yR + 20, { width: largeur - 20, lineBreak: false, ellipsis: true });
+      doc.y = yR + 40;
+    }
 
     if (annule) {
       doc.save().rotate(-25, { origin: [doc.page.width / 2, doc.page.height / 2] })
