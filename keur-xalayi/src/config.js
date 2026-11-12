@@ -11,7 +11,7 @@ const config = {
   databaseUrl: env.DATABASE_URL || 'postgres://kx:kx@localhost:5432/keurxalayi',
   databaseSsl: env.DATABASE_SSL === 'true',
   jwtSecret: env.JWT_SECRET || 'dev-secret-a-changer',
-  sessionHeures: 12,
+  sessionJours: 365, // on reste connecté jusqu'à la déconnexion (renouvelé à chaque jour d'utilisation)
   admin: {
     identifiant: env.ADMIN_IDENTIFIANT || 'directeur',
     motDePasse: env.ADMIN_MOT_DE_PASSE || 'KeurXalayi2026',

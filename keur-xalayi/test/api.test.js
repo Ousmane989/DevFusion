@@ -44,6 +44,24 @@ before(async () => {
 
 after(async () => { serveur.close(); await pool.end(); });
 
+test('on reste connecté jusqu\'à la déconnexion (cookie d\'un an, prolongé à l\'usage)', async () => {
+  const r = await fetch(base + '/api/auth/connexion', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifiant: config.admin.identifiant, mot_de_passe: config.admin.motDePasse }),
+  });
+  const cookie = r.headers.get('set-cookie');
+  assert.match(cookie, /Max-Age=31536000/);
+  // Un jeton vieux de deux jours est accepté et renouvelé
+  const jwt = require('jsonwebtoken');
+  const vieux = jwt.sign({ uid: 1, role: 'directeur', iat: Math.floor(Date.now() / 1000) - 2 * 86400 }, config.jwtSecret, { expiresIn: '365d' });
+  const m = await fetch(base + '/api/auth/moi', { headers: { cookie: `kx_session=${vieux}` } });
+  assert.strictEqual(m.status, 200);
+  assert.match(m.headers.get('set-cookie') || '', /kx_session=.*Max-Age=31536000/);
+  // Déconnexion : le cookie est effacé
+  const d = await fetch(base + '/api/auth/deconnexion', { method: 'POST', headers: { cookie: cookie.split(';')[0] } });
+  assert.match(d.headers.get('set-cookie') || '', /kx_session=;/);
+});
+
 test('refuse l\'accès sans connexion et avec un mauvais mot de passe', async () => {
   assert.strictEqual((await appel(null, '/api/eleves')).statut, 401);
   const r = await appel(null, '/api/auth/connexion', { methode: 'POST', corps: { identifiant: 'directeur', mot_de_passe: 'faux' } });

@@ -9,13 +9,14 @@ const { HttpError } = require('./utils');
 const COOKIE = 'kx_session';
 
 function creerSession(res, user) {
-  const token = jwt.sign({ uid: user.id, role: user.role }, config.jwtSecret, { expiresIn: `${config.sessionHeures}h` });
+  const token = jwt.sign({ uid: user.id, role: user.role }, config.jwtSecret, { expiresIn: `${config.sessionJours}d` });
   res.cookie(COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.isProd,
-    // Cookie de session (sans durée) : effacé à la fermeture du navigateur ; le jeton
-    // expire de toute façon après sessionHeures.
+    // On reste connecté (même application fermée) jusqu'à « Déconnexion » ; la session est
+    // prolongée chaque jour d'utilisation (voir authentifier).
+    maxAge: config.sessionJours * 24 * 3600 * 1000,
   });
 }
 
@@ -39,6 +40,8 @@ async function authentifier(req, res, next) {
       [payload.uid],
     );
     if (!user || !user.actif) throw new HttpError(401, 'Compte désactivé.');
+    // Session prolongée une fois par jour d'utilisation : on ne se déconnecte que volontairement.
+    if (payload.iat && Date.now() / 1000 - payload.iat > 24 * 3600) creerSession(res, user);
     user.classes = null; // null = toutes les classes
     if (user.role === 'enseignant') {
       const rows = user.personnel_id
