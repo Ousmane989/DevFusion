@@ -135,6 +135,40 @@ const LISTES = {
     };
   },
 
+  // Contacts des parents : nom de l'élève, classe, père, mère, tuteur et leurs numéros
+  async contacts(req) {
+    if (req.user.role !== 'directeur') throw new HttpError(403, 'Accès refusé.');
+    const params = []; let filtre = '';
+    if (req.query.classe_id) { params.push(req.query.classe_id); filtre += ` AND c.id = $${params.length}`; }
+    if (req.query.q) {
+      params.push(`%${String(req.query.q).trim().toLowerCase()}%`);
+      const k = `$${params.length}`;
+      filtre += ` AND (lower(e.nom || ' ' || e.prenom) LIKE ${k} OR lower(e.prenom || ' ' || e.nom) LIKE ${k} OR e.whatsapp LIKE ${k}
+        OR lower(COALESCE(e.pere_nom,'') || ' ' || COALESCE(e.mere_nom,'') || ' ' || COALESCE(e.tuteur_nom,'')) LIKE ${k})`;
+    }
+    if (req.query.sans_numero) filtre += ' AND e.whatsapp IS NULL';
+    const lignes = await query(
+      `SELECT e.nom, e.prenom, e.pere_nom, e.mere_nom, e.tuteur_nom, e.whatsapp, e.telephone2, c.nom AS classe, c.id AS classe_id
+         FROM eleves e JOIN inscriptions i ON i.eleve_id = e.id JOIN annees_scolaires a ON a.id = i.annee_id AND a.active
+         JOIN classes c ON c.id = i.classe_id JOIN niveaux n ON n.id = c.niveau_id
+        WHERE e.statut = 'actif' ${filtre} ORDER BY n.ordre, c.nom, i.numero, e.nom, e.prenom`, params);
+    // +221771234567 -> « +221 77 123 45 67 » (plus lisible sur la liste imprimée)
+    const lisible = (t) => (/^\+221\d{9}$/.test(t || '') ? t.replace(/^\+221(\d{2})(\d{3})(\d{2})(\d{2})$/, '+221 $1 $2 $3 $4') : t || '');
+    lignes.forEach((l, k) => { l.n = k + 1; l.eleve = `${l.prenom} ${l.nom}`; l.whatsapp = lisible(l.whatsapp) || 'à compléter'; l.telephone2 = lisible(l.telephone2); });
+    const classe = req.query.classe_id && lignes[0] ? lignes[0].classe : null;
+    return {
+      titre: 'Contacts des parents',
+      sousTitre: classe ? `Classe ${classe}` : 'Toute l\'école',
+      paysage: true,
+      colonnes: [
+        { titre: 'N°', cle: 'n', largeur: 0.4 }, { titre: 'Élève', cle: 'eleve', largeur: 1.8 }, { titre: 'Classe', cle: 'classe', largeur: 0.8 },
+        { titre: 'Père', cle: 'pere_nom', largeur: 1.4 }, { titre: 'Mère', cle: 'mere_nom', largeur: 1.4 }, { titre: 'Tuteur', cle: 'tuteur_nom', largeur: 1.1 },
+        { titre: 'WhatsApp', cle: 'whatsapp', largeur: 1.2 }, { titre: 'Autre numéro', cle: 'telephone2', largeur: 1.2 },
+      ],
+      lignes,
+    };
+  },
+
   async personnel(req) {
     if (req.user.role !== 'directeur') throw new HttpError(403, 'Accès refusé.');
     const lignes = await query(

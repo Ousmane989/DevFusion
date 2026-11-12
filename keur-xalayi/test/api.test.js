@@ -145,6 +145,13 @@ test('reçus : paiement d\'un mois passé daté d\'avant, liste par mois payé, 
   assert.ok((await appel('dir', '/api/paiements/recus?q=' + encodeURIComponent(p.donnees.numero_recu))).donnees.recus.length === 1);
 });
 
+test('contacts des parents : export Excel et PDF, réservé à la directrice', async () => {
+  for (const f of ['contacts.xlsx', 'contacts.pdf', 'contacts.pdf?sans_numero=1', `contacts.pdf?classe_id=${classe.id}`]) {
+    assert.strictEqual((await appel('dir', `/api/exports/${f}`)).statut, 200, f);
+  }
+  assert.ok([401, 403].includes((await appel('ens', '/api/exports/contacts.pdf')).statut));
+});
+
 test('journal des paiements : recherche par prénom puis nom, sans accents', async () => {
   const tous = (await appel('dir', '/api/paiements')).donnees.paiements;
   assert.ok(tous.length > 0);
