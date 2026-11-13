@@ -1,4 +1,4 @@
-/* Karat — espace administrateur : inscrits, réactivation, paramètres. */
+/* Karat — espace administrateur : tableau de bord, inscrits, réactivation, paramètres. */
 (function () {
   'use strict';
 
@@ -26,7 +26,7 @@
   // ---------- Menu ----------
   function switchSection(name) {
     qa('.adm-sec').forEach((s) => s.classList.toggle('active', s.id === 'asec-' + name));
-    qa('.adm-link').forEach((l) => l.classList.toggle('active', l.dataset.asec === name));
+    qa('.adm-link, .adm-tab[data-asec]').forEach((l) => l.classList.toggle('active', l.dataset.asec === name));
     setSide(false);
     window.scrollTo(0, 0);
   }
@@ -34,6 +34,102 @@
     const s = q('#adm-side'), sc = q('#adm-scrim');
     if (s) s.classList.toggle('open', open);
     if (sc) sc.classList.toggle('open', open);
+  }
+
+  // ---------- Tableau de bord ----------
+  const PERIODS = [['today', "Aujourd'hui"], ['yesterday', 'Hier'], ['week', 'Cette semaine'], ['month', 'Ce mois-ci'],
+    ['90d', '90 derniers jours'], ['year', 'Cette année'], ['all', 'Depuis toujours'], ['custom', 'Période personnalisée']];
+  let period = { key: 'month' };
+  try { const saved = JSON.parse(localStorage.getItem('karat_adm_period') || 'null'); if (saved && saved.key) period = saved; } catch (_) {}
+
+  // Variation par rapport à la période précédente.
+  function delta(v) {
+    if (v == null) return '<div class="kd">pas de comparaison</div>';
+    if (v === 0) return '<div class="kd">= 0 %</div>';
+    return `<div class="kd ${v > 0 ? 'up' : 'down'}">${v > 0 ? '↑' : '↓'} ${money(Math.abs(v)).replace('.', ',')} %</div>`;
+  }
+  // Montants séparés par devise : { MRU: 1400, FCFA: 20000 }.
+  function amounts(m) {
+    const e = Object.entries(m || {}).filter(([, v]) => v);
+    if (!e.length) return '0<small>MRU</small>';
+    return e.map(([c, v], i) => i === 0 ? `${money(v)}<small>${c}</small>` : `<div class="kv2">${money(v)} ${c}</div>`).join('');
+  }
+  function amountDelta(cur, prev) {
+    if (!prev) return '<div class="kd">pas de comparaison</div>';
+    const c = Object.keys({ ...cur, ...prev });
+    if (!c.length) return '<div class="kd">= 0 %</div>';
+    return c.map((k) => { const a = cur[k] || 0, b = prev[k] || 0; if (!b) return a ? `<div class="kd up">↑ nouveau (${k})</div>` : ''; const v = Math.round(((a - b) / b) * 1000) / 10; return v ? `<div class="kd ${v > 0 ? 'up' : 'down'}">${v > 0 ? '↑' : '↓'} ${String(Math.abs(v)).replace('.', ',')} % ${c.length > 1 ? k : ''}</div>` : `<div class="kd">= 0 % ${c.length > 1 ? k : ''}</div>`; }).join('');
+  }
+  const kpi = (label, value, extra, cls) => `<div class="kpi ${cls || ''}"><div class="kl">${label}</div><div class="kv">${value}</div>${extra || ''}</div>`;
+
+  function renderStats(d) {
+    const k = d.karat, sh = d.shops;
+    q('#period-lab').textContent = d.period.key === 'custom'
+      ? `${fmtDate(d.period.from)} → ${fmtDate(new Date(new Date(d.period.to).getTime() - 1).toISOString())}` : d.period.label;
+    q('#dq-live-txt').textContent = `${d.live.visitors} visiteur${d.live.visitors > 1 ? 's' : ''} · ${d.live.shops} boutique${d.live.shops > 1 ? 's' : ''} (15 min)`;
+    const tn = q('#dq-todo-n'); tn.hidden = !d.live.toActivate; tn.textContent = d.live.toActivate > 99 ? '99+' : d.live.toActivate;
+    q('#dq-users-txt').textContent = `${money(k.usersTotal)} comptes · ${money(k.activePaid)} payants`;
+    q('#kpi-karat').innerHTML =
+      kpi('Utilisateurs total', money(k.usersTotal), `<div class="kd">${money(k.newUsers)} nouveau${k.newUsers > 1 ? 'x' : ''} sur la période</div>`) +
+      kpi('Abonnés actifs (payants)', money(k.activePaid), '<div class="kd">en ce moment</div>', 'gold') +
+      kpi('Nouveaux abonnés payants', money(k.newPaid), delta(k.newPaidChange)) +
+      kpi('Taux de conversion', `${String(k.conversion).replace('.', ',')} %`, delta(k.conversionChange)) +
+      kpi('Renouvellements', money(k.renewals), delta(k.renewalsChange)) +
+      kpi("Chiffre d'affaires abonnements", amounts(k.revenue), amountDelta(k.revenue, k.revenuePrev), 'gold') +
+      kpi('MRR <span style="opacity:.6">(revenu mensuel)</span>', amounts(k.mrr), '<div class="kd">abonnés actifs × prix mensuel</div>') +
+      kpi('ARR <span style="opacity:.6">(revenu annuel)</span>', amounts(k.arr), '<div class="kd">MRR × 12</div>');
+    const max = Math.max(1, d.funnel[0].n);
+    q('#funnel').innerHTML = `<h3>Parcours des inscrits de la période</h3><p class="fdesc">Combien de nouveaux comptes passent chaque étape, jusqu'à l'abonnement payant.</p>` +
+      d.funnel.map((f) => `<div class="fstep"><div class="fr"><span>${esc(f.label)}</span><span>${money(f.n)} · ${String(f.pct).replace('.', ',')} %</span></div><div class="fbar"><i style="width:${(f.n / max) * 100}%"></i></div></div>`).join('');
+    q('#kpi-shops').innerHTML =
+      kpi('Commandes', money(sh.orders), delta(sh.ordersChange)) +
+      kpi('Ventes des boutiques', amounts(sh.gmv), amountDelta(sh.gmv, sh.gmvPrev), 'gold') +
+      kpi('Visiteurs des boutiques', money(sh.visits), delta(sh.visitsChange)) +
+      kpi('Boutiques ayant vendu', money(sh.activeShops), delta(sh.activeShopsChange)) +
+      kpi('Produits ajoutés', money(sh.newProducts), delta(sh.newProductsChange));
+    q('#dash-note').textContent = d.paymentsSince
+      ? `Paiements d'abonnement enregistrés depuis le ${fmtDate(d.paymentsSince)} (à chaque activation depuis l'espace admin).`
+      : "Les paiements d'abonnement sont enregistrés à chaque activation depuis l'espace admin : le chiffre d'affaires, les nouveaux abonnés et les renouvellements se rempliront au fil des activations.";
+  }
+  async function loadStats() {
+    const skel = '<div class="kpi-skel"></div>'.repeat(4);
+    q('#kpi-karat').innerHTML = skel; q('#kpi-shops').innerHTML = skel;
+    const qs = new URLSearchParams({ period: period.key });
+    if (period.key === 'custom') { qs.set('from', period.from); qs.set('to', period.to); }
+    const r = await api('/api/admin/stats?' + qs.toString());
+    if (!r.ok) { q('#kpi-karat').innerHTML = `<div class="adm-empty">${r.status === 403 ? "Accès réservé à l'administrateur." : 'Statistiques indisponibles.'}</div>`; q('#kpi-shops').innerHTML = ''; return; }
+    renderStats(r.data);
+  }
+  function openSheet(open) {
+    const sh = q('#period-sheet'); sh.classList.toggle('open', open); sh.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (!open) return;
+    q('#period-opts').innerHTML = PERIODS.map(([k, l]) => `<button type="button" class="sheet-opt${k === period.key ? ' on' : ''}" data-p="${k}">${l}</button>`).join('');
+    q('#period-custom').classList.toggle('open', period.key === 'custom');
+    const today = new Date().toISOString().slice(0, 10);
+    q('#pc-from').value = period.from || today.slice(0, 8) + '01'; q('#pc-to').value = period.to || today; q('#pc-from').max = q('#pc-to').max = today;
+    q('#period-opts').querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.p === 'custom') { q('#period-custom').classList.add('open'); return; }
+      setPeriod({ key: b.dataset.p });
+    }));
+  }
+  function setPeriod(p) {
+    period = p;
+    try { localStorage.setItem('karat_adm_period', JSON.stringify(p)); } catch (_) {}
+    openSheet(false);
+    loadStats();
+  }
+  function wireDash() {
+    q('#period-btn').addEventListener('click', () => openSheet(true));
+    qa('[data-close-sheet]').forEach((e) => e.addEventListener('click', () => openSheet(false)));
+    q('#pc-apply').addEventListener('click', () => {
+      const from = q('#pc-from').value, to = q('#pc-to').value;
+      if (!from || !to || to < from) { q('#pc-to').focus(); return; }
+      setPeriod({ key: 'custom', from, to });
+    });
+    q('#dq-live').addEventListener('click', loadStats);
+    q('#dq-todo').addEventListener('click', () => { q('#adm-billing').value = 'no'; applyFilters(); switchSection('users'); });
+    qa('.dq[data-goto]').forEach((b) => b.addEventListener('click', () => switchSection(b.dataset.goto)));
+    qa('.adm-tab[data-asec]').forEach((t) => t.addEventListener('click', () => switchSection(t.dataset.asec)));
   }
 
   // ---------- Inscrits ----------
@@ -136,6 +232,7 @@
     const r = await api(`/api/admin/users/${id}/${act}`, body);
     if (!r.ok) { if (m) { m.textContent = (r.data && r.data.error) || 'Erreur.'; m.className = 'adm-act-msg err'; } return; }
     await load();
+    loadStats();
     openDetail(id);
     const m2 = q('#adm-act-msg');
     if (m2) {
@@ -256,8 +353,10 @@
     q('#adm-country').addEventListener('change', applyFilters);
     q('#adm-billing').addEventListener('change', applyFilters);
     q('#adm-modal').addEventListener('click', (e) => { if (e.target.id === 'adm-modal') closeDetail(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDetail(); openSheet(false); } });
     wireSettings();
+    wireDash();
+    loadStats();
     load();
     loadSettings();
   }

@@ -14,6 +14,7 @@ const { verifyPassword, signSession, setSessionCookie } = require('../auth');
 const { config, isAdminUser } = require('../config');
 const { sendEmail, emailConfig } = require('../mailer');
 const { MODULE_IDS: FORMATION_IDS, readFormation, writeFormation, validUrl } = require('../formation');
+const { recordPayment, resolvePeriod, computeStats } = require('../stats');
 
 const router = express.Router();
 
@@ -193,6 +194,14 @@ router.get('/users', async (_req, res, next) => {
   }
 });
 
+// GET /api/admin/stats?period=today|yesterday|week|month|90d|year|all|custom
+//   &from=AAAA-MM-JJ&to=AAAA-MM-JJ — tableau de bord de l'administrateur.
+router.get('/stats', async (req, res, next) => {
+  try {
+    res.json({ ok: true, ...(await computeStats(resolvePeriod(req.query.period, req.query.from, req.query.to))) });
+  } catch (err) { next(err); }
+});
+
 // Applique une action d'abonnement à un compte principal (owner_id NULL).
 async function loadAccount(id) {
   const u = await getUserById(id);
@@ -211,6 +220,8 @@ router.post('/users/:id/activate', async (req, res, next) => {
     await db.prepare(
       "UPDATE users SET status = 'active', plan = ?, subscription_ends_at = ? WHERE id = ?"
     ).run(plan, isoIn(days), u.id);
+    // Journal des paiements (statistiques : nouveaux abonnés, renouvellements, CA).
+    await recordPayment(u, plan, days);
     const fresh = await getUserById(u.id);
     res.json({ ok: true, days, plan, planName: PLANS[plan].name, status: fresh.status, subscriptionEndsAt: fresh.subscription_ends_at });
   } catch (err) { next(err); }

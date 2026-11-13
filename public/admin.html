@@ -111,6 +111,72 @@
     .adm-sec-card input:focus { outline: none; border-color: var(--gold); }
     .adm-sec-card .btn-adm { width: 100%; margin-top: 6px; }
 
+    /* ===== Tableau de bord (statistiques) ===== */
+    .dash-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .dash-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+    .dq { display: flex; align-items: center; gap: 11px; text-align: left; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 15px; color: var(--text); font-family: var(--sans); cursor: pointer; transition: border-color .2s, transform .2s; min-width: 0; position: relative; }
+    .dq:hover { border-color: rgba(212,175,55,.45); transform: translateY(-1px); }
+    .dq svg { width: 21px; height: 21px; flex: none; color: var(--gold-light); }
+    .dq b { display: block; font-weight: 500; font-size: .92rem; }
+    .dq small { display: block; color: var(--text-mute); font-size: .74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dq .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 0 rgba(111,191,139,.6); animation: livePulse 1.8s infinite; position: absolute; top: 12px; right: 12px; }
+    @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(111,191,139,.55); } 70% { box-shadow: 0 0 0 9px rgba(111,191,139,0); } 100% { box-shadow: 0 0 0 0 rgba(111,191,139,0); } }
+    .dq .dq-badge { position: absolute; top: -7px; right: -6px; background: var(--danger); color: #fff; font-size: .7rem; font-weight: 700; border-radius: 50px; padding: 2px 7px; }
+    .period-btn { display: inline-flex; align-items: center; gap: 9px; background: var(--bg-card); border: 1px solid var(--line); color: var(--text); font-family: var(--sans); font-size: .9rem; padding: 10px 15px; border-radius: 12px; cursor: pointer; }
+    .period-btn svg { width: 17px; height: 17px; color: var(--gold-light); }
+    .period-btn:hover { border-color: var(--gold); }
+    .dash-lab { font-size: .72rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-mute); margin: 22px 2px 10px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+    .kpi { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 15px 16px; min-width: 0; }
+    .kpi .kl { color: var(--text-mute); font-size: .8rem; line-height: 1.25; min-height: 2.5em; }
+    .kpi .kv { font-family: var(--serif); font-size: 1.75rem; font-weight: 600; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .kpi .kv small { font-family: var(--sans); font-size: .78rem; font-weight: 500; color: var(--text-dim); margin-left: 3px; }
+    .kpi .kv2 { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; color: var(--text-dim); }
+    .kpi .kd { font-size: .74rem; margin-top: 5px; color: var(--text-mute); }
+    .kpi .up { color: var(--success); } .kpi .down { color: var(--danger); }
+    .kpi.gold .kv { color: var(--gold-light); }
+    .kpi-skel { height: 104px; border-radius: var(--radius); background: linear-gradient(90deg, var(--bg-card), rgba(255,255,255,.05), var(--bg-card)); background-size: 200% 100%; animation: skel 1.2s infinite; }
+    @keyframes skel { to { background-position: -200% 0; } }
+    .funnel { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+    .funnel h3 { font-family: var(--sans); font-size: .98rem; font-weight: 600; margin-bottom: 3px; }
+    .funnel .fdesc { color: var(--text-mute); font-size: .78rem; margin-bottom: 14px; }
+    .fstep { margin-bottom: 12px; }
+    .fstep .fr { display: flex; justify-content: space-between; font-size: .86rem; margin-bottom: 5px; }
+    .fstep .fr span:last-child { color: var(--text-mute); font-variant-numeric: tabular-nums; }
+    .fbar { height: 8px; border-radius: 6px; background: rgba(255,255,255,.06); overflow: hidden; }
+    .fbar i { display: block; height: 100%; border-radius: 6px; background: var(--gold-grad); transition: width .6s var(--ease); }
+    .dash-note { color: var(--text-mute); font-size: .76rem; margin-top: 14px; }
+    /* Feuille de choix de période (glisse depuis le bas) */
+    .sheet { position: fixed; inset: 0; z-index: 70; display: none; }
+    .sheet.open { display: block; }
+    .sheet-ov { position: absolute; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(2px); animation: fadeIn .2s; }
+    .sheet-box { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; max-width: 520px; background: var(--bg-card); border: 1px solid var(--line); border-bottom: none; border-radius: 22px 22px 0 0; padding: 10px 8px 22px; animation: sheetUp .28s var(--ease); max-height: 86vh; overflow-y: auto; }
+    @keyframes sheetUp { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
+    @keyframes fadeIn { from { opacity: 0; } }
+    .sheet-grip { width: 42px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.18); margin: 2px auto 10px; }
+    .sheet-box h4 { font-family: var(--sans); font-weight: 600; font-size: 1rem; padding: 4px 14px 8px; }
+    .sheet-opt { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: none; color: var(--text); font-family: var(--sans); font-size: .98rem; padding: 14px; border-radius: 12px; cursor: pointer; text-align: left; }
+    .sheet-opt:hover { background: rgba(255,255,255,.04); }
+    .sheet-opt.on { color: var(--gold-light); }
+    .sheet-opt.on::after { content: '✓'; }
+    .sheet-custom { display: none; gap: 8px; padding: 6px 14px 4px; flex-wrap: wrap; }
+    .sheet-custom.open { display: flex; }
+    .sheet-custom input { flex: 1; min-width: 130px; background: var(--bg-soft); border: 1px solid var(--line); color: var(--text); font-family: var(--sans); padding: 10px; border-radius: 10px; color-scheme: dark; }
+    .sheet-custom button { flex: 1 0 100%; }
+    /* Barre de navigation du bas (téléphone) */
+    .adm-tabbar { display: none; }
+    @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 860px) {
+      .dash-quick { grid-template-columns: repeat(2, 1fr); }
+      .adm-burger { display: none !important; }
+      .adm-tabbar { display: flex; position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 40; justify-content: space-around; align-items: center; background: rgba(20,20,20,.94); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 8px 6px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+      .adm-tab { background: none; border: none; color: var(--text-mute); width: 52px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+      .adm-tab svg { width: 22px; height: 22px; }
+      .adm-tab.active { background: var(--gold-grad); color: #1a1400; box-shadow: 0 6px 18px rgba(212,175,55,.35); }
+      .adm-content { padding-bottom: 110px; }
+      .karat-lang.float { bottom: 96px !important; }
+    }
+
     .adm-scrim { display: none; }
     @media (max-width: 860px) {
       .adm-shell { grid-template-columns: 1fr; }
@@ -153,7 +219,11 @@
     <div class="adm-shell">
       <aside class="adm-side" id="adm-side">
         <div class="lab">Gestion</div>
-        <button class="adm-link active" data-asec="users">
+        <button class="adm-link active" data-asec="dash">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Tableau de bord</span>
+        </button>
+        <button class="adm-link" data-asec="users">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Inscrits</span>
         </button>
@@ -165,8 +235,32 @@
       </aside>
 
       <main class="adm-content">
+        <!-- ============ TABLEAU DE BORD ============ -->
+        <section class="adm-sec active" id="asec-dash">
+          <div class="dash-head">
+            <div><h1 class="adm-h1">Administration</h1><p class="adm-sub" style="margin:0">Vue d'ensemble de Karat : comptes, abonnements et boutiques.</p></div>
+          </div>
+          <div class="dash-quick">
+            <button class="dq" id="dq-live"><span class="live-dot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span><b>En direct</b><small id="dq-live-txt">—</small></span></button>
+            <button class="dq" id="dq-todo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>À traiter</b><small>Essais et abonnements finis</small></span><span class="dq-badge" id="dq-todo-n" hidden></span></button>
+            <button class="dq" data-goto="users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>Utilisateurs</b><small id="dq-users-txt">Comptes inscrits</small></span></button>
+            <button class="dq" data-goto="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span><b>Réglages</b><small>WhatsApp, e-mail, formation</small></span></button>
+          </div>
+          <button class="period-btn" id="period-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="period-lab">Ce mois-ci</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text-mute)"><path d="M6 9l6 6 6-6"/></svg></button>
+
+          <div class="dash-lab">Statistiques Karat</div>
+          <div class="kpi-grid" id="kpi-karat"></div>
+
+          <div class="dash-lab">De l'inscription à l'abonnement</div>
+          <div class="funnel" id="funnel"></div>
+
+          <div class="dash-lab">Statistiques boutiques</div>
+          <div class="kpi-grid" id="kpi-shops"></div>
+          <p class="dash-note" id="dash-note"></p>
+        </section>
+
         <!-- ============ INSCRITS ============ -->
-        <section class="adm-sec active" id="asec-users">
+        <section class="adm-sec" id="asec-users">
           <h1 class="adm-h1">Personnes inscrites</h1>
           <p class="adm-sub">Toutes les personnes inscrites, leurs coordonnées et l'état de leur abonnement.</p>
 
@@ -295,10 +389,31 @@
     </div>
 
     <div class="adm-modal" id="adm-modal"><div class="adm-box" id="adm-box"></div></div>
+
+    <div class="sheet" id="period-sheet" aria-hidden="true">
+      <div class="sheet-ov" data-close-sheet></div>
+      <div class="sheet-box" role="dialog" aria-label="Période">
+        <div class="sheet-grip"></div>
+        <h4>Période</h4>
+        <div id="period-opts"></div>
+        <div class="sheet-custom" id="period-custom">
+          <input type="date" id="pc-from" aria-label="Du" />
+          <input type="date" id="pc-to" aria-label="Au" />
+          <button type="button" class="btn-adm gold" id="pc-apply">Afficher cette période</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="adm-tabbar" aria-label="Navigation">
+      <button class="adm-tab active" data-asec="dash" aria-label="Tableau de bord"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/></svg></button>
+      <button class="adm-tab" data-asec="users" aria-label="Inscrits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+      <a class="adm-tab" href="/" target="_blank" rel="noopener" aria-label="Voir le site"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/></svg></a>
+      <button class="adm-tab" data-asec="settings" aria-label="Paramètres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button>
+    </nav>
   </div>
 
   <script src="/js/api.js"></script>
-  <script src="/js/admin.js"></script>
+  <script src="/js/admin.js?v=20261113a"></script>
   <script src="/js/i18n.js"></script>
 </body>
 </html>
