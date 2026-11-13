@@ -28,6 +28,8 @@ const SCHEMA = `
 `;
 let ready = null;
 function ensureReady() {
+  // Postgres (production) : la table est créée par migration Supabase.
+  if (isPg) return Promise.resolve();
   if (!ready) {
     ready = (async () => {
       // En production les tables sont créées par migration : on tolère l'échec.
@@ -102,16 +104,22 @@ const inRange = (ms, r) => r && ms >= r.from && ms < r.to;
 const pct = (cur, prev) => (prev ? Math.round(((cur - prev) / prev) * 1000) / 10 : null);
 const addCur = (m, cur, n) => { m[cur] = (m[cur] || 0) + n; return m; };
 
+// Chaque lecture a un délai maximal : une étape bloquée renvoie une erreur
+// qui la nomme au lieu de laisser la requête attendre indéfiniment.
+function step(name, promise, ms = 8000) {
+  let t;
+  return Promise.race([promise, new Promise((_, rej) => { t = setTimeout(() => rej(new Error('Statistiques : délai dépassé (' + name + ')')), ms); })])
+    .finally(() => clearTimeout(t));
+}
+
 async function computeStats(period) {
-  await ensureReady();
+  await step('préparation', ensureReady());
   const now = Date.now();
-  const [users, payments, prodRows, orderRows] = await Promise.all([
-    db.prepare('SELECT id, owner_id, email, is_admin, status, plan, country, currency, email_verified, created_at, trial_ends_at, subscription_ends_at FROM users').all(),
-    db.prepare('SELECT user_id, plan, amount, currency, kind, created_at FROM sub_payments').all(),
-    db.prepare('SELECT user_id, created_at FROM products').all(),
-    db.prepare('SELECT user_id, total_mru, status, created_at FROM orders').all(),
-  ]);
-  const evRange = (r) => db.prepare("SELECT COUNT(*) AS n FROM store_events WHERE type = 'visit' AND created_at >= ? AND created_at < ?").get(sqlTime(r.from), sqlTime(r.to)).then((x) => Number(x && x.n) || 0);
+  const users = await step('comptes', db.prepare('SELECT id, owner_id, email, is_admin, status, plan, country, currency, email_verified, created_at, trial_ends_at, subscription_ends_at FROM users').all());
+  const payments = await step('paiements', db.prepare('SELECT user_id, plan, amount, currency, kind, created_at FROM sub_payments').all());
+  const prodRows = await step('produits', db.prepare('SELECT user_id, created_at FROM products').all());
+  const orderRows = await step('commandes', db.prepare('SELECT user_id, total_mru, status, created_at FROM orders').all());
+  const evRange = (r) => step('visites', db.prepare("SELECT COUNT(*) AS n FROM store_events WHERE type = 'visit' AND created_at >= ? AND created_at < ?").get(sqlTime(r.from), sqlTime(r.to))).then((x) => Number(x && x.n) || 0);
 
   // Comptes clients (hors administrateurs) ; boutiques filles rattachées au compte.
   const accounts = users.filter((u) => !u.owner_id && !isAdminUser(u));
@@ -143,10 +151,9 @@ async function computeStats(period) {
 
   const cur = { signups: signups(P), newPaid: pays(P, 'new').length, renewals: pays(P, 'renewal').length, orders: ordersIn(P).length };
   const prv = R ? { signups: signups(R).length, newPaid: pays(R, 'new').length, renewals: pays(R, 'renewal').length, orders: ordersIn(R).length } : null;
-  const [visits, visitsPrev, live] = await Promise.all([
-    evRange(P), R ? evRange(R) : Promise.resolve(null),
-    db.prepare("SELECT COUNT(*) AS n, COUNT(DISTINCT user_id) AS shops FROM store_events WHERE type = 'visit' AND created_at >= ?").get(sqlTime(now - 15 * 60000)),
-  ]);
+  const visits = await evRange(P);
+  const visitsPrev = R ? await evRange(R) : null;
+  const live = await step('en direct', db.prepare("SELECT COUNT(*) AS n, COUNT(DISTINCT user_id) AS shops FROM store_events WHERE type = 'visit' AND created_at >= ?").get(sqlTime(now - 15 * 60000)));
 
   const total = accounts.filter((u) => created(u) < P.to).length;
   const firstPay = payments.reduce((m, p) => Math.min(m, toMs(p.created_at)), Infinity);

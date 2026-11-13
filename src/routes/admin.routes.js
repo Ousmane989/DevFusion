@@ -199,7 +199,10 @@ router.get('/users', async (_req, res, next) => {
 router.get('/stats', async (req, res, next) => {
   try {
     res.json({ ok: true, ...(await computeStats(resolvePeriod(req.query.period, req.query.from, req.query.to))) });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[admin/stats]', err);
+    res.status(500).json({ error: (err && err.message) || 'Statistiques indisponibles.' });
+  }
 });
 
 // Applique une action d'abonnement à un compte principal (owner_id NULL).
