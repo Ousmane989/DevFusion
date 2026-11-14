@@ -335,12 +335,12 @@
 
             <form class="adm-sec-card" id="form-email">
               <h3>E-mail de connexion</h3>
-              <p class="desc">Adresse utilisée pour vous connecter à l'espace admin.</p>
+              <p class="desc">Adresse utilisée pour vous connecter à l'espace admin.<br>Actuelle : <strong id="se-current">…</strong></p>
               <label>Nouvel e-mail
-                <input type="email" id="se-email" placeholder="karat-boutique@gmail.com" autocomplete="username" />
+                <input type="email" id="se-email" placeholder="nouvelle@adresse.com" autocomplete="username" required />
               </label>
               <label>Mot de passe actuel
-                <input type="password" id="se-pass" placeholder="••••••••" autocomplete="current-password" />
+                <input type="password" id="se-pass" placeholder="••••••••" autocomplete="current-password" required />
               </label>
               <div class="adm-act-msg" id="se-msg"></div>
               <button type="submit" class="btn-adm gold">Changer l'e-mail</button>
@@ -348,12 +348,15 @@
 
             <form class="adm-sec-card" id="form-pass">
               <h3>Mot de passe</h3>
-              <p class="desc">Choisissez un mot de passe long et unique.</p>
+              <p class="desc">Choisissez un mot de passe long et unique. Les autres appareils connectés seront déconnectés.</p>
               <label>Mot de passe actuel
-                <input type="password" id="sp-current" placeholder="••••••••" autocomplete="current-password" />
+                <input type="password" id="sp-current" placeholder="••••••••" autocomplete="current-password" required />
               </label>
               <label>Nouveau mot de passe (8 caractères min.)
                 <input type="password" id="sp-next" placeholder="••••••••" autocomplete="new-password" />
+              </label>
+              <label>Confirmer le nouveau mot de passe
+                <input type="password" id="sp-confirm" placeholder="••••••••" autocomplete="new-password" />
               </label>
               <div class="adm-act-msg" id="sp-msg"></div>
               <button type="submit" class="btn-adm gold">Changer le mot de passe</button>
@@ -413,7 +416,7 @@
   </div>
 
   <script src="/js/api.js"></script>
-  <script src="/js/admin.js?v=20261113b"></script>
+  <script src="/js/admin.js?v=20261114a"></script>
   <script src="/js/i18n.js"></script>
 </body>
 </html>

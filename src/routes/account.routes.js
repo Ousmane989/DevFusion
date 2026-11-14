@@ -6,6 +6,7 @@ const db = require('../db');
 const { requireAuth } = require('../middleware');
 const { hashPassword, verifyPassword, clearSessionCookie, signSession, setSessionCookie } = require('../auth');
 const { getUserById, getUserByEmail, publicUser } = require('../account');
+const { isAdminEmail, isAdminUser } = require('../config');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -79,8 +80,17 @@ router.post('/email', requireAuth, async (req, res) => {
   if (existing && existing.id !== req.account.id) {
     return res.status(409).json({ errors: { email: 'Cet e-mail est déjà utilisé.' } });
   }
+  const admin = isAdminUser(req.account);
+  // Une adresse administrateur (ADMIN_EMAILS) reste réservée : un compte
+  // client ne peut pas la prendre pour obtenir les droits admin.
+  if (!admin && isAdminEmail(email)) {
+    return res.status(409).json({ errors: { email: 'Cette adresse est réservée.' } });
+  }
   // L'e-mail de connexion est porté par la boutique principale (le compte).
-  await db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, req.account.id);
+  // Un administrateur garde ses droits via l'indicateur is_admin, même si sa
+  // nouvelle adresse ne figure pas dans ADMIN_EMAILS.
+  if (admin) await db.prepare('UPDATE users SET email = ?, is_admin = 1 WHERE id = ?').run(email, req.account.id);
+  else await db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, req.account.id);
   res.json({ ok: true, email });
 });
 

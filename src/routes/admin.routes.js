@@ -41,12 +41,13 @@ router.post('/login', async (req, res) => {
 router.use(requireAuth, requireAdmin);
 
 // GET /api/admin/settings — réglages de l'espace admin.
-router.get('/settings', async (_req, res, next) => {
+router.get('/settings', async (req, res, next) => {
   try {
     const val = async (k) => { const r = await db.prepare('SELECT value FROM app_config WHERE key = ?').get(k); return r && r.value; };
     const cfg = await emailConfig();
     res.json({
       ok: true,
+      accountEmail: (req.account || req.user).email,
       whatsapp: (await val('admin_whatsapp')) || config.adminWhatsapp,
       waveLink: (await val('wave_link')) || '',
       email: { configured: Boolean(cfg.apiKey), from: cfg.fromEmail, fromName: cfg.fromName },

@@ -18,7 +18,7 @@ const { billedPlan } = require('../subscription');
 const { COUNTRIES, currencyOf } = require('../catalog');
 const { sendCode, hasSmtp } = require('../mailer');
 const { requireAuth } = require('../middleware');
-const { config, isAdminUser } = require('../config');
+const { config, isAdminUser, isAdminEmail } = require('../config');
 
 const router = express.Router();
 
@@ -82,6 +82,12 @@ router.post('/signup', authLimiter, async (req, res) => {
   const email = String(b.email).toLowerCase().trim();
   if (await getUserByEmail(email)) {
     return res.status(409).json({ errors: { email: 'Un compte existe deja avec cet e-mail.' } });
+  }
+  // Les adresses administrateur (ADMIN_EMAILS) sont réservées : sinon, après
+  // un changement d'e-mail de l'admin, l'ancienne adresse redeviendrait libre
+  // et donnerait les droits admin à quiconque s'inscrirait avec.
+  if (isAdminEmail(email)) {
+    return res.status(409).json({ errors: { email: 'Cette adresse est réservée.' } });
   }
 
   const passwordHash = await hashPassword(String(b.password));

@@ -271,6 +271,7 @@
     const r = await api('/api/admin/settings');
     if (r.ok && r.data) {
       q('#st-wa').value = r.data.whatsapp || '';
+      if (q('#se-current')) q('#se-current').textContent = r.data.accountEmail || '—';
       if (q('#st-wave')) q('#st-wave').value = r.data.waveLink || '';
       const em = r.data.email || {};
       if (q('#st-email-from')) q('#st-email-from').value = em.from || '';
@@ -327,15 +328,18 @@
       const m = q('#se-msg'); setMsg(m, true, 'Traitement…');
       const r = await api('/api/account/email', { email: q('#se-email').value.trim(), password: q('#se-pass').value });
       if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.email || er.password || 'Erreur.'); return; }
-      setMsg(m, true, 'E-mail de connexion mis à jour ✓'); q('#se-pass').value = '';
+      setMsg(m, true, 'E-mail de connexion mis à jour ✓ Utilisez-le à votre prochaine connexion.');
+      if (q('#se-current')) q('#se-current').textContent = r.data.email; q('#se-email').value = ''; q('#se-pass').value = '';
     });
     const fp = q('#form-pass');
     if (fp) fp.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const m = q('#sp-msg'); setMsg(m, true, 'Traitement…');
+      const m = q('#sp-msg');
+      if (q('#sp-confirm') && q('#sp-confirm').value !== q('#sp-next').value) { setMsg(m, false, 'Les deux nouveaux mots de passe ne correspondent pas.'); return; }
+      setMsg(m, true, 'Traitement…');
       const r = await api('/api/account/password', { current: q('#sp-current').value, next: q('#sp-next').value });
       if (!r.ok) { const er = (r.data && r.data.errors) || {}; setMsg(m, false, er.current ? 'Mot de passe actuel incorrect.' : (er.next || 'Erreur.')); return; }
-      setMsg(m, true, 'Mot de passe mis à jour ✓'); q('#sp-current').value = ''; q('#sp-next').value = '';
+      setMsg(m, true, 'Mot de passe mis à jour ✓'); q('#sp-current').value = ''; q('#sp-next').value = ''; if (q('#sp-confirm')) q('#sp-confirm').value = '';
     });
   }
 
