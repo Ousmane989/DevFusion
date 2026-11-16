@@ -7,9 +7,9 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" type="image/png" href="/livreur/img/icon.png?v=2" />
-  <script src="/livreur/theme.js?v=20261111a"></script>
+  <script src="/livreur/theme.js?v=20261116a"></script>
   <link rel="stylesheet" href="/livreur/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="/livreur/livreur.css?v=20261111a" />
+  <link rel="stylesheet" href="/livreur/livreur.css?v=20261116a" />
 </head>
 <body>
   <div class="app">
@@ -31,6 +31,14 @@
             <div class="ops-clock"><strong id="a-clock">--:--</strong><span id="a-date"></span></div>
           </div>
           <div class="kpis" id="a-kpis"></div>
+          <div class="panel stats-panel">
+            <div class="panel-head"><h2>Statistiques</h2><div class="actions" id="a-stats-range"><button class="tab active" data-days="14">14 jours</button><button class="tab" data-days="30">30 jours</button><button class="tab" data-days="90">90 jours</button></div></div>
+            <div class="stats-grid">
+              <div class="stat-chart"><div class="stat-head"><b>Visites du site</b><span id="a-st-visits"></span></div><div id="a-ch-visits"></div></div>
+              <div class="stat-chart"><div class="stat-head"><b>Commandes et livraisons</b><span class="legend"><i class="lg-a"></i>Reçues <i class="lg-b"></i>Livrées</span></div><div id="a-ch-orders"></div></div>
+            </div>
+            <div class="grid grid-2 stats-lists"><div><h3>Pages les plus vues</h3><div id="a-st-pages"></div></div><div><h3>D'où viennent les visiteurs</h3><div id="a-st-sources"></div></div></div>
+          </div>
           <div class="panel flush hidden" id="a-requests-panel">
             <div class="panel-head"><h2>Demandes de partenariat</h2><div class="actions"><button class="btn btn-ghost btn-sm" data-goto="partenaires">Tous les partenaires</button></div></div>
             <div id="a-requests"></div>
@@ -123,8 +131,8 @@
       </div>
     </div>
   </div>
-  <script src="/livreur/lv.js?v=20261111a"></script>
-  <script src="/livreur/anim.js?v=20261111a"></script>
-  <script src="/livreur/agence.js?v=20261111a"></script>
+  <script src="/livreur/lv.js?v=20261116a"></script>
+  <script src="/livreur/anim.js?v=20261116a"></script>
+  <script src="/livreur/agence.js?v=20261116a"></script>
 </body>
 </html>

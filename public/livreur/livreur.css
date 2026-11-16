@@ -993,6 +993,26 @@ body.leaving { animation: leave .28s ease forwards; }
 .recruit-perks span { padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
 .recruit-perks b { color: var(--accent); }
 
+/* Statistiques du tableau de bord agence */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.stat-chart { border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 8px; background: var(--surface); }
+.stat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; font-size: 14px; }
+.stat-head span { color: var(--text-dim); font-size: 13px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin: 0 4px 0 10px; vertical-align: -1px; }
+.bar-chart { width: 100%; height: auto; display: block; }
+.bar-chart line { stroke: var(--line); }
+.bar-chart text { fill: var(--text-dim); font-size: 11px; }
+.bar-chart rect { transition: opacity .2s; }
+.bar-chart rect:hover { opacity: .75; }
+.b-a, .lg-a { fill: var(--brand); background: var(--brand); }
+.b-b, .lg-b { fill: var(--accent); background: var(--accent); }
+.stats-lists { margin-top: 18px; }
+.stats-lists h3 { font-size: 15px; margin-bottom: 10px; }
+.top-row { position: relative; display: flex; justify-content: space-between; padding: 8px 12px; margin-bottom: 6px; border-radius: 10px; overflow: hidden; font-size: 14px; }
+.top-row span, .top-row b { position: relative; z-index: 1; }
+.top-row i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-soft); border-radius: 10px; z-index: 0; }
+@media (max-width: 760px) { .stats-grid { grid-template-columns: 1fr; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
   html { scroll-behavior: auto; }

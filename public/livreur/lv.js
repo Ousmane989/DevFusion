@@ -272,7 +272,19 @@ window.LV = (function () {
   }
 
   // ----- En-tête / pied de page publics -----
+  function trackVisit() {
+    try {
+      if (sessionStorage.getItem('lv_v_' + location.pathname)) return;
+      sessionStorage.setItem('lv_v_' + location.pathname, '1');
+    } catch (e) { /* navigation privée : on compte quand même */ }
+    try {
+      fetch('/api/livreur/visit', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: location.pathname, referrer: document.referrer || '' }) }).catch(function () {});
+    } catch (e) { /* hors ligne */ }
+  }
+
   function publicChrome() {
+    trackVisit();
     const h = document.getElementById('lv-header');
     if (h) {
       h.outerHTML = '<div class="topstrip"><div class="container">' +
