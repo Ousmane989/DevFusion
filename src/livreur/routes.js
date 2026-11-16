@@ -144,6 +144,32 @@ router.get('/track/:code', trackLimiter, wrap(async (req, res) => {
   });
 }));
 
+// Visites du site public (compteur par jour, page et provenance — aucune donnée personnelle).
+const visitLimiter = limiter(30, 'Trop de requêtes.');
+const VISIT_PAGES = ['/livreur', '/livreur/suivi', '/livreur/inscription', '/livreur/inscription-livreur', '/livreur/connexion', '/livreur/agence/connexion'];
+function visitSource(ref, host) {
+  try {
+    const h = new URL(String(ref)).hostname.replace(/^www\./, '').toLowerCase();
+    if (!h || h === String(host || '').split(':')[0]) return 'direct';
+    if (/(^|\.)(facebook|fb)\.com$/.test(h)) return 'facebook.com';
+    if (/whatsapp/.test(h)) return 'whatsapp';
+    if (/^(.*\.)?google\./.test(h)) return 'google';
+    if (/instagram\.com$/.test(h)) return 'instagram.com';
+    if (/tiktok\.com$/.test(h)) return 'tiktok.com';
+    return h.slice(0, 60);
+  } catch (e) { return 'direct'; }
+}
+router.post('/visit', visitLimiter, wrap(async (req, res) => {
+  const b = req.body || {};
+  let page = String(b.page || '').split(/[?#]/)[0].replace(/\/+$/, '') || '/livreur';
+  if (!VISIT_PAGES.includes(page)) page = 'autre';
+  const source = visitSource(b.referrer, req.headers.host);
+  const day = S.today();
+  const r = await db.prepare('UPDATE lv_visits SET n = n + 1 WHERE day = ? AND page = ? AND source = ?').run(day, page, source);
+  if (!r || !r.changes) await db.prepare('INSERT INTO lv_visits (day, page, source, n) VALUES (?, ?, ?, 1)').run(day, page, source);
+  res.json({ ok: true });
+}));
+
 router.post('/contact', formLimiter, wrap(async (req, res) => {
   const name = str(req.body.name, 120);
   const phone = normPhone(req.body.phone);
@@ -595,6 +621,37 @@ agency.get('/summary', wrap(async (req, res) => {
     couriers: Number(couriers.n), partners: Number(partners.n), messages: Number(msgs.n),
     boutique_requests: Number(collabReq.n),
   });
+}));
+
+// Statistiques : visites du site et activité des N derniers jours (graphiques du tableau de bord).
+agency.get('/stats', wrap(async (req, res) => {
+  const n = Math.min(Math.max(parseInt(req.query.days, 10) || 14, 7), 90);
+  const days = [];
+  const d = new Date(S.today() + 'T00:00:00Z');
+  for (let i = n - 1; i >= 0; i--) days.push(new Date(d.getTime() - i * 864e5).toISOString().slice(0, 10));
+  const from = days[0];
+  const visits = await db.prepare('SELECT day, page, source, SUM(n) AS n FROM lv_visits WHERE day >= ? GROUP BY day, page, source').all(from);
+  const orders = await db.prepare('SELECT created_at, delivered_at, status, fee FROM lv_orders WHERE created_at >= ? OR delivered_at >= ?').all(from, from);
+  const row = Object.fromEntries(days.map((k) => [k, { day: k, visits: 0, orders: 0, delivered: 0, fees: 0 }]));
+  const pages = {}; const sources = {};
+  let total = 0;
+  for (const v of visits) {
+    const k = Number(v.n) || 0;
+    if (row[v.day]) row[v.day].visits += k;
+    pages[v.page] = (pages[v.page] || 0) + k;
+    sources[v.source] = (sources[v.source] || 0) + k;
+    total += k;
+  }
+  for (const o of orders) {
+    const c = String(o.created_at).slice(0, 10);
+    if (row[c]) row[c].orders++;
+    if (o.status === 'livree') {
+      const l = String(o.delivered_at).slice(0, 10);
+      if (row[l]) { row[l].delivered++; row[l].fees += Number(o.fee) || 0; }
+    }
+  }
+  const top = (m) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => ({ key: k, n: v }));
+  res.json({ days: days.map((k) => row[k]), visits_total: total, visits_today: row[S.today()] ? row[S.today()].visits : 0, pages: top(pages), sources: top(sources) });
 }));
 
 agency.get('/orders', wrap(async (req, res) => {

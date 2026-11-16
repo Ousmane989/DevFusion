@@ -148,6 +148,13 @@ const SCHEMA = `
   );
   CREATE INDEX IF NOT EXISTS idx_lv_collabs_merchant ON lv_collabs(merchant_id);
   CREATE INDEX IF NOT EXISTS idx_lv_collabs_agency ON lv_collabs(agency_id, status);
+  CREATE TABLE IF NOT EXISTS lv_visits (
+    day TEXT NOT NULL,
+    page TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT '',
+    n INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_lv_visits_day ON lv_visits(day, page, source);
 `;
 
 // Villes desservies et délais : public/livreur/defaults.json, fichier partagé

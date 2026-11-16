@@ -307,6 +307,51 @@
   }
   watchLost();
 
+  // --------- Statistiques (visites du site, commandes, livraisons) ---------
+  let statDays = 14;
+  const PAGE_NAMES = { '/livreur': 'Accueil', '/livreur/suivi': 'Suivi colis', '/livreur/inscription': 'Devenir partenaire',
+    '/livreur/inscription-livreur': 'Devenir livreur', '/livreur/connexion': 'Connexion partenaire', '/livreur/agence/connexion': 'Connexion agence / livreur', autre: 'Autres pages' };
+  const SOURCE_NAMES = { direct: 'Accès direct / lien partagé', whatsapp: 'WhatsApp', google: 'Google' };
+  function barChart(days, series) {
+    const W = 600, H = 170, P = 22, n = days.length;
+    const max = Math.max(1, ...days.map((d) => Math.max(...series.map((s) => d[s.key]))));
+    const slot = (W - P) / n, bw = Math.max(2, (slot * 0.72) / series.length);
+    let bars = '';
+    days.forEach((d, i) => series.forEach((s, j) => {
+      const h = Math.round((d[s.key] / max) * (H - 26));
+      const x = P + i * slot + slot * 0.14 + j * bw;
+      bars += '<rect class="' + s.cls + '" x="' + x.toFixed(1) + '" y="' + (H - 16 - h) + '" width="' + (bw - 1).toFixed(1) + '" height="' + h + '" rx="2"><title>' +
+        d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + ' : ' + d[s.key] + ' ' + s.label + '</title></rect>';
+    }));
+    const step = Math.ceil(n / 7);
+    let labels = '';
+    days.forEach((d, i) => { if (i % step === 0 || (i === n - 1 && i % step >= step / 2)) labels += '<text x="' + (P + i * slot + slot / 2).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle">' + d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + '</text>'; });
+    return '<svg class="bar-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img"><line x1="' + P + '" x2="' + W + '" y1="' + (H - 16) + '" y2="' + (H - 16) + '" />' +
+      '<text x="0" y="12">' + max + '</text>' + bars + labels + '</svg>';
+  }
+  function topList(rows, names) {
+    if (!rows.length) return '<div class="empty" style="padding:14px">Pas encore de visites enregistrées.</div>';
+    const max = rows[0].n || 1;
+    return rows.map((r) => '<div class="top-row"><span>' + esc(names[r.key] || r.key) + '</span><b>' + r.n + '</b><i style="width:' + Math.round((r.n / max) * 100) + '%"></i></div>').join('');
+  }
+  async function loadStats() {
+    const r = await api('/agency/stats?days=' + statDays);
+    if (!r.ok) return;
+    const d = r.data;
+    document.getElementById('a-st-visits').textContent = d.visits_total + ' visites · ' + d.visits_today + ' aujourd\'hui';
+    document.getElementById('a-ch-visits').innerHTML = barChart(d.days, [{ key: 'visits', cls: 'b-a', label: 'visites' }]);
+    document.getElementById('a-ch-orders').innerHTML = barChart(d.days, [{ key: 'orders', cls: 'b-a', label: 'reçues' }, { key: 'delivered', cls: 'b-b', label: 'livrées' }]);
+    document.getElementById('a-st-pages').innerHTML = topList(d.pages, PAGE_NAMES);
+    document.getElementById('a-st-sources').innerHTML = topList(d.sources, SOURCE_NAMES);
+  }
+  document.getElementById('a-stats-range').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-days]');
+    if (!b) return;
+    statDays = Number(b.dataset.days);
+    document.querySelectorAll('#a-stats-range .tab').forEach((t) => t.classList.toggle('active', t === b));
+    loadStats();
+  });
+
   // --------- Bilan (clôture) de la journée ou de la période ---------
   const blFrom = document.getElementById('a-bl-from');
   const blTo = document.getElementById('a-bl-to');
@@ -348,6 +393,7 @@
   // --------- Vues ---------
   const VIEWS = {
     async dashboard() {
+      loadStats();
       const [s, n, c] = await Promise.all([api('/agency/summary'), api('/agency/orders?status=nouvelle'), api('/agency/orders?status=confirmee')]);
       const d = s.data;
       const inProgress = (d.by.assignee || 0) + (d.by.recuperee || 0) + (d.by.en_cours || 0);
